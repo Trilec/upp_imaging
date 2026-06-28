@@ -1,0 +1,8 @@
+description "User-facing libpng package test";
+
+uses
+	Core,
+	libpng;
+
+file
+	main.cpp;

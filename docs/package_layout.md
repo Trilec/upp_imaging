@@ -13,7 +13,8 @@ Expected dependency direction:
 
 - `zlib_src` is the strict upstream-source base package
 - `zlib` is the user-facing compatibility layer
-- future `libpng` should depend on `zlib`
+- `libpng_src` is the strict upstream-source libpng package and depends on `zlib_src`
+- `libpng` is the user-facing libpng layer and currently depends on `zlib`
 - future OpenEXR packages will likely depend on Imath and may also depend on zlib
 - OpenImageIO may remain external or become an adapter later, depending on complexity
 
@@ -23,3 +24,11 @@ Current zlib package policy:
 - `zlib` provides a stable include path for normal apps
 - on Windows/Core, `zlib` may resolve through U++ `plugin/z` to avoid duplicate symbols
 - strict proof of vendored upstream linkage belongs to `zlib_src_test`
+
+Current libpng package policy:
+
+- `libpng_src` builds imported upstream libpng 1.6.58 directly
+- `libpng_src` depends on `zlib_src`
+- `libpng` provides a stable include path for normal apps
+- `libpng` currently compiles imported libpng source against `zlib`
+- strict proof of vendored upstream linkage belongs to `libpng_src_test`

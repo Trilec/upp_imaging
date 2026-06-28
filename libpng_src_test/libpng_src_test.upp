@@ -1,0 +1,7 @@
+description "Strict imported-source libpng linkage test";
+
+uses
+	libpng_src;
+
+file
+	main.cpp;

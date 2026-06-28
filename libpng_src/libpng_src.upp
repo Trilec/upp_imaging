@@ -1,0 +1,36 @@
+description "Strict upstream libpng 1.6.58 source package for U++";
+
+options(BUILDER_OPTION) NOWARNINGS;
+
+uses
+	zlib_src;
+
+file
+	png.h,
+	zlib.h,
+	upstream/png.c,
+	upstream/pngerror.c,
+	upstream/pngget.c,
+	upstream/pngmem.c,
+	upstream/pngpread.c,
+	upstream/pngread.c,
+	upstream/pngrio.c,
+	upstream/pngrtran.c,
+	upstream/pngrutil.c,
+	upstream/pngset.c,
+	upstream/pngtrans.c,
+	upstream/pngwio.c,
+	upstream/pngwrite.c,
+	upstream/pngwtran.c,
+	upstream/pngwutil.c,
+	upstream/zlib.h,
+	upstream/png.h,
+	upstream/pngconf.h,
+	upstream/pnglibconf.h,
+	upstream/pngdebug.h,
+	upstream/pnginfo.h,
+	upstream/pngpriv.h,
+	upstream/pngstruct.h,
+	upstream/README,
+	upstream/LICENSE,
+	upstream/AUTHORS;
