@@ -1,0 +1,7 @@
+description "Strict imported-source zlib linkage test";
+
+uses
+	zlib_src;
+
+file
+	main.cpp;

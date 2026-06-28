@@ -13,5 +13,6 @@
 
 Notes:
 
-- The imported upstream source tree is preserved under `zlib/upstream/`.
-- The current Windows `Core` + `zlib` proof build reuses U++ `plugin/z` linkage to avoid duplicate static zlib symbols, because `Core` already links `plugin/z` on Windows.
+- The imported upstream source tree is preserved under `zlib_src/upstream/`.
+- `zlib_src` is the strict package that compiles imported upstream zlib 1.3.2 sources directly.
+- `zlib` is a compatibility package. On Windows/Core builds it can reuse U++ `plugin/z` linkage to avoid duplicate static zlib symbols, because `Core` already links `plugin/z` on Windows.

@@ -1,6 +1,6 @@
 # zlib
 
-This package contains upstream `zlib` 1.3.2 packaged for U++.
+`zlib` is the normal user-facing compatibility package for U++ applications.
 
 ## Include style
 
@@ -10,21 +10,20 @@ Preferred public include:
 #include <zlib/zlib.h>
 ```
 
-The package provides `zlib/zlib.h` as a thin wrapper over `zlib/upstream/zlib.h` so callers do not need to include headers from the `upstream/` subdirectory directly.
+The package provides a stable user-facing include path.
 
-On Windows builds that also use `Core`, the wrapper intentionally resolves to U++'s `plugin/z` header because `Core` already brings in `plugin/z` on that platform. This avoids duplicate zlib symbols while preserving the imported upstream source tree in this repository.
+## Package meaning
 
-## Upstream import
+- use `zlib_src` when you need strict imported-source compilation and linkage
+- use `zlib` when you need a convenient package for normal U++ applications
 
-- upstream version: `1.3.2`
-- source archive: `https://zlib.net/zlib-1.3.2.tar.gz`
-- upstream license text: `zlib/upstream/LICENSE`
+## Windows behavior
 
-## Local modifications
+On Windows builds that also use `Core`, U++ already links `plugin/z`.
+To avoid duplicate zlib symbols, this package resolves to `plugin/z` on that target.
 
-No upstream source files were modified for the initial import.
-Only U++ package metadata and a wrapper header were added around the imported source.
+That means `zlib` is a compatibility package on Windows/Core, not proof that the imported upstream zlib 1.3.2 objects are linked.
 
-## Windows note
+On targets without that conflict, `zlib` can delegate to `zlib_src`.
 
-For the current `umk` + `CLANGx64` proof using `Core`, U++ on Windows links `plugin/z` through `Core`. Because of that, the package currently reuses that linkage on Windows instead of compiling a second static zlib copy into the same executable.
+Strict upstream import details live in `zlib_src/README.md`.
