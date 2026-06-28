@@ -3,19 +3,8 @@ description "zlib compression library packaged for U++";
 options(BUILDER_OPTION) NOWARNINGS;
 
 uses(WIN32) plugin\z;
+uses(!WIN32) zlib_src;
 
 file
 	zlib.h,
-	upstream/crc32.h,
-	upstream/deflate.h,
-	upstream/gzguts.h,
-	upstream/inffast.h,
-	upstream/inffixed.h,
-	upstream/inflate.h,
-	upstream/inftrees.h,
-	upstream/trees.h,
-	upstream/zconf.h,
-	upstream/zlib.h,
-	upstream/zutil.h,
-	upstream/README,
-	upstream/LICENSE;
+	README.md;

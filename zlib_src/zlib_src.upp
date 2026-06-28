@@ -1,0 +1,34 @@
+description "Strict upstream zlib 1.3.2 source package for U++";
+
+options(BUILDER_OPTION) NOWARNINGS;
+
+file
+	zlib.h,
+	upstream/adler32.c,
+	upstream/compress.c,
+	upstream/crc32.c,
+	upstream/deflate.c,
+	upstream/gzclose.c,
+	upstream/gzlib.c,
+	upstream/gzread.c,
+	upstream/gzwrite.c,
+	upstream/infback.c,
+	upstream/inffast.c,
+	upstream/inflate.c,
+	upstream/inftrees.c,
+	upstream/trees.c,
+	upstream/uncompr.c,
+	upstream/zutil.c,
+	upstream/zlib.h,
+	upstream/zconf.h,
+	upstream/crc32.h,
+	upstream/deflate.h,
+	upstream/gzguts.h,
+	upstream/inffast.h,
+	upstream/inffixed.h,
+	upstream/inflate.h,
+	upstream/inftrees.h,
+	upstream/trees.h,
+	upstream/zutil.h,
+	upstream/README,
+	upstream/LICENSE;
