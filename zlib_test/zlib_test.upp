@@ -1,0 +1,8 @@
+description "Minimal zlib packaging test";
+
+uses
+	Core,
+	zlib;
+
+file
+	main.cpp;
