@@ -17,6 +17,7 @@ Expected dependency direction:
 - `libpng` is the user-facing libpng layer and currently depends on `zlib`
 - `imath_src` is the strict upstream-source Imath package
 - `imath` is the user-facing Imath layer and currently depends on `imath_src`
+- `openexr_src` is currently only a preflight skeleton, not a full strict OpenEXR package yet
 - future OpenEXR packages will likely depend on Imath and may also depend on zlib
 - OpenImageIO may remain external or become an adapter later, depending on complexity
 

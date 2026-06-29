@@ -50,3 +50,9 @@ Imath preflight goal:
 - `imath_src_test` should prove imported Imath 3.2.2 compiles and links under `umk` + `CLANGx64`
 - `imath_test` should prove the user-facing include path works in a normal `Core` executable
 - this step does not include OpenEXR yet
+
+OpenEXR preflight goal:
+
+- inspect current upstream OpenEXR packaging complexity before attempting read/write support
+- confirm compatibility with local `imath_src` 3.2.2
+- keep this task to a minimal compile probe, not a real library implementation
