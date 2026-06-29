@@ -2,7 +2,7 @@
 
 `upp_imaging` is a reusable U++ imaging-library nest intended to grow as a set of independently usable packages.
 
-The first packages are `zlib_src`, `zlib`, `libpng_src`, `libpng`, `imath_src`, and `imath`.
+The first packages are `zlib_src`, `zlib`, `libpng_src`, `libpng`, `imath_src`, `imath`, `iex_src`, and `ilmthread_src`.
 
 Goals:
 
@@ -31,6 +31,10 @@ LumaPix may consume this nest later, but this repo is not LumaPix-specific.
 - `imath`: user-facing Imath package with stable include path
 - `imath_src_test`: strict imported-source Imath linkage proof
 - `imath_test`: user-facing Imath package proof
+- `iex_src`: strict imported-source Iex lower-layer package
+- `iex_src_test`: Iex exception/runtime probe
+- `ilmthread_src`: strict imported-source IlmThread lower-layer package
+- `ilmthread_src_test`: IlmThread runtime/semaphore probe
 - `openexr_src`: OpenEXR preflight header/probe skeleton only
 - `openexr_src_probe`: minimal OpenEXR compile probe
 
@@ -51,6 +55,10 @@ LumaPix may consume this nest later, but this repo is not LumaPix-specific.
 - `imath/`: user-facing Imath package layered on top of `imath_src`
 - `imath_src_test/`: strict imported-source Imath proof executable
 - `imath_test/`: user-facing Imath proof executable
+- `iex_src/`: strict imported-source Iex lower-layer package
+- `iex_src_test/`: Iex exception/runtime probe executable
+- `ilmthread_src/`: strict imported-source IlmThread lower-layer package
+- `ilmthread_src_test/`: IlmThread runtime/semaphore probe executable
 - `openexr_src/`: OpenEXR preflight package skeleton
 - `openexr_src_probe/`: OpenEXR compile-only preflight probe
 - `docs/`: package, toolchain, upstream, and license policy notes
@@ -62,3 +70,5 @@ LumaPix may consume this nest later, but this repo is not LumaPix-specific.
 - CLANG is the first validated toolchain target
 - on Windows with `Core`, `zlib` may reuse U++ `plugin/z`; use `zlib_src_test` to validate imported upstream linkage
 - `libpng` currently compiles imported libpng 1.6.58 against `zlib` and does not use U++ `plugin/png`
+- `openexr_core_src` is still deferred
+- full EXR read/write is not implemented yet
