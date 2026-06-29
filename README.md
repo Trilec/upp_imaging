@@ -24,6 +24,9 @@ LumaPix may consume this nest later, but this repo is not LumaPix-specific.
 - `libpng`: user-facing libpng package with stable include path, built against `zlib`
 - `libpng_src_test`: strict imported-source libpng linkage proof
 - `libpng_test`: user-facing libpng package proof
+- `libpng_src_roundtrip_test`: strict imported-source libpng memory round-trip proof
+- `libpng_roundtrip_test`: user-facing libpng memory round-trip proof
+- `upp_png_plugin_test`: U++ `plugin/png` comparison round-trip proof
 
 ## Layout
 
@@ -35,6 +38,9 @@ LumaPix may consume this nest later, but this repo is not LumaPix-specific.
 - `libpng/`: user-facing libpng package layered on top of `zlib`
 - `libpng_src_test/`: strict imported-source libpng proof executable
 - `libpng_test/`: user-facing libpng proof executable
+- `libpng_src_roundtrip_test/`: strict imported-source libpng encode/decode test
+- `libpng_roundtrip_test/`: user-facing libpng encode/decode test
+- `upp_png_plugin_test/`: U++ `plugin/png` comparison encode/decode test
 - `docs/`: package, toolchain, upstream, and license policy notes
 
 ## Notes

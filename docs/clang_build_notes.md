@@ -31,3 +31,16 @@ Windows/Core note for libpng:
 - `libpng_src` links cleanly in the strict no-`Core` test
 - `libpng -> libpng_src -> zlib_src` duplicates zlib symbols in `Core` builds on Windows
 - `libpng` therefore compiles imported libpng sources against `zlib` for compatibility builds on this target
+
+Round-trip validation goals:
+
+- `libpng_src_roundtrip_test` should prove strict in-memory PNG encode/decode and exact pixel recovery
+- `libpng_roundtrip_test` should prove the same behavior through the user-facing package
+- `upp_png_plugin_test` should document how the built-in U++ PNG path behaves with premultiplied alpha images
+
+Current round-trip result:
+
+- `libpng_src_roundtrip_test` passes with exact 2x2 RGBA pixel recovery
+- `libpng_roundtrip_test` passes with exact 2x2 RGBA pixel recovery
+- `upp_png_plugin_test` passes for size, opaque pixels, and partial-alpha preservation of alpha
+- the tested U++ `Image`/`plugin/png` path does not preserve the low-level RGB payload of the partial-alpha pixel as an exact channel value

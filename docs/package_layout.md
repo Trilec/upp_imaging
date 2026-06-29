@@ -32,3 +32,11 @@ Current libpng package policy:
 - `libpng` provides a stable include path for normal apps
 - `libpng` currently compiles imported libpng source against `zlib`
 - strict proof of vendored upstream linkage belongs to `libpng_src_test`
+
+Conflict rule:
+
+- do not mix strict and user-facing implementations in one executable unless the goal is to test symbol behavior explicitly
+- good: `libpng_src_roundtrip_test` uses `libpng_src` only
+- good: `libpng_roundtrip_test` uses `Core + libpng`
+- bad: one target uses both `libpng_src` and `libpng`
+- reason: both layers may compile libpng objects and can cause duplicate symbols

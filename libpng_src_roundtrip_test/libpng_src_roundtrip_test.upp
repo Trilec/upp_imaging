@@ -1,0 +1,7 @@
+description "Strict libpng memory round-trip test";
+
+uses
+	libpng_src;
+
+file
+	main.cpp;

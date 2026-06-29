@@ -1,0 +1,8 @@
+description "User-facing libpng memory round-trip test";
+
+uses
+	Core,
+	libpng;
+
+file
+	main.cpp;
