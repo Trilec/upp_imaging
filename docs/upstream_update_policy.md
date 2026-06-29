@@ -11,3 +11,6 @@ The current Windows compatibility workaround is implemented only in package meta
 
 For the initial `libpng` import, no upstream source files were modified.
 The release-provided `scripts/pnglibconf.h.prebuilt` file was copied into the imported source tree as `libpng_src/upstream/pnglibconf.h` instead of being regenerated locally.
+
+For the initial `Imath` import, no upstream source files were modified.
+The generated config header `imath_src/upstream/ImathConfig.h` was created from upstream `config/ImathConfig.h.in` using upstream release defaults required for the local static package build and should be treated as packaging metadata, not as an upstream source patch.

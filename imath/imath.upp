@@ -1,0 +1,11 @@
+description "Imath package with stable public include path";
+
+uses
+	imath_src;
+
+file
+	half.h,
+	ImathVec.h,
+	ImathBox.h,
+	ImathMatrix.h,
+	README.md;

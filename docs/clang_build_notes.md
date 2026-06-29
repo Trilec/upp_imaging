@@ -44,3 +44,9 @@ Current round-trip result:
 - `libpng_roundtrip_test` passes with exact 2x2 RGBA pixel recovery
 - `upp_png_plugin_test` passes for size, opaque pixels, and partial-alpha preservation of alpha
 - the tested U++ `Image`/`plugin/png` path does not preserve the low-level RGB payload of the partial-alpha pixel as an exact channel value
+
+Imath preflight goal:
+
+- `imath_src_test` should prove imported Imath 3.2.2 compiles and links under `umk` + `CLANGx64`
+- `imath_test` should prove the user-facing include path works in a normal `Core` executable
+- this step does not include OpenEXR yet

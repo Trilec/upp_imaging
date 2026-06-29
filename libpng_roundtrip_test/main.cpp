@@ -23,9 +23,10 @@ static void PngFlush(png_structp)
 static void PngRead(png_structp png_ptr, png_bytep data, png_size_t length)
 {
 	MemBuffer *buffer = (MemBuffer *)png_get_io_ptr(png_ptr);
-	if(buffer->pos + (int)length > buffer->data.GetCount())
+	if(buffer->pos + (int)length > buffer->data.GetCount()) {
 		png_error(png_ptr, "read past end of buffer");
-		memcpy(data, buffer->data.Begin() + buffer->pos, (size_t)length);
+	}
+	memcpy(data, buffer->data.Begin() + buffer->pos, (size_t)length);
 	buffer->pos += (int)length;
 }
 

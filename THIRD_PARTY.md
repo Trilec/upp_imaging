@@ -36,3 +36,22 @@ Notes:
 - The release-provided file `scripts/pnglibconf.h.prebuilt` was copied into `libpng_src/upstream/pnglibconf.h` to avoid local config generation.
 - A local bridge header `libpng_src/upstream/zlib.h` was added so the imported libpng sources can include zlib from `zlib_src` without modifying upstream libpng files.
 - `libpng` is the current user-facing package and compiles the same imported libpng sources against `zlib` for compatibility with normal U++ applications.
+
+## Imath
+
+- Upstream name: Imath
+- Upstream version: 3.2.2
+- Upstream authors: Contributors to the OpenEXR Project / Academy Software Foundation
+- Source archive used: `https://github.com/AcademySoftwareFoundation/Imath/archive/refs/tags/v3.2.2.tar.gz`
+- SHA-256: `B4275D83FB95521510E389B8D13AF10298ED5BED1C8E13EFD961D91B1105E462`
+- License: BSD-3-Clause
+- Date imported: 2026-06-28
+- Files modified after import: No upstream files modified
+
+Notes:
+
+- The imported upstream source tree is preserved under `imath_src/upstream/`.
+- `imath_src` is the strict package that compiles imported upstream Imath 3.2.2 sources directly.
+- `imath` is the current user-facing package and delegates to `imath_src`.
+- A repository-owned generated config header `imath_src/upstream/ImathConfig.h` was created from upstream `config/ImathConfig.h.in` using the upstream release defaults needed for this local static package build.
+- OpenEXR is not included in this import.

@@ -8,3 +8,5 @@
 * Added strict `libpng_src` and user-facing `libpng` packages.
 * Added `libpng_src_test` and `libpng_test`.
 * Added automated libpng and U++ plugin/png round-trip tests.
+* Added strict `imath_src` and user-facing `imath` packages.
+* Added `imath_src_test` and `imath_test`.

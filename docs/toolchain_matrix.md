@@ -12,6 +12,8 @@
 - libpng_src round trip: pass
 - libpng round trip: pass
 - U++ plugin/png round trip: pass with documented partial-alpha RGB caveat in the `Image` path
+- imath_src: pending
+- imath: pending
 
 Notes:
 
@@ -21,6 +23,7 @@ Notes:
 - `libpng_src` depends on `zlib_src`, not `zlib`.
 - `libpng` currently compiles imported libpng sources against `zlib` and does not use `plugin/png`.
 - `plugin/png` is available as an independent U++ comparison path and uses the U++ image/raster stack.
+- `imath_src` is independent of OpenEXR and is the first OpenEXR-branch preflight package.
 
 ## Future targets
 
