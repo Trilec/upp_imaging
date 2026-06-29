@@ -1,0 +1,30 @@
+description "Strict imported-source IlmThread package for U++";
+
+options(BUILDER_OPTION) NOWARNINGS;
+
+uses
+	iex_src;
+
+library(WIN32) kernel32;
+
+file
+	IlmThread.h,
+	IlmThreadSemaphore.h,
+	upstream/OpenEXRConfig.h,
+	upstream/IexConfig.h,
+	upstream/IlmThreadConfig.h,
+	upstream/Iex.h,
+	upstream/IlmThread.cpp,
+	upstream/IlmThread.h,
+	upstream/IlmThreadExport.h,
+	upstream/IlmThreadForward.h,
+	upstream/IlmThreadMutex.h,
+	upstream/IlmThreadNamespace.h,
+	upstream/IlmThreadPool.cpp,
+	upstream/IlmThreadPool.h,
+	upstream/IlmThreadProcessGroup.h,
+	upstream/IlmThreadSemaphore.cpp,
+	upstream/IlmThreadSemaphore.h,
+	upstream/IlmThreadSemaphoreWin32.cpp,
+	upstream/LICENSE.md,
+	upstream/README.md;

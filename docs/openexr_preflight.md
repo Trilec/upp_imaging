@@ -48,6 +48,12 @@ Likely generated or config-managed files for a real package attempt include:
 
 This preflight package includes a repository-owned `OpenEXRConfig.h` derived from upstream `cmake/OpenEXRConfig.h.in`, but does not yet attempt the full generated-config set required for a real library build.
 
+Lower-layer progress in this task:
+
+- `iex_src` uses a repository-owned `IexConfig.h` derived from upstream `cmake/IexConfig.h.in`
+- `ilmthread_src` uses a repository-owned `IlmThreadConfig.h` derived from upstream `cmake/IlmThreadConfig.h.in`
+- `openexr_core_src` is still deferred
+
 ## Minimal package strategy
 
 Recommended package direction:
@@ -68,7 +74,7 @@ Current probe limitation discovered:
 
 ## What should be attempted first next
 
-- package `Iex`, `IlmThread`, and `OpenEXRCore` explicitly as strict source layers or carefully scoped internal subpackages
+- package `OpenEXRCore` explicitly as the next strict source layer or document a smaller compression-disabled first pass if possible
 - decide whether to keep OpenEXR's current compression surface minimal for the first scanline RGBA round-trip
 - add a minimal strict OpenEXR library build before any EXR file read/write test
 

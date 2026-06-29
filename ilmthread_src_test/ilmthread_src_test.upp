@@ -1,0 +1,7 @@
+description "Strict IlmThread package preflight test";
+
+uses
+	ilmthread_src;
+
+file
+	main.cpp;
