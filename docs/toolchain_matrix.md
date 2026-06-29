@@ -12,8 +12,9 @@
 - libpng_src round trip: pass
 - libpng round trip: pass
 - U++ plugin/png round trip: pass with documented partial-alpha RGB caveat in the `Image` path
-- imath_src: pending
-- imath: pending
+- imath_src: pass (`imath_src_test` reports version 3.2.2, half conversion, V3f math, and Box/M44 smoke)
+- imath: pass (`imath_test` reports user-facing wrapper OK, half conversion, V3f math, and Box smoke)
+- openexr_src preflight: pass (`openexr_src_probe` reports version 3.4.13 and namespace/header probe OK)
 
 Notes:
 

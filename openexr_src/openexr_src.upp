@@ -1,0 +1,21 @@
+description "OpenEXR preflight header/probe package for U++";
+
+uses
+	imath_src;
+
+file
+	half.h,
+	ImfRgba.h,
+	ImfVersion.h,
+	openexr_version.h,
+	upstream/OpenEXRConfig.h,
+	upstream/half.h,
+	upstream/ImfExport.h,
+	upstream/ImfNamespace.h,
+	upstream/ImfRgba.h,
+	upstream/ImfForward.h,
+	upstream/ImfVersion.h,
+	upstream/openexr_version.h,
+	upstream/README.md,
+	upstream/LICENSE.md,
+	README.md;

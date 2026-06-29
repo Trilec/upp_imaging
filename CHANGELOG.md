@@ -10,3 +10,4 @@
 * Added automated libpng and U++ plugin/png round-trip tests.
 * Added strict `imath_src` and user-facing `imath` packages.
 * Added `imath_src_test` and `imath_test`.
+* Added OpenEXR preflight audit documentation and a minimal compile probe skeleton.

@@ -31,6 +31,8 @@ LumaPix may consume this nest later, but this repo is not LumaPix-specific.
 - `imath`: user-facing Imath package with stable include path
 - `imath_src_test`: strict imported-source Imath linkage proof
 - `imath_test`: user-facing Imath package proof
+- `openexr_src`: OpenEXR preflight header/probe skeleton only
+- `openexr_src_probe`: minimal OpenEXR compile probe
 
 ## Layout
 
@@ -49,6 +51,8 @@ LumaPix may consume this nest later, but this repo is not LumaPix-specific.
 - `imath/`: user-facing Imath package layered on top of `imath_src`
 - `imath_src_test/`: strict imported-source Imath proof executable
 - `imath_test/`: user-facing Imath proof executable
+- `openexr_src/`: OpenEXR preflight package skeleton
+- `openexr_src_probe/`: OpenEXR compile-only preflight probe
 - `docs/`: package, toolchain, upstream, and license policy notes
 
 ## Notes
