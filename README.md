@@ -2,7 +2,7 @@
 
 `upp_imaging` is a reusable U++ imaging-library nest intended to grow as a set of independently usable packages.
 
-The first packages are `zlib_src`, `zlib`, `libpng_src`, and `libpng`.
+The first packages are `zlib_src`, `zlib`, `libpng_src`, `libpng`, `imath_src`, and `imath`.
 
 Goals:
 
@@ -27,6 +27,10 @@ LumaPix may consume this nest later, but this repo is not LumaPix-specific.
 - `libpng_src_roundtrip_test`: strict imported-source libpng memory round-trip proof
 - `libpng_roundtrip_test`: user-facing libpng memory round-trip proof
 - `upp_png_plugin_test`: U++ `plugin/png` comparison round-trip proof
+- `imath_src`: strict upstream Imath 3.2.2 source package
+- `imath`: user-facing Imath package with stable include path
+- `imath_src_test`: strict imported-source Imath linkage proof
+- `imath_test`: user-facing Imath package proof
 
 ## Layout
 
@@ -41,6 +45,10 @@ LumaPix may consume this nest later, but this repo is not LumaPix-specific.
 - `libpng_src_roundtrip_test/`: strict imported-source libpng encode/decode test
 - `libpng_roundtrip_test/`: user-facing libpng encode/decode test
 - `upp_png_plugin_test/`: U++ `plugin/png` comparison encode/decode test
+- `imath_src/`: strict upstream-source Imath package and imported upstream source
+- `imath/`: user-facing Imath package layered on top of `imath_src`
+- `imath_src_test/`: strict imported-source Imath proof executable
+- `imath_test/`: user-facing Imath proof executable
 - `docs/`: package, toolchain, upstream, and license policy notes
 
 ## Notes

@@ -1,0 +1,8 @@
+description "User-facing Imath package test";
+
+uses
+	Core,
+	imath;
+
+file
+	main.cpp;

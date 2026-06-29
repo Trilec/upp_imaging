@@ -15,6 +15,8 @@ Expected dependency direction:
 - `zlib` is the user-facing compatibility layer
 - `libpng_src` is the strict upstream-source libpng package and depends on `zlib_src`
 - `libpng` is the user-facing libpng layer and currently depends on `zlib`
+- `imath_src` is the strict upstream-source Imath package
+- `imath` is the user-facing Imath layer and currently depends on `imath_src`
 - future OpenEXR packages will likely depend on Imath and may also depend on zlib
 - OpenImageIO may remain external or become an adapter later, depending on complexity
 
@@ -32,6 +34,13 @@ Current libpng package policy:
 - `libpng` provides a stable include path for normal apps
 - `libpng` currently compiles imported libpng source against `zlib`
 - strict proof of vendored upstream linkage belongs to `libpng_src_test`
+
+Current Imath package policy:
+
+- `imath_src` builds imported upstream Imath 3.2.2 directly
+- `imath` provides a stable include path for normal apps
+- `imath` currently delegates to `imath_src`
+- strict proof of vendored upstream linkage belongs to `imath_src_test`
 
 Conflict rule:
 

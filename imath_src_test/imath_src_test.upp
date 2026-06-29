@@ -1,0 +1,7 @@
+description "Strict imported-source Imath linkage test";
+
+uses
+	imath_src;
+
+file
+	main.cpp;
