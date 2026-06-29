@@ -1,0 +1,31 @@
+description "Strict imported-source Iex package for U++";
+
+noblitz;
+
+options(BUILDER_OPTION) NOWARNINGS;
+
+file
+	Iex.h,
+	IexConfig.h,
+	IexConfigInternal.h,
+	upstream/OpenEXRConfig.h,
+	upstream/IexConfig.h,
+	upstream/IexConfigInternal.h,
+	upstream/Iex.h,
+	upstream/IexBaseExc.cpp,
+	upstream/IexBaseExc.h,
+	upstream/IexErrnoExc.h,
+	upstream/IexExport.h,
+	upstream/IexForward.h,
+	upstream/IexMacros.h,
+	upstream/IexMathExc.h,
+	upstream/IexMathFloatExc.cpp,
+	upstream/IexMathFloatExc.h,
+	upstream/IexMathFpu.cpp,
+	upstream/IexMathFpu.h,
+	upstream/IexMathIeeeExc.h,
+	upstream/IexNamespace.h,
+	upstream/IexThrowErrnoExc.cpp,
+	upstream/IexThrowErrnoExc.h,
+	upstream/LICENSE.md,
+	upstream/README.md;

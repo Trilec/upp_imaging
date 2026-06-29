@@ -73,3 +73,28 @@ Notes:
 - A minimal public/header subset was imported into `openexr_src/upstream/` for compile-time probing only.
 - A repository-owned generated config header `openexr_src/upstream/OpenEXRConfig.h` was created from upstream `cmake/OpenEXRConfig.h.in` using values derived from the inspected release.
 - Full OpenEXR packaging will require additional libraries and generated config headers, especially for `Iex`, `IlmThread`, and `OpenEXRCore`.
+
+## Iex
+
+- Upstream name: Iex
+- Upstream version inspected from OpenEXR release: 3.4.13 source tree
+- Source origin: `openexr-3.4.13/src/lib/Iex`
+- Files modified after import: Yes
+
+Notes:
+
+- `iex_src` packages the lower OpenEXR exception/error layer.
+- Repository-owned generated headers `IexConfig.h` and `IexConfigInternal.h` were added from upstream templates / local static-package assumptions.
+- Imported file `iex_src/upstream/IexMathFpu.cpp` was minimally adjusted to use quoted local config-header includes for the U++ package include model.
+
+## IlmThread
+
+- Upstream name: IlmThread
+- Upstream version inspected from OpenEXR release: 3.4.13 source tree
+- Source origin: `openexr-3.4.13/src/lib/IlmThread`
+- Files modified after import: No imported upstream source files modified
+
+Notes:
+
+- `ilmthread_src` packages the lower OpenEXR threading layer.
+- Repository-owned generated header `IlmThreadConfig.h` was added from upstream template / local Windows static-package assumptions.
