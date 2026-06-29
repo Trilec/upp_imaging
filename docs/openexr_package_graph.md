@@ -25,6 +25,13 @@ Current intended strict-source layering for the OpenEXR branch:
   - likely depends on `iex_src`, `ilmthread_src`, `openexr_core_src`, and `imath_src`
   - currently remains only a preflight skeleton
 
+Current tested lower layers:
+
+- `iex_src` added and test-backed
+- `ilmthread_src` added and test-backed
+- `openexr_core_src` still deferred
+- full OpenEXR read/write still deferred
+
 Current uncertainty:
 
 - whether `openexr_core_src` should vendor or externally package deflate/OpenJPH support in the first pass

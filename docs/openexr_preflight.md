@@ -51,7 +51,9 @@ This preflight package includes a repository-owned `OpenEXRConfig.h` derived fro
 Lower-layer progress in this task:
 
 - `iex_src` uses a repository-owned `IexConfig.h` derived from upstream `cmake/IexConfig.h.in`
+- `iex_src_test` now passes under local `CLANGx64`
 - `ilmthread_src` uses a repository-owned `IlmThreadConfig.h` derived from upstream `cmake/IlmThreadConfig.h.in`
+- `ilmthread_src_test` now passes under local `CLANGx64`
 - `openexr_core_src` is still deferred
 
 ## Minimal package strategy

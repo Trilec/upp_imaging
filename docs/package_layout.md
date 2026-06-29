@@ -17,6 +17,8 @@ Expected dependency direction:
 - `libpng` is the user-facing libpng layer and currently depends on `zlib`
 - `imath_src` is the strict upstream-source Imath package
 - `imath` is the user-facing Imath layer and currently depends on `imath_src`
+- `iex_src` is the strict upstream-source Iex lower layer
+- `ilmthread_src` is the strict upstream-source IlmThread lower layer and depends on `iex_src`
 - `openexr_src` is currently only a preflight skeleton, not a full strict OpenEXR package yet
 - future OpenEXR packages will likely depend on Imath and may also depend on zlib
 - OpenImageIO may remain external or become an adapter later, depending on complexity
@@ -42,6 +44,13 @@ Current Imath package policy:
 - `imath` provides a stable include path for normal apps
 - `imath` currently delegates to `imath_src`
 - strict proof of vendored upstream linkage belongs to `imath_src_test`
+
+Current OpenEXR lower-layer policy:
+
+- `iex_src` is packaged and tested as the exception/error layer
+- `ilmthread_src` is packaged and tested as the threading layer
+- `openexr_core_src` is intentionally deferred until deflate/OpenJPH/config decisions are made cleanly
+- `openexr_src` remains preflight only
 
 Conflict rule:
 

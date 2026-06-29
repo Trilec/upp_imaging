@@ -56,9 +56,17 @@ This document tracks generated/config headers needed for OpenEXR lower-layer pac
 - they all depend on top-level config macros such as `OPENEXR_DLL` and visibility macros from `OpenEXRConfig.h`
 - for current static-package builds, the non-DLL paths are the intended configuration
 
-## Additional Config Still Needed For Real OpenEXR Packaging
+## Already Added In Current Preflight Work
+
+- `OpenEXRConfig.h`
+- `IexConfig.h`
+- `IexConfigInternal.h`
+- `IlmThreadConfig.h`
+
+## Still Needed For OpenEXRCore / Full OpenEXR
 
 - `OpenEXRConfigInternal.h`
-- `IexConfigInternal.h`
 - `openexr_config.h` integration details for `OpenEXRCore`
-- platform/thread/compression feature decisions for `OpenEXRCore`
+- compression-specific config headers or macro decisions for `OpenEXRCore`
+- OpenJPH / deflate control macros or package decisions
+- any additional platform threading/config glue beyond the current IlmThread layer

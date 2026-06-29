@@ -11,3 +11,4 @@
 * Added strict `imath_src` and user-facing `imath` packages.
 * Added `imath_src_test` and `imath_test`.
 * Added OpenEXR preflight audit documentation and a minimal compile probe skeleton.
+* Added strict `iex_src` and `ilmthread_src` lower-layer OpenEXR preflight packages and tests.
