@@ -1,0 +1,9 @@
+description "U++ plugin/png round-trip comparison test";
+
+uses
+	Core,
+	Draw,
+	plugin/png;
+
+file
+	main.cpp;
