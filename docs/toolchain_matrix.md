@@ -14,6 +14,8 @@
 - U++ plugin/png round trip: pass with documented partial-alpha RGB caveat in the `Image` path
 - imath_src: pass (`imath_src_test` reports version 3.2.2, half conversion, V3f math, and Box/M44 smoke)
 - imath: pass (`imath_test` reports user-facing wrapper OK, half conversion, V3f math, and Box smoke)
+- libdeflate_src: pending
+- libdeflate: pending
 - openexr_src preflight: pass (`openexr_src_probe` reports version 3.4.13 and namespace/header probe OK)
 - iex_src: pass (`iex_src_test` throws and catches IEX_NAMESPACE::ArgExc through BaseExc)
 - ilmthread_src: pass (`ilmthread_src_test` reports supportsThreads() and verifies semaphore post/wait)
@@ -27,6 +29,7 @@ Notes:
 - `libpng` currently compiles imported libpng sources against `zlib` and does not use `plugin/png`.
 - `plugin/png` is available as an independent U++ comparison path and uses the U++ image/raster stack.
 - `imath_src` is independent of OpenEXR and is the first OpenEXR-branch preflight package.
+- `libdeflate_src` is the standalone deflate package intended to satisfy future OpenEXRCore ZIP/ZIPS compression needs.
 - `openexr_core_src` is still deferred pending deflate/OpenJPH/config decisions.
 
 ## Future targets

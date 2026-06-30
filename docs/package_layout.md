@@ -17,6 +17,8 @@ Expected dependency direction:
 - `libpng` is the user-facing libpng layer and currently depends on `zlib`
 - `imath_src` is the strict upstream-source Imath package
 - `imath` is the user-facing Imath layer and currently depends on `imath_src`
+- `libdeflate_src` is the strict standalone libdeflate package
+- `libdeflate` is the user-facing libdeflate layer and currently depends on `libdeflate_src`
 - `iex_src` is the strict upstream-source Iex lower layer
 - `ilmthread_src` is the strict upstream-source IlmThread lower layer and depends on `iex_src`
 - `openexr_src` is currently only a preflight skeleton, not a full strict OpenEXR package yet
@@ -44,6 +46,13 @@ Current Imath package policy:
 - `imath` provides a stable include path for normal apps
 - `imath` currently delegates to `imath_src`
 - strict proof of vendored upstream linkage belongs to `imath_src_test`
+
+Current libdeflate package policy:
+
+- `libdeflate_src` builds official standalone libdeflate 1.25 directly
+- `libdeflate` provides a stable include path for normal apps
+- `libdeflate` currently delegates to `libdeflate_src`
+- strict proof of vendored upstream linkage belongs to `libdeflate_src_test`
 
 Current OpenEXR lower-layer policy:
 

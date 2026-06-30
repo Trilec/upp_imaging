@@ -1,0 +1,8 @@
+description "libdeflate package with stable public include path";
+
+uses
+	libdeflate_src;
+
+file
+	libdeflate.h,
+	README.md;

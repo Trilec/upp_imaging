@@ -14,3 +14,6 @@ The release-provided `scripts/pnglibconf.h.prebuilt` file was copied into the im
 
 For the initial `Imath` import, no upstream source files were modified.
 The generated config header `imath_src/upstream/ImathConfig.h` was created from upstream `config/ImathConfig.h.in` using upstream release defaults required for the local static package build and should be treated as packaging metadata, not as an upstream source patch.
+
+For the initial `libdeflate` import, no upstream source files were modified.
+The package uses the official standalone libdeflate release rather than the OpenEXR-vendored subtree so it remains independently useful.

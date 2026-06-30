@@ -1,0 +1,7 @@
+description "Strict libdeflate source package test";
+
+uses
+	libdeflate_src;
+
+file
+	main.cpp;
