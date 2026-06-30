@@ -98,3 +98,20 @@ Notes:
 
 - `ilmthread_src` packages the lower OpenEXR threading layer.
 - Repository-owned generated header `IlmThreadConfig.h` was added from upstream template / local Windows static-package assumptions.
+
+## libdeflate
+
+- Upstream name: libdeflate
+- Upstream version: 1.25
+- Upstream authors/project: Eric Biggers / libdeflate project
+- Source archive used: `https://github.com/ebiggers/libdeflate/archive/refs/tags/v1.25.tar.gz`
+- SHA-256: `D11473C1AD4C57D874695E8026865E38B47116BBCB872BFC622EC8F37A86017D`
+- License: MIT
+- Date imported: 2026-06-28
+- Files modified after import: No upstream files modified
+
+Notes:
+
+- `libdeflate_src` packages the official standalone libdeflate release, not the OpenEXR-vendored subtree.
+- The selected version matches the libdeflate version vendored by OpenEXR 3.4.13.
+- `libdeflate` is the user-facing wrapper package and currently delegates to `libdeflate_src`.

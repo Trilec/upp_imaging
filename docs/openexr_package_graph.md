@@ -2,6 +2,13 @@
 
 Current intended strict-source layering for the OpenEXR branch:
 
+- `libdeflate_src`
+  - independent compression package
+  - likely future dependency of `openexr_core_src`
+
+- `libdeflate`
+  - user-facing wrapper package for normal app usage
+
 - `iex_src`
   - OpenEXR exception and error support layer
   - should be independently usable
@@ -35,5 +42,6 @@ Current tested lower layers:
 Current uncertainty:
 
 - whether `openexr_core_src` should vendor or externally package deflate/OpenJPH support in the first pass
+- whether OpenEXRCore should depend directly on `libdeflate_src` or a more specialized package shim
 - whether `Iex`, `IlmThread`, and `OpenEXRCore` should remain top-level packages or become subpackages beneath a single `openexr_src` source tree layout
 - how best to handle OpenEXR's direct include style like `<half.h>` under U++ package include paths without over-broad global shims

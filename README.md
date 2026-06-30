@@ -2,7 +2,7 @@
 
 `upp_imaging` is a reusable U++ imaging-library nest intended to grow as a set of independently usable packages.
 
-The first packages are `zlib_src`, `zlib`, `libpng_src`, `libpng`, `imath_src`, `imath`, `iex_src`, and `ilmthread_src`.
+The first packages are `zlib_src`, `zlib`, `libpng_src`, `libpng`, `imath_src`, `imath`, `libdeflate_src`, `libdeflate`, `iex_src`, and `ilmthread_src`.
 
 Goals:
 
@@ -31,6 +31,10 @@ LumaPix may consume this nest later, but this repo is not LumaPix-specific.
 - `imath`: user-facing Imath package with stable include path
 - `imath_src_test`: strict imported-source Imath linkage proof
 - `imath_test`: user-facing Imath package proof
+- `libdeflate_src`: strict standalone libdeflate 1.25 source package
+- `libdeflate`: user-facing libdeflate package with stable include path
+- `libdeflate_src_test`: strict imported-source libdeflate package proof
+- `libdeflate_test`: user-facing libdeflate package proof
 - `iex_src`: strict imported-source Iex lower-layer package
 - `iex_src_test`: Iex exception/runtime probe
 - `ilmthread_src`: strict imported-source IlmThread lower-layer package
@@ -55,6 +59,10 @@ LumaPix may consume this nest later, but this repo is not LumaPix-specific.
 - `imath/`: user-facing Imath package layered on top of `imath_src`
 - `imath_src_test/`: strict imported-source Imath proof executable
 - `imath_test/`: user-facing Imath proof executable
+- `libdeflate_src/`: strict standalone libdeflate package and imported upstream source
+- `libdeflate/`: user-facing libdeflate package layered on top of `libdeflate_src`
+- `libdeflate_src_test/`: strict imported-source libdeflate proof executable
+- `libdeflate_test/`: user-facing libdeflate proof executable
 - `iex_src/`: strict imported-source Iex lower-layer package
 - `iex_src_test/`: Iex exception/runtime probe executable
 - `ilmthread_src/`: strict imported-source IlmThread lower-layer package
