@@ -45,6 +45,8 @@ LumaPix may consume this nest later, but this repo is not LumaPix-specific.
 - `ilmthread_src_test`: IlmThread runtime/semaphore probe
 - `openexr_src`: OpenEXR preflight header/probe skeleton only
 - `openexr_src_probe`: minimal OpenEXR compile probe
+- `openexr_core_src`: first honest OpenEXRCore package attempt
+- `openexr_core_src_probe`: OpenEXRCore compile/link/runtime probe
 
 ## Layout
 
@@ -77,6 +79,8 @@ LumaPix may consume this nest later, but this repo is not LumaPix-specific.
 - `ilmthread_src_test/`: IlmThread runtime/semaphore probe executable
 - `openexr_src/`: OpenEXR preflight package skeleton
 - `openexr_src_probe/`: OpenEXR compile-only preflight probe
+- `openexr_core_src/`: first OpenEXRCore package attempt with a modest real implementation slice
+- `openexr_core_src_probe/`: OpenEXRCore version/header/compression-enum probe
 - `docs/`: package, toolchain, upstream, and license policy notes
 
 ## Notes
@@ -86,5 +90,7 @@ LumaPix may consume this nest later, but this repo is not LumaPix-specific.
 - CLANG is the first validated toolchain target
 - on Windows with `Core`, `zlib` may reuse U++ `plugin/z`; use `zlib_src_test` to validate imported upstream linkage
 - `libpng` currently compiles imported libpng 1.6.58 against `zlib` and does not use U++ `plugin/png`
-- `openexr_core_src` is still deferred
+- `openexr_core_src` now exists as a modest first package attempt
 - full EXR read/write is not implemented yet
+
+The current `openexr_core_src` scope is deliberately narrow: enough to prove public C-layer headers, generated config, and a small real implementation slice, not full OpenEXRCore coverage.

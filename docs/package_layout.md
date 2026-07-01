@@ -23,6 +23,7 @@ Expected dependency direction:
 - `openjph` is the user-facing OpenJPH layer and currently depends on `openjph_src`
 - `iex_src` is the strict upstream-source Iex lower layer
 - `ilmthread_src` is the strict upstream-source IlmThread lower layer and depends on `iex_src`
+- `openexr_core_src` is the first OpenEXRCore package attempt with a modest real implementation slice
 - `openexr_src` is currently only a preflight skeleton, not a full strict OpenEXR package yet
 - future OpenEXR packages will likely depend on Imath and may also depend on zlib
 - OpenImageIO may remain external or become an adapter later, depending on complexity
@@ -67,7 +68,8 @@ Current OpenEXR lower-layer policy:
 
 - `iex_src` is packaged and tested as the exception/error layer
 - `ilmthread_src` is packaged and tested as the threading layer
-- `openexr_core_src` is intentionally deferred until deflate/OpenJPH/config decisions are made cleanly
+- `openexr_core_src` now exists as a modest first package attempt and probe layer
+- full OpenEXRCore coverage is still deferred
 - `openexr_src` remains preflight only
 
 Conflict rule:

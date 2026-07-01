@@ -19,6 +19,7 @@
 - openjph_src: pass (`openjph_src_test` checks version macros and basic public types through the strict package)
 - openjph: pass (`openjph_test` checks version macros and basic public types through Core + openjph)
 - openexr_src preflight: pass (`openexr_src_probe` reports version 3.4.13 and namespace/header probe OK)
+- openexr_core_src attempt: pass (`openexr_core_src_probe` reports version 3.4.13, public headers OK, and compression enums OK)
 - iex_src: pass (`iex_src_test` throws and catches IEX_NAMESPACE::ArgExc through BaseExc)
 - ilmthread_src: pass (`ilmthread_src_test` reports supportsThreads() and verifies semaphore post/wait)
 
@@ -33,7 +34,7 @@ Notes:
 - `imath_src` is independent of OpenEXR and is the first OpenEXR-branch preflight package.
 - `libdeflate_src` is the standalone deflate package intended to satisfy future OpenEXRCore ZIP/ZIPS compression needs.
 - `openjph_src` is the standalone HTJ2K/OpenJPH package intended to satisfy future OpenEXRCore HTJ2K dependency needs.
-- `openexr_core_src` is still deferred pending deflate/OpenJPH/config decisions.
+- `openexr_core_src` now exists as a first modest package attempt; full EXR read/write remains deferred.
 
 ## Future targets
 
