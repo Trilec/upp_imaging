@@ -176,6 +176,21 @@ Current package result:
 - `openjph_src_test` and `openjph_test` are intended as compile/link/API smoke tests, not full codec validation
 - that is enough for this stage to treat OpenJPH as a packaged lower dependency rather than an unknown external
 
+## Current openexr_core_src attempt
+
+- package exists as a first honest but modest attempt
+- current implementation slice includes the public C-layer headers plus `base.c`
+- current probe verifies:
+  - OpenEXRCore version `3.4.13`
+  - public header availability
+  - public compression enum visibility including ZIP/ZIPS and HTJ2K constants
+
+What this means:
+
+- the package/config/header surface is now real enough to link a probe against
+- full OpenEXRCore implementation coverage is still not claimed
+- EXR read/write remains deferred
+
 ## Can A Minimal Scanline RGBA Only Build Be Realistic?
 
 Maybe later, but not honestly enough to claim from this preflight.
@@ -194,18 +209,15 @@ That package should still be selective about docs/tests/tools, but not overly cl
 
 ## Recommendation
 
-Recommendation: **Option C**
+Recommendation: **Option D**
 
-Do not package `openexr_core_src` yet; first add a deflate/OpenJPH packaging or disable strategy.
+Keep iterating on `openexr_core_src` from this now-real package attempt before any EXR I/O work.
 
 Why:
 
 - `Iex` and `IlmThread` are now clean and test-backed
-- `OpenEXRCore` is the first place where the dependency graph stops being lightweight
-- `libdeflate` is a distinct dependency from our existing zlib stack, but it is now straightforward to package independently
-- OpenJPH is part of the current upstream core story and should be handled intentionally, not accidentally
-- the next clean engineering step is to decide whether to:
-  - package OpenJPH deliberately, or
-  - establish a documented way to disable the corresponding paths for a first strict U++ build
+- `libdeflate` and `OpenJPH` are now also packaged and test-backed
+- the first honest OpenEXRCore package attempt already exists and passes a real probe
+- the next sensible work is to widen the implementation slice of `openexr_core_src`, not to jump straight to EXR read/write
 
 Until that choice is made, full EXR read/write remains intentionally deferred.

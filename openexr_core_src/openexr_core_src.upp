@@ -1,0 +1,34 @@
+description "First OpenEXRCore package attempt for U++";
+
+noblitz;
+
+uses
+	imath_src,
+	ilmthread_src;
+
+options(BUILDER_OPTION) NOWARNINGS;
+
+file
+	openexr.h,
+	upstream\README.md,
+	upstream\LICENSE.md,
+	upstream\OpenEXRConfig.h,
+	upstream\OpenEXRConfigInternal.h,
+	upstream\IlmThreadConfig.h,
+	upstream\ImathConfig.h,
+	upstream\base.c,
+	upstream\openexr.h,
+	upstream\openexr_attr.h,
+	upstream\openexr_base.h,
+	upstream\openexr_chunkio.h,
+	upstream\openexr_coding.h,
+	upstream\openexr_compression.h,
+	upstream\openexr_config.h,
+	upstream\openexr_context.h,
+	upstream\openexr_debug.h,
+	upstream\openexr_decode.h,
+	upstream\openexr_encode.h,
+	upstream\openexr_errors.h,
+	upstream\openexr_part.h,
+	upstream\openexr_std_attr.h,
+	upstream\openexr_version.h;

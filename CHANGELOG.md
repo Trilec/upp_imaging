@@ -13,3 +13,5 @@
 * Added OpenEXR preflight audit documentation and a minimal compile probe skeleton.
 * Added strict `iex_src` and `ilmthread_src` lower-layer OpenEXR preflight packages and tests.
 * Added strict `libdeflate_src` and user-facing `libdeflate` packages and tests.
+* Added strict `openjph_src` and user-facing `openjph` packages and tests.
+* Added the first `openexr_core_src` package attempt and probe.

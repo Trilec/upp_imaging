@@ -17,6 +17,20 @@ This document tracks generated/config headers needed for OpenEXR lower-layer pac
 - why valid: values were derived from the inspected 3.4.13 release metadata and static-build-oriented defaults from upstream CMake
 - note: packaging metadata, not unmodified upstream source
 
+## OpenEXRConfigInternal.h
+
+- upstream template: `openexr-3.4.13/cmake/OpenEXRConfigInternal.h.in`
+- repository-owned generated output: `openexr_core_src/upstream/OpenEXRConfigInternal.h`
+- current values used:
+  - `OPENEXR_USE_INTERNAL_DEFLATE` unset because this package attempt is not embedding vendored deflate
+  - `OPENEXR_IMF_HAVE_COMPLETE_IOMANIP` enabled
+  - `OPENEXR_IMF_HAVE_SYSCONF_NPROCESSORS_ONLN` enabled
+  - `OPENEXR_IMF_HAVE_GCC_INLINE_ASM_AVX` enabled
+  - `OPENEXR_MISSING_ARM_VLD1` set to `0`
+  - Darwin/Linux-procfs test-only probes left unset
+- why valid: this first package attempt only needs enough config to support the current public-header and `base.c` probe layer under local static CLANGx64 packaging
+- note: packaging metadata, not unmodified upstream source
+
 ## IexConfig.h
 
 - upstream template: `openexr-3.4.13/cmake/IexConfig.h.in`
@@ -65,7 +79,6 @@ This document tracks generated/config headers needed for OpenEXR lower-layer pac
 
 ## Still Needed For OpenEXRCore / Full OpenEXR
 
-- `OpenEXRConfigInternal.h`
 - `openexr_config.h` integration details for `OpenEXRCore`
 - compression-specific config headers or macro decisions for `OpenEXRCore`
 - OpenJPH / deflate control macros or package decisions
