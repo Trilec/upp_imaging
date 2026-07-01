@@ -23,6 +23,7 @@ Current intended strict-source layering for the OpenEXR branch:
 - `openexr_core_src`
   - low-level OpenEXR core/C layer
   - depends on `imath_src`
+  - likely depends on `libdeflate_src`
   - depends on generated OpenEXR config metadata
   - may depend on deflate and OpenJPH-related compression configuration immediately
   - currently deferred until the compression/config surface is reduced or explicitly packaged

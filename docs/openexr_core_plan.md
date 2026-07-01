@@ -94,6 +94,42 @@ Expected OpenEXRCore impact:
 - upstream release tree inspected here contains vendored OpenJPH `0.26.3`
 - HTJ2K support is therefore part of the current OpenEXRCore packaging surface unless explicitly disabled by a packaging strategy we have not yet reproduced in U++
 
+## OpenJPH / HTJ2K Source Audit
+
+Exact OpenEXRCore source files identified in the current audit:
+
+- direct OpenJPH includes and API usage:
+  - `src/lib/OpenEXRCore/internal_ht.cpp`
+
+- HTJ2K helper/common logic:
+  - `src/lib/OpenEXRCore/internal_ht_common.cpp`
+  - `src/lib/OpenEXRCore/internal_ht_common.h`
+
+- compression dispatch that routes to HTJ2K paths:
+  - `src/lib/OpenEXRCore/compression.c`
+
+- public enum exposure of HTJ2K compression values:
+  - `src/lib/OpenEXRCore/openexr_attr.h`
+
+- debug string exposure of HTJ2K names:
+  - `src/lib/OpenEXRCore/debug.c`
+
+Compression enum mapping confirmed:
+
+- `EXR_COMPRESSION_HTJ2K32`
+- `EXR_COMPRESSION_HTJ2K256`
+
+These map in `compression.c` to:
+
+- `internal_exr_apply_ht()` for encode
+- `internal_exr_undo_ht()` for decode
+
+What this means:
+
+- HTJ2K is not just a stray codepath hidden in a corner
+- it is wired into the public compression enum surface and into the main compression dispatch
+- excluding it may still be possible, but it is not currently proven to be a tiny or risk-free source exclusion
+
 ## Can OpenJPH Be Disabled Cleanly?
 
 Not clearly from the current preflight.
