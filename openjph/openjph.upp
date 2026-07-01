@@ -1,0 +1,8 @@
+description "OpenJPH package with stable public include path";
+
+uses
+	openjph_src;
+
+file
+	openjph.h,
+	README.md;

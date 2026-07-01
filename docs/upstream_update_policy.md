@@ -17,3 +17,6 @@ The generated config header `imath_src/upstream/ImathConfig.h` was created from 
 
 For the initial `libdeflate` import, no upstream source files were modified.
 The package uses the official standalone libdeflate release rather than the OpenEXR-vendored subtree so it remains independently useful.
+
+For the initial `OpenJPH` import, no upstream source files were modified.
+The package uses the official standalone OpenJPH release, version-matched to the OpenEXR 3.4.13 vendored copy, so the dependency remains explicit and independently testable.
