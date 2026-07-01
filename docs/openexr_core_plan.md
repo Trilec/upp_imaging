@@ -152,6 +152,30 @@ So for now, OpenJPH should be treated as part of the OpenEXRCore packaging probl
 
 Current recommendation: OpenJPH remains the next blocker.
 
+## OpenJPH package result
+
+- selected source strategy: official standalone OpenJPH release
+- selected version: `0.26.3`
+- source archive: `https://github.com/aous72/OpenJPH/archive/refs/tags/0.26.3.tar.gz`
+- SHA-256: `29DE006DA7F1E8CF0CD7C3EC424CF29103E465052C00B5A5F0CCB7E1F917BB3F`
+- expected role: future HTJ2K dependency package for `openexr_core_src`
+
+Why this strategy:
+
+- it matches the version vendored by OpenEXR 3.4.13 exactly
+- it keeps the dependency independently testable and explicit
+- it avoids hiding another reusable component inside OpenEXR-only packaging
+
+Expected OpenEXRCore impact:
+
+- if `openjph_src` passes smoke tests, the HTJ2K dependency is much better defined for a future `openexr_core_src` attempt
+- this still does not imply OpenEXRCore or EXR read/write support is ready yet
+
+Current package result:
+
+- `openjph_src_test` and `openjph_test` are intended as compile/link/API smoke tests, not full codec validation
+- that is enough for this stage to treat OpenJPH as a packaged lower dependency rather than an unknown external
+
 ## Can A Minimal Scanline RGBA Only Build Be Realistic?
 
 Maybe later, but not honestly enough to claim from this preflight.

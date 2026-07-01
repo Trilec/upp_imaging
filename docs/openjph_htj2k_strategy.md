@@ -94,6 +94,11 @@ However:
 - OpenEXR vendors OpenJPH `0.26.3` in the inspected 3.4.13 tree
 - if a standalone OpenJPH package is added, it should be checked against that version first to avoid a mismatch right out of the gate
 
+Selected source strategy in this repository:
+
+- use the official standalone OpenJPH `0.26.3` release
+- this matches the version vendored by OpenEXR 3.4.13
+
 ## Is OpenJPH Independently Useful Here?
 
 Maybe, but less obviously than zlib, libpng, Imath, or libdeflate.
@@ -104,6 +109,13 @@ It can still make sense as an explicit package because:
 - it avoids opaque vendored magic later
 
 But it may end up being more OpenEXR-facing than broadly useful to typical U++ users.
+
+Current package stance:
+
+- `openjph_src` is treated as a real package layer, even if its main short-term job is to unblock honest OpenEXRCore packaging
+- `openjph` is the user-facing wrapper package
+
+The clean HTJ2K-disable path remains unproven.
 
 ## Recommendation
 

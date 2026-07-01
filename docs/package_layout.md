@@ -19,6 +19,8 @@ Expected dependency direction:
 - `imath` is the user-facing Imath layer and currently depends on `imath_src`
 - `libdeflate_src` is the strict standalone libdeflate package
 - `libdeflate` is the user-facing libdeflate layer and currently depends on `libdeflate_src`
+- `openjph_src` is the strict standalone OpenJPH package
+- `openjph` is the user-facing OpenJPH layer and currently depends on `openjph_src`
 - `iex_src` is the strict upstream-source Iex lower layer
 - `ilmthread_src` is the strict upstream-source IlmThread lower layer and depends on `iex_src`
 - `openexr_src` is currently only a preflight skeleton, not a full strict OpenEXR package yet
@@ -53,6 +55,13 @@ Current libdeflate package policy:
 - `libdeflate` provides a stable include path for normal apps
 - `libdeflate` currently delegates to `libdeflate_src`
 - strict proof of vendored upstream linkage belongs to `libdeflate_src_test`
+
+Current OpenJPH package policy:
+
+- `openjph_src` builds official standalone OpenJPH 0.26.3 directly
+- `openjph` provides a stable include path for normal apps
+- `openjph` currently delegates to `openjph_src`
+- strict proof of vendored upstream linkage belongs to `openjph_src_test`
 
 Current OpenEXR lower-layer policy:
 

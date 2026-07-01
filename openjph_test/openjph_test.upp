@@ -1,0 +1,8 @@
+description "User-facing OpenJPH package test";
+
+uses
+	Core,
+	openjph;
+
+file
+	main.cpp;

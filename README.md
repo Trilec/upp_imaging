@@ -2,7 +2,7 @@
 
 `upp_imaging` is a reusable U++ imaging-library nest intended to grow as a set of independently usable packages.
 
-The first packages are `zlib_src`, `zlib`, `libpng_src`, `libpng`, `imath_src`, `imath`, `libdeflate_src`, `libdeflate`, `iex_src`, and `ilmthread_src`.
+The first packages are `zlib_src`, `zlib`, `libpng_src`, `libpng`, `imath_src`, `imath`, `libdeflate_src`, `libdeflate`, `openjph_src`, `openjph`, `iex_src`, and `ilmthread_src`.
 
 Goals:
 
@@ -35,6 +35,10 @@ LumaPix may consume this nest later, but this repo is not LumaPix-specific.
 - `libdeflate`: user-facing libdeflate package with stable include path
 - `libdeflate_src_test`: strict imported-source libdeflate package proof
 - `libdeflate_test`: user-facing libdeflate package proof
+- `openjph_src`: strict standalone OpenJPH 0.26.3 source package
+- `openjph`: user-facing OpenJPH package with stable include path
+- `openjph_src_test`: strict imported-source OpenJPH package proof
+- `openjph_test`: user-facing OpenJPH package proof
 - `iex_src`: strict imported-source Iex lower-layer package
 - `iex_src_test`: Iex exception/runtime probe
 - `ilmthread_src`: strict imported-source IlmThread lower-layer package
@@ -63,6 +67,10 @@ LumaPix may consume this nest later, but this repo is not LumaPix-specific.
 - `libdeflate/`: user-facing libdeflate package layered on top of `libdeflate_src`
 - `libdeflate_src_test/`: strict imported-source libdeflate proof executable
 - `libdeflate_test/`: user-facing libdeflate proof executable
+- `openjph_src/`: strict standalone OpenJPH package and imported upstream source
+- `openjph/`: user-facing OpenJPH package layered on top of `openjph_src`
+- `openjph_src_test/`: strict imported-source OpenJPH proof executable
+- `openjph_test/`: user-facing OpenJPH proof executable
 - `iex_src/`: strict imported-source Iex lower-layer package
 - `iex_src_test/`: Iex exception/runtime probe executable
 - `ilmthread_src/`: strict imported-source IlmThread lower-layer package
