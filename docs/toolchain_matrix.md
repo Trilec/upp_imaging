@@ -14,8 +14,8 @@
 - U++ plugin/png round trip: pass with documented partial-alpha RGB caveat in the `Image` path
 - imath_src: pass (`imath_src_test` reports version 3.2.2, half conversion, V3f math, and Box/M44 smoke)
 - imath: pass (`imath_test` reports user-facing wrapper OK, half conversion, V3f math, and Box smoke)
-- libdeflate_src: pending
-- libdeflate: pending
+- libdeflate_src: pass (`libdeflate_src_test` allocates compressor/decompressor and performs zlib-wrapper compress/decompress round trip)
+- libdeflate: pass (`libdeflate_test` performs the same round trip through Core + libdeflate)
 - openexr_src preflight: pass (`openexr_src_probe` reports version 3.4.13 and namespace/header probe OK)
 - iex_src: pass (`iex_src_test` throws and catches IEX_NAMESPACE::ArgExc through BaseExc)
 - ilmthread_src: pass (`ilmthread_src_test` reports supportsThreads() and verifies semaphore post/wait)
