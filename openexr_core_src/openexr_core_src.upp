@@ -17,6 +17,7 @@ file
 	upstream\IlmThreadConfig.h,
 	upstream\ImathConfig.h,
 	upstream\base.c,
+	temp_context.c,
 	upstream\openexr.h,
 	upstream\openexr_attr.h,
 	upstream\openexr_base.h,

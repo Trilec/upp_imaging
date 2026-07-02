@@ -25,6 +25,24 @@ int main()
 		failed++;
 	}
 
+	exr_context_t ctxt = 0;
+	exr_result_t r = exr_start_temporary_context(&ctxt, "upp_imaging_core_probe", 0);
+	if(r == EXR_ERR_SUCCESS && ctxt) {
+		const char* name = 0;
+		exr_result_t nr = exr_get_file_name(ctxt, &name);
+		exr_result_t fr = exr_finish(&ctxt);
+		if(nr == EXR_ERR_SUCCESS && fr == EXR_ERR_SUCCESS) {
+			printf("OpenEXRCore temporary context: OK\n");
+			passed++;
+		} else {
+			printf("OpenEXRCore temporary context: FAIL\n");
+			failed++;
+		}
+	} else {
+		printf("OpenEXRCore temporary context: FAIL\n");
+		failed++;
+	}
+
 	printf("OpenEXRCore public headers: OK\n");
 	passed++;
 
