@@ -4,7 +4,8 @@ noblitz;
 
 uses
 	imath_src,
-	ilmthread_src;
+	ilmthread_src,
+	libdeflate_src;
 
 options(BUILDER_OPTION) NOWARNINGS;
 
@@ -28,6 +29,13 @@ file
 	upstream\opaque.c,
 	upstream\bytes.c,
 	upstream\preview.c,
+	upstream\part.c,
+	upstream\part_attr.c,
+	upstream\std_attr.c,
+	upstream\parse_header.c,
+	upstream\write_header.c,
+	upstream\compression.c,
+	upstream\validation.c,
 	upstream\openexr.h,
 	upstream\openexr_attr.h,
 	upstream\openexr_base.h,
