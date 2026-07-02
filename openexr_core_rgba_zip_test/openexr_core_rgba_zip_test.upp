@@ -1,4 +1,4 @@
-description "OpenEXRCore 2x2 pixel write/read round-trip";
+description "OpenEXRCore RGBA ZIP round-trip";
 
 uses
 	openexr_core;
