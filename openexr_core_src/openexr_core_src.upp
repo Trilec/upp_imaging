@@ -10,7 +10,7 @@ uses
 
 options(BUILDER_OPTION) NOWARNINGS;
 options
-	-IE:/apps/github/upp_imaging/openjph_src/upstream;
+	-I../openjph_src/upstream;
 
 file
 	openexr.h,
