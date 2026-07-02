@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <openexr_core_src/openexr.h>
+#include <openexr_core/openexr.h>
 
 static int fail(const char* label, int& failed)
 {

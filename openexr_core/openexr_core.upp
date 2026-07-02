@@ -1,0 +1,8 @@
+description "User-facing OpenEXRCore package with stable include path";
+
+uses
+	openexr_core_src;
+
+file
+	openexr.h,
+	README.md;
