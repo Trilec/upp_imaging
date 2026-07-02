@@ -5,9 +5,12 @@ noblitz;
 uses
 	imath_src,
 	ilmthread_src,
-	libdeflate_src;
+	libdeflate_src,
+	openjph_src;
 
 options(BUILDER_OPTION) NOWARNINGS;
+options
+	-IE:/apps/github/upp_imaging/openjph_src/upstream;
 
 file
 	openexr.h,
@@ -35,6 +38,21 @@ file
 	upstream\parse_header.c,
 	upstream\write_header.c,
 	upstream\compression.c,
+	upstream\chunk.c,
+	upstream\coding.c,
+	upstream\internal_huf.c,
+	upstream\internal_rle.c,
+	upstream\internal_zip.c,
+	upstream\internal_pxr24.c,
+	upstream\internal_b44.c,
+	upstream\internal_b44_table.c,
+	upstream\internal_b44_table_init.c,
+	upstream\internal_piz.c,
+	upstream\internal_dwa.c,
+	upstream\internal_dwa_table.c,
+	upstream\internal_dwa_table_init.c,
+	upstream\internal_ht.cpp,
+	upstream\internal_ht_common.cpp,
 	upstream\validation.c,
 	upstream\openexr.h,
 	upstream\openexr_attr.h,
