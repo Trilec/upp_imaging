@@ -17,3 +17,4 @@ Why this shape:
 
 - it proves the generated-config and public C API surface can live in a U++ package
 - it keeps the current claim modest while the larger compression/context/chunk machinery is still being sorted out
+- OpenEXRCore 2x2 uncompressed Y/HALF pixel write/read round-trip passes under CLANGx64

@@ -1,0 +1,9 @@
+description "OpenEXRCore 2x2 pixel write/read round-trip";
+
+uses
+	openexr_core_src;
+
+options(BUILDER_OPTION) NOWARNINGS;
+
+file
+	main.cpp;
