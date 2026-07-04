@@ -1,0 +1,9 @@
+description "Reusable synthetic image test support";
+
+uses
+	Core;
+
+file
+	ImagingRoundtripTest.h,
+	ImagingRoundtripTest.cpp,
+	README.md;
