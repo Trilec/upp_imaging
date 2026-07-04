@@ -1,0 +1,10 @@
+description "User-facing OpenEXR IO helper package";
+
+uses
+	Core,
+	openexr_core;
+
+file
+	OpenExrIO.h,
+	OpenExrIO.cpp,
+	README.md;

@@ -1,0 +1,11 @@
+description "OpenEXR IO helper round-trip test";
+
+uses
+	Core,
+	imaging_roundtrip_test_support,
+	openexr_io;
+
+options(BUILDER_OPTION) NOWARNINGS;
+
+file
+	main.cpp;
