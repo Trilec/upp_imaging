@@ -5,86 +5,144 @@
 
 using namespace Upp;
 
-static int PrintFail(const char* label, const String& detail, int& failed)
+static void PrintMetrics(const char* label, int width, int height, const RoundtripComparison& cmp)
 {
-	if(IsNull(detail))
-		printf("%s: FAIL\n", label);
-	else
-		printf("%s: FAIL (%s)\n", label, ~detail);
-	++failed;
-	return 1;
+	printf("%s dimensions=%dx%d different_components=%d max_error_r=%.9g max_error_g=%.9g max_error_b=%.9g max_error_a=%.9g mean_absolute_error=%.9g rmse=%.9g\n",
+		label,
+		width,
+		height,
+		cmp.different_components,
+		cmp.max_error_r,
+		cmp.max_error_g,
+		cmp.max_error_b,
+		cmp.max_error_a,
+		cmp.mean_absolute_error,
+		cmp.rmse);
 }
 
-static int PrintCmp(const char* label, const RoundtripComparison& cmp, int& failed, int& passed)
+static bool PrintChartStage(const char* label, int width, int height, bool include_hdr, TestImageF& image)
 {
-	if(cmp.different_components == 0 && cmp.dimensions_match) {
-		printf("%s: OK\n", label);
-		++passed;
-		return 0;
-	}
-	printf("%s: FAIL (%s)\n", label, ~cmp.summary);
-	++failed;
-	return 1;
-}
-
-static bool SaveThenLoad(const char* path, const TestImageF& src, bool output_half, bool use_zip, TestImageF& dst, String& error)
-{
-	ExrRgbaImageF image;
-	image.width = src.width;
-	image.height = src.height;
-	image.pixels.SetCount(src.pixels.GetCount());
-	for(int i = 0; i < src.pixels.GetCount(); ++i) {
-		image.pixels[i].r = src.pixels[i].r;
-		image.pixels[i].g = src.pixels[i].g;
-		image.pixels[i].b = src.pixels[i].b;
-		image.pixels[i].a = src.pixels[i].a;
-	}
-	if(!SaveExrRgbaF(path, image, output_half, use_zip, &error))
-		return false;
-	ExrRgbaImageF loaded;
-	if(!LoadExrRgbaF(path, loaded, &error))
-		return false;
-	dst.width = loaded.width;
-	dst.height = loaded.height;
-	dst.pixels.SetCount(loaded.pixels.GetCount());
-	for(int i = 0; i < loaded.pixels.GetCount(); ++i) {
-		dst.pixels[i].r = loaded.pixels[i].r;
-		dst.pixels[i].g = loaded.pixels[i].g;
-		dst.pixels[i].b = loaded.pixels[i].b;
-		dst.pixels[i].a = loaded.pixels[i].a;
-	}
+	image = GenerateRoundtripTestPattern(width, height, include_hdr);
+	printf("%s chart: OK\n", label);
 	return true;
+}
+
+static bool PrintComparisonStage(const char* label, const TestImageF& expected, const TestImageF& actual, int& passed, int& failed)
+{
+	RoundtripComparison cmp = CompareExact(expected, actual);
+	PrintMetrics(label, expected.width, expected.height, cmp);
+	if(cmp.dimensions_match && cmp.different_components == 0 && cmp.max_error_r == 0.0 && cmp.max_error_g == 0.0 && cmp.max_error_b == 0.0 && cmp.max_error_a == 0.0 && cmp.mean_absolute_error == 0.0 && cmp.rmse == 0.0) {
+		printf("%s comparison: OK\n", label);
+		++passed;
+		return true;
+	}
+	printf("%s comparison: FAIL\n", label);
+	++failed;
+	return false;
+}
+
+static void CopyTestImageToExr(const TestImageF& src, ExrRgbaImageF& dst)
+{
+	dst.width = src.width;
+	dst.height = src.height;
+	dst.pixels.SetCount(src.pixels.GetCount());
+	for(int i = 0; i < src.pixels.GetCount(); ++i) {
+		dst.pixels[i].r = src.pixels[i].r;
+		dst.pixels[i].g = src.pixels[i].g;
+		dst.pixels[i].b = src.pixels[i].b;
+		dst.pixels[i].a = src.pixels[i].a;
+	}
+}
+
+static void CopyExrToTestImage(const ExrRgbaImageF& src, TestImageF& dst)
+{
+	dst.width = src.width;
+	dst.height = src.height;
+	dst.pixels.SetCount(src.pixels.GetCount());
+	for(int i = 0; i < src.pixels.GetCount(); ++i) {
+		dst.pixels[i].r = src.pixels[i].r;
+		dst.pixels[i].g = src.pixels[i].g;
+		dst.pixels[i].b = src.pixels[i].b;
+		dst.pixels[i].a = src.pixels[i].a;
+	}
+}
+
+static void PrintFileSize(const char* label, const char* path)
+{
+	FileIn in(path);
+	long long size = in.IsOpen() ? (long long)in.GetSize() : -1;
+	printf("%s file_size=%lld bytes\n", label, size);
 }
 
 CONSOLE_APP_MAIN
 {
 	int passed = 0;
 	int failed = 0;
-
 	String error;
+
 	const char* half_path = "E:/apps/github/upp_imaging/out/openexr_io_half_zip.exr";
 	const char* float_path = "E:/apps/github/upp_imaging/out/openexr_io_float.exr";
 
-	TestImageF half_src = GenerateRoundtripTestPattern(256, 192, false);
-	TestImageF half_dst;
-	if(!SaveThenLoad(half_path, half_src, true, true, half_dst, error))
-	{
-		PrintFail("OpenEXR IO half ZIP round-trip", error, failed);
+	TestImageF half_src;
+	if(!PrintChartStage("OpenEXR IO HALF/ZIP", 256, 192, false, half_src))
+		return;
+	++passed;
+	ExrRgbaImageF half_file;
+	CopyTestImageToExr(half_src, half_file);
+	if(!SaveExrRgbaF(half_path, half_file, true, true, &error)) {
+		printf("OpenEXR IO HALF/ZIP save: FAIL (%s)\n", IsNull(error) ? "unknown" : ~error);
+		++failed;
 		SetExitCode(1);
 		return;
 	}
-	PrintCmp("OpenEXR IO half ZIP round-trip", CompareExact(half_src, half_dst), failed, passed);
-
-	TestImageF float_src = GenerateRoundtripTestPattern(256, 192, true);
-	TestImageF float_dst;
+	printf("OpenEXR IO HALF/ZIP save: OK\n");
+	++passed;
+	ExrRgbaImageF half_loaded;
 	error.Clear();
-	if(!SaveThenLoad(float_path, float_src, false, false, float_dst, error))
-	{
-		PrintFail("OpenEXR IO float round-trip", error, failed);
+	if(!LoadExrRgbaF(half_path, half_loaded, &error)) {
+		printf("OpenEXR IO HALF/ZIP load: FAIL (%s)\n", IsNull(error) ? "unknown" : ~error);
+		++failed;
 		SetExitCode(1);
 		return;
 	}
-	PrintCmp("OpenEXR IO float round-trip", CompareExact(float_src, float_dst), failed, passed);
+	printf("OpenEXR IO HALF/ZIP load: OK\n");
+	++passed;
+	TestImageF half_dst;
+	CopyExrToTestImage(half_loaded, half_dst);
+	if(!PrintComparisonStage("OpenEXR IO HALF/ZIP", half_src, half_dst, passed, failed))
+		return;
+	PrintFileSize("OpenEXR IO HALF/ZIP", half_path);
+
+	TestImageF float_src;
+	if(!PrintChartStage("OpenEXR IO FLOAT", 256, 192, true, float_src))
+		return;
+	++passed;
+	ExrRgbaImageF float_file;
+	CopyTestImageToExr(float_src, float_file);
+	error.Clear();
+	if(!SaveExrRgbaF(float_path, float_file, false, false, &error)) {
+		printf("OpenEXR IO FLOAT save: FAIL (%s)\n", IsNull(error) ? "unknown" : ~error);
+		++failed;
+		SetExitCode(1);
+		return;
+	}
+	printf("OpenEXR IO FLOAT save: OK\n");
+	++passed;
+	ExrRgbaImageF float_loaded;
+	error.Clear();
+	if(!LoadExrRgbaF(float_path, float_loaded, &error)) {
+		printf("OpenEXR IO FLOAT load: FAIL (%s)\n", IsNull(error) ? "unknown" : ~error);
+		++failed;
+		SetExitCode(1);
+		return;
+	}
+	printf("OpenEXR IO FLOAT load: OK\n");
+	++passed;
+	TestImageF float_dst;
+	CopyExrToTestImage(float_loaded, float_dst);
+	if(!PrintComparisonStage("OpenEXR IO FLOAT", float_src, float_dst, passed, failed))
+		return;
+	PrintFileSize("OpenEXR IO FLOAT", float_path);
 
 	ExrRgbaImageF invalid;
 	invalid.width = 3;
@@ -92,15 +150,15 @@ CONSOLE_APP_MAIN
 	invalid.pixels.SetCount(5);
 	error.Clear();
 	if(SaveExrRgbaF("E:/apps/github/upp_imaging/out/openexr_io_invalid.exr", invalid, true, true, &error)) {
-		printf("OpenEXR IO validation error: FAIL\n");
+		printf("OpenEXR IO validation failures: FAIL\n");
 		++failed;
 	}
 	else if(IsNull(error)) {
-		printf("OpenEXR IO validation error: FAIL\n");
+		printf("OpenEXR IO validation failures: FAIL\n");
 		++failed;
 	}
 	else {
-		printf("OpenEXR IO validation error: OK (%s)\n", ~error);
+		printf("OpenEXR IO validation failures: OK\n");
 		++passed;
 	}
 
