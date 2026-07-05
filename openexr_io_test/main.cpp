@@ -38,33 +38,8 @@ static bool PrintComparisonStage(const char* label, const TestImageF& expected, 
 	}
 	printf("%s comparison: FAIL\n", label);
 	++failed;
+	SetExitCode(1);
 	return false;
-}
-
-static void CopyTestImageToExr(const TestImageF& src, ExrRgbaImageF& dst)
-{
-	dst.width = src.width;
-	dst.height = src.height;
-	dst.pixels.SetCount(src.pixels.GetCount());
-	for(int i = 0; i < src.pixels.GetCount(); ++i) {
-		dst.pixels[i].r = src.pixels[i].r;
-		dst.pixels[i].g = src.pixels[i].g;
-		dst.pixels[i].b = src.pixels[i].b;
-		dst.pixels[i].a = src.pixels[i].a;
-	}
-}
-
-static void CopyExrToTestImage(const ExrRgbaImageF& src, TestImageF& dst)
-{
-	dst.width = src.width;
-	dst.height = src.height;
-	dst.pixels.SetCount(src.pixels.GetCount());
-	for(int i = 0; i < src.pixels.GetCount(); ++i) {
-		dst.pixels[i].r = src.pixels[i].r;
-		dst.pixels[i].g = src.pixels[i].g;
-		dst.pixels[i].b = src.pixels[i].b;
-		dst.pixels[i].a = src.pixels[i].a;
-	}
 }
 
 static void PrintFileSize(const char* label, const char* path)
@@ -87,8 +62,7 @@ CONSOLE_APP_MAIN
 	if(!PrintChartStage("OpenEXR IO HALF/ZIP", 256, 192, false, half_src))
 		return;
 	++passed;
-	ExrRgbaImageF half_file;
-	CopyTestImageToExr(half_src, half_file);
+	ExrRgbaImageF half_file = ToExrRgbaImageF(half_src);
 	if(!SaveExrRgbaF(half_path, half_file, true, true, &error)) {
 		printf("OpenEXR IO HALF/ZIP save: FAIL (%s)\n", IsNull(error) ? "unknown" : ~error);
 		++failed;
@@ -107,8 +81,7 @@ CONSOLE_APP_MAIN
 	}
 	printf("OpenEXR IO HALF/ZIP load: OK\n");
 	++passed;
-	TestImageF half_dst;
-	CopyExrToTestImage(half_loaded, half_dst);
+	TestImageF half_dst = ToTestImageF(half_loaded);
 	if(!PrintComparisonStage("OpenEXR IO HALF/ZIP", half_src, half_dst, passed, failed))
 		return;
 	PrintFileSize("OpenEXR IO HALF/ZIP", half_path);
@@ -117,8 +90,7 @@ CONSOLE_APP_MAIN
 	if(!PrintChartStage("OpenEXR IO FLOAT", 256, 192, true, float_src))
 		return;
 	++passed;
-	ExrRgbaImageF float_file;
-	CopyTestImageToExr(float_src, float_file);
+	ExrRgbaImageF float_file = ToExrRgbaImageF(float_src);
 	error.Clear();
 	if(!SaveExrRgbaF(float_path, float_file, false, false, &error)) {
 		printf("OpenEXR IO FLOAT save: FAIL (%s)\n", IsNull(error) ? "unknown" : ~error);
@@ -138,8 +110,7 @@ CONSOLE_APP_MAIN
 	}
 	printf("OpenEXR IO FLOAT load: OK\n");
 	++passed;
-	TestImageF float_dst;
-	CopyExrToTestImage(float_loaded, float_dst);
+	TestImageF float_dst = ToTestImageF(float_loaded);
 	if(!PrintComparisonStage("OpenEXR IO FLOAT", float_src, float_dst, passed, failed))
 		return;
 	PrintFileSize("OpenEXR IO FLOAT", float_path);

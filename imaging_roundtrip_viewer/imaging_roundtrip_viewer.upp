@@ -1,0 +1,14 @@
+uses
+	CtrlLib,
+	Ui,
+	openexr_io,
+	imaging_roundtrip_test_support;
+
+mainconfig
+	"" = "GUI";
+
+file
+	RoundtripViewer.h,
+	RoundtripViewer.cpp,
+	main.cpp,
+	README.md;

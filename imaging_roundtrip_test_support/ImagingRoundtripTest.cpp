@@ -209,9 +209,11 @@ TestImageF GenerateRoundtripTestPattern(int width, int height, bool include_hdr)
 	TestImageF out;
 	out.width = width;
 	out.height = height;
-	out.pixels.SetCount(width * height);
-	if(width <= 0 || height <= 0)
+	if(width <= 0 || height <= 0) {
+		out.pixels.Clear();
 		return out;
+	}
+	out.pixels.SetCount(width * height);
 
 	for(int y = 0; y < height; ++y) {
 		for(int x = 0; x < width; ++x) {
@@ -248,15 +250,69 @@ TestImageF GenerateRoundtripTestPattern(int width, int height, bool include_hdr)
 	return out;
 }
 
+ExrRgbaImageF ToExrRgbaImageF(const TestImageF& src)
+{
+	ExrRgbaImageF out;
+	out.width = src.width;
+	out.height = src.height;
+	if(src.width <= 0 || src.height <= 0)
+		return out;
+	out.pixels.SetCount(src.pixels.GetCount());
+	for(int i = 0; i < src.pixels.GetCount(); ++i) {
+		out.pixels[i].r = src.pixels[i].r;
+		out.pixels[i].g = src.pixels[i].g;
+		out.pixels[i].b = src.pixels[i].b;
+		out.pixels[i].a = src.pixels[i].a;
+	}
+	return out;
+}
+
+TestImageF ToTestImageF(const ExrRgbaImageF& src)
+{
+	TestImageF out;
+	out.width = src.width;
+	out.height = src.height;
+	if(src.width <= 0 || src.height <= 0)
+		return out;
+	out.pixels.SetCount(src.pixels.GetCount());
+	for(int i = 0; i < src.pixels.GetCount(); ++i) {
+		out.pixels[i].r = src.pixels[i].r;
+		out.pixels[i].g = src.pixels[i].g;
+		out.pixels[i].b = src.pixels[i].b;
+		out.pixels[i].a = src.pixels[i].a;
+	}
+	return out;
+}
+
+static bool IsValidImageBuffer(const TestImageF& img)
+{
+	if(img.width <= 0 || img.height <= 0)
+		return false;
+	const int64 required = (int64)img.width * (int64)img.height;
+	return img.pixels.GetCount() >= required;
+}
+
+static RoundtripComparison MakeMalformedComparison(const char* text)
+{
+	RoundtripComparison cmp;
+	cmp.dimensions_match = false;
+	cmp.different_components = 1;
+	cmp.summary = text;
+	return cmp;
+}
+
 static RoundtripComparison CompareImpl(const TestImageF& expected, const TestImageF& actual, double tolerance)
 {
 	RoundtripComparison cmp;
+	if(!IsValidImageBuffer(expected))
+		return MakeMalformedComparison("malformed expected image object");
+	if(!IsValidImageBuffer(actual))
+		return MakeMalformedComparison("malformed actual image object");
 	if(expected.width != actual.width || expected.height != actual.height)
 		cmp.dimensions_match = false;
 
 	int w = expected.width < actual.width ? expected.width : actual.width;
 	int h = expected.height < actual.height ? expected.height : actual.height;
-	const int total_pixels = w * h;
 	double abs_sum = 0.0;
 	double sq_sum = 0.0;
 	int compared_components = 0;
@@ -288,16 +344,20 @@ static RoundtripComparison CompareImpl(const TestImageF& expected, const TestIma
 		cmp.mean_absolute_error = abs_sum / (double)compared_components;
 		cmp.rmse = sqrt(sq_sum / (double)compared_components);
 	}
-	cmp.summary = Format("dimensions_match=%s different_components=%d max_error_r=%.9g max_error_g=%.9g max_error_b=%.9g max_error_a=%.9g mean_absolute_error=%.9g rmse=%.9g",
-		cmp.dimensions_match ? "true" : "false",
-		cmp.different_components,
-		cmp.max_error_r,
-		cmp.max_error_g,
-		cmp.max_error_b,
-		cmp.max_error_a,
-		cmp.mean_absolute_error,
-		cmp.rmse);
-	if(cmp.different_components == 0)
+	if(!cmp.dimensions_match)
+		cmp.summary = Format("dimension mismatch: expected=%dx%d actual=%dx%d",
+			expected.width, expected.height, actual.width, actual.height);
+	else
+		cmp.summary = Format("dimensions_match=%s different_components=%d max_error_r=%.9g max_error_g=%.9g max_error_b=%.9g max_error_a=%.9g mean_absolute_error=%.9g rmse=%.9g",
+			cmp.dimensions_match ? "true" : "false",
+			cmp.different_components,
+			cmp.max_error_r,
+			cmp.max_error_g,
+			cmp.max_error_b,
+			cmp.max_error_a,
+			cmp.mean_absolute_error,
+			cmp.rmse);
+	if(cmp.different_components == 0 && cmp.dimensions_match)
 		cmp.summary = "OK";
 	return cmp;
 }
