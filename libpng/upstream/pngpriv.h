@@ -58,6 +58,11 @@
 
 #define PNGLIB_BUILD /*libpng is being built, not used*/
 
+/* Keep the user-facing package symbol-prefixed so it can coexist with
+ * plugin/png and other libpng-based code in the same link unit.
+ */
+#define PNG_PREFIX 1
+
 /* If HAVE_CONFIG_H is defined during the build then the build system must
  * provide an appropriate "config.h" file on the include path.  The header file
  * must provide definitions as required below (search for "HAVE_CONFIG_H");

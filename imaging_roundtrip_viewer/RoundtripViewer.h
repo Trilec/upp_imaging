@@ -41,11 +41,13 @@ public:
 	RoundtripViewerWindow();
 
 private:
-	enum ProfileKind { PROFILE_HALF_ZIP = 0, PROFILE_FLOAT_NONE = 1 };
+	enum FormatKind { FORMAT_EXR = 0, FORMAT_PNG = 1 };
+	enum ProfileKind { PROFILE_EXR_HALF_ZIP = 0, PROFILE_EXR_FLOAT_NONE = 1, PROFILE_PNG_RGBA8 = 2 };
 	enum DisplayKind { DISPLAY_RGB = 0, DISPLAY_RAW_RGB = 1, DISPLAY_ALPHA = 2 };
 
 	struct ProfileSpec {
 		const char* name;
+		FormatKind format;
 		int width;
 		int height;
 		bool include_hdr;

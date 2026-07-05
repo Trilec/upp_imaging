@@ -5,6 +5,40 @@
 
 using namespace Upp;
 
+static ExrRgbaImageF ToExrRgbaImageF(const TestImageF& src)
+{
+	ExrRgbaImageF out;
+	out.width = src.width;
+	out.height = src.height;
+	if(src.width <= 0 || src.height <= 0)
+		return out;
+	out.pixels.SetCount(src.pixels.GetCount());
+	for(int i = 0; i < src.pixels.GetCount(); ++i) {
+		out.pixels[i].r = src.pixels[i].r;
+		out.pixels[i].g = src.pixels[i].g;
+		out.pixels[i].b = src.pixels[i].b;
+		out.pixels[i].a = src.pixels[i].a;
+	}
+	return out;
+}
+
+static TestImageF ToTestImageF(const ExrRgbaImageF& src)
+{
+	TestImageF out;
+	out.width = src.width;
+	out.height = src.height;
+	if(src.width <= 0 || src.height <= 0)
+		return out;
+	out.pixels.SetCount(src.pixels.GetCount());
+	for(int i = 0; i < src.pixels.GetCount(); ++i) {
+		out.pixels[i].r = src.pixels[i].r;
+		out.pixels[i].g = src.pixels[i].g;
+		out.pixels[i].b = src.pixels[i].b;
+		out.pixels[i].a = src.pixels[i].a;
+	}
+	return out;
+}
+
 static void PrintMetrics(const char* label, int width, int height, const RoundtripComparison& cmp)
 {
 	printf("%s dimensions=%dx%d different_components=%d max_error_r=%.9g max_error_g=%.9g max_error_b=%.9g max_error_a=%.9g mean_absolute_error=%.9g rmse=%.9g\n",
