@@ -26,6 +26,7 @@ file
 	upstream/pnglibconf.h,
 	upstream/pngdebug.h,
 	upstream/pnginfo.h,
+	upstream/pngprefix.h,
 	upstream/pngpriv.h,
 	upstream/pngstruct.h,
 	upstream/README,

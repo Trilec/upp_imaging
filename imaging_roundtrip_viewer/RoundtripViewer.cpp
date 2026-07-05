@@ -2,7 +2,78 @@
 
 #include <math.h>
 
+#include <openexr_io/OpenExrIO.h>
+#include <png_io/PngIO.h>
+
 namespace Upp {
+
+static ExrRgbaImageF ToExrRgbaImageF(const TestImageF& src)
+{
+	ExrRgbaImageF out;
+	out.width = src.width;
+	out.height = src.height;
+	if(src.width <= 0 || src.height <= 0)
+		return out;
+	out.pixels.SetCount(src.pixels.GetCount());
+	for(int i = 0; i < src.pixels.GetCount(); ++i) {
+		out.pixels[i].r = src.pixels[i].r;
+		out.pixels[i].g = src.pixels[i].g;
+		out.pixels[i].b = src.pixels[i].b;
+		out.pixels[i].a = src.pixels[i].a;
+	}
+	return out;
+}
+
+static TestImageF ToTestImageF(const ExrRgbaImageF& src)
+{
+	TestImageF out;
+	out.width = src.width;
+	out.height = src.height;
+	if(src.width <= 0 || src.height <= 0)
+		return out;
+	out.pixels.SetCount(src.pixels.GetCount());
+	for(int i = 0; i < src.pixels.GetCount(); ++i) {
+		out.pixels[i].r = src.pixels[i].r;
+		out.pixels[i].g = src.pixels[i].g;
+		out.pixels[i].b = src.pixels[i].b;
+		out.pixels[i].a = src.pixels[i].a;
+	}
+	return out;
+}
+
+static PngRgbaImage8 ToPngRgbaImage8(const TestImage8& src)
+{
+	PngRgbaImage8 out;
+	out.width = src.width;
+	out.height = src.height;
+	if(!src.IsValid())
+		return out;
+	out.pixels.SetCount(src.pixels.GetCount());
+	for(int i = 0; i < src.pixels.GetCount(); ++i) {
+		out.pixels[i].r = src.pixels[i].r;
+		out.pixels[i].g = src.pixels[i].g;
+		out.pixels[i].b = src.pixels[i].b;
+		out.pixels[i].a = src.pixels[i].a;
+	}
+	return out;
+}
+
+static TestImage8 ToTestImage8(const PngRgbaImage8& src)
+{
+	TestImage8 out;
+	out.width = src.width;
+	out.height = src.height;
+	if(!src.IsValid())
+		return out;
+	out.pixels.SetCount(src.pixels.GetCount());
+	for(int i = 0; i < src.pixels.GetCount(); ++i) {
+		out.pixels[i].r = src.pixels[i].r;
+		out.pixels[i].g = src.pixels[i].g;
+		out.pixels[i].b = src.pixels[i].b;
+		out.pixels[i].a = src.pixels[i].a;
+	}
+	return out;
+}
 
 static bool IsValidImage(const TestImageF& img)
 {
@@ -66,10 +137,11 @@ void PreviewPane::PreviewCanvas::Paint(Draw& w)
 const RoundtripViewerWindow::ProfileSpec& RoundtripViewerWindow::GetProfile(ProfileKind kind)
 {
 	static const ProfileSpec profiles[] = {
-		{"HALF + ZIP", 256, 192, false, true, true},
-		{"FLOAT + NONE", 256, 192, true, false, false},
+		{"EXR HALF + ZIP", FORMAT_EXR, 256, 192, false, true, true},
+		{"EXR FLOAT + NONE", FORMAT_EXR, 256, 192, true, false, false},
+		{"PNG RGBA8", FORMAT_PNG, 256, 192, false, false, false},
 	};
-	return profiles[(int)kind < 0 ? 0 : (int)kind > 1 ? 1 : (int)kind];
+	return profiles[(int)kind < 0 ? 0 : (int)kind > 2 ? 2 : (int)kind];
 }
 
 bool RoundtripViewerWindow::IsExactPass(const RoundtripComparison& cmp)
@@ -116,8 +188,9 @@ RoundtripViewerWindow::RoundtripViewerWindow()
 	gain_label_.SetText("Gain").NoWantFocus().IgnoreMouse();
 	run_button_.SetText("Run Round-trip");
 
-	profile_drop_.Add("HALF + ZIP", (int)PROFILE_HALF_ZIP);
-	profile_drop_.Add("FLOAT + NONE", (int)PROFILE_FLOAT_NONE);
+	profile_drop_.Add("EXR HALF + ZIP", (int)PROFILE_EXR_HALF_ZIP);
+	profile_drop_.Add("EXR FLOAT + NONE", (int)PROFILE_EXR_FLOAT_NONE);
+	profile_drop_.Add("PNG RGBA8", (int)PROFILE_PNG_RGBA8);
 	profile_drop_.Select(0);
 	display_drop_.Add("RGB", DISPLAY_RGB);
 	display_drop_.Add("Raw RGB", DISPLAY_RAW_RGB);
@@ -174,34 +247,65 @@ void RoundtripViewerWindow::RunProfile(ProfileKind kind)
 	SetRunState(RUN_RUNNING);
 	io_error_.Clear();
 	const ProfileSpec& spec = GetProfile(kind);
-	generated_ = GenerateRoundtripTestPattern(spec.width, spec.height, spec.include_hdr);
+	generated_ = TestImageF();
 	reloaded_ = TestImageF();
 	comparison_ = RoundtripComparison();
 	output_size_ = -1;
-	output_path_ = GetExeDirFile("roundtrip_viewer.exr");
+	output_path_ = spec.format == FORMAT_PNG ? GetExeDirFile("roundtrip_viewer.png") : GetExeDirFile("roundtrip_viewer.exr");
 
-	ExrRgbaImageF save_image = ToExrRgbaImageF(generated_);
-	if(!SaveExrRgbaF(~output_path_, save_image, spec.output_half, spec.use_zip, &io_error_)) {
-		SetRunState(RUN_FAIL, io_error_);
-		UpdateStatus();
-		UpdateDetails();
-		RefreshViews();
-		return;
-	}
-	FileIn in(~output_path_);
-	if(in.IsOpen())
-		output_size_ = (long long)in.GetSize();
+	if(spec.format == FORMAT_EXR) {
+		generated_ = GenerateRoundtripTestPattern(spec.width, spec.height, spec.include_hdr);
+		ExrRgbaImageF save_image = ToExrRgbaImageF(generated_);
+		if(!SaveExrRgbaF(~output_path_, save_image, spec.output_half, spec.use_zip, &io_error_)) {
+			SetRunState(RUN_FAIL, io_error_);
+			UpdateStatus();
+			UpdateDetails();
+			RefreshViews();
+			return;
+		}
+		FileIn in(~output_path_);
+		if(in.IsOpen())
+			output_size_ = (long long)in.GetSize();
 
-	ExrRgbaImageF loaded_image;
-	if(!LoadExrRgbaF(~output_path_, loaded_image, &io_error_)) {
-		SetRunState(RUN_FAIL, io_error_);
-		UpdateStatus();
-		UpdateDetails();
-		RefreshViews();
-		return;
+		ExrRgbaImageF loaded_image;
+		if(!LoadExrRgbaF(~output_path_, loaded_image, &io_error_)) {
+			SetRunState(RUN_FAIL, io_error_);
+			UpdateStatus();
+			UpdateDetails();
+			RefreshViews();
+			return;
+		}
+		reloaded_ = ToTestImageF(loaded_image);
+		comparison_ = CompareExact(generated_, reloaded_);
 	}
-	reloaded_ = ToTestImageF(loaded_image);
-	comparison_ = CompareExact(generated_, reloaded_);
+	else {
+		TestImageF source = GenerateRoundtripTestPattern(spec.width, spec.height, false);
+		TestImage8 expected8 = QuantizeToRgba8(source);
+		generated_ = NormalizeToFloat(expected8);
+		PngRgbaImage8 save_image = ToPngRgbaImage8(expected8);
+		if(!SavePngRgba8(~output_path_, save_image, &io_error_)) {
+			SetRunState(RUN_FAIL, io_error_);
+			UpdateStatus();
+			UpdateDetails();
+			RefreshViews();
+			return;
+		}
+		FileIn in(~output_path_);
+		if(in.IsOpen())
+			output_size_ = (long long)in.GetSize();
+
+		PngRgbaImage8 loaded_image;
+		if(!LoadPngRgba8(~output_path_, loaded_image, &io_error_)) {
+			SetRunState(RUN_FAIL, io_error_);
+			UpdateStatus();
+			UpdateDetails();
+			RefreshViews();
+			return;
+		}
+		TestImage8 actual8 = ToTestImage8(loaded_image);
+		reloaded_ = NormalizeToFloat(actual8);
+		comparison_ = CompareExact(generated_, reloaded_);
+	}
 	io_error_.Clear();
 	if(IsExactPass(comparison_))
 		SetRunState(RUN_PASS);
@@ -230,7 +334,7 @@ void RoundtripViewerWindow::UpdateStatus()
 		status_label_.SetText("Not run");
 		return;
 	case RUN_RUNNING:
-		status_label_.SetText("Running...");
+		status_label_.SetText("Running…");
 		return;
 	case RUN_PASS:
 		status_label_.SetText("PASS — exact round-trip");

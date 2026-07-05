@@ -1,0 +1,10 @@
+description "Reusable RGBA8 PNG IO helper";
+
+uses
+	Core,
+	libpng;
+
+file
+	PngIO.h,
+	PngIO.cpp,
+	README.md;

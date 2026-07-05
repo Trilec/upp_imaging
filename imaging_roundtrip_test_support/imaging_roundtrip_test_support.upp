@@ -2,7 +2,6 @@ description "Reusable synthetic image test support";
 
 uses
 	Core;
-	openexr_io;
 
 file
 	ImagingRoundtripTest.h,

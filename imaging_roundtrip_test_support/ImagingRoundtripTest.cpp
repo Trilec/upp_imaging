@@ -21,6 +21,12 @@ static float ClampFloat(float v, float lo, float hi)
 	return v < lo ? lo : (v > hi ? hi : v);
 }
 
+static byte ClampByte(float v)
+{
+	v = ClampFloat(v, 0.0f, 1.0f);
+	return (byte)(v * 255.0f + 0.5f);
+}
+
 static float QuantizeHalfExact(float v)
 {
 	static const float levels[] = {0.0f, 0.25f, 0.5f, 1.0f, 2.0f, 4.0f};
@@ -250,38 +256,122 @@ TestImageF GenerateRoundtripTestPattern(int width, int height, bool include_hdr)
 	return out;
 }
 
-ExrRgbaImageF ToExrRgbaImageF(const TestImageF& src)
+void TestImage8::Clear()
 {
-	ExrRgbaImageF out;
-	out.width = src.width;
-	out.height = src.height;
-	if(src.width <= 0 || src.height <= 0)
+	width = 0;
+	height = 0;
+	pixels.Clear();
+}
+
+bool TestImage8::IsValid() const
+{
+	return width > 0 && height > 0 && pixels.GetCount() == (int64)width * height;
+}
+
+TestImage8 QuantizeToRgba8(const TestImageF& source)
+{
+	TestImage8 out;
+	out.width = source.width;
+	out.height = source.height;
+	if(source.width <= 0 || source.height <= 0)
 		return out;
-	out.pixels.SetCount(src.pixels.GetCount());
-	for(int i = 0; i < src.pixels.GetCount(); ++i) {
-		out.pixels[i].r = src.pixels[i].r;
-		out.pixels[i].g = src.pixels[i].g;
-		out.pixels[i].b = src.pixels[i].b;
-		out.pixels[i].a = src.pixels[i].a;
+	const int64 count = (int64)source.width * source.height;
+	out.pixels.SetCount((int)count);
+	for(int i = 0; i < source.pixels.GetCount(); ++i) {
+		const TestRgbaF& p = source.pixels[i];
+		out.pixels[i].r = ClampByte(p.r);
+		out.pixels[i].g = ClampByte(p.g);
+		out.pixels[i].b = ClampByte(p.b);
+		out.pixels[i].a = ClampByte(p.a);
 	}
 	return out;
 }
 
-TestImageF ToTestImageF(const ExrRgbaImageF& src)
+TestImageF NormalizeToFloat(const TestImage8& source)
 {
 	TestImageF out;
-	out.width = src.width;
-	out.height = src.height;
-	if(src.width <= 0 || src.height <= 0)
+	out.width = source.width;
+	out.height = source.height;
+	if(!source.IsValid())
 		return out;
-	out.pixels.SetCount(src.pixels.GetCount());
-	for(int i = 0; i < src.pixels.GetCount(); ++i) {
-		out.pixels[i].r = src.pixels[i].r;
-		out.pixels[i].g = src.pixels[i].g;
-		out.pixels[i].b = src.pixels[i].b;
-		out.pixels[i].a = src.pixels[i].a;
+	out.pixels.SetCount(source.pixels.GetCount());
+	for(int i = 0; i < source.pixels.GetCount(); ++i) {
+		const TestRgba8& p = source.pixels[i];
+		out.pixels[i].r = (float)p.r / 255.0f;
+		out.pixels[i].g = (float)p.g / 255.0f;
+		out.pixels[i].b = (float)p.b / 255.0f;
+		out.pixels[i].a = (float)p.a / 255.0f;
 	}
 	return out;
+}
+
+static bool IsValidImageBuffer8(const TestImage8& img)
+{
+	return img.IsValid();
+}
+
+static RoundtripComparison8 MakeMalformedComparison8(const char* text)
+{
+	RoundtripComparison8 cmp;
+	cmp.dimensions_match = false;
+	cmp.different_components = 1;
+	cmp.summary = text;
+	return cmp;
+}
+
+static RoundtripComparison8 CompareImpl(const TestImage8& expected, const TestImage8& actual)
+{
+	RoundtripComparison8 cmp;
+	if(!IsValidImageBuffer8(expected))
+		return MakeMalformedComparison8("malformed expected image object");
+	if(!IsValidImageBuffer8(actual))
+		return MakeMalformedComparison8("malformed actual image object");
+	if(expected.width != actual.width || expected.height != actual.height)
+		cmp.dimensions_match = false;
+
+	const int w = expected.width < actual.width ? expected.width : actual.width;
+	const int h = expected.height < actual.height ? expected.height : actual.height;
+	for(int y = 0; y < h; ++y) {
+		for(int x = 0; x < w; ++x) {
+			const TestRgba8& e = expected.pixels[y * expected.width + x];
+			const TestRgba8& a = actual.pixels[y * actual.width + x];
+			const int dr = abs((int)e.r - (int)a.r);
+			const int dg = abs((int)e.g - (int)a.g);
+			const int db = abs((int)e.b - (int)a.b);
+			const int da = abs((int)e.a - (int)a.a);
+			cmp.max_error_r = dr > cmp.max_error_r ? dr : cmp.max_error_r;
+			cmp.max_error_g = dg > cmp.max_error_g ? dg : cmp.max_error_g;
+			cmp.max_error_b = db > cmp.max_error_b ? db : cmp.max_error_b;
+			cmp.max_error_a = da > cmp.max_error_a ? da : cmp.max_error_a;
+			cmp.different_components += (dr != 0) + (dg != 0) + (db != 0) + (da != 0);
+		}
+	}
+	if(!cmp.dimensions_match)
+	{
+		int64 pixel_diff = (int64)expected.width * expected.height - (int64)actual.width * actual.height;
+		if(pixel_diff < 0)
+			pixel_diff = -pixel_diff;
+		cmp.different_components += (int)(pixel_diff * 4);
+	}
+	if(cmp.different_components == 0 && cmp.dimensions_match)
+		cmp.summary = "OK";
+	else if(!cmp.dimensions_match)
+		cmp.summary = Format("dimension mismatch: expected=%dx%d actual=%dx%d",
+			expected.width, expected.height, actual.width, actual.height);
+	else
+		cmp.summary = Format("dimensions_match=%s different_components=%d max_error_r=%d max_error_g=%d max_error_b=%d max_error_a=%d",
+			cmp.dimensions_match ? "true" : "false",
+			cmp.different_components,
+			cmp.max_error_r,
+			cmp.max_error_g,
+			cmp.max_error_b,
+			cmp.max_error_a);
+	return cmp;
+}
+
+RoundtripComparison8 CompareExact(const TestImage8& expected, const TestImage8& actual)
+{
+	return CompareImpl(expected, actual);
 }
 
 static bool IsValidImageBuffer(const TestImageF& img)
