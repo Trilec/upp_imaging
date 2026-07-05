@@ -1,0 +1,10 @@
+description "JPEG round-trip regression test";
+
+uses
+	Core,
+	imaging_roundtrip_test_support,
+	jpeg_io;
+
+file
+	main.cpp,
+	README.md;

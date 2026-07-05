@@ -1,0 +1,10 @@
+description "Reusable JPEG IO helper for U++";
+
+uses
+	Core,
+	libjpeg_turbo;
+
+file
+	JpegIO.h,
+	JpegIO.cpp,
+	README.md;

@@ -3,6 +3,7 @@
 #include <math.h>
 
 #include <openexr_io/OpenExrIO.h>
+#include <jpeg_io/JpegIO.h>
 #include <png_io/PngIO.h>
 
 namespace Upp {
@@ -54,6 +55,72 @@ static PngRgbaImage8 ToPngRgbaImage8(const TestImage8& src)
 		out.pixels[i].g = src.pixels[i].g;
 		out.pixels[i].b = src.pixels[i].b;
 		out.pixels[i].a = src.pixels[i].a;
+	}
+	return out;
+}
+
+static byte ClampRgbByte(float v)
+{
+	v = v < 0.0f ? 0.0f : (v > 1.0f ? 1.0f : v);
+	return (byte)(v * 255.0f + 0.5f);
+}
+
+static TestRgbImage8 QuantizeToRgb8(const TestImageF& src)
+{
+	TestRgbImage8 out;
+	out.width = src.width;
+	out.height = src.height;
+	if(src.width <= 0 || src.height <= 0 || src.pixels.GetCount() != (int64)src.width * src.height)
+		return out;
+	out.pixels.SetCount(src.pixels.GetCount());
+	for(int i = 0; i < src.pixels.GetCount(); ++i) {
+		out.pixels[i].r = ClampRgbByte(src.pixels[i].r);
+		out.pixels[i].g = ClampRgbByte(src.pixels[i].g);
+		out.pixels[i].b = ClampRgbByte(src.pixels[i].b);
+	}
+	return out;
+}
+
+static JpegRgbImage8 ToJpegRgbImage8(const TestRgbImage8& src)
+{
+	JpegRgbImage8 out;
+	out.width = src.width;
+	out.height = src.height;
+	if(!src.IsValid())
+		return out;
+	out.pixels.SetCount(src.pixels.GetCount());
+	for(int i = 0; i < src.pixels.GetCount(); ++i)
+		out.pixels[i] = {src.pixels[i].r, src.pixels[i].g, src.pixels[i].b};
+	return out;
+}
+
+static TestRgbImage8 ToTestRgbImage8(const JpegRgbImage8& src)
+{
+	TestRgbImage8 out;
+	out.width = src.width;
+	out.height = src.height;
+	if(!src.IsValid())
+		return out;
+	out.pixels.SetCount(src.pixels.GetCount());
+	for(int i = 0; i < src.pixels.GetCount(); ++i)
+		out.pixels[i] = {src.pixels[i].r, src.pixels[i].g, src.pixels[i].b};
+	return out;
+}
+
+static TestImageF NormalizeToFloat(const TestRgbImage8& src)
+{
+	TestImageF out;
+	out.width = src.width;
+	out.height = src.height;
+	if(!src.IsValid())
+		return out;
+	out.pixels.SetCount(src.pixels.GetCount());
+	for(int i = 0; i < src.pixels.GetCount(); ++i) {
+		const TestRgb8& p = src.pixels[i];
+		out.pixels[i].r = (float)p.r / 255.0f;
+		out.pixels[i].g = (float)p.g / 255.0f;
+		out.pixels[i].b = (float)p.b / 255.0f;
+		out.pixels[i].a = 1.0f;
 	}
 	return out;
 }
@@ -137,11 +204,17 @@ void PreviewPane::PreviewCanvas::Paint(Draw& w)
 const RoundtripViewerWindow::ProfileSpec& RoundtripViewerWindow::GetProfile(ProfileKind kind)
 {
 	static const ProfileSpec profiles[] = {
-		{"EXR HALF + ZIP", FORMAT_EXR, 256, 192, false, true, true},
-		{"EXR FLOAT + NONE", FORMAT_EXR, 256, 192, true, false, false},
-		{"PNG RGBA8", FORMAT_PNG, 256, 192, false, false, false},
+		{"EXR HALF + ZIP", FORMAT_EXR, 256, 192, false, true, true, {}, false, 0.0, 0.0, 0.0},
+		{"EXR FLOAT + NONE", FORMAT_EXR, 256, 192, true, false, false, {}, false, 0.0, 0.0, 0.0},
+		{"PNG RGBA8", FORMAT_PNG, 256, 192, false, false, false, {}, false, 0.0, 0.0, 0.0},
+		{"JPEG RGB8 95 4:4:4", FORMAT_JPEG, 256, 192, false, false, false, {95, JpegSubsampling::S444, false, true}, true, 3.5, 6.5, 32.0},
 	};
-	return profiles[(int)kind < 0 ? 0 : (int)kind > 2 ? 2 : (int)kind];
+	return profiles[(int)kind < 0 ? 0 : (int)kind > 3 ? 3 : (int)kind];
+}
+
+bool RoundtripViewerWindow::IsLossyPass(const LossyRgbComparison& cmp, const ProfileSpec& spec)
+{
+	return cmp.dimensions_match && cmp.max_error_r <= spec.max_mae && cmp.max_error_g <= spec.max_mae && cmp.max_error_b <= spec.max_mae && cmp.rmse <= spec.max_rmse && cmp.psnr >= spec.min_psnr;
 }
 
 bool RoundtripViewerWindow::IsExactPass(const RoundtripComparison& cmp)
@@ -191,6 +264,7 @@ RoundtripViewerWindow::RoundtripViewerWindow()
 	profile_drop_.Add("EXR HALF + ZIP", (int)PROFILE_EXR_HALF_ZIP);
 	profile_drop_.Add("EXR FLOAT + NONE", (int)PROFILE_EXR_FLOAT_NONE);
 	profile_drop_.Add("PNG RGBA8", (int)PROFILE_PNG_RGBA8);
+	profile_drop_.Add("JPEG RGB8 95 4:4:4", (int)PROFILE_JPEG_RGB95_444);
 	profile_drop_.Select(0);
 	display_drop_.Add("RGB", DISPLAY_RGB);
 	display_drop_.Add("Raw RGB", DISPLAY_RAW_RGB);
@@ -251,7 +325,8 @@ void RoundtripViewerWindow::RunProfile(ProfileKind kind)
 	reloaded_ = TestImageF();
 	comparison_ = RoundtripComparison();
 	output_size_ = -1;
-	output_path_ = spec.format == FORMAT_PNG ? GetExeDirFile("roundtrip_viewer.png") : GetExeDirFile("roundtrip_viewer.exr");
+	output_path_ = spec.format == FORMAT_PNG ? GetExeDirFile("roundtrip_viewer.png") : spec.format == FORMAT_JPEG ? GetExeDirFile("roundtrip_viewer.jpg") : GetExeDirFile("roundtrip_viewer.exr");
+	rgb_comparison_ = LossyRgbComparison();
 
 	if(spec.format == FORMAT_EXR) {
 		generated_ = GenerateRoundtripTestPattern(spec.width, spec.height, spec.include_hdr);
@@ -277,6 +352,34 @@ void RoundtripViewerWindow::RunProfile(ProfileKind kind)
 		}
 		reloaded_ = ToTestImageF(loaded_image);
 		comparison_ = CompareExact(generated_, reloaded_);
+	}
+	else if(spec.format == FORMAT_JPEG) {
+		TestImageF source = GenerateRoundtripTestPattern(spec.width, spec.height, false);
+		TestRgbImage8 expected8 = QuantizeToRgb8(source);
+		generated_ = NormalizeToFloat(expected8);
+		JpegRgbImage8 save_image = ToJpegRgbImage8(expected8);
+		if(!SaveJpegRgb8(~output_path_, save_image, spec.jpeg_options, &io_error_)) {
+			SetRunState(RUN_FAIL, io_error_);
+			UpdateStatus();
+			UpdateDetails();
+			RefreshViews();
+			return;
+		}
+		FileIn in(~output_path_);
+		if(in.IsOpen())
+			output_size_ = (long long)in.GetSize();
+
+		JpegRgbImage8 loaded_image;
+		if(!LoadJpegRgb8(~output_path_, loaded_image, &io_error_)) {
+			SetRunState(RUN_FAIL, io_error_);
+			UpdateStatus();
+			UpdateDetails();
+			RefreshViews();
+			return;
+		}
+		TestRgbImage8 actual8 = ToTestRgbImage8(loaded_image);
+		reloaded_ = NormalizeToFloat(actual8);
+		rgb_comparison_ = CompareLossyRgb8(expected8, actual8);
 	}
 	else {
 		TestImageF source = GenerateRoundtripTestPattern(spec.width, spec.height, false);
@@ -307,7 +410,13 @@ void RoundtripViewerWindow::RunProfile(ProfileKind kind)
 		comparison_ = CompareExact(generated_, reloaded_);
 	}
 	io_error_.Clear();
-	if(IsExactPass(comparison_))
+	if(spec.lossy) {
+		if(IsLossyPass(rgb_comparison_, spec))
+			SetRunState(RUN_PASS, "lossy round-trip within thresholds");
+		else
+			SetRunState(RUN_FAIL, rgb_comparison_.summary);
+	}
+	else if(IsExactPass(comparison_))
 		SetRunState(RUN_PASS);
 	else
 		SetRunState(RUN_FAIL, comparison_.summary);
@@ -337,7 +446,7 @@ void RoundtripViewerWindow::UpdateStatus()
 		status_label_.SetText("Running…");
 		return;
 	case RUN_PASS:
-		status_label_.SetText("PASS — exact round-trip");
+		status_label_.SetText(IsNull(run_message_) ? "PASS — exact round-trip" : Format("PASS — %s", ~run_message_));
 		return;
 	case RUN_FAIL:
 		if(!IsNull(run_message_))
@@ -354,19 +463,36 @@ void RoundtripViewerWindow::UpdateStatus()
 void RoundtripViewerWindow::UpdateDetails()
 {
 	String size_text = output_size_ >= 0 ? Format("%lld bytes", output_size_) : String("n/a");
-	details_label_.SetText(Format(
-		"Profile: %s\nDimensions: %dx%d\nFile size: %s\nDifferent components: %d\nMax R error: %.9g\nMax G error: %.9g\nMax B error: %.9g\nMax A error: %.9g\nMean absolute error: %.9g\nRMSE: %.9g",
-		AsString(profile_drop_.GetItemText(profile_drop_.GetSelection())),
-		generated_.width,
-		generated_.height,
-		size_text,
-		comparison_.different_components,
-		comparison_.max_error_r,
-		comparison_.max_error_g,
-		comparison_.max_error_b,
-		comparison_.max_error_a,
-		comparison_.mean_absolute_error,
-		comparison_.rmse));
+	const ProfileSpec& spec = GetProfile((ProfileKind)(int)profile_drop_.GetSelectedData());
+	if(spec.lossy) {
+		details_label_.SetText(Format(
+			"Profile: %s\nDimensions: %dx%d\nFile size: %s\nMax R error: %d\nMax G error: %d\nMax B error: %d\nMean absolute error: %.9g\nRMSE: %.9g\nPSNR: %.9g dB",
+			AsString(profile_drop_.GetItemText(profile_drop_.GetSelection())),
+			generated_.width,
+			generated_.height,
+			size_text,
+			rgb_comparison_.max_error_r,
+			rgb_comparison_.max_error_g,
+			rgb_comparison_.max_error_b,
+			rgb_comparison_.mean_absolute_error,
+			rgb_comparison_.rmse,
+			rgb_comparison_.psnr));
+	}
+	else {
+		details_label_.SetText(Format(
+			"Profile: %s\nDimensions: %dx%d\nFile size: %s\nDifferent components: %d\nMax R error: %.9g\nMax G error: %.9g\nMax B error: %.9g\nMax A error: %.9g\nMean absolute error: %.9g\nRMSE: %.9g",
+			AsString(profile_drop_.GetItemText(profile_drop_.GetSelection())),
+			generated_.width,
+			generated_.height,
+			size_text,
+			comparison_.different_components,
+			comparison_.max_error_r,
+			comparison_.max_error_g,
+			comparison_.max_error_b,
+			comparison_.max_error_a,
+			comparison_.mean_absolute_error,
+			comparison_.rmse));
+	}
 	path_label_.SetText(Format("Output path: %s", ~output_path_));
 	error_label_.SetText(IsNull(io_error_) ? "Load/save error: none" : Format("Load/save error: %s", ~io_error_));
 }

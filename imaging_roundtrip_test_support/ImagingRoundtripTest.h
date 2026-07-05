@@ -28,6 +28,15 @@ struct TestRgba8
 
 static_assert(sizeof(TestRgba8) == 4, "TestRgba8 must stay packed");
 
+struct TestRgb8
+{
+	byte r = 0;
+	byte g = 0;
+	byte b = 0;
+};
+
+static_assert(sizeof(TestRgb8) == 3, "TestRgb8 must stay packed");
+
 struct TestImage8
 {
 	int width = 0;
@@ -64,10 +73,36 @@ struct RoundtripComparison8
 	Upp::String summary;
 };
 
+struct TestRgbImage8
+{
+	int width = 0;
+	int height = 0;
+	Upp::Vector<TestRgb8> pixels;
+
+	void Clear();
+	bool IsValid() const;
+};
+
+struct LossyRgbComparison
+{
+	bool dimensions_match = true;
+
+	int max_error_r = 0;
+	int max_error_g = 0;
+	int max_error_b = 0;
+
+	double mean_absolute_error = 0.0;
+	double rmse = 0.0;
+	double psnr = 0.0;
+
+	Upp::String summary;
+};
+
 TestImageF GenerateRoundtripTestPattern(int width, int height, bool include_hdr);
 TestImage8 QuantizeToRgba8(const TestImageF& source);
 TestImageF NormalizeToFloat(const TestImage8& source);
 RoundtripComparison8 CompareExact(const TestImage8& expected, const TestImage8& actual);
+LossyRgbComparison CompareLossyRgb8(const TestRgbImage8& expected, const TestRgbImage8& actual);
 RoundtripComparison CompareExact(const TestImageF& expected, const TestImageF& actual);
 RoundtripComparison CompareTolerance(const TestImageF& expected, const TestImageF& actual, double tolerance);
 

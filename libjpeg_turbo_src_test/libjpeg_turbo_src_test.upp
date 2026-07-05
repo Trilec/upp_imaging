@@ -1,0 +1,9 @@
+description "Strict libjpeg-turbo source probe";
+
+uses
+	Core,
+	libjpeg_turbo_src;
+
+file
+	main.cpp,
+	README.md;

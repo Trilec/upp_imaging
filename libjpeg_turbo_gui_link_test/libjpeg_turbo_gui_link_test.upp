@@ -1,0 +1,13 @@
+description "GUI link probe for libjpeg-turbo";
+
+uses
+	CtrlLib,
+	Ui,
+	libjpeg_turbo;
+
+mainconfig
+	"" = "GUI";
+
+file
+	main.cpp,
+	README.md;

@@ -1,0 +1,10 @@
+description "Stable user-facing libjpeg-turbo package for U++";
+
+uses
+	libjpeg_turbo_src;
+
+file
+	jpeglib.h,
+	jerror.h,
+	jmorecfg.h,
+	README.md;
