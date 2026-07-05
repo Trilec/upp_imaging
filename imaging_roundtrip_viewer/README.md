@@ -1,1 +1,1 @@
-OpenEXR round-trip visual viewer.
+OpenEXR, PNG, and JPEG round-trip visual viewer.

@@ -17,7 +17,9 @@
 - EXR `NONE` and `ZIP` compression paths are tested
 - `libpng` 1.6.58 is packaged and symbol-prefixed
 - PNG RGBA8 load/save works
-- EXR and PNG are exercised in the shared viewer
+- `libjpeg-turbo` 3.2.0 is packaged and working
+- JPEG RGB8 load/save works through `jpeg_io`
+- EXR, PNG, and JPEG are exercised in the shared viewer
 - `CLANGx64` is the currently validated toolchain
 
 ## Current limits
@@ -43,6 +45,7 @@ PNG does not yet preserve:
 
 - use `openexr_io` for ordinary supported EXR RGBA load/save
 - use `png_io` for ordinary PNG RGBA8 load/save
+- use `jpeg_io` for ordinary JPEG RGB8 load/save
 - use `openexr_core` and `libpng` only when direct lower-level upstream APIs are required
 - do not consume `_src` packages from ordinary application code
 

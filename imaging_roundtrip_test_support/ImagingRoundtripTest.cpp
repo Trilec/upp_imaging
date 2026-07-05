@@ -268,6 +268,18 @@ bool TestImage8::IsValid() const
 	return width > 0 && height > 0 && pixels.GetCount() == (int64)width * height;
 }
 
+void TestRgbImage8::Clear()
+{
+	width = 0;
+	height = 0;
+	pixels.Clear();
+}
+
+bool TestRgbImage8::IsValid() const
+{
+	return width > 0 && height > 0 && pixels.GetCount() == (int64)width * height;
+}
+
 TestImage8 QuantizeToRgba8(const TestImageF& source)
 {
 	TestImage8 out;
@@ -372,6 +384,57 @@ static RoundtripComparison8 CompareImpl(const TestImage8& expected, const TestIm
 RoundtripComparison8 CompareExact(const TestImage8& expected, const TestImage8& actual)
 {
 	return CompareImpl(expected, actual);
+}
+
+static LossyRgbComparison MakeMalformedRgbComparison(const char* text)
+{
+	LossyRgbComparison cmp;
+	cmp.dimensions_match = false;
+	cmp.summary = text;
+	return cmp;
+}
+
+LossyRgbComparison CompareLossyRgb8(const TestRgbImage8& expected, const TestRgbImage8& actual)
+{
+	LossyRgbComparison cmp;
+	if(!expected.IsValid())
+		return MakeMalformedRgbComparison("malformed expected RGB image object");
+	if(!actual.IsValid())
+		return MakeMalformedRgbComparison("malformed actual RGB image object");
+	if(expected.width != actual.width || expected.height != actual.height) {
+		cmp.dimensions_match = false;
+		cmp.summary = Format("dimension mismatch: expected=%dx%d actual=%dx%d",
+			expected.width, expected.height, actual.width, actual.height);
+		return cmp;
+	}
+
+	const int count = expected.width * expected.height;
+	double abs_sum = 0.0;
+	double sq_sum = 0.0;
+	for(int i = 0; i < count; ++i) {
+		const TestRgb8& e = expected.pixels[i];
+		const TestRgb8& a = actual.pixels[i];
+		const int dr = abs((int)e.r - (int)a.r);
+		const int dg = abs((int)e.g - (int)a.g);
+		const int db = abs((int)e.b - (int)a.b);
+		cmp.max_error_r = dr > cmp.max_error_r ? dr : cmp.max_error_r;
+		cmp.max_error_g = dg > cmp.max_error_g ? dg : cmp.max_error_g;
+		cmp.max_error_b = db > cmp.max_error_b ? db : cmp.max_error_b;
+		abs_sum += (double)dr + (double)dg + (double)db;
+		sq_sum += (double)dr * dr + (double)dg * dg + (double)db * db;
+	}
+
+	const double samples = (double)count * 3.0;
+	if(samples > 0.0) {
+		cmp.mean_absolute_error = abs_sum / samples;
+		cmp.rmse = sqrt(sq_sum / samples);
+		cmp.psnr = cmp.rmse == 0.0 ? HUGE_VAL : 20.0 * log10(255.0 / cmp.rmse);
+	}
+	cmp.summary = Format("dimensions_match=true max_error_r=%d max_error_g=%d max_error_b=%d mean_absolute_error=%.9g rmse=%.9g psnr=%.9g",
+		cmp.max_error_r, cmp.max_error_g, cmp.max_error_b, cmp.mean_absolute_error, cmp.rmse, cmp.psnr);
+	if(cmp.max_error_r == 0 && cmp.max_error_g == 0 && cmp.max_error_b == 0)
+		cmp.summary = "OK";
+	return cmp;
 }
 
 static bool IsValidImageBuffer(const TestImageF& img)

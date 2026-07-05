@@ -5,6 +5,7 @@
 #include <Ui/Ui.h>
 
 #include <imaging_roundtrip_test_support/ImagingRoundtripTest.h>
+#include <jpeg_io/JpegIO.h>
 
 namespace Upp {
 
@@ -41,8 +42,8 @@ public:
 	RoundtripViewerWindow();
 
 private:
-	enum FormatKind { FORMAT_EXR = 0, FORMAT_PNG = 1 };
-	enum ProfileKind { PROFILE_EXR_HALF_ZIP = 0, PROFILE_EXR_FLOAT_NONE = 1, PROFILE_PNG_RGBA8 = 2 };
+	enum FormatKind { FORMAT_EXR = 0, FORMAT_PNG = 1, FORMAT_JPEG = 2 };
+	enum ProfileKind { PROFILE_EXR_HALF_ZIP = 0, PROFILE_EXR_FLOAT_NONE = 1, PROFILE_PNG_RGBA8 = 2, PROFILE_JPEG_RGB95_444 = 3 };
 	enum DisplayKind { DISPLAY_RGB = 0, DISPLAY_RAW_RGB = 1, DISPLAY_ALPHA = 2 };
 
 	struct ProfileSpec {
@@ -53,10 +54,16 @@ private:
 		bool include_hdr;
 		bool output_half;
 		bool use_zip;
+		JpegSaveOptions jpeg_options;
+		bool lossy;
+		double max_mae;
+		double max_rmse;
+		double min_psnr;
 	};
 
 	static const ProfileSpec& GetProfile(ProfileKind kind);
 	static bool IsExactPass(const RoundtripComparison& cmp);
+	static bool IsLossyPass(const LossyRgbComparison& cmp, const ProfileSpec& spec);
 	static int GetGainValue(const Value& v);
 
 	void SetRunState(int state, const String& message = String());
@@ -104,6 +111,7 @@ private:
 	TestImageF generated_;
 	TestImageF reloaded_;
 	RoundtripComparison comparison_;
+	LossyRgbComparison rgb_comparison_;
 	String io_error_;
 	String output_path_;
 	long long output_size_ = -1;

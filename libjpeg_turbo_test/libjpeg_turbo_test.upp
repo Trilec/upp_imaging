@@ -1,0 +1,9 @@
+description "User-facing libjpeg-turbo probe";
+
+uses
+	Core,
+	libjpeg_turbo;
+
+file
+	main.cpp,
+	README.md;
