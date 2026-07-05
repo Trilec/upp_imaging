@@ -187,90 +187,108 @@ bool SaveExrRgbaF(const char* path, const ExrRgbaImageF& image, bool output_half
 
 bool LoadExrRgbaF(const char* path, ExrRgbaImageF& image, String* error)
 {
+	image.Clear();
 	if(!path || !*path)
 		return SetError(error, "path is empty");
 
+	ExrRgbaImageF temp;
 	exr_context_t ctxt = 0;
 	exr_result_t r = exr_start_read(&ctxt, path, 0);
 	if(r != EXR_ERR_SUCCESS || !ctxt)
 		return SetError(error, "exr_start_read", r);
+	auto fail = [&](const char* text) -> bool {
+		temp.Clear();
+		image.Clear();
+		exr_finish(&ctxt);
+		return SetError(error, text);
+	};
+	auto failr = [&](const char* op, exr_result_t rr) -> bool {
+		temp.Clear();
+		image.Clear();
+		exr_finish(&ctxt);
+		return SetError(error, op, rr);
+	};
 
 	int count = 0;
 	r = exr_get_count(ctxt, &count);
-	if(r != EXR_ERR_SUCCESS || count != 1) {
-		exr_finish(&ctxt);
-		return SetError(error, "exr_get_count", r);
-	}
+	if(r != EXR_ERR_SUCCESS)
+		return failr("exr_get_count", r);
+	if(count < 1)
+		return fail("invalid EXR file: no parts");
+	if(count > 1)
+		return fail("multipart EXR is not supported");
 
 	exr_storage_t storage = EXR_STORAGE_UNKNOWN;
 	r = exr_get_storage(ctxt, 0, &storage);
-	if(r != EXR_ERR_SUCCESS || storage != EXR_STORAGE_SCANLINE) {
-		exr_finish(&ctxt);
-		return SetError(error, "exr_get_storage", r);
+	if(r != EXR_ERR_SUCCESS)
+		return failr("exr_get_storage", r);
+	if(storage != EXR_STORAGE_SCANLINE) {
+		if(storage == EXR_STORAGE_TILED || storage == EXR_STORAGE_DEEP_TILED)
+			return fail("tiled EXR is not supported");
+		if(storage == EXR_STORAGE_DEEP_SCANLINE)
+			return fail("deep EXR is not supported");
+		return fail("unsupported EXR storage type");
 	}
 
 	exr_attr_box2i_t dw;
 	r = exr_get_data_window(ctxt, 0, &dw);
-	if(r != EXR_ERR_SUCCESS) {
-		exr_finish(&ctxt);
-		return SetError(error, "exr_get_data_window", r);
-	}
-
-	image.width = (int)(dw.max.x - dw.min.x + 1);
-	image.height = (int)(dw.max.y - dw.min.y + 1);
-	if(image.width <= 0 || image.height <= 0) {
-		exr_finish(&ctxt);
-		return SetError(error, "invalid data window dimensions");
-	}
-	image.pixels.SetCount(image.width * image.height);
-	for(ExrRgbaF& p : image.pixels) {
+	if(r != EXR_ERR_SUCCESS)
+		return failr("exr_get_data_window", r);
+	if(dw.min.x != 0 || dw.min.y != 0)
+		return fail("invalid EXR data window");
+	temp.width = (int)(dw.max.x - dw.min.x + 1);
+	temp.height = (int)(dw.max.y - dw.min.y + 1);
+	if(temp.width <= 0 || temp.height <= 0)
+		return fail("invalid EXR data window");
+	temp.pixels.SetCount(temp.width * temp.height);
+	for(ExrRgbaF& p : temp.pixels) {
 		p.r = 0.0f;
 		p.g = 0.0f;
 		p.b = 0.0f;
 		p.a = 1.0f;
 	}
 
-	for(int y = 0; y < image.height; ) {
+	for(int y = 0; y < temp.height; ) {
 		exr_chunk_info_t cinfo;
 		r = exr_read_scanline_chunk_info(ctxt, 0, y, &cinfo);
-		if(r != EXR_ERR_SUCCESS) {
-			exr_finish(&ctxt);
-			return SetError(error, "exr_read_scanline_chunk_info", r);
-		}
+		if(r != EXR_ERR_SUCCESS)
+			return failr("exr_read_scanline_chunk_info", r);
+		if(cinfo.height <= 0)
+			return fail("invalid EXR scanline chunk height");
 		exr_decode_pipeline_t decode = EXR_DECODE_PIPELINE_INITIALIZER;
 		r = exr_decoding_initialize(ctxt, 0, &cinfo, &decode);
 		if(r != EXR_ERR_SUCCESS) {
 			exr_decoding_destroy(ctxt, &decode);
-			exr_finish(&ctxt);
-			return SetError(error, "exr_decoding_initialize", r);
+			return failr("exr_decoding_initialize", r);
 		}
-		if(!AssignDecodeChannels(decode, image, y, error)) {
+		if(!AssignDecodeChannels(decode, temp, y, error)) {
 			exr_decoding_destroy(ctxt, &decode);
+			temp.Clear();
+			image.Clear();
 			exr_finish(&ctxt);
 			return false;
 		}
 		r = exr_decoding_choose_default_routines(ctxt, 0, &decode);
 		if(r != EXR_ERR_SUCCESS) {
 			exr_decoding_destroy(ctxt, &decode);
-			exr_finish(&ctxt);
-			return SetError(error, "exr_decoding_choose_default_routines", r);
+			return failr("exr_decoding_choose_default_routines", r);
 		}
 		r = exr_decoding_run(ctxt, 0, &decode);
 		if(r != EXR_ERR_SUCCESS) {
 			exr_decoding_destroy(ctxt, &decode);
-			exr_finish(&ctxt);
-			return SetError(error, "exr_decoding_run", r);
+			return failr("exr_decoding_run", r);
 		}
 		r = exr_decoding_destroy(ctxt, &decode);
-		if(r != EXR_ERR_SUCCESS) {
-			exr_finish(&ctxt);
-			return SetError(error, "exr_decoding_destroy", r);
-		}
+		if(r != EXR_ERR_SUCCESS)
+			return failr("exr_decoding_destroy", r);
 		y += cinfo.height;
 	}
 
 	r = exr_finish(&ctxt);
 	if(r != EXR_ERR_SUCCESS)
-		return SetError(error, "exr_finish", r);
+		return failr("exr_finish", r);
+	image.width = temp.width;
+	image.height = temp.height;
+	image.pixels = pick(temp.pixels);
 	return true;
 }

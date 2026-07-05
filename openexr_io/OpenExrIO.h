@@ -6,17 +6,24 @@
 
 struct ExrRgbaF
 {
-	float r;
-	float g;
-	float b;
-	float a;
+	float r = 0.0f;
+	float g = 0.0f;
+	float b = 0.0f;
+	float a = 1.0f;
 };
 
 struct ExrRgbaImageF
 {
-	int width;
-	int height;
+	int width = 0;
+	int height = 0;
 	Upp::Vector<ExrRgbaF> pixels;
+
+	void Clear()
+	{
+		width = 0;
+		height = 0;
+		pixels.Clear();
+	}
 };
 
 bool SaveExrRgbaF(const char* path, const ExrRgbaImageF& image, bool output_half, bool use_zip, Upp::String* error = NULL);

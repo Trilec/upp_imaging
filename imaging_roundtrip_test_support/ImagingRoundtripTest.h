@@ -2,6 +2,7 @@
 #define UPP_IMAGING_IMAGING_ROUNDTRIP_TEST_SUPPORT_H
 
 #include <Core/Core.h>
+#include <openexr_io/OpenExrIO.h>
 
 struct TestRgbaF
 {
@@ -34,6 +35,8 @@ struct RoundtripComparison
 };
 
 TestImageF GenerateRoundtripTestPattern(int width, int height, bool include_hdr);
+ExrRgbaImageF ToExrRgbaImageF(const TestImageF& src);
+TestImageF ToTestImageF(const ExrRgbaImageF& src);
 RoundtripComparison CompareExact(const TestImageF& expected, const TestImageF& actual);
 RoundtripComparison CompareTolerance(const TestImageF& expected, const TestImageF& actual, double tolerance);
 
