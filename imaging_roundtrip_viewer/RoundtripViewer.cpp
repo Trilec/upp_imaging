@@ -83,6 +83,13 @@ int RoundtripViewerWindow::GetGainValue(const Value& v)
 	return gain > 0 ? gain : 1;
 }
 
+void RoundtripViewerWindow::SetRunState(int state, const String& message)
+{
+	run_state_ = state;
+	run_message_ = message;
+	UpdateStatus();
+}
+
 RoundtripViewerWindow::RoundtripViewerWindow()
 {
 	Title("OpenEXR round-trip viewer");
@@ -153,7 +160,8 @@ RoundtripViewerWindow::RoundtripViewerWindow()
 	UpdateStatus();
 	UpdateDetails();
 	RefreshViews();
-	PostCallback([this] { RunSelected(); });
+	SetRunState(RUN_NOT_RUN);
+	SetTimeCallback(150, [this] { RunSelected(); });
 }
 
 void RoundtripViewerWindow::RunSelected()
@@ -163,16 +171,18 @@ void RoundtripViewerWindow::RunSelected()
 
 void RoundtripViewerWindow::RunProfile(ProfileKind kind)
 {
+	SetRunState(RUN_RUNNING);
+	io_error_.Clear();
 	const ProfileSpec& spec = GetProfile(kind);
 	generated_ = GenerateRoundtripTestPattern(spec.width, spec.height, spec.include_hdr);
 	reloaded_ = TestImageF();
 	comparison_ = RoundtripComparison();
-	io_error_.Clear();
 	output_size_ = -1;
 	output_path_ = GetExeDirFile("roundtrip_viewer.exr");
 
 	ExrRgbaImageF save_image = ToExrRgbaImageF(generated_);
 	if(!SaveExrRgbaF(~output_path_, save_image, spec.output_half, spec.use_zip, &io_error_)) {
+		SetRunState(RUN_FAIL, io_error_);
 		UpdateStatus();
 		UpdateDetails();
 		RefreshViews();
@@ -184,6 +194,7 @@ void RoundtripViewerWindow::RunProfile(ProfileKind kind)
 
 	ExrRgbaImageF loaded_image;
 	if(!LoadExrRgbaF(~output_path_, loaded_image, &io_error_)) {
+		SetRunState(RUN_FAIL, io_error_);
 		UpdateStatus();
 		UpdateDetails();
 		RefreshViews();
@@ -192,6 +203,10 @@ void RoundtripViewerWindow::RunProfile(ProfileKind kind)
 	reloaded_ = ToTestImageF(loaded_image);
 	comparison_ = CompareExact(generated_, reloaded_);
 	io_error_.Clear();
+	if(IsExactPass(comparison_))
+		SetRunState(RUN_PASS);
+	else
+		SetRunState(RUN_FAIL, comparison_.summary);
 	UpdateStatus();
 	UpdateDetails();
 	RefreshViews();
@@ -210,19 +225,26 @@ void RoundtripViewerWindow::RefreshViews()
 
 void RoundtripViewerWindow::UpdateStatus()
 {
-	if(!IsNull(io_error_)) {
-		status_label_.SetText(Format("FAIL — %s", ~io_error_));
+	switch(run_state_) {
+	case RUN_NOT_RUN:
+		status_label_.SetText("Not run");
 		return;
-	}
-	if(IsExactPass(comparison_)) {
+	case RUN_RUNNING:
+		status_label_.SetText("Running...");
+		return;
+	case RUN_PASS:
 		status_label_.SetText("PASS — exact round-trip");
 		return;
-	}
-	if(!comparison_.dimensions_match) {
-		status_label_.SetText(Format("FAIL — %s", ~comparison_.summary));
+	case RUN_FAIL:
+		if(!IsNull(run_message_))
+			status_label_.SetText(Format("FAIL — %s", ~run_message_));
+		else
+			status_label_.SetText(Format("FAIL — %s", ~comparison_.summary));
+		return;
+	default:
+		status_label_.SetText("Not run");
 		return;
 	}
-	status_label_.SetText(Format("FAIL — %d differing components", comparison_.different_components));
 }
 
 void RoundtripViewerWindow::UpdateDetails()
