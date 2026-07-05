@@ -57,6 +57,8 @@ private:
 	static bool IsExactPass(const RoundtripComparison& cmp);
 	static int GetGainValue(const Value& v);
 
+	void SetRunState(int state, const String& message = String());
+
 	void RunSelected();
 	void RunProfile(ProfileKind kind);
 	void RefreshViews();
@@ -88,6 +90,10 @@ private:
 	UiDropdown display_drop_;
 	UiDropdown gain_drop_;
 	UiButton run_button_;
+
+	enum RunState { RUN_NOT_RUN = 0, RUN_RUNNING = 1, RUN_PASS = 2, RUN_FAIL = 3 };
+	int run_state_ = RUN_NOT_RUN;
+	String run_message_;
 
 	PreviewPane generated_pane_;
 	PreviewPane reloaded_pane_;
