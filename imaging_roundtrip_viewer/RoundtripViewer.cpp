@@ -164,7 +164,7 @@ void RoundtripViewerWindow::SetRunState(int state, const String& message)
 
 RoundtripViewerWindow::RoundtripViewerWindow()
 {
-	Title("OpenEXR round-trip viewer");
+	Title("Imaging round-trip viewer");
 	Sizeable().Zoomable();
 	SetRect(0, 0, DPI(1600), DPI(1020));
 	BackPaint();
