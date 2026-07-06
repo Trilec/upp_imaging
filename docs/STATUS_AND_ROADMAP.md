@@ -10,8 +10,8 @@
 | Iex | OpenEXR 3.4.13 stack | `iex_src` | — | — | Green | — | Lower layer complete |
 | IlmThread | OpenEXR 3.4.13 stack | `ilmthread_src` | — | — | Green | — | Lower layer complete |
 | OpenEXRCore | 3.4.13 | `openexr_core_src` | `openexr_core` | `openexr_io` | Green | Green | Scanline RGBA subset complete |
-| JPEG | planned | — | — | — | — | — | Next |
-| TIFF | planned | — | — | — | — | — | After JPEG |
+| JPEG | 3.2.0 | `libjpeg_turbo_src` | `libjpeg_turbo` | `jpeg_io` | Green | Green | RGB8 lossy subset complete |
+| TIFF | planned | — | — | — | — | — | Next |
 | OpenColorIO | planned | — | — | — | — | — | Later foundation |
 | OpenImageIO | planned | — | — | — | — | — | Format abstraction |
 | LumaPix adapter | planned | — | — | — | — | — | Final integration |
@@ -21,23 +21,23 @@
 - EXR scanline RGBA `HALF` and `FLOAT`
 - EXR `NONE` and `ZIP` compression
 - PNG straight RGBA8 read/write
+- JPEG RGB8 load/save
+- JPEG Q95 4:4:4 baseline validation
+- JPEG MAE/RMSE/PSNR acceptance
+- JPEG progressive validation
 - exact numerical round-trip tests for both supported helper paths
 - shared viewer with `Generated`, `Reloaded`, and `Difference` panes
 
 ## Next implementation order
 
-1. `libjpeg-turbo` source and user-facing packages
-2. reusable JPEG IO
-3. lossy comparison rules: tolerance, RMSE, PSNR
-4. JPEG viewer profile
-5. `libtiff` source and user-facing packages
-6. reusable TIFF IO
-7. TIFF 8-bit, 16-bit, and float validation where practical
-8. OpenColorIO CPU foundation
-9. OpenImageIO reduced build
-10. initial OIIO plugins: EXR, PNG, JPEG, TIFF
-11. OCIO integration with the higher-level image stack
-12. LumaPix adapter
+1. `libtiff` source and user-facing packages
+2. reusable TIFF IO
+3. TIFF 8-bit, 16-bit, and float validation where practical
+4. OpenColorIO CPU foundation
+5. OpenImageIO reduced build
+6. initial OIIO plugins: EXR, PNG, JPEG, TIFF
+7. OCIO integration with the higher-level image stack
+8. LumaPix adapter
 
 We are not manually implementing every format supported by OpenImageIO before packaging OpenImageIO.
 

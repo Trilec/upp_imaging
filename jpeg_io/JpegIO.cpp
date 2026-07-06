@@ -29,10 +29,6 @@ static void JpegOutputMessage(j_common_ptr)
 {
 }
 
-static void JpegEmitMessage(j_common_ptr, int)
-{
-}
-
 static bool CheckImage(const JpegRgbImage8& image, String& error)
 {
 	if(image.width <= 0 || image.height <= 0) {
@@ -135,6 +131,7 @@ bool SaveJpegRgb8(const char* path, const JpegRgbImage8& image, const JpegSaveOp
 			*error = "cannot open JPEG output file";
 		return false;
 	}
+	bool file_open = true;
 
 	jpeg_compress_struct cinfo;
 	JpegErrorMgr jerr;
@@ -144,11 +141,14 @@ bool SaveJpegRgb8(const char* path, const JpegRgbImage8& image, const JpegSaveOp
 	cinfo.err = jpeg_std_error(&jerr.pub);
 	jerr.pub.error_exit = JpegErrorExit;
 	jerr.pub.output_message = JpegOutputMessage;
-	jerr.pub.emit_message = JpegEmitMessage;
 
 	if(setjmp(jerr.setjmp_buffer)) {
 		jpeg_destroy_compress(&cinfo);
-		fclose(fp);
+		if(file_open) {
+			fclose(fp);
+			file_open = false;
+		}
+		FileDelete(path);
 		return false;
 	}
 
@@ -172,8 +172,22 @@ bool SaveJpegRgb8(const char* path, const JpegRgbImage8& image, const JpegSaveOp
 	}
 
 	jpeg_finish_compress(&cinfo);
+	if(cinfo.err->num_warnings > 0) {
+		if(error)
+			*error = "JPEG encode completed with warnings";
+		jpeg_destroy_compress(&cinfo);
+		if(file_open) {
+			fclose(fp);
+			file_open = false;
+		}
+		FileDelete(path);
+		return false;
+	}
 	jpeg_destroy_compress(&cinfo);
-	fclose(fp);
+	if(file_open) {
+		fclose(fp);
+		file_open = false;
+	}
 	return true;
 }
 
@@ -194,6 +208,7 @@ bool LoadJpegRgb8(const char* path, JpegRgbImage8& image, String* error)
 			*error = "cannot open JPEG input file";
 		return false;
 	}
+	bool file_open = true;
 
 	jpeg_decompress_struct dinfo;
 	JpegErrorMgr jerr;
@@ -203,11 +218,13 @@ bool LoadJpegRgb8(const char* path, JpegRgbImage8& image, String* error)
 	dinfo.err = jpeg_std_error(&jerr.pub);
 	jerr.pub.error_exit = JpegErrorExit;
 	jerr.pub.output_message = JpegOutputMessage;
-	jerr.pub.emit_message = JpegEmitMessage;
 
 	if(setjmp(jerr.setjmp_buffer)) {
 		jpeg_destroy_decompress(&dinfo);
-		fclose(fp);
+		if(file_open) {
+			fclose(fp);
+			file_open = false;
+		}
 		image.Clear();
 		return false;
 	}
@@ -260,16 +277,39 @@ bool LoadJpegRgb8(const char* path, JpegRgbImage8& image, String* error)
 	image.height = (int)dinfo.output_height;
 	image.pixels.SetCount((int)pixels);
 	const size_t row_stride = (size_t)image.width * 3;
-	Vector<byte> row;
-	row.SetCount((int)row_stride);
+	JSAMPARRAY scanline = (*dinfo.mem->alloc_sarray)((j_common_ptr)&dinfo, JPOOL_IMAGE, (JDIMENSION)row_stride, 1);
 	while(dinfo.output_scanline < dinfo.output_height) {
-		JSAMPROW row_ptr = row.Begin();
-		jpeg_read_scanlines(&dinfo, &row_ptr, 1);
-		memcpy(image.pixels.Begin() + (size_t)(dinfo.output_scanline - 1) * (size_t)image.width, row.Begin(), row_stride);
+		JDIMENSION rows_read = jpeg_read_scanlines(&dinfo, scanline, 1);
+		if(rows_read != 1) {
+			if(error)
+				*error = "JPEG decode completed with warnings; file may be truncated or malformed";
+			jpeg_destroy_decompress(&dinfo);
+			if(file_open) {
+				fclose(fp);
+				file_open = false;
+			}
+			image.Clear();
+			return false;
+		}
+		memcpy(image.pixels.Begin() + (size_t)(dinfo.output_scanline - 1) * (size_t)image.width, scanline[0], row_stride);
 	}
 
 	jpeg_finish_decompress(&dinfo);
+	if(dinfo.err->num_warnings > 0) {
+		if(error)
+			*error = "JPEG decode completed with warnings; file may be truncated or malformed";
+		jpeg_destroy_decompress(&dinfo);
+		if(file_open) {
+			fclose(fp);
+			file_open = false;
+		}
+		image.Clear();
+		return false;
+	}
 	jpeg_destroy_decompress(&dinfo);
-	fclose(fp);
+	if(file_open) {
+		fclose(fp);
+		file_open = false;
+	}
 	return true;
 }
