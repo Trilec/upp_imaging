@@ -1,0 +1,12 @@
+description "GUI link probe for libtiff";
+
+uses
+	CtrlLib,
+	Ui,
+	libtiff;
+
+mainconfig
+	"" = "GUI";
+
+file
+	main.cpp;

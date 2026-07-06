@@ -1,0 +1,8 @@
+description "User-facing libtiff probe";
+
+uses
+	Core,
+	libtiff;
+
+file
+	main.cpp;

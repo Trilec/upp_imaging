@@ -1,0 +1,10 @@
+description "Reusable TIFF IO helper for U++";
+
+uses
+	Core,
+	libtiff;
+
+file
+	TiffIO.h,
+	TiffIO.cpp,
+	README.md;

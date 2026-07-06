@@ -6,6 +6,7 @@
 
 #include <imaging_roundtrip_test_support/ImagingRoundtripTest.h>
 #include <jpeg_io/JpegIO.h>
+#include <tiff_io/TiffIO.h>
 
 namespace Upp {
 
@@ -42,8 +43,9 @@ public:
 	RoundtripViewerWindow();
 
 private:
-	enum FormatKind { FORMAT_EXR = 0, FORMAT_PNG = 1, FORMAT_JPEG = 2 };
-	enum ProfileKind { PROFILE_EXR_HALF_ZIP = 0, PROFILE_EXR_FLOAT_NONE = 1, PROFILE_PNG_RGBA8 = 2, PROFILE_JPEG_RGB95_444 = 3 };
+	enum FormatKind { FORMAT_EXR = 0, FORMAT_PNG = 1, FORMAT_JPEG = 2, FORMAT_TIFF = 3 };
+	enum ProfileKind { PROFILE_EXR_HALF_ZIP = 0, PROFILE_EXR_FLOAT_NONE = 1, PROFILE_PNG_RGBA8 = 2, PROFILE_JPEG_RGB95_444 = 3, PROFILE_TIFF_RGBA8_DEFLATE = 4, PROFILE_TIFF_RGBA16_DEFLATE = 5, PROFILE_TIFF_RGBAF_NONE = 6 };
+	enum TiffProfileKind { TIFF_RGBA8_DEFLATE = 0, TIFF_RGBA16_DEFLATE = 1, TIFF_RGBAF_NONE = 2 };
 	enum DisplayKind { DISPLAY_RGB = 0, DISPLAY_RAW_RGB = 1, DISPLAY_ALPHA = 2 };
 
 	struct ProfileSpec {
@@ -55,6 +57,8 @@ private:
 		bool output_half;
 		bool use_zip;
 		JpegSaveOptions jpeg_options;
+		TiffSaveOptions tiff_options;
+		TiffProfileKind tiff_kind;
 		bool lossy;
 		double max_mae;
 		double max_rmse;
@@ -63,6 +67,7 @@ private:
 
 	static const ProfileSpec& GetProfile(ProfileKind kind);
 	static bool IsExactPass(const RoundtripComparison& cmp);
+	static bool IsExactPass(const RoundtripComparison16& cmp);
 	static bool IsLossyPass(const LossyRgbComparison& cmp, const ProfileSpec& spec);
 	static int GetGainValue(const Value& v);
 
@@ -70,6 +75,7 @@ private:
 
 	void RunSelected();
 	void RunProfile(ProfileKind kind);
+	void RunTiffProfile(const ProfileSpec& spec);
 	void RefreshViews();
 	void UpdateStatus();
 	void UpdateDetails();
@@ -111,6 +117,7 @@ private:
 	TestImageF generated_;
 	TestImageF reloaded_;
 	RoundtripComparison comparison_;
+	RoundtripComparison16 comparison16_;
 	LossyRgbComparison rgb_comparison_;
 	String io_error_;
 	String output_path_;
