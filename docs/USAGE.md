@@ -111,6 +111,45 @@ The output is lossy. ICC profiles and metadata preservation are not implemented.
 CMYK and YCCK are rejected. Malformed and truncated files fail strictly.
 `jpeg_io` is validated under `CLANGx64`.
 
+## TIFF save
+
+```cpp
+#include <tiff_io/TiffIO.h>
+
+const char* path = "example.tif";
+
+TiffRgbaImage8 image;
+image.width = 2;
+image.height = 2;
+image.pixels.SetCount(4);
+
+TiffSaveOptions options;
+options.compression = TiffCompression::Deflate;
+
+Upp::String error;
+if(!SaveTiffRgba8(path, image, options, &error)) {
+    ...
+}
+```
+
+## TIFF load
+
+```cpp
+const char* path = "example.tif";
+
+TiffRgbaImage8 image;
+Upp::String error;
+
+if(!LoadTiffRgba8(path, image, &error)) {
+    ...
+}
+```
+
+Use the typed API that matches the stored TIFF sample type.
+`SaveTiffRgba16()` / `LoadTiffRgba16()` are for 16-bit RGBA.
+`SaveTiffRgbaF()` / `LoadTiffRgbaF()` are for 32-bit float RGBA.
+TIFF support is classic, single-directory, scanline RGBA only.
+
 ## Build
 
 Console test:
