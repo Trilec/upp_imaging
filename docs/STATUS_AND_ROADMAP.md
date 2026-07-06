@@ -41,6 +41,8 @@
 4. OCIO integration with the higher-level image stack
 5. LumaPix adapter
 
+OpenColorIO mandatory dependency foundation is in progress.
+
 We are not manually implementing every format supported by OpenImageIO before packaging OpenImageIO.
 
 The direct format work establishes:

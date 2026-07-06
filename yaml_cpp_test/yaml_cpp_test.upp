@@ -1,0 +1,9 @@
+description "Stable yaml-cpp user-facing probe";
+
+uses
+	Core,
+	yaml_cpp;
+
+file
+	main.cpp,
+	README.md;

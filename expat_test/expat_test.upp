@@ -1,0 +1,9 @@
+description "Stable Expat user-facing probe";
+
+uses
+	Core,
+	expat;
+
+file
+	main.cpp,
+	README.md;

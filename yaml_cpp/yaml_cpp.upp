@@ -1,0 +1,8 @@
+description "Stable yaml-cpp user-facing package";
+
+uses
+	yaml_cpp_src;
+
+file
+	yaml_cpp/yaml.h,
+	README.md;

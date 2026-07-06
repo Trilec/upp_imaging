@@ -1,0 +1,19 @@
+description "Stable minizip-ng user-facing package";
+
+uses
+	minizip_ng_src,
+	zlib;
+
+file
+	minizip_ng/mz.h,
+	minizip_ng/mz_crypt.h,
+	minizip_ng/mz_os.h,
+	minizip_ng/mz_strm.h,
+	minizip_ng/mz_strm_buf.h,
+	minizip_ng/mz_strm_mem.h,
+	minizip_ng/mz_strm_os.h,
+	minizip_ng/mz_strm_split.h,
+	minizip_ng/mz_strm_zlib.h,
+	minizip_ng/mz_zip.h,
+	minizip_ng/mz_zip_rw.h,
+	README.md;

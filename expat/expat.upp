@@ -1,0 +1,8 @@
+description "Stable Expat user-facing package";
+
+uses
+	expat_src;
+
+file
+	expat/expat.h,
+	README.md;

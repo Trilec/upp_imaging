@@ -1,0 +1,10 @@
+description "Stable minizip-ng user-facing probe";
+
+uses
+	Core,
+	minizip_ng,
+	zlib;
+
+file
+	main.cpp,
+	README.md;

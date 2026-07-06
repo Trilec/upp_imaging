@@ -1,0 +1,10 @@
+description "Strict upstream pystring 1.1.4 source package";
+
+noblitz
+NOWARNINGS
+
+file
+	README.md,
+	LICENSE,
+	pystring.h,
+	upstream/pystring.cpp;

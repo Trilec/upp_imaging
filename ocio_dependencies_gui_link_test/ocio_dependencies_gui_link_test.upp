@@ -1,0 +1,17 @@
+description "OCIO dependency GUI coexistence probe";
+
+uses
+	CtrlLib,
+	Ui,
+	expat,
+	yaml_cpp,
+	pystring,
+	minizip_ng,
+	imath,
+	zlib;
+
+mainconfig
+	"" = "GUI";
+
+file
+	main.cpp;
