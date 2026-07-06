@@ -4,6 +4,7 @@
 
 #include <openexr_io/OpenExrIO.h>
 #include <jpeg_io/JpegIO.h>
+#include <tiff_io/TiffIO.h>
 #include <png_io/PngIO.h>
 
 namespace Upp {
@@ -31,6 +32,94 @@ static TestImageF ToTestImageF(const ExrRgbaImageF& src)
 	out.width = src.width;
 	out.height = src.height;
 	if(src.width <= 0 || src.height <= 0)
+		return out;
+	out.pixels.SetCount(src.pixels.GetCount());
+	for(int i = 0; i < src.pixels.GetCount(); ++i) {
+		out.pixels[i].r = src.pixels[i].r;
+		out.pixels[i].g = src.pixels[i].g;
+		out.pixels[i].b = src.pixels[i].b;
+		out.pixels[i].a = src.pixels[i].a;
+	}
+	return out;
+}
+
+static bool IsValidImage(const TestImageF& img);
+
+static TiffRgbaImage8 ToTiffRgbaImage8(const TestImage8& src)
+{
+	TiffRgbaImage8 out;
+	out.width = src.width;
+	out.height = src.height;
+	if(!src.IsValid())
+		return out;
+	out.pixels.SetCount(src.pixels.GetCount());
+	for(int i = 0; i < src.pixels.GetCount(); ++i)
+		out.pixels[i] = {src.pixels[i].r, src.pixels[i].g, src.pixels[i].b, src.pixels[i].a};
+	return out;
+}
+
+static TiffRgbaImage16 ToTiffRgbaImage16(const TestImage16& src)
+{
+	TiffRgbaImage16 out;
+	out.width = src.width;
+	out.height = src.height;
+	if(!src.IsValid())
+		return out;
+	out.pixels.SetCount(src.pixels.GetCount());
+	for(int i = 0; i < src.pixels.GetCount(); ++i)
+		out.pixels[i] = {src.pixels[i].r, src.pixels[i].g, src.pixels[i].b, src.pixels[i].a};
+	return out;
+}
+
+static TiffRgbaImageF ToTiffRgbaImageF(const TestImageF& src)
+{
+	TiffRgbaImageF out;
+	out.width = src.width;
+	out.height = src.height;
+	if(!IsValidImage(src))
+		return out;
+	out.pixels.SetCount(src.pixels.GetCount());
+	for(int i = 0; i < src.pixels.GetCount(); ++i)
+		out.pixels[i] = {src.pixels[i].r, src.pixels[i].g, src.pixels[i].b, src.pixels[i].a};
+	return out;
+}
+
+static TestImage16 ToTestImage16(const TiffRgbaImage16& src)
+{
+	TestImage16 out;
+	out.width = src.width;
+	out.height = src.height;
+	if(!src.IsValid())
+		return out;
+	out.pixels.SetCount(src.pixels.GetCount());
+	for(int i = 0; i < src.pixels.GetCount(); ++i)
+		out.pixels[i] = {src.pixels[i].r, src.pixels[i].g, src.pixels[i].b, src.pixels[i].a};
+	return out;
+}
+
+static TestImage8 ToTestImage8(const TiffRgbaImage8& src)
+{
+	TestImage8 out;
+	out.width = src.width;
+	out.height = src.height;
+	if(!src.IsValid())
+		return out;
+	out.pixels.SetCount(src.pixels.GetCount());
+	for(int i = 0; i < src.pixels.GetCount(); ++i) {
+		out.pixels[i].r = src.pixels[i].r;
+		out.pixels[i].g = src.pixels[i].g;
+		out.pixels[i].b = src.pixels[i].b;
+		out.pixels[i].a = src.pixels[i].a;
+	}
+	return out;
+}
+
+static TestImageF ToTestImageF(const TiffRgbaImageF& src)
+{
+	TestImageF out;
+	out.width = src.width;
+	out.height = src.height;
+	if(!src.IsValid())
 		return out;
 	out.pixels.SetCount(src.pixels.GetCount());
 	for(int i = 0; i < src.pixels.GetCount(); ++i) {
@@ -204,12 +293,15 @@ void PreviewPane::PreviewCanvas::Paint(Draw& w)
 const RoundtripViewerWindow::ProfileSpec& RoundtripViewerWindow::GetProfile(ProfileKind kind)
 {
 	static const ProfileSpec profiles[] = {
-		{"EXR HALF + ZIP", FORMAT_EXR, 256, 192, false, true, true, {}, false, 0.0, 0.0, 0.0},
-		{"EXR FLOAT + NONE", FORMAT_EXR, 256, 192, true, false, false, {}, false, 0.0, 0.0, 0.0},
-		{"PNG RGBA8", FORMAT_PNG, 256, 192, false, false, false, {}, false, 0.0, 0.0, 0.0},
-		{"JPEG RGB8 95 4:4:4", FORMAT_JPEG, 256, 192, false, false, false, {95, JpegSubsampling::S444, false, true}, true, 3.5, 6.5, 32.0},
+		{"EXR HALF + ZIP", FORMAT_EXR, 256, 192, false, true, true, {}, {}, TIFF_RGBA8_DEFLATE, false, 0.0, 0.0, 0.0},
+		{"EXR FLOAT + NONE", FORMAT_EXR, 256, 192, true, false, false, {}, {}, TIFF_RGBA8_DEFLATE, false, 0.0, 0.0, 0.0},
+		{"PNG RGBA8", FORMAT_PNG, 256, 192, false, false, false, {}, {}, TIFF_RGBA8_DEFLATE, false, 0.0, 0.0, 0.0},
+		{"JPEG RGB8 95 4:4:4", FORMAT_JPEG, 256, 192, false, false, false, {95, JpegSubsampling::S444, false, true}, {}, TIFF_RGBA8_DEFLATE, true, 3.5, 6.5, 32.0},
+		{"TIFF RGBA8 + Deflate", FORMAT_TIFF, 256, 192, false, false, false, {}, {TiffCompression::Deflate}, TIFF_RGBA8_DEFLATE, false, 0.0, 0.0, 0.0},
+		{"TIFF RGBA16 + Deflate", FORMAT_TIFF, 257, 193, false, false, false, {}, {TiffCompression::Deflate}, TIFF_RGBA16_DEFLATE, false, 0.0, 0.0, 0.0},
+		{"TIFF RGBA Float32 + NONE", FORMAT_TIFF, 255, 191, true, false, false, {}, {TiffCompression::None}, TIFF_RGBAF_NONE, false, 0.0, 0.0, 0.0},
 	};
-	return profiles[(int)kind < 0 ? 0 : (int)kind > 3 ? 3 : (int)kind];
+	return profiles[(int)kind < 0 ? 0 : (int)kind > 6 ? 6 : (int)kind];
 }
 
 bool RoundtripViewerWindow::IsLossyPass(const LossyRgbComparison& cmp, const ProfileSpec& spec)
@@ -223,6 +315,11 @@ bool RoundtripViewerWindow::IsLossyPass(const LossyRgbComparison& cmp, const Pro
 bool RoundtripViewerWindow::IsExactPass(const RoundtripComparison& cmp)
 {
 	return cmp.dimensions_match && cmp.different_components == 0 && cmp.max_error_r == 0.0 && cmp.max_error_g == 0.0 && cmp.max_error_b == 0.0 && cmp.max_error_a == 0.0 && cmp.mean_absolute_error == 0.0 && cmp.rmse == 0.0;
+}
+
+bool RoundtripViewerWindow::IsExactPass(const RoundtripComparison16& cmp)
+{
+	return cmp.dimensions_match && cmp.different_components == 0 && cmp.max_error_r == 0 && cmp.max_error_g == 0 && cmp.max_error_b == 0 && cmp.max_error_a == 0;
 }
 
 int RoundtripViewerWindow::GetGainValue(const Value& v)
@@ -268,6 +365,9 @@ RoundtripViewerWindow::RoundtripViewerWindow()
 	profile_drop_.Add("EXR FLOAT + NONE", (int)PROFILE_EXR_FLOAT_NONE);
 	profile_drop_.Add("PNG RGBA8", (int)PROFILE_PNG_RGBA8);
 	profile_drop_.Add("JPEG RGB8 95 4:4:4", (int)PROFILE_JPEG_RGB95_444);
+	profile_drop_.Add("TIFF RGBA8 + Deflate", (int)PROFILE_TIFF_RGBA8_DEFLATE);
+	profile_drop_.Add("TIFF RGBA16 + Deflate", (int)PROFILE_TIFF_RGBA16_DEFLATE);
+	profile_drop_.Add("TIFF RGBA Float32 + NONE", (int)PROFILE_TIFF_RGBAF_NONE);
 	profile_drop_.Select(0);
 	display_drop_.Add("RGB", DISPLAY_RGB);
 	display_drop_.Add("Raw RGB", DISPLAY_RAW_RGB);
@@ -327,8 +427,9 @@ void RoundtripViewerWindow::RunProfile(ProfileKind kind)
 	generated_ = TestImageF();
 	reloaded_ = TestImageF();
 	comparison_ = RoundtripComparison();
+	comparison16_ = RoundtripComparison16();
 	output_size_ = -1;
-	output_path_ = spec.format == FORMAT_PNG ? GetExeDirFile("roundtrip_viewer.png") : spec.format == FORMAT_JPEG ? GetExeDirFile("roundtrip_viewer.jpg") : GetExeDirFile("roundtrip_viewer.exr");
+	output_path_ = spec.format == FORMAT_PNG ? GetExeDirFile("roundtrip_viewer.png") : spec.format == FORMAT_JPEG ? GetExeDirFile("roundtrip_viewer.jpg") : spec.format == FORMAT_TIFF ? GetExeDirFile("roundtrip_viewer.tif") : GetExeDirFile("roundtrip_viewer.exr");
 	rgb_comparison_ = LossyRgbComparison();
 
 	if(spec.format == FORMAT_EXR) {
@@ -384,6 +485,10 @@ void RoundtripViewerWindow::RunProfile(ProfileKind kind)
 		reloaded_ = NormalizeToFloat(actual8);
 		rgb_comparison_ = CompareLossyRgb8(expected8, actual8);
 	}
+	else if(spec.format == FORMAT_TIFF) {
+		RunTiffProfile(spec);
+		return;
+	}
 	else {
 		TestImageF source = GenerateRoundtripTestPattern(spec.width, spec.height, false);
 		TestImage8 expected8 = QuantizeToRgba8(source);
@@ -428,6 +533,107 @@ void RoundtripViewerWindow::RunProfile(ProfileKind kind)
 	RefreshViews();
 }
 
+void RoundtripViewerWindow::RunTiffProfile(const ProfileSpec& spec)
+{
+	auto fail = [this](const String& message) {
+		SetRunState(RUN_FAIL, message);
+		UpdateStatus();
+		UpdateDetails();
+		RefreshViews();
+	};
+	auto pass = [this](const String& message = String()) {
+		SetRunState(RUN_PASS, message);
+		UpdateStatus();
+		UpdateDetails();
+		RefreshViews();
+	};
+
+	if(spec.tiff_kind == TIFF_RGBA8_DEFLATE) {
+		TestImageF source = GenerateRoundtripTestPattern(spec.width, spec.height, false);
+		TestImage8 expected8 = QuantizeToRgba8(source);
+		generated_ = NormalizeToFloat(expected8);
+		TiffRgbaImage8 save_image = ToTiffRgbaImage8(expected8);
+		if(!SaveTiffRgba8(~output_path_, save_image, spec.tiff_options, &io_error_)) {
+			fail(io_error_);
+			return;
+		}
+		FileIn in(~output_path_);
+		if(in.IsOpen())
+			output_size_ = (long long)in.GetSize();
+		TiffRgbaImage8 loaded_image;
+		if(!LoadTiffRgba8(~output_path_, loaded_image, &io_error_)) {
+			fail(io_error_);
+			return;
+		}
+		TestImage8 actual8 = ToTestImage8(loaded_image);
+		reloaded_ = NormalizeToFloat(actual8);
+		comparison_ = CompareExact(generated_, reloaded_);
+		if(IsExactPass(comparison_))
+			pass();
+		else
+			fail(comparison_.summary);
+		return;
+	}
+
+	if(spec.tiff_kind == TIFF_RGBA16_DEFLATE) {
+		TestImageF source = GenerateRoundtripTestPattern(spec.width, spec.height, false);
+		TestImage16 expected16 = QuantizeToRgba16(source);
+		generated_ = NormalizeToFloat(expected16);
+		TiffRgbaImage16 save_image = ToTiffRgbaImage16(expected16);
+		if(!SaveTiffRgba16(~output_path_, save_image, spec.tiff_options, &io_error_)) {
+			fail(io_error_);
+			return;
+		}
+		FileIn in(~output_path_);
+		if(in.IsOpen())
+			output_size_ = (long long)in.GetSize();
+		TiffRgbaImage16 loaded_image;
+		if(!LoadTiffRgba16(~output_path_, loaded_image, &io_error_)) {
+			fail(io_error_);
+			return;
+		}
+		TestImage16 actual16 = ToTestImage16(loaded_image);
+		reloaded_ = NormalizeToFloat(actual16);
+		comparison16_ = CompareExact(expected16, actual16);
+		if(IsExactPass(comparison16_))
+			pass();
+		else
+			fail(comparison16_.summary);
+		return;
+	}
+
+	if(spec.tiff_kind == TIFF_RGBAF_NONE) {
+		TestImageF source = GenerateRoundtripTestPattern(spec.width, spec.height, true);
+		generated_.width = source.width;
+		generated_.height = source.height;
+		generated_.pixels.SetCount(source.pixels.GetCount());
+		for(int i = 0; i < source.pixels.GetCount(); ++i)
+			generated_.pixels[i] = source.pixels[i];
+		TiffRgbaImageF save_image = ToTiffRgbaImageF(source);
+		if(!SaveTiffRgbaF(~output_path_, save_image, spec.tiff_options, &io_error_)) {
+			fail(io_error_);
+			return;
+		}
+		FileIn in(~output_path_);
+		if(in.IsOpen())
+			output_size_ = (long long)in.GetSize();
+		TiffRgbaImageF loaded_image;
+		if(!LoadTiffRgbaF(~output_path_, loaded_image, &io_error_)) {
+			fail(io_error_);
+			return;
+		}
+		reloaded_ = ToTestImageF(loaded_image);
+		comparison_ = CompareExact(generated_, reloaded_);
+		if(IsExactPass(comparison_))
+			pass();
+		else
+			fail(comparison_.summary);
+		return;
+	}
+
+	fail("unsupported TIFF profile");
+}
+
 void RoundtripViewerWindow::RefreshViews()
 {
 	DisplayKind kind = (DisplayKind)(int)display_drop_.GetSelectedData();
@@ -454,6 +660,8 @@ void RoundtripViewerWindow::UpdateStatus()
 	case RUN_FAIL:
 		if(!IsNull(run_message_))
 			status_label_.SetText(Format("FAIL — %s", ~run_message_));
+		else if(GetProfile((ProfileKind)(int)profile_drop_.GetSelectedData()).format == FORMAT_TIFF && GetProfile((ProfileKind)(int)profile_drop_.GetSelectedData()).tiff_kind == TIFF_RGBA16_DEFLATE)
+			status_label_.SetText(Format("FAIL — %s", ~comparison16_.summary));
 		else
 			status_label_.SetText(Format("FAIL — %s", ~comparison_.summary));
 		return;
@@ -480,6 +688,19 @@ void RoundtripViewerWindow::UpdateDetails()
 			rgb_comparison_.mean_absolute_error,
 			rgb_comparison_.rmse,
 			rgb_comparison_.psnr));
+	}
+	else if(spec.format == FORMAT_TIFF && spec.tiff_kind == TIFF_RGBA16_DEFLATE) {
+		details_label_.SetText(Format(
+			"Profile: %s\nDimensions: %dx%d\nFile size: %s\nDifferent components: %d\nMax R error: %d\nMax G error: %d\nMax B error: %d\nMax A error: %d",
+			AsString(profile_drop_.GetItemText(profile_drop_.GetSelection())),
+			generated_.width,
+			generated_.height,
+			size_text,
+			comparison16_.different_components,
+			comparison16_.max_error_r,
+			comparison16_.max_error_g,
+			comparison16_.max_error_b,
+			comparison16_.max_error_a));
 	}
 	else {
 		details_label_.SetText(Format(

@@ -4,6 +4,17 @@
 
 using namespace Upp;
 
+static float ClampFloat(float v, float lo, float hi)
+{
+	return v < lo ? lo : (v > hi ? hi : v);
+}
+
+static uint16_t ClampU16(float v)
+{
+	v = ClampFloat(v, 0.0f, 1.0f);
+	return (uint16_t)(v * 65535.0f + 0.5f);
+}
+
 RoundtripComparison::RoundtripComparison()
 {
 	dimensions_match = true;
@@ -14,11 +25,6 @@ RoundtripComparison::RoundtripComparison()
 	max_error_a = 0.0;
 	mean_absolute_error = 0.0;
 	rmse = 0.0;
-}
-
-static float ClampFloat(float v, float lo, float hi)
-{
-	return v < lo ? lo : (v > hi ? hi : v);
 }
 
 static byte ClampByte(float v)
@@ -280,6 +286,18 @@ bool TestRgbImage8::IsValid() const
 	return width > 0 && height > 0 && pixels.GetCount() == (int64)width * height;
 }
 
+void TestImage16::Clear()
+{
+	width = 0;
+	height = 0;
+	pixels.Clear();
+}
+
+bool TestImage16::IsValid() const
+{
+	return width > 0 && height > 0 && pixels.GetCount() == (int64)width * height;
+}
+
 TestImage8 QuantizeToRgba8(const TestImageF& source)
 {
 	TestImage8 out;
@@ -299,6 +317,25 @@ TestImage8 QuantizeToRgba8(const TestImageF& source)
 	return out;
 }
 
+TestImage16 QuantizeToRgba16(const TestImageF& source)
+{
+	TestImage16 out;
+	out.width = source.width;
+	out.height = source.height;
+	if(source.width <= 0 || source.height <= 0)
+		return out;
+	const int64 count = (int64)source.width * source.height;
+	out.pixels.SetCount((int)count);
+	for(int i = 0; i < source.pixels.GetCount(); ++i) {
+		const TestRgbaF& p = source.pixels[i];
+		out.pixels[i].r = ClampU16(p.r);
+		out.pixels[i].g = ClampU16(p.g);
+		out.pixels[i].b = ClampU16(p.b);
+		out.pixels[i].a = ClampU16(p.a);
+	}
+	return out;
+}
+
 TestImageF NormalizeToFloat(const TestImage8& source)
 {
 	TestImageF out;
@@ -313,6 +350,24 @@ TestImageF NormalizeToFloat(const TestImage8& source)
 		out.pixels[i].g = (float)p.g / 255.0f;
 		out.pixels[i].b = (float)p.b / 255.0f;
 		out.pixels[i].a = (float)p.a / 255.0f;
+	}
+	return out;
+}
+
+TestImageF NormalizeToFloat(const TestImage16& source)
+{
+	TestImageF out;
+	out.width = source.width;
+	out.height = source.height;
+	if(!source.IsValid())
+		return out;
+	out.pixels.SetCount(source.pixels.GetCount());
+	for(int i = 0; i < source.pixels.GetCount(); ++i) {
+		const TestRgba16& p = source.pixels[i];
+		out.pixels[i].r = (float)p.r / 65535.0f;
+		out.pixels[i].g = (float)p.g / 65535.0f;
+		out.pixels[i].b = (float)p.b / 65535.0f;
+		out.pixels[i].a = (float)p.a / 65535.0f;
 	}
 	return out;
 }
@@ -384,6 +439,64 @@ static RoundtripComparison8 CompareImpl(const TestImage8& expected, const TestIm
 RoundtripComparison8 CompareExact(const TestImage8& expected, const TestImage8& actual)
 {
 	return CompareImpl(expected, actual);
+}
+
+static RoundtripComparison16 MakeMalformedComparison16(const char* text)
+{
+	RoundtripComparison16 cmp;
+	cmp.dimensions_match = false;
+	cmp.different_components = 1;
+	cmp.summary = text;
+	return cmp;
+}
+
+RoundtripComparison16 CompareExact(const TestImage16& expected, const TestImage16& actual)
+{
+	RoundtripComparison16 cmp;
+	if(!expected.IsValid())
+		return MakeMalformedComparison16("malformed expected image object");
+	if(!actual.IsValid())
+		return MakeMalformedComparison16("malformed actual image object");
+	if(expected.width != actual.width || expected.height != actual.height)
+		cmp.dimensions_match = false;
+
+	const int w = expected.width < actual.width ? expected.width : actual.width;
+	const int h = expected.height < actual.height ? expected.height : actual.height;
+	for(int y = 0; y < h; ++y) {
+		for(int x = 0; x < w; ++x) {
+			const TestRgba16& e = expected.pixels[y * expected.width + x];
+			const TestRgba16& a = actual.pixels[y * actual.width + x];
+			const int dr = abs((int)e.r - (int)a.r);
+			const int dg = abs((int)e.g - (int)a.g);
+			const int db = abs((int)e.b - (int)a.b);
+			const int da = abs((int)e.a - (int)a.a);
+			cmp.max_error_r = dr > cmp.max_error_r ? dr : cmp.max_error_r;
+			cmp.max_error_g = dg > cmp.max_error_g ? dg : cmp.max_error_g;
+			cmp.max_error_b = db > cmp.max_error_b ? db : cmp.max_error_b;
+			cmp.max_error_a = da > cmp.max_error_a ? da : cmp.max_error_a;
+			cmp.different_components += (dr != 0) + (dg != 0) + (db != 0) + (da != 0);
+		}
+	}
+	if(!cmp.dimensions_match) {
+		int64 pixel_diff = (int64)expected.width * expected.height - (int64)actual.width * actual.height;
+		if(pixel_diff < 0)
+			pixel_diff = -pixel_diff;
+		cmp.different_components += (int)(pixel_diff * 4);
+	}
+	if(cmp.different_components == 0 && cmp.dimensions_match)
+		cmp.summary = "OK";
+	else if(!cmp.dimensions_match)
+		cmp.summary = Format("dimension mismatch: expected=%dx%d actual=%dx%d",
+			expected.width, expected.height, actual.width, actual.height);
+	else
+		cmp.summary = Format("dimensions_match=%s different_components=%d max_error_r=%d max_error_g=%d max_error_b=%d max_error_a=%d",
+			cmp.dimensions_match ? "true" : "false",
+			cmp.different_components,
+			cmp.max_error_r,
+			cmp.max_error_g,
+			cmp.max_error_b,
+			cmp.max_error_a);
+	return cmp;
 }
 
 static LossyRgbComparison MakeMalformedRgbComparison(const char* text)

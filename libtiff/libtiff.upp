@@ -1,0 +1,9 @@
+description "Stable user-facing libtiff package for U++";
+
+uses
+	libtiff_src;
+
+file
+	tiff.h,
+	tiffio.h,
+	README.md;

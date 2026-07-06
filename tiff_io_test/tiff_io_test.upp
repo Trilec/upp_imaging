@@ -1,0 +1,10 @@
+description "TIFF IO regression test";
+
+uses
+	Core,
+	libtiff,
+	tiff_io,
+	imaging_roundtrip_test_support;
+
+file
+	main.cpp;
