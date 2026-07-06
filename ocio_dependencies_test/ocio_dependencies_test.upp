@@ -1,0 +1,14 @@
+description "Aggregate OCIO dependency coexistence test";
+
+uses
+	Core,
+	expat,
+	yaml_cpp,
+	pystring,
+	minizip_ng,
+	imath,
+	zlib;
+
+file
+	main.cpp,
+	README.md;

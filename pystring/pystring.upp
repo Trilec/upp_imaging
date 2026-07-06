@@ -1,0 +1,8 @@
+description "Stable pystring user-facing package";
+
+uses
+	pystring_src;
+
+file
+	pystring/pystring.h,
+	README.md;

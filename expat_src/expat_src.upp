@@ -1,0 +1,17 @@
+description "Strict upstream Expat 2.7.2 source package";
+
+noblitz
+NOWARNINGS
+
+file
+	expat_config.h,
+	expat.h,
+	expat_external.h,
+	README.md,
+	upstream/COPYING,
+	upstream/lib/expat_config.h,
+	upstream/lib/xmlparse.c,
+	upstream/lib/xmlrole.c,
+	upstream/lib/xmltok.c,
+	upstream/lib/xmltok_impl.c,
+	upstream/lib/xmltok_ns.c;

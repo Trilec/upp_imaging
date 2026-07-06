@@ -1,0 +1,9 @@
+description "Strict yaml-cpp source probe";
+
+uses
+	Core,
+	yaml_cpp_src;
+
+file
+	main.cpp,
+	README.md;
