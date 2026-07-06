@@ -5,12 +5,14 @@
 ```cpp
 #include <openexr_io/OpenExrIO.h>
 
+const char* path = "example.exr";
+
 ExrRgbaImageF image;
 image.width = 2;
 image.height = 2;
 image.pixels.SetCount(4);
 
-String error;
+Upp::String error;
 if(!SaveExrRgbaF(path, image, true, true, &error)) {
     // output_half = true
     // use_zip = true
@@ -22,8 +24,10 @@ if(!SaveExrRgbaF(path, image, true, true, &error)) {
 ## EXR load
 
 ```cpp
+const char* path = "example.exr";
+
 ExrRgbaImageF image;
-String error;
+Upp::String error;
 
 if(!LoadExrRgbaF(path, image, &error)) {
     ...
@@ -37,12 +41,14 @@ RGB is required; missing alpha becomes `1.0f`.
 ```cpp
 #include <png_io/PngIO.h>
 
+const char* path = "example.png";
+
 PngRgbaImage8 image;
 image.width = 2;
 image.height = 2;
 image.pixels.SetCount(4);
 
-String error;
+Upp::String error;
 if(!SavePngRgba8(path, image, &error)) {
     ...
 }
@@ -51,8 +57,10 @@ if(!SavePngRgba8(path, image, &error)) {
 ## PNG load
 
 ```cpp
+const char* path = "example.png";
+
 PngRgbaImage8 image;
-String error;
+Upp::String error;
 
 if(!LoadPngRgba8(path, image, &error)) {
     ...
@@ -60,6 +68,48 @@ if(!LoadPngRgba8(path, image, &error)) {
 ```
 
 Pixels are straight, non-premultiplied RGBA8.
+
+## JPEG save
+
+```cpp
+#include <jpeg_io/JpegIO.h>
+
+const char* path = "example.jpg";
+
+JpegRgbImage8 image;
+image.width = 2;
+image.height = 2;
+image.pixels.SetCount(4);
+
+Upp::String error;
+JpegSaveOptions options;
+options.quality = 95;
+options.subsampling = JpegSubsampling::S444;
+options.progressive = false;
+options.optimize_coding = true;
+
+if(!SaveJpegRgb8(path, image, options, &error)) {
+    ...
+}
+```
+
+## JPEG load
+
+```cpp
+const char* path = "example.jpg";
+
+JpegRgbImage8 image;
+Upp::String error;
+
+if(!LoadJpegRgb8(path, image, &error)) {
+    ...
+}
+```
+
+JPEG is RGB-only. Alpha is not stored or composited by `jpeg_io`.
+The output is lossy. ICC profiles and metadata preservation are not implemented.
+CMYK and YCCK are rejected. Malformed and truncated files fail strictly.
+`jpeg_io` is validated under `CLANGx64`.
 
 ## Build
 

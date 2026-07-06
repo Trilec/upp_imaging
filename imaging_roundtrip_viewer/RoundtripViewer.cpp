@@ -214,7 +214,10 @@ const RoundtripViewerWindow::ProfileSpec& RoundtripViewerWindow::GetProfile(Prof
 
 bool RoundtripViewerWindow::IsLossyPass(const LossyRgbComparison& cmp, const ProfileSpec& spec)
 {
-	return cmp.dimensions_match && cmp.max_error_r <= spec.max_mae && cmp.max_error_g <= spec.max_mae && cmp.max_error_b <= spec.max_mae && cmp.rmse <= spec.max_rmse && cmp.psnr >= spec.min_psnr;
+	return cmp.dimensions_match
+		&& cmp.mean_absolute_error <= spec.max_mae
+		&& cmp.rmse <= spec.max_rmse
+		&& cmp.psnr >= spec.min_psnr;
 }
 
 bool RoundtripViewerWindow::IsExactPass(const RoundtripComparison& cmp)

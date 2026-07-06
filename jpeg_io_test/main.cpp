@@ -37,13 +37,30 @@ static TestRgbImage8 ToTestRgbImage8(const JpegRgbImage8& src)
 	return out;
 }
 
-static void WriteTruncatedFile(const char* path)
+static bool MeetsPolicy(const LossyRgbComparison& cmp)
+{
+	return cmp.dimensions_match && cmp.mean_absolute_error <= 3.5 && cmp.rmse <= 6.5 && cmp.psnr >= 32.0;
+}
+
+static bool EndsWithEoi(const String& data)
+{
+	return data.GetCount() >= 2 && (byte)data[data.GetCount() - 2] == 0xff && (byte)data[data.GetCount() - 1] == 0xd9;
+}
+
+static void WriteMalformedHeaderFile(const char* path)
 {
 	FileOut out(path);
 	if(out.IsOpen()) {
 		const byte junk[] = { 0xff, 0xd8, 0xff, 0x00, 0x00, 0x00 };
 		out.Put(junk, sizeof(junk));
 	}
+}
+
+static void WriteTruncatedValidFile(const char* path, const String& valid_data)
+{
+	FileOut out(path);
+	if(out.IsOpen() && valid_data.GetCount() >= 2)
+		out.Put(valid_data.Begin(), valid_data.GetCount() - 2);
 }
 
 CONSOLE_APP_MAIN
@@ -53,9 +70,13 @@ CONSOLE_APP_MAIN
 	String error;
 
 	const String path = GetExeDirFile("jpeg_io_roundtrip.jpg");
+	const String progressive_path = GetExeDirFile("jpeg_io_roundtrip_progressive.jpg");
 	const String bad_path = GetExeDirFile("jpeg_io_truncated.jpg");
+	const String truncated_path = GetExeDirFile("jpeg_io_truncated_valid.jpg");
 	const String missing_path = GetExeDirFile("jpeg_io_missing_input.jpg");
 	FileDelete(missing_path);
+	FileDelete(progressive_path);
+	FileDelete(truncated_path);
 
 	TestImageF generated_float = GenerateRoundtripTestPattern(256, 192, false);
 	TestImage8 quantized = QuantizeToRgba8(generated_float);
@@ -85,6 +106,12 @@ CONSOLE_APP_MAIN
 	}
 	printf("JPEG IO save Q95 4:4:4: OK\n");
 	++passed;
+	String valid_data = LoadFile(path);
+	printf("JPEG IO EOI marker: %s\n", EndsWithEoi(valid_data) ? "OK" : "FAIL");
+	if(EndsWithEoi(valid_data))
+		++passed;
+	else
+		++failed;
 
 	JpegRgbImage8 loaded_image;
 	error.Clear();
@@ -104,7 +131,8 @@ CONSOLE_APP_MAIN
 		++passed;
 	else
 		++failed;
-	printf("JPEG IO metrics: MAE=%.9g RMSE=%.9g PSNR=%.9g dB\n", cmp.mean_absolute_error, cmp.rmse, cmp.psnr);
+	printf("JPEG IO metrics: max_error_r=%d max_error_g=%d max_error_b=%d MAE=%.9g RMSE=%.9g PSNR=%.9g dB\n",
+		cmp.max_error_r, cmp.max_error_g, cmp.max_error_b, cmp.mean_absolute_error, cmp.rmse, cmp.psnr);
 	if(cmp.dimensions_match && cmp.mean_absolute_error <= 3.5 && cmp.rmse <= 6.5 && cmp.psnr >= 32.0) {
 		printf("JPEG IO quality policy: OK\n");
 		++passed;
@@ -114,7 +142,49 @@ CONSOLE_APP_MAIN
 		++failed;
 	}
 
-	WriteTruncatedFile(~bad_path);
+	JpegSaveOptions progressive_options = options;
+	progressive_options.progressive = true;
+	if(!SaveJpegRgb8(~progressive_path, save_image, progressive_options, &error)) {
+		printf("JPEG IO progressive save: FAIL (%s)\n", IsNull(error) ? "unknown" : ~error);
+		++failed;
+		SetExitCode(1);
+		return;
+	}
+	printf("JPEG IO progressive save: OK\n");
+	++passed;
+
+	JpegRgbImage8 progressive_loaded;
+	error.Clear();
+	if(!LoadJpegRgb8(~progressive_path, progressive_loaded, &error)) {
+		printf("JPEG IO progressive load: FAIL (%s)\n", IsNull(error) ? "unknown" : ~error);
+		++failed;
+		SetExitCode(1);
+		return;
+	}
+	printf("JPEG IO progressive load: OK\n");
+	++passed;
+	TestRgbImage8 progressive_actual = ToTestRgbImage8(progressive_loaded);
+	LossyRgbComparison progressive_cmp = CompareLossyRgb8(expected, progressive_actual);
+	printf("JPEG IO progressive dimensions: %s\n", progressive_cmp.dimensions_match ? "OK" : "FAIL");
+	if(progressive_cmp.dimensions_match)
+		++passed;
+	else
+		++failed;
+	printf("JPEG IO progressive metrics: max_error_r=%d max_error_g=%d max_error_b=%d MAE=%.9g RMSE=%.9g PSNR=%.9g dB\n",
+		progressive_cmp.max_error_r, progressive_cmp.max_error_g, progressive_cmp.max_error_b, progressive_cmp.mean_absolute_error, progressive_cmp.rmse, progressive_cmp.psnr);
+	printf("JPEG IO progressive policy: %s\n", MeetsPolicy(progressive_cmp) ? "OK" : "FAIL");
+	if(MeetsPolicy(progressive_cmp))
+		++passed;
+	else
+		++failed;
+
+	String progressive_file_data = LoadFile(progressive_path);
+	printf("JPEG IO progressive file_size=%lld bytes\n", (long long)progressive_file_data.GetCount());
+
+	WriteMalformedHeaderFile(~bad_path);
+	WriteTruncatedValidFile(~truncated_path, valid_data);
+	bool malformed_header_ok = true;
+	bool truncated_valid_ok = true;
 
 	bool validation_ok = true;
 	JpegRgbImage8 invalid;
@@ -137,7 +207,21 @@ CONSOLE_APP_MAIN
 	error.Clear();
 	if(LoadJpegRgb8(~missing_path, invalid, &error) || IsNull(error)) validation_ok = false;
 	error.Clear();
-	if(LoadJpegRgb8(~bad_path, invalid, &error) || IsNull(error)) validation_ok = false;
+	if(LoadJpegRgb8(~bad_path, invalid, &error) || IsNull(error) || invalid.IsValid()) malformed_header_ok = false;
+	printf("JPEG IO malformed header rejection: %s\n", malformed_header_ok ? "OK" : "FAIL");
+	if(malformed_header_ok)
+		++passed;
+	else
+		++failed;
+	error.Clear();
+	if(LoadJpegRgb8(~truncated_path, invalid, &error) || IsNull(error) || invalid.IsValid()) truncated_valid_ok = false;
+	printf("JPEG IO truncated valid file rejection: %s\n", truncated_valid_ok ? "OK" : "FAIL");
+	if(truncated_valid_ok)
+		++passed;
+	else
+		++failed;
+	error.Clear();
+	if(!EndsWithEoi(valid_data) || !EndsWithEoi(progressive_file_data)) validation_ok = false;
 	printf("JPEG IO validation failures: %s\n", validation_ok ? "OK" : "FAIL");
 	if(validation_ok)
 		++passed;
@@ -146,6 +230,10 @@ CONSOLE_APP_MAIN
 
 	FileIn in(~path);
 	printf("JPEG IO file_size=%lld bytes\n", in.IsOpen() ? (long long)in.GetSize() : -1LL);
+	FileIn progressive_in(~progressive_path);
+	printf("JPEG IO progressive_file_size=%lld bytes\n", progressive_in.IsOpen() ? (long long)progressive_in.GetSize() : -1LL);
+	printf("JPEG IO baseline metrics: max_error_r=%d max_error_g=%d max_error_b=%d MAE=%.9g RMSE=%.9g PSNR=%.9g dB\n",
+		cmp.max_error_r, cmp.max_error_g, cmp.max_error_b, cmp.mean_absolute_error, cmp.rmse, cmp.psnr);
 	printf("SUMMARY passed=%d failed=%d\n", passed, failed);
 	SetExitCode(failed ? 1 : 0);
 }
