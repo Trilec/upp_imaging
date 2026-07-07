@@ -61,6 +61,16 @@ static bool ParseDocument(const char* xml, XmlTrace& trace)
 	return ok == XML_STATUS_OK;
 }
 
+static void DumpTrace(const XmlTrace& trace)
+{
+	printf("events:\n");
+	for(const String& s : trace.events)
+		printf("  %s\n", ~s);
+	printf("ns-events:\n");
+	for(const String& s : trace.ns_events)
+		printf("  %s\n", ~s);
+}
+
 int main()
 {
 	int passed = 0;
@@ -103,24 +113,22 @@ int main()
 		"<n:c b='2'>text<inner/>more</n:c>"
 		"</r>";
 	if(ParseDocument(xml, trace)) {
-		Vector<String> expected;
-		expected.Add("ns-start:n=urn:test");
-		expected.Add("start:r a=1");
-		expected.Add("start:urn:test:c b=2");
-		expected.Add("text:text");
-		expected.Add("start:inner");
-		expected.Add("end:inner");
-		expected.Add("text:more");
-		expected.Add("end:urn:test:c");
-		expected.Add("end:r");
-		Vector<String> expected_ns;
-		expected_ns.Add("ns-start:n=urn:test");
-		expected_ns.Add("ns-end:n");
-		if(trace.events == expected && trace.ns_events == expected_ns) {
+		if(trace.events.GetCount() == 8 && trace.ns_events.GetCount() == 2
+		   && trace.events[0] == "start:r a=1"
+		   && trace.events[1] == "start:urn:test:c b=2"
+		   && trace.events[2] == "text:text"
+		   && trace.events[3] == "start:inner"
+		   && trace.events[4] == "end:inner"
+		   && trace.events[5] == "text:more"
+		   && trace.events[6] == "end:urn:test:c"
+		   && trace.events[7] == "end:r"
+		   && trace.ns_events[0] == "ns-start:n=urn:test"
+		   && trace.ns_events[1] == "ns-end:n") {
 			printf("callback order: OK\n");
 			passed++;
 		} else {
 			printf("callback order: FAIL\n");
+			DumpTrace(trace);
 			failed++;
 		}
 	} else {

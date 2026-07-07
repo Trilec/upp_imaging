@@ -4,6 +4,10 @@
 
 #include <yaml_cpp/yaml.h>
 
+#ifndef UPP_IMAGING_LOCAL_YAML_CPP_INCLUDE_TREE
+#error yaml-cpp did not resolve through the local upp_imaging include tree
+#endif
+
 using namespace Upp;
 
 static bool CheckNode(const YAML::Node& node)
@@ -35,6 +39,9 @@ int main()
 {
 	int passed = 0;
 	int failed = 0;
+
+	printf("local include tree: OK\n");
+	passed++;
 
 	const char* yaml_text =
 		"name: ocio\n"

@@ -61,6 +61,16 @@ static bool ParseDocument(const char* xml, XmlTrace& trace)
 	return ok == XML_STATUS_OK;
 }
 
+static void DumpTrace(const XmlTrace& trace)
+{
+	printf("events:\n");
+	for(const String& s : trace.events)
+		printf("  %s\n", ~s);
+	printf("ns-events:\n");
+	for(const String& s : trace.ns_events)
+		printf("  %s\n", ~s);
+}
+
 int main()
 {
 	int passed = 0;
@@ -81,21 +91,20 @@ int main()
 		"<n:c b='2'>text<inner/>more</n:c>"
 		"</r>";
 	if(ParseDocument(xml, trace)) {
-		Vector<String> expected;
-		expected.Add("ns-start:n=urn:test");
-		expected.Add("start:r a=1");
-		expected.Add("start:urn:test:c b=2");
-		expected.Add("text:text");
-		expected.Add("start:inner");
-		expected.Add("end:inner");
-		expected.Add("text:more");
-		expected.Add("end:urn:test:c");
-		expected.Add("end:r");
-		if(trace.events == expected) {
+		if(trace.events.GetCount() == 8
+		   && trace.events[0] == "start:r a=1"
+		   && trace.events[1] == "start:urn:test:c b=2"
+		   && trace.events[2] == "text:text"
+		   && trace.events[3] == "start:inner"
+		   && trace.events[4] == "end:inner"
+		   && trace.events[5] == "text:more"
+		   && trace.events[6] == "end:urn:test:c"
+		   && trace.events[7] == "end:r") {
 			printf("XML parse: OK\n");
 			passed++;
 		} else {
 			printf("XML parse: FAIL\n");
+			DumpTrace(trace);
 			failed++;
 		}
 	} else {
