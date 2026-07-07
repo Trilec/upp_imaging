@@ -1,0 +1,8 @@
+description "Stable OpenColorIO user-facing package";
+
+uses
+	opencolorio_src;
+
+file
+	OpenColorIO.h,
+	README.md;
