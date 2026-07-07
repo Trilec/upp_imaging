@@ -4,6 +4,10 @@
 
 #include <pystring/pystring.h>
 
+#ifndef UPP_IMAGING_LOCAL_PYSTRING_INCLUDE
+#error pystring did not resolve through the local upp_imaging include tree
+#endif
+
 using namespace Upp;
 
 static bool Check(const Vector<String>& got, const Vector<String>& expected)
@@ -15,6 +19,8 @@ int main()
 {
 	int passed = 0;
 	int failed = 0;
+
+	printf("local include tree: OK\n");
 
 	const std::vector<std::string> split = pystring::split("red,green,blue", ",");
 	Vector<String> split_expected;

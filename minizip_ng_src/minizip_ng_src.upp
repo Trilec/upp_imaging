@@ -9,6 +9,8 @@ uses
 file
 	README.md,
 	LICENSE,
+	zlib.h,
+	upstream/zlib-ng.h,
 	mz.h,
 	mz_crypt.h,
 	mz_os.h,

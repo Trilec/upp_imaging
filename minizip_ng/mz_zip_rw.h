@@ -1,3 +1,3 @@
 #pragma once
 
-#include <mz_zip_rw.h>
+#include <minizip_ng_src/mz_zip_rw.h>

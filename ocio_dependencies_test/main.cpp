@@ -3,15 +3,28 @@
 #include <stdio.h>
 #include <string.h>
 #include <imath/ImathVec.h>
-#include <mz.h>
-#include <mz_zip.h>
-#include <mz_zip_rw.h>
-#include <pystring.h>
+#include <minizip_ng/mz.h>
+#include <minizip_ng/mz_strm.h>
+#include <minizip_ng/mz_zip.h>
+#include <minizip_ng/mz_zip_rw.h>
+#include <pystring/pystring.h>
 #include <time.h>
-#include <yaml-cpp/yaml.h>
+#include <yaml_cpp/yaml.h>
 #include <zlib.h>
 
 #include <expat/expat.h>
+
+#ifndef UPP_IMAGING_LOCAL_YAML_CPP_INCLUDE_TREE
+#error local yaml-cpp package not selected
+#endif
+
+#ifndef UPP_IMAGING_LOCAL_PYSTRING_INCLUDE
+#error local pystring package not selected
+#endif
+
+#ifndef UPP_IMAGING_LOCAL_MINIZIP_NG_INCLUDE
+#error local minizip-ng package not selected
+#endif
 
 using namespace Upp;
 
@@ -60,7 +73,9 @@ static bool TestYamlCpp()
 
 static bool TestPystring()
 {
-	return pystring::lower("HeLLo") == "hello" && pystring::split("a,b", ",") == std::vector<std::string>{"a", "b"};
+	return pystring::lower("HeLLo") == "hello"
+		&& pystring::split("a,b", ",") == std::vector<std::string>{"a", "b"}
+		&& pystring::join("-", std::vector<std::string>{"a", "b"}) == "a-b";
 }
 
 static bool TestMinizip()
@@ -84,7 +99,8 @@ static bool TestMinizip()
 	info.uncompressed_size = (int64_t)strlen(one);
 	info.modified_date = time(NULL);
 	if(mz_zip_writer_add_buffer(writer, (void*)one, (int)strlen(one), &info) != MZ_OK) {
-		mz_zip_writer_close(writer);
+		if(mz_zip_writer_close(writer) != MZ_OK)
+			return false;
 		mz_zip_writer_delete(&writer);
 		FileDelete(path);
 		return false;
@@ -95,13 +111,23 @@ static bool TestMinizip()
 	info.uncompressed_size = (int64_t)strlen(two);
 	info.modified_date = time(NULL);
 	if(mz_zip_writer_add_buffer(writer, (void*)two, (int)strlen(two), &info) != MZ_OK) {
-		mz_zip_writer_close(writer);
+		if(mz_zip_writer_close(writer) != MZ_OK)
+			return false;
 		mz_zip_writer_delete(&writer);
 		FileDelete(path);
 		return false;
 	}
-	mz_zip_writer_close(writer);
+	if(mz_zip_writer_close(writer) != MZ_OK) {
+		mz_zip_writer_delete(&writer);
+		FileDelete(path);
+		return false;
+	}
 	mz_zip_writer_delete(&writer);
+	FileIn in(path);
+	if(!in.IsOpen() || in.GetSize() <= 0) {
+		FileDelete(path);
+		return false;
+	}
 
 	void* reader = mz_zip_reader_create();
 	if(!reader)
@@ -110,20 +136,33 @@ static bool TestMinizip()
 	if(ok) {
 		ok = mz_zip_reader_locate_entry(reader, "one.txt", 0) == MZ_OK && mz_zip_reader_entry_open(reader) == MZ_OK;
 		if(ok) {
+			mz_zip_file* entry = NULL;
+			ok = mz_zip_reader_entry_get_info(reader, &entry) == MZ_OK && entry && entry->filename
+				&& strcmp(entry->filename, "one.txt") == 0 && entry->uncompressed_size == (int64_t)strlen(one)
+				&& entry->compression_method == MZ_COMPRESS_METHOD_STORE;
+		}
+		if(ok) {
 			char buf[8] = {};
 			const int rc = mz_zip_reader_entry_read(reader, buf, (int)sizeof(buf));
 			ok = rc == 3 && memcmp(buf, one, 3) == 0;
-			mz_zip_reader_entry_close(reader);
+			ok = ok && mz_zip_reader_entry_close(reader) == MZ_OK;
 		}
 		if(ok) {
 			ok = mz_zip_reader_locate_entry(reader, "two.txt", 0) == MZ_OK && mz_zip_reader_entry_open(reader) == MZ_OK;
 			if(ok) {
+				mz_zip_file* entry = NULL;
+				ok = mz_zip_reader_entry_get_info(reader, &entry) == MZ_OK && entry && entry->filename
+					&& strcmp(entry->filename, "two.txt") == 0 && entry->uncompressed_size == (int64_t)strlen(two)
+					&& entry->compression_method == MZ_COMPRESS_METHOD_STORE;
+			}
+			if(ok) {
 				char buf[8] = {};
 				const int rc = mz_zip_reader_entry_read(reader, buf, (int)sizeof(buf));
 				ok = rc == 3 && memcmp(buf, two, 3) == 0;
-				mz_zip_reader_entry_close(reader);
+				ok = ok && mz_zip_reader_entry_close(reader) == MZ_OK;
 			}
 		}
+		ok = ok && mz_zip_reader_close(reader) == MZ_OK;
 	}
 	mz_zip_reader_delete(&reader);
 	FileDelete(path);
