@@ -2,4 +2,4 @@
 
 #define ZLIB_COMPAT 1
 
-#include "../zlib.h"
+#include "../zlib-ng.h"

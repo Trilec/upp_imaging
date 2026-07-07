@@ -12,7 +12,7 @@
 #include <minizip_ng/mz_zip_rw.h>
 #include <pystring/pystring.h>
 #include <yaml_cpp/yaml.h>
-#include <zlib.h>
+#include <zlib/zlib.h>
 
 #ifndef UPP_IMAGING_LOCAL_YAML_CPP_INCLUDE_TREE
 #error local yaml-cpp package not selected
@@ -105,11 +105,17 @@ GUI_APP_MAIN
 		failed++;
 	}
 
-	if(zlibVersion() && strcmp(zlibVersion(), "1.3.2") == 0) {
+	const char* runtime_version = zlibVersion();
+	const bool zlib_ok = runtime_version && *runtime_version && strcmp(runtime_version, ZLIB_VERSION) == 0 && ZLIB_VERNUM >= 0x12D0;
+	if(zlib_ok) {
 		printf("OCIO GUI dependency zlib: OK\n");
+		printf("runtime version: %s\n", runtime_version);
+		printf("header version: %s\n", ZLIB_VERSION);
 		passed++;
 	} else {
 		printf("OCIO GUI dependency zlib: FAIL\n");
+		printf("runtime version: %s\n", runtime_version ? runtime_version : "(null)");
+		printf("header version: %s\n", ZLIB_VERSION);
 		failed++;
 	}
 

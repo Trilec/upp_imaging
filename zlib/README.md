@@ -12,6 +12,14 @@ Preferred public include:
 
 The package provides a stable user-facing include path.
 
+## Provider split
+
+- `zlib_src` is the pinned strict-source package for zlib 1.3.2
+- `zlib` is the stable user-facing package
+- on Windows, `zlib` resolves through U++ `plugin/z` (runtime/header 1.3.1)
+- on non-Windows targets, `zlib` delegates to `zlib_src`
+- the Windows provider is selected to coexist with U++ GUI/plugin linkage and still satisfies the OpenColorIO minimum version
+
 ## Package meaning
 
 - use `zlib_src` when you need strict imported-source compilation and linkage

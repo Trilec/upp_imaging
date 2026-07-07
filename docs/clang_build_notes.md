@@ -14,6 +14,7 @@ Observed package behavior on Windows:
 - a second static zlib package causes duplicate linker symbols
 - the current `zlib` package reuses `plugin/z` linkage on this target so `Core + zlib` builds succeed
 - `zlib_src` exists specifically to prove the imported upstream source can be compiled and linked without that compatibility layer
+- the OCIO foundation intentionally uses the stable Windows provider, not `zlib_src`, so GUI/plugin links stay singular
 
 Current validation result:
 

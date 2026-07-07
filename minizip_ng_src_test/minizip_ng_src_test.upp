@@ -2,8 +2,7 @@ description "Strict minizip-ng source probe";
 
 uses
 	Core,
-	minizip_ng_src,
-	zlib_src;
+	minizip_ng_src;
 
 file
 	main.cpp,
