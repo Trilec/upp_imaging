@@ -5,8 +5,13 @@
 #include <time.h>
 
 #include <minizip_ng/mz.h>
+#include <minizip_ng/mz_strm.h>
 #include <minizip_ng/mz_zip.h>
 #include <minizip_ng/mz_zip_rw.h>
+
+#ifndef UPP_IMAGING_LOCAL_MINIZIP_NG_INCLUDE
+#error minizip-ng did not resolve through the local upp_imaging include tree
+#endif
 
 using namespace Upp;
 
@@ -15,6 +20,12 @@ struct EntrySpec {
 	const void* data;
 	int size;
 };
+
+static bool FileIsNonEmpty(const String& path)
+{
+	FileIn in(path);
+	return in.IsOpen() && in.GetSize() > 0;
+}
 
 static bool WriteArchive(const String& path, const EntrySpec* entries, int count)
 {
@@ -51,12 +62,33 @@ static bool WriteArchive(const String& path, const EntrySpec* entries, int count
 	return true;
 }
 
+static bool CheckEntryMetadata(void* reader, const EntrySpec& spec)
+{
+	if(mz_zip_reader_locate_entry(reader, spec.name, 0) != MZ_OK)
+		return false;
+	if(mz_zip_reader_entry_open(reader) != MZ_OK)
+		return false;
+	mz_zip_file* info = NULL;
+	const int info_rc = mz_zip_reader_entry_get_info(reader, &info);
+	const bool ok = info_rc == MZ_OK && info && info->filename && strcmp(info->filename, spec.name) == 0
+		&& info->uncompressed_size == spec.size && info->compression_method == MZ_COMPRESS_METHOD_STORE;
+	const int close_rc = mz_zip_reader_entry_close(reader);
+	return ok && close_rc == MZ_OK;
+}
+
 static bool ReadExactEntry(void* reader, const EntrySpec& spec)
 {
 	if(mz_zip_reader_locate_entry(reader, spec.name, 0) != MZ_OK)
 		return false;
 	if(mz_zip_reader_entry_open(reader) != MZ_OK)
 		return false;
+	mz_zip_file* info = NULL;
+	if(mz_zip_reader_entry_get_info(reader, &info) != MZ_OK || !info || !info->filename
+	   || strcmp(info->filename, spec.name) != 0 || info->uncompressed_size != spec.size
+	   || info->compression_method != MZ_COMPRESS_METHOD_STORE) {
+		mz_zip_reader_entry_close(reader);
+		return false;
+	}
 
 	Vector<byte> got;
 	got.SetCount(spec.size);
@@ -105,6 +137,14 @@ int main()
 		failed++;
 	}
 
+	if(FileIsNonEmpty(zip_path)) {
+		printf("zip output non-empty: OK\n");
+		passed++;
+	} else {
+		printf("zip output non-empty: FAIL\n");
+		failed++;
+	}
+
 	void* reader = mz_zip_reader_create();
 	if(!reader) {
 		printf("zip reader create: FAIL\n");
@@ -128,6 +168,14 @@ int main()
 				failed++;
 			}
 
+			if(CheckEntryMetadata(reader, entries[0]) && CheckEntryMetadata(reader, entries[1])) {
+				printf("zip metadata: OK\n");
+				passed++;
+			} else {
+				printf("zip metadata: FAIL\n");
+				failed++;
+			}
+
 			if(ReadExactEntry(reader, entries[0]) && ReadExactEntry(reader, entries[1])) {
 				printf("zip exact readback: OK\n");
 				passed++;
@@ -136,7 +184,10 @@ int main()
 				failed++;
 			}
 
-			mz_zip_reader_close(reader);
+			if(mz_zip_reader_close(reader) != MZ_OK) {
+				printf("zip reader close: FAIL\n");
+				failed++;
+			}
 		} else {
 			printf("zip open: FAIL (%d)\n", open_rc);
 			failed++;
@@ -159,7 +210,8 @@ int main()
 		} else {
 			printf("malformed zip: FAIL\n");
 			failed++;
-			mz_zip_reader_close(bad_reader);
+			if(mz_zip_reader_close(bad_reader) != MZ_OK)
+				failed++;
 		}
 		mz_zip_reader_delete(&bad_reader);
 	} else {

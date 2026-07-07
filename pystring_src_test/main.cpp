@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-#include <pystring.h>
+#include <pystring_src/pystring.h>
 
 using namespace Upp;
 

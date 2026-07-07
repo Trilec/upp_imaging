@@ -1,3 +1,3 @@
 #pragma once
 
-#include <mz_strm_os.h>
+#include <minizip_ng_src/mz_strm_os.h>
