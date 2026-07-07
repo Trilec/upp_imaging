@@ -2,7 +2,7 @@
 
 | Area | Version | Strict package | User package | Helper | Automated coverage | Viewer | Status |
 | --- | ---: | --- | --- | --- | --- | --- | --- |
-| zlib | 1.3.2 | `zlib_src` | `zlib` | — | Green | — | Foundation complete |
+| zlib | 1.3.2 strict / 1.3.1 Windows provider | `zlib_src` | `zlib` | — | Green | — | Foundation complete |
 | libpng | 1.6.58 | `libpng_src` | `libpng` | `png_io` | Green | Green | RGBA8 subset complete |
 | Imath | 3.2.2 | `imath_src` | `imath` | — | Green | — | Foundation complete |
 | libdeflate | 1.25 | `libdeflate_src` | `libdeflate` | — | Green | — | Foundation complete |

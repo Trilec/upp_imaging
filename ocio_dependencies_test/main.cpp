@@ -10,7 +10,7 @@
 #include <pystring/pystring.h>
 #include <time.h>
 #include <yaml_cpp/yaml.h>
-#include <zlib.h>
+#include <zlib/zlib.h>
 
 #include <expat/expat.h>
 
@@ -83,15 +83,18 @@ static bool TestMinizip()
 	const String path = GetExeDirFile("ocio_dependencies_aggregate.zip");
 	FileDelete(path);
 	void* writer = mz_zip_writer_create();
-	if(!writer)
+	if(!writer) {
+		FileDelete(path);
 		return false;
+	}
 	if(mz_zip_writer_open_file(writer, ~path, 0, 0) != MZ_OK) {
 		mz_zip_writer_delete(&writer);
+		FileDelete(path);
 		return false;
 	}
 	mz_zip_writer_set_compress_method(writer, MZ_COMPRESS_METHOD_STORE);
-	const char one[] = "one";
-	const char two[] = "two";
+	const char one[] = "alpha from memory";
+	const byte two[] = {0x00, 0x01, 0x02, 0xFE, 0xFF, 0x10};
 	mz_zip_file info;
 	memset(&info, 0, sizeof(info));
 	info.filename = "one.txt";
@@ -106,11 +109,11 @@ static bool TestMinizip()
 		return false;
 	}
 	memset(&info, 0, sizeof(info));
-	info.filename = "two.txt";
+	info.filename = "two.bin";
 	info.compression_method = MZ_COMPRESS_METHOD_STORE;
-	info.uncompressed_size = (int64_t)strlen(two);
+	info.uncompressed_size = (int64_t)sizeof(two);
 	info.modified_date = time(NULL);
-	if(mz_zip_writer_add_buffer(writer, (void*)two, (int)strlen(two), &info) != MZ_OK) {
+	if(mz_zip_writer_add_buffer(writer, (void*)two, (int)sizeof(two), &info) != MZ_OK) {
 		if(mz_zip_writer_close(writer) != MZ_OK)
 			return false;
 		mz_zip_writer_delete(&writer);
@@ -130,8 +133,10 @@ static bool TestMinizip()
 	}
 
 	void* reader = mz_zip_reader_create();
-	if(!reader)
+	if(!reader) {
+		FileDelete(path);
 		return false;
+	}
 	bool ok = mz_zip_reader_open_file(reader, ~path) == MZ_OK;
 	if(ok) {
 		ok = mz_zip_reader_locate_entry(reader, "one.txt", 0) == MZ_OK && mz_zip_reader_entry_open(reader) == MZ_OK;
@@ -141,24 +146,35 @@ static bool TestMinizip()
 				&& strcmp(entry->filename, "one.txt") == 0 && entry->uncompressed_size == (int64_t)strlen(one)
 				&& entry->compression_method == MZ_COMPRESS_METHOD_STORE;
 		}
-		if(ok) {
-			char buf[8] = {};
+	if(ok) {
+		char buf[8] = {};
+		int total = 0;
+		while(total < (int)strlen(one)) {
 			const int rc = mz_zip_reader_entry_read(reader, buf, (int)sizeof(buf));
-			ok = rc == 3 && memcmp(buf, one, 3) == 0;
-			ok = ok && mz_zip_reader_entry_close(reader) == MZ_OK;
+			if(rc <= 0) {
+				ok = false;
+				break;
+			}
+			if(memcmp(buf, one + total, rc) != 0) {
+				ok = false;
+				break;
+			}
+			total += rc;
 		}
+		ok = ok && total == (int)strlen(one) && mz_zip_reader_entry_close(reader) == MZ_OK;
+	}
 		if(ok) {
-			ok = mz_zip_reader_locate_entry(reader, "two.txt", 0) == MZ_OK && mz_zip_reader_entry_open(reader) == MZ_OK;
+			ok = mz_zip_reader_locate_entry(reader, "two.bin", 0) == MZ_OK && mz_zip_reader_entry_open(reader) == MZ_OK;
 			if(ok) {
 				mz_zip_file* entry = NULL;
 				ok = mz_zip_reader_entry_get_info(reader, &entry) == MZ_OK && entry && entry->filename
-					&& strcmp(entry->filename, "two.txt") == 0 && entry->uncompressed_size == (int64_t)strlen(two)
+					&& strcmp(entry->filename, "two.bin") == 0 && entry->uncompressed_size == (int64_t)sizeof(two)
 					&& entry->compression_method == MZ_COMPRESS_METHOD_STORE;
 			}
 			if(ok) {
-				char buf[8] = {};
+				unsigned char buf[8] = {};
 				const int rc = mz_zip_reader_entry_read(reader, buf, (int)sizeof(buf));
-				ok = rc == 3 && memcmp(buf, two, 3) == 0;
+				ok = rc == (int)sizeof(two) && memcmp(buf, two, sizeof(two)) == 0;
 				ok = ok && mz_zip_reader_entry_close(reader) == MZ_OK;
 			}
 		}
@@ -179,7 +195,8 @@ static bool TestImath()
 
 static bool TestZlib()
 {
-	return strcmp(zlibVersion(), "1.3.2") == 0;
+	const char* version = zlibVersion();
+	return version && *version && strcmp(version, ZLIB_VERSION) == 0 && ZLIB_VERNUM >= 0x12D0;
 }
 
 int main()
@@ -233,16 +250,21 @@ int main()
 	unsigned char restored[128];
 	uLongf compressed_len = sizeof(compressed);
 	uLongf restored_len = sizeof(restored);
-	bool zlib_ok = version && strcmp(version, "1.3.2") == 0 && compress(compressed, &compressed_len, (const Bytef*)src, (uLong)strlen(src)) == Z_OK;
+	const bool version_ok = version && *version && strcmp(version, ZLIB_VERSION) == 0 && ZLIB_VERNUM >= 0x12D0;
+	bool zlib_ok = version_ok && compress(compressed, &compressed_len, (const Bytef*)src, (uLong)strlen(src)) == Z_OK;
 	if(zlib_ok) {
 		restored_len = sizeof(restored);
 		zlib_ok = uncompress(restored, &restored_len, compressed, compressed_len) == Z_OK && restored_len == strlen(src) && memcmp(restored, src, strlen(src)) == 0;
 	}
 	if(zlib_ok) {
 		printf("OCIO dependency zlib: OK\n");
+		printf("runtime version: %s\n", version ? version : "(null)");
+		printf("header version: %s\n", ZLIB_VERSION);
 		passed++;
 	} else {
 		printf("OCIO dependency zlib: FAIL\n");
+		printf("runtime version: %s\n", version ? version : "(null)");
+		printf("header version: %s\n", ZLIB_VERSION);
 		failed++;
 	}
 

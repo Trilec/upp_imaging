@@ -4,13 +4,15 @@ noblitz
 NOWARNINGS
 
 uses
-	zlib_src;
+	zlib;
+
+library(WIN32) bcrypt;
 
 file
 	README.md,
 	LICENSE,
 	zlib.h,
-	upstream/zlib-ng.h,
+	zlib-ng.h,
 	mz.h,
 	mz_crypt.h,
 	mz_os.h,
@@ -23,6 +25,8 @@ file
 	mz_zip.h,
 	mz_zip_rw.h,
 	upstream/mz_crypt.c,
+	upstream/mz_crypt_winvista.c,
+	upstream/mz_crypt_winxp.c,
 	upstream/mz_os.c,
 	upstream/mz_os_win32.c,
 	upstream/mz_strm.c,

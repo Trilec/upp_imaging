@@ -13,8 +13,12 @@ Expected dependency direction:
 
 - `zlib_src` is the strict upstream-source base package
 - `zlib` is the user-facing compatibility layer
+- on Windows, `zlib` resolves to U++ `plugin/z` to coexist with GUI/plugin packages
+- on non-Windows targets, `zlib` delegates to `zlib_src`
 - `libpng_src` is the strict upstream-source libpng package and depends on `zlib_src`
 - `libpng` is the user-facing libpng layer and currently depends on `zlib`
+- `minizip_ng_src` is the strict upstream-source minizip-ng package and depends on `zlib`
+- `minizip_ng` is the user-facing minizip-ng layer and depends on `minizip_ng_src` and `zlib`
 - `imath_src` is the strict upstream-source Imath package
 - `imath` is the user-facing Imath layer and currently depends on `imath_src`
 - `libdeflate_src` is the strict standalone libdeflate package
@@ -32,7 +36,8 @@ Current zlib package policy:
 
 - `zlib_src` builds imported upstream zlib 1.3.2 directly
 - `zlib` provides a stable include path for normal apps
-- on Windows/Core, `zlib` may resolve through U++ `plugin/z` to avoid duplicate symbols
+- on Windows/Core, `zlib` resolves through U++ `plugin/z` to avoid duplicate symbols
+- this Windows provider also satisfies the minimum zlib version used by the OCIO dependency foundation
 - strict proof of vendored upstream linkage belongs to `zlib_src_test`
 
 Current libpng package policy:
