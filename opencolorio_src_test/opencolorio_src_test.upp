@@ -1,0 +1,8 @@
+description "Strict OpenColorIO source probe";
+
+uses
+	Core,
+	opencolorio_src;
+
+file
+	main.cpp;

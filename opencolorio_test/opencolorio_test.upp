@@ -1,0 +1,8 @@
+description "Stable OpenColorIO user-facing probe";
+
+uses
+	Core,
+	opencolorio;
+
+file
+	main.cpp;
