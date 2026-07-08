@@ -24,6 +24,12 @@
 - TIFF NONE, LZW, and Deflate paths are tested
 - EXR, PNG, and JPEG are exercised in the shared viewer
 - TIFF profiles are exercised in the shared viewer
+- OpenColorIO 2.5.2 core is packaged
+- OpenColorIO CPU processing is validated
+- OpenColorIO GPU GLSL and HLSL extraction is validated
+- OpenColorIO built-in CG and Studio configs are validated
+- OpenColorIO actual GPU rendering is not implemented
+- OpenColorIO system-monitor enumeration is currently headless
 - `CLANGx64` is the currently validated toolchain
 
 ## Current limits

@@ -31,6 +31,7 @@ file
 	ext/xxHash/CMakeLists.txt,
 	ext/xxHash/src/include/xxhash.h,
 	LICENSE,
+	OCIO.h,
 	OpenColorIO/OpenColorABI.h,
 	OpenColorIO/OpenColorABI.h.in,
 	OpenColorIO/OpenColorAppHelpers.h,
