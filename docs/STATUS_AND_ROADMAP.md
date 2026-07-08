@@ -12,7 +12,7 @@
 | OpenEXRCore | 3.4.13 | `openexr_core_src` | `openexr_core` | `openexr_io` | Green | Green | Scanline RGBA subset complete |
 | JPEG | 3.2.0 | `libjpeg_turbo_src` | `libjpeg_turbo` | `jpeg_io` | Green | Green | RGB8 lossy subset complete |
 | TIFF | 4.7.2 | `libtiff_src` | `libtiff` | `tiff_io` | Green | Green | Typed RGBA subset complete |
-| OpenColorIO | planned | — | — | — | — | — | Later foundation |
+| OpenColorIO | 2.5.2 | `opencolorio_src` | `opencolorio` | `opencolorio_src_test`, `opencolorio_test`, `opencolorio_gui_link_test` | Green | Green | Core packaged |
 | OpenImageIO | planned | — | — | — | — | — | Format abstraction |
 | LumaPix adapter | planned | — | — | — | — | — | Final integration |
 
@@ -32,16 +32,22 @@
 - TIFF exact comparisons
 - classic single-directory scanline TIFF subset
 - shared viewer with `Generated`, `Reloaded`, and `Difference` panes
+- OpenColorIO 2.5.2 core packaged
+- OpenColorIO CPU processing validated
+- OpenColorIO GPU GLSL and HLSL extraction validated
+- OpenColorIO built-in CG and Studio configs validated
+- OpenColorIO actual GPU rendering not implemented
+- OpenColorIO system-monitor enumeration currently headless
 
 ## Next implementation order
 
 1. OpenColorIO CPU foundation
-2. OpenImageIO reduced build
+2. OCIO integration in the diagnostic image viewer
+3. OpenImageIO focused integration proof
 3. initial OIIO plugins: EXR, PNG, JPEG, TIFF
-4. OCIO integration with the higher-level image stack
-5. LumaPix adapter
+4. LumaPix adapter
 
-OpenColorIO mandatory dependency foundation is in progress.
+OpenColorIO 2.5.2 is now packaged and validated.
 
 We are not manually implementing every format supported by OpenImageIO before packaging OpenImageIO.
 

@@ -7,11 +7,10 @@
 #include <sstream>
 #include <string>
 
-#include <OpenColorIO/OpenColorIO.h>
-#include <OpenColorIO/OpenColorIOConfig.h>
+#include <opencolorio_src/OCIO.h>
 
-#ifndef UPP_IMAGING_LOCAL_OPENCOLORIO_INCLUDE
-#error local OpenColorIO package not selected
+#ifndef UPP_IMAGING_LOCAL_OPENCOLORIO_SOURCE_INCLUDE
+#error local OpenColorIO source package not selected
 #endif
 
 namespace OCIO = OCIO_NAMESPACE;
@@ -30,6 +29,11 @@ static bool NearPixel(const float* got, const float* exp, int count, double eps 
 			return false;
 	}
 	return true;
+}
+
+static void PrintPixel(const char* label, const float* pixel)
+{
+	printf("%s %.6g %.6g %.6g %.6g\n", label, pixel[0], pixel[1], pixel[2], pixel[3]);
 }
 
 static bool HasColorSpace(const OCIO::ConstConfigRcPtr& config, const char* name)
@@ -127,12 +131,14 @@ static bool TestProgrammaticCPU()
 	const float expect1[4] = {0.25f, 0.16f, 0.64f, 0.7f};
 	if(!NearPixel(pixel1, expect1, 4))
 		return false;
+	PrintPixel("Programmatic CPU pixel1:", pixel1);
 
 	float pixel2[4] = {0.3f, 0.1f, 0.5f, 0.9f};
 	cpu->applyRGBA(pixel2);
 	const float expect2[4] = {0.49f, 0.0625f, 0.4225f, 0.9f};
 	if(!NearPixel(pixel2, expect2, 4))
 		return false;
+	PrintPixel("Programmatic CPU pixel2:", pixel2);
 
 	float image[8] = {0.2f, 0.4f, 0.6f, 0.7f, 0.3f, 0.1f, 0.5f, 0.9f};
 	OCIO::PackedImageDesc desc(image, 2, 1, 4);
@@ -166,6 +172,7 @@ static bool TestInverseCPU(double& max_error)
 		for(int i = 0; i < 4; ++i)
 			max_error = std::max(max_error, std::fabs((double)pixel[i] - in[i]));
 	}
+	printf("Inverse CPU max error: %.6g\n", max_error);
 	return max_error <= 2e-5;
 }
 
@@ -190,7 +197,12 @@ static OCIO::ConstConfigRcPtr MakeYamlConfig()
 		"      children:\n"
 		"        - !<MatrixTransform> {matrix: [2., 0., 0., 0., 0., 0.5, 0., 0., 0., 0., 1.5, 0., 0., 0., 0., 1.], offset: [0.1, 0.2, -0.1, 0.]}\n"
 		"        - !<ExponentTransform> {value: [2., 2., 2., 1.]}\n"
-		"        - !<RangeTransform> {min_in_value: 0., min_out_value: 0., max_in_value: 1., max_out_value: 1.}\n";
+		"        - !<RangeTransform> {min_in_value: 0., min_out_value: 0., max_in_value: 1., max_out_value: 1.}\n"
+		"displays:\n"
+		"  sRGB:\n"
+		"    - !<View> {name: Raw, colorspace: linear}\n"
+		"active_displays: [sRGB]\n"
+		"active_views: [Raw]\n";
 	std::istringstream in(yaml);
 	return OCIO::Config::CreateFromStream(in);
 }
@@ -226,6 +238,7 @@ static bool TestYamlConfig()
 	const float expect[4] = {0.25f, 0.16f, 0.64f, 0.7f};
 	if(!NearPixel(pixel, expect, 4))
 		return false;
+	PrintPixel("YAML CPU pixel:", pixel);
 
 	std::ostringstream out;
 	config->serialize(out);
@@ -234,6 +247,7 @@ static bool TestYamlConfig()
 	if(!reparsed)
 		return false;
 	reparsed->validate();
+	printf("YAML parse/reparse: OK\n");
 	return reparsed->getNumColorSpaces() == 2
 		&& std::strcmp(reparsed->getRoleColorSpace("scene_linear"), "linear") == 0
 		&& std::strcmp(reparsed->getRoleColorSpace("default"), "linear") == 0;
@@ -333,6 +347,7 @@ static bool TestDynamicProperty()
 	cpu->applyRGBA(pixel);
 	if(!NearPixel(pixel, doubled, 4))
 		return false;
+	PrintPixel("Dynamic property CPU pixel:", pixel);
 
 	OCIO::ConstGPUProcessorRcPtr gpu = processor->getDefaultGPUProcessor();
 	if(!gpu)
@@ -342,20 +357,73 @@ static bool TestDynamicProperty()
 	desc->setFunctionName("OCIOTest");
 	desc->setResourcePrefix("ocio_");
 	gpu->extractGpuShaderInfo(desc);
+	printf("Dynamic property GPU uniforms: %u\n", desc->getNumUniforms());
 	return desc->getNumUniforms() > 0 && desc->getShaderText() && *desc->getShaderText();
+}
+
+static bool ValidateBuiltinConfig(const char* name)
+{
+	try
+	{
+		OCIO::ConstConfigRcPtr config = OCIO::Config::CreateFromBuiltinConfig(name);
+		if(!config)
+			return false;
+		config->validate();
+		if(config->getNumColorSpaces() == 0)
+			return false;
+		const char* display = config->getDefaultDisplay();
+		if(!display || !*display)
+			return false;
+		const char* view = config->getDefaultView(display);
+		if(!view || !*view)
+			return false;
+		printf("Builtin config %s: OK (%d color spaces, default display '%s', default view '%s')\n",
+			name, (int)config->getNumColorSpaces(), display, view);
+		return true;
+	}
+	catch(const std::exception& e)
+	{
+		printf("Builtin config %s: FAIL (%s)\n", name, e.what());
+		return false;
+	}
+	catch(...)
+	{
+		printf("Builtin config %s: FAIL\n", name);
+		return false;
+	}
 }
 
 static bool TestBuiltinRegistry()
 {
-	OCIO::ConstBuiltinTransformRegistryRcPtr builtin = OCIO::BuiltinTransformRegistry::Get();
-	if(!builtin || builtin->getNumBuiltins() == 0)
-		return false;
-	const char* style = builtin->getBuiltinStyle(0);
-	const char* desc = builtin->getBuiltinDescription(0);
-	if(!style || !*style || !desc || !*desc)
-		return false;
 	const OCIO::BuiltinConfigRegistry& configs = OCIO::BuiltinConfigRegistry::Get();
-	return configs.getNumBuiltinConfigs() > 0;
+	const size_t count = configs.getNumBuiltinConfigs();
+	printf("Builtin registry count: %zu\n", count);
+	if(count != 8)
+		return false;
+
+	const char* required[] = {
+		"cg-config-v4.0.0_aces-v2.0_ocio-v2.5",
+		"studio-config-v4.0.0_aces-v2.0_ocio-v2.5",
+	};
+	for(const char* name : required) {
+		bool found = false;
+		for(size_t i = 0; i < count; ++i) {
+			const char* current = configs.getBuiltinConfigName(i);
+			if(current && std::strcmp(current, name) == 0) {
+				found = true;
+				break;
+			}
+		}
+		if(!found)
+			return false;
+	}
+
+	if(!ValidateBuiltinConfig("cg-config-v4.0.0_aces-v2.0_ocio-v2.5"))
+		return false;
+	if(!ValidateBuiltinConfig("studio-config-v4.0.0_aces-v2.0_ocio-v2.5"))
+		return false;
+
+	return true;
 }
 
 int main()
@@ -363,6 +431,13 @@ int main()
 	try {
 	int passed = 0;
 	int failed = 0;
+	#ifdef UPP_IMAGING_LOCAL_OPENCOLORIO_SOURCE_INCLUDE
+	printf("Source package marker: OK\n");
+	passed++;
+	#else
+	printf("Source package marker: FAIL\n");
+	failed++;
+	#endif
 
 	if(TestVersion()) {
 		printf("OpenColorIO version: OK\n");

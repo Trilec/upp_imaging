@@ -57,3 +57,11 @@ OpenEXR preflight goal:
 - inspect current upstream OpenEXR packaging complexity before attempting read/write support
 - confirm compatibility with local `imath_src` 3.2.2
 - keep this task to a minimal compile probe, not a real library implementation
+
+OpenColorIO foundation notes:
+
+- `opencolorio_src_test` uses a source-only wrapper and proves the strict source boundary
+- `opencolorio_test` uses the stable wrapper and proves the user-facing boundary
+- `opencolorio_gui_link_test` proves the package coexists with `Ui` and `Animation`
+- `SystemMonitors` is intentionally headless on this target; monitor enumeration and ICC profile discovery are not provided yet
+- remaining warnings are the familiar `OpenColorIO/...` versus `opencolorio/...` case-mismatch class, plus ordinary upstream warnings
