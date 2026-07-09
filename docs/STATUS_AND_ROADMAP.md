@@ -41,9 +41,8 @@
 
 ## Next implementation order
 
-1. OpenColorIO CPU foundation
-2. OCIO integration in the diagnostic image viewer
-3. OpenImageIO focused integration proof
+1. OCIO integration in the diagnostic image viewer
+2. OpenImageIO focused integration proof
 3. initial OIIO plugins: EXR, PNG, JPEG, TIFF
 4. LumaPix adapter
 
