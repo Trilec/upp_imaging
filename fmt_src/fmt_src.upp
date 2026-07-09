@@ -1,0 +1,23 @@
+description "Strict upstream fmt 12.2.0 source package";
+
+options(BUILDER_OPTION) NOWARNINGS;
+
+file
+	format.h,
+	README.md,
+	LICENSE,
+	upstream/args.h,
+	upstream/base.h,
+	upstream/chrono.h,
+	upstream/color.h,
+	upstream/compile.h,
+	upstream/core.h,
+	upstream/fmt-c.h,
+	upstream/format.h,
+	upstream/format-inl.h,
+	upstream/os.h,
+	upstream/ostream.h,
+	upstream/printf.h,
+	upstream/ranges.h,
+	upstream/std.h,
+	upstream/xchar.h;

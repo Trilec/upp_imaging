@@ -1,0 +1,9 @@
+description "Strict robin-map source probe";
+
+uses
+	Core,
+	robinmap_src;
+
+file
+	main.cpp,
+	README.md;

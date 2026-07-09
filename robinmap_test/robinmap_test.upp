@@ -1,0 +1,9 @@
+description "robin-map user-facing probe";
+
+uses
+	Core,
+	robinmap;
+
+file
+	main.cpp,
+	README.md;

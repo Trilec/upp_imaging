@@ -1,0 +1,9 @@
+description "robin-map package with stable public include path";
+
+uses
+	robinmap_src;
+
+file
+	robin_map.h,
+	README.md,
+	LICENSE;

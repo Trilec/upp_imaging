@@ -13,6 +13,8 @@ Major required dependencies:
 - `libpng`
 - `libjpeg-turbo`
 - `libtiff`
+- `fmt`
+- `robin-map`
 - CMake and a Windows C++ toolchain
 
 Existing packages that should be reusable:
@@ -21,12 +23,15 @@ Existing packages that should be reusable:
 - `libpng`
 - `libjpeg_turbo`
 - `libtiff`
+- `fmt`
+- `robinmap`
 - likely `iex_src` and `ilmthread_src` once a full OpenEXR package is added
 
 Still missing for a first OIIO pass:
 - a full OpenEXR package boundary for OIIO to bind against
 - an OIIO package wrapper and test harness
 - any build glue for OIIO plugin discovery
+- any OIIO-specific dependency shims beyond the imported prerequisite packages
 
 First target:
 - a thin OIIO package that proves `ImageInput` and `ImageOutput` for EXR, PNG, JPEG, and TIFF

@@ -1,0 +1,12 @@
+description "Strict upstream robin-map 1.4.1 source package";
+
+options(BUILDER_OPTION) NOWARNINGS;
+
+file
+	robin_map.h,
+	README.md,
+	LICENSE,
+	upstream/robin_growth_policy.h,
+	upstream/robin_hash.h,
+	upstream/robin_map.h,
+	upstream/robin_set.h;
