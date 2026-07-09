@@ -35,6 +35,51 @@ static bool HasRgbDifference(const TestImageF& a, const TestImageF& b)
 	return false;
 }
 
+static bool TestPreviewRecovery(const OCIO::ConstConfigRcPtr& config, const String& builtin)
+{
+	String source = OcioPreview::GetDefaultSourceColorSpace(config);
+	Vector<String> displays = OcioPreview::GetDisplayNames(config);
+	if(source.IsEmpty() || displays.IsEmpty())
+		return false;
+	String display = displays[0];
+	Vector<String> views = OcioPreview::GetViewNames(config, display);
+	if(views.IsEmpty())
+		return false;
+	String view = views[0];
+
+	TestImageF src;
+	src.width = 2;
+	src.height = 1;
+	src.pixels.SetCount(2);
+	src.pixels[0] = {0.2f, 0.4f, 0.6f, 0.7f};
+	src.pixels[1] = {0.3f, 0.1f, 0.5f, 0.9f};
+	TestImageF original;
+	CopyTestImage(src, original);
+
+	TestImageF invalid_preview;
+	String preview_error;
+	if(OcioPreview::ApplyPreview(config, source, "invalid-display", "invalid-view", src, invalid_preview, preview_error))
+		return false;
+	if(preview_error.IsEmpty())
+		return false;
+	if(!SameImage(src, original))
+		return false;
+
+	TestImageF valid_preview;
+	preview_error.Clear();
+	if(!OcioPreview::ApplyPreview(config, source, display, view, src, valid_preview, preview_error))
+		return false;
+	if(valid_preview.pixels.GetCount() == 0 || valid_preview.pixels.GetCount() != src.pixels.GetCount())
+		return false;
+	if(!HasRgbDifference(src, valid_preview))
+		return false;
+	if(!SameImage(src, original))
+		return false;
+
+	printf("OCIO preview recovery %s: OK (%s)\n", ~builtin, ~OcioPreview::DescribeSelection(builtin, source, display, view));
+	return true;
+}
+
 int main()
 {
 	int passed = 0;
@@ -97,6 +142,23 @@ int main()
 		}
 		if(preview_ok)
 			break;
+	}
+
+	bool recovery_ok = false;
+	for(const String& builtin : builtins) {
+		OCIO::ConstConfigRcPtr config;
+		String error;
+		if(!OcioPreview::LoadBuiltinConfig(builtin, config, error))
+			continue;
+		recovery_ok = TestPreviewRecovery(config, builtin);
+		if(recovery_ok)
+			break;
+	}
+	if(recovery_ok)
+		passed++;
+	else {
+		printf("OCIO preview recovery: FAIL\n");
+		failed++;
 	}
 
 	if(preview_ok)

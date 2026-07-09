@@ -29,6 +29,7 @@
 - OpenColorIO GPU GLSL and HLSL extraction is validated
 - OpenColorIO built-in CG and Studio configs are validated
 - OpenColorIO CPU preview is integrated into the shared viewer
+- OpenColorIO preview errors clear after a later successful refresh
 - OpenColorIO raw round-trip metrics remain unchanged
 - OpenColorIO actual GPU rendering is not implemented
 - OpenColorIO export-through-OCIO is not implemented

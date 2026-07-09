@@ -814,19 +814,27 @@ void RoundtripViewerWindow::RefreshViews()
 	TestImageF preview_reloaded;
 	CopyTestImage(generated_, preview_generated);
 	CopyTestImage(reloaded_, preview_reloaded);
+	bool generated_preview_ok = true;
+	bool reloaded_preview_ok = true;
 	if(IsOcioEnabled() && ocio_config_) {
 		const String source = GetDropdownValue(ocio_source_drop_);
 		const String display = GetDropdownValue(ocio_display_drop_);
 		const String view = GetDropdownValue(ocio_view_drop_);
 		if(!source.IsEmpty() && !display.IsEmpty() && !view.IsEmpty()) {
 			String preview_error;
-			if(!OcioPreview::ApplyPreview(ocio_config_, source, display, view, generated_, preview_generated, preview_error) && ocio_error_.IsEmpty())
+			generated_preview_ok = OcioPreview::ApplyPreview(ocio_config_, source, display, view, generated_, preview_generated, preview_error);
+			if(!generated_preview_ok && ocio_error_.IsEmpty())
 				ocio_error_ = preview_error;
 			preview_error.Clear();
-			if(!OcioPreview::ApplyPreview(ocio_config_, source, display, view, reloaded_, preview_reloaded, preview_error) && ocio_error_.IsEmpty())
+			reloaded_preview_ok = OcioPreview::ApplyPreview(ocio_config_, source, display, view, reloaded_, preview_reloaded, preview_error);
+			if(!reloaded_preview_ok && ocio_error_.IsEmpty())
 				ocio_error_ = preview_error;
+			if(generated_preview_ok && reloaded_preview_ok)
+				ocio_error_.Clear();
 		}
 	}
+	else if(!IsOcioEnabled())
+		ocio_error_.Clear();
 	generated_pane_.SetPaneImage(MakeDisplayImage(preview_generated, kind));
 	reloaded_pane_.SetPaneImage(MakeDisplayImage(preview_reloaded, kind));
 	if(IsValidImage(generated_) && IsValidImage(reloaded_) && generated_.width == reloaded_.width && generated_.height == reloaded_.height)

@@ -25,5 +25,6 @@ Current behavior:
 Validation:
 - original image remains unchanged in memory
 - preview can toggle OCIO on/off
+- preview errors clear after a later successful refresh
 - exact EXR/PNG/TIFF metrics still use decoded pixels
 - OCIO does not affect export unless we add that later
