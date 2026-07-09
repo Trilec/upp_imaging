@@ -1,0 +1,9 @@
+description "fmt package with stable public include path";
+
+uses
+	fmt_src;
+
+file
+	format.h,
+	README.md,
+	LICENSE;

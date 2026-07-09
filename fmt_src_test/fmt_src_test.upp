@@ -1,0 +1,9 @@
+description "Strict fmt source probe";
+
+uses
+	Core,
+	fmt_src;
+
+file
+	main.cpp,
+	README.md;

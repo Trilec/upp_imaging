@@ -30,6 +30,10 @@ Expected dependency direction:
 - `openexr_core_src` is the first OpenEXRCore package attempt with a modest real implementation slice
 - `openexr_src` is currently only a preflight skeleton, not a full strict OpenEXR package yet
 - future OpenEXR packages will likely depend on Imath and may also depend on zlib
+- `fmt_src` is the strict upstream fmt header-only package
+- `fmt` is the user-facing fmt layer and currently depends on `fmt_src`
+- `robinmap_src` is the strict upstream robin-map header-only package
+- `robinmap` is the user-facing robin-map layer and currently depends on `robinmap_src`
 - `opencolorio_src` builds imported OpenColorIO 2.5.2 directly, with generated builtin config blobs and a headless monitor path on Windows
 - `opencolorio_src/OCIO.h` is the strict source-boundary wrapper used by source probes
 - `opencolorio` is the stable user-facing wrapper package and keeps the public include boundary separate
