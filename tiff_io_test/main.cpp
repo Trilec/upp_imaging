@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#include <libdeflate/libdeflate.h>
+#include <zlib/zlib.h>
+
 #include <imaging_roundtrip_test_support/ImagingRoundtripTest.h>
 #include <libtiff/tiffio.h>
 #include <tiff_io/TiffIO.h>
@@ -9,8 +12,184 @@ using namespace Upp;
 
 struct TiffMessageState
 {
-	String* error = NULL;
+	String first_error;
+	String first_warning;
+	int errors = 0;
+	int warnings = 0;
 };
+
+static String TiffFormatMessage(const char* module, const char* fmt, va_list ap)
+{
+	char buffer[1024];
+	buffer[0] = 0;
+	vsnprintf(buffer, sizeof(buffer), fmt, ap);
+	if(module && *module)
+		return Format("%s: %s", module, buffer);
+	return buffer;
+}
+
+static int TiffErrorHandler(TIFF*, void* user_data, const char* module, const char* fmt, va_list ap)
+{
+	TiffMessageState* state = (TiffMessageState*)user_data;
+	if(state) {
+		++state->errors;
+		if(state->first_error.GetCount() == 0)
+			state->first_error = TiffFormatMessage(module, fmt, ap);
+	}
+	return 1;
+}
+
+static int TiffWarningHandler(TIFF*, void* user_data, const char* module, const char* fmt, va_list ap)
+{
+	TiffMessageState* state = (TiffMessageState*)user_data;
+	if(state) {
+		++state->warnings;
+		if(state->first_warning.GetCount() == 0)
+			state->first_warning = TiffFormatMessage(module, fmt, ap);
+	}
+	return 1;
+}
+
+static String TiffDiagnostics(const char* prefix, const TiffMessageState& state, const String& detail = String())
+{
+	String out = prefix;
+	if(detail.GetCount())
+		out << ": " << detail;
+	out << Format(" | errors=%d warnings=%d", state.errors, state.warnings);
+	if(state.first_error.GetCount())
+		out << " | first_error=" << state.first_error;
+	if(state.first_warning.GetCount())
+		out << " | first_warning=" << state.first_warning;
+	return out;
+}
+
+static TestImage8 ToTestImage8(const TiffRgbaImage8& src);
+static bool ValidateRgbaTags(const char* path, int width, int height, uint16_t bits, uint16_t sample_format, uint16_t compression);
+
+static TIFF* OpenTiff(const char* path, const char* mode, TiffMessageState& state)
+{
+	TIFFOpenOptions* opts = TIFFOpenOptionsAlloc();
+	if(!opts)
+		return NULL;
+	TIFFOpenOptionsSetErrorHandlerExtR(opts, TiffErrorHandler, &state);
+	TIFFOpenOptionsSetWarningHandlerExtR(opts, TiffWarningHandler, &state);
+	TIFF* tif = TIFFOpenExt(path, mode, opts);
+	TIFFOpenOptionsFree(opts);
+	return tif;
+}
+
+static bool EnsureWritableFile(const String& path, String& error)
+{
+	FileOut out(path);
+	if(!out.IsOpen()) {
+		error = Format("TIFF output file could not be created: %s", path);
+		return false;
+	}
+	out.Put("x", 1);
+	out.Close();
+	if(!FileDelete(path)) {
+		error = Format("TIFF output file could not be removed: %s", path);
+		return false;
+	}
+	return true;
+}
+
+static bool PrepareOutputRoot(String& root, String& error)
+{
+	char temp_path[MAX_PATH];
+	DWORD len = GetTempPathA(MAX_PATH, temp_path);
+	if(len == 0 || len >= MAX_PATH) {
+		error = "TIFF temporary path lookup failed";
+		return false;
+	}
+	String root_name;
+	root_name << "upp_imaging_tiff_" << (int)GetCurrentProcessId() << '_' << (int)GetTickCount();
+	root = AppendFileName(temp_path, root_name);
+	if(!DirectoryCreate(root)) {
+		error = Format("TIFF output path is not writable: %s", root);
+		return false;
+	}
+	String sentinel = AppendFileName(root, "sentinel.tmp");
+	{
+		FILE* f = fopen(~sentinel, "wb");
+		if(!f) {
+			error = Format("TIFF output path is not writable: %s", root);
+			return false;
+		}
+		if(fwrite("x", 1, 1, f) != 1 || fflush(f) != 0 || fclose(f) != 0) {
+			error = Format("TIFF output path is not writable: %s", root);
+			return false;
+		}
+	}
+	if(!FileDelete(sentinel)) {
+		error = Format("TIFF output file appears locked: %s", sentinel);
+		return false;
+	}
+	return true;
+}
+
+static void CleanupOutputRoot(const String& root)
+{
+	FindFile ff(AppendFileName(root, "*.*"));
+	while(ff) {
+		if(!ff.IsFolder())
+			FileDelete(AppendFileName(root, ff.GetName()));
+		ff.Next();
+	}
+	DirectoryDelete(root);
+}
+
+static void PrintCodecInfo()
+{
+	printf("TIFFGetVersion(): %s\n", TIFFGetVersion());
+	printf("TIFFIsCODECConfigured(NONE)=%d\n", TIFFIsCODECConfigured(COMPRESSION_NONE));
+	printf("TIFFIsCODECConfigured(LZW)=%d\n", TIFFIsCODECConfigured(COMPRESSION_LZW));
+	printf("TIFFIsCODECConfigured(ADOBE_DEFLATE)=%d\n", TIFFIsCODECConfigured(COMPRESSION_ADOBE_DEFLATE));
+	printf("ZLIB_VERSION=%s\n", ZLIB_VERSION);
+	printf("zlibVersion()=%s\n", zlibVersion());
+#ifdef LIBDEFLATE_VERSION_STRING
+	printf("LIBDEFLATE_VERSION_STRING=%s\n", LIBDEFLATE_VERSION_STRING);
+#endif
+}
+
+static bool ProbeCodecRgba8(const String& root, const char* name, TiffCompression compression, const TiffRgbaImage8& image)
+{
+	const String path = AppendFileName(root, Format("codec_probe_%s.tif", name));
+	FileDelete(path);
+	String preflight_error;
+	if(!EnsureWritableFile(path, preflight_error))
+		printf("%s preflight: %s\n", name, ~preflight_error);
+
+	TiffSaveOptions options;
+	options.compression = compression;
+	String error;
+	const bool saved = SaveTiffRgba8(~path, image, options, &error);
+	printf("%s save: %s\n", name, saved ? "OK" : "FAIL");
+	if(!saved)
+		printf("%s save diagnostics: %s\n", name, ~error);
+	String data = LoadFile(path);
+	printf("%s file_size=%lld bytes\n", name, (long long)data.GetCount());
+	if(!saved)
+		return false;
+	TiffRgbaImage8 loaded;
+	String load_error;
+	const bool loaded_ok = LoadTiffRgba8(~path, loaded, &load_error);
+	printf("%s load: %s\n", name, loaded_ok ? "OK" : "FAIL");
+	if(!loaded_ok)
+		printf("%s load diagnostics: %s\n", name, ~load_error);
+	if(!loaded_ok)
+		return false;
+	TestImage8 expect = ToTestImage8(image);
+	TestImage8 actual = ToTestImage8(loaded);
+	RoundtripComparison8 cmp = CompareExact(expect, actual);
+	printf("%s exact comparison: %s\n", name, (cmp.different_components == 0 && cmp.dimensions_match) ? "OK" : "FAIL");
+	printf("%s metrics: different_components=%d max_error_r=%d max_error_g=%d max_error_b=%d max_error_a=%d\n",
+		name, cmp.different_components, cmp.max_error_r, cmp.max_error_g, cmp.max_error_b, cmp.max_error_a);
+	const uint16_t expected_compression = compression == TiffCompression::None ? COMPRESSION_NONE : compression == TiffCompression::Lzw ? COMPRESSION_LZW : COMPRESSION_ADOBE_DEFLATE;
+	const bool tags_ok = ValidateRgbaTags(~path, image.width, image.height, 8, SAMPLEFORMAT_UINT, expected_compression);
+	printf("%s tags: %s\n", name, tags_ok ? "OK" : "FAIL");
+	return tags_ok && cmp.different_components == 0 && cmp.dimensions_match;
+}
 
 static bool IsValidImage(const TestImageF& img)
 {
@@ -95,44 +274,6 @@ static TestImageF ToTestImageF(const TiffRgbaImageF& src)
 	return out;
 }
 
-static String TiffFormatMessage(const char* module, const char* fmt, va_list ap)
-{
-	char buffer[1024];
-	buffer[0] = 0;
-	vsnprintf(buffer, sizeof(buffer), fmt, ap);
-	if(module && *module)
-		return Format("%s: %s", module, buffer);
-	return buffer;
-}
-
-static int TiffErrorHandler(TIFF*, void* user_data, const char* module, const char* fmt, va_list ap)
-{
-	TiffMessageState* state = (TiffMessageState*)user_data;
-	if(state && state->error)
-		*state->error = TiffFormatMessage(module, fmt, ap);
-	return 1;
-}
-
-static int TiffWarningHandler(TIFF*, void* user_data, const char* module, const char* fmt, va_list ap)
-{
-	TiffMessageState* state = (TiffMessageState*)user_data;
-	if(state && state->error && IsNull(*state->error))
-		*state->error = TiffFormatMessage(module, fmt, ap);
-	return 1;
-}
-
-static TIFF* OpenTiff(const char* path, const char* mode, TiffMessageState& state)
-{
-	TIFFOpenOptions* opts = TIFFOpenOptionsAlloc();
-	if(!opts)
-		return NULL;
-	TIFFOpenOptionsSetErrorHandlerExtR(opts, TiffErrorHandler, &state);
-	TIFFOpenOptionsSetWarningHandlerExtR(opts, TiffWarningHandler, &state);
-	TIFF* tif = TIFFOpenExt(path, mode, opts);
-	TIFFOpenOptionsFree(opts);
-	return tif;
-}
-
 static void Stage(const char* label, bool ok, int& passed, int& failed)
 {
 	printf("%s: %s\n", label, ok ? "OK" : "FAIL");
@@ -144,9 +285,7 @@ static void Stage(const char* label, bool ok, int& passed, int& failed)
 
 static bool ValidateRgbaTags(const char* path, int width, int height, uint16_t bits, uint16_t sample_format, uint16_t compression)
 {
-	String error;
 	TiffMessageState state;
-	state.error = &error;
 	TIFF* tif = OpenTiff(path, "r", state);
 	if(!tif)
 		return false;
@@ -194,9 +333,7 @@ static bool ValidateRgbaTags(const char* path, int width, int height, uint16_t b
 
 static bool ValidateTiledFixture(const char* path)
 {
-	String error;
 	TiffMessageState state;
-	state.error = &error;
 	TIFF* tif = OpenTiff(path, "r", state);
 	if(!tif)
 		return false;
@@ -207,9 +344,7 @@ static bool ValidateTiledFixture(const char* path)
 
 static bool ValidateMultiDirectoryFixture(const char* path)
 {
-	String error;
 	TiffMessageState state;
-	state.error = &error;
 	TIFF* tif = OpenTiff(path, "r", state);
 	if(!tif)
 		return false;
@@ -220,9 +355,7 @@ static bool ValidateMultiDirectoryFixture(const char* path)
 
 static bool ValidatePlanarSeparateFixture(const char* path)
 {
-	String error;
 	TiffMessageState state;
-	state.error = &error;
 	TIFF* tif = OpenTiff(path, "r", state);
 	if(!tif)
 		return false;
@@ -234,9 +367,7 @@ static bool ValidatePlanarSeparateFixture(const char* path)
 
 static bool WriteTiledRgba8(const char* path, const TiffRgbaImage8& image)
 {
-	String error;
 	TiffMessageState state;
-	state.error = &error;
 	TIFF* tif = OpenTiff(path, "w", state);
 	if(!tif)
 		return false;
@@ -262,9 +393,7 @@ static bool WriteTiledRgba8(const char* path, const TiffRgbaImage8& image)
 
 static bool WriteTwoDirectoryRgba8(const char* path)
 {
-	String error;
 	TiffMessageState state;
-	state.error = &error;
 	TIFF* tif = OpenTiff(path, "w", state);
 	if(!tif)
 		return false;
@@ -295,9 +424,7 @@ static bool WriteTwoDirectoryRgba8(const char* path)
 
 static bool WritePlanarSeparateRgba8(const char* path)
 {
-	String error;
 	TiffMessageState state;
-	state.error = &error;
 	TIFF* tif = OpenTiff(path, "w", state);
 	if(!tif)
 		return false;
@@ -357,17 +484,26 @@ CONSOLE_APP_MAIN
 {
 	int passed = 0;
 	int failed = 0;
+	String output_root;
+	String root_error;
+	if(!PrepareOutputRoot(output_root, root_error)) {
+		printf("%s\n", ~root_error);
+		SetExitCode(1);
+		return;
+	}
+	printf("TIFF output root: %s\n", ~output_root);
+	PrintCodecInfo();
 	String error;
 
-	const String rgba8_path = GetExeDirFile("tiff_io_rgba8_deflate.tif");
-	const String rgba8_lzw_path = GetExeDirFile("tiff_io_rgba8_lzw.tif");
-	const String rgba16_path = GetExeDirFile("tiff_io_rgba16_deflate.tif");
-	const String float_path = GetExeDirFile("tiff_io_float_none.tif");
-	const String malformed_path = GetExeDirFile("tiff_io_malformed.tif");
-	const String truncated_path = GetExeDirFile("tiff_io_truncated.tif");
-	const String tiled_path = GetExeDirFile("tiff_io_tiled.tif");
-	const String multipage_path = GetExeDirFile("tiff_io_multipage.tif");
-	const String separate_path = GetExeDirFile("tiff_io_separate.tif");
+	const String rgba8_path = AppendFileName(output_root, "tiff_io_rgba8_deflate.tif");
+	const String rgba8_lzw_path = AppendFileName(output_root, "tiff_io_rgba8_lzw.tif");
+	const String rgba16_path = AppendFileName(output_root, "tiff_io_rgba16_deflate.tif");
+	const String float_path = AppendFileName(output_root, "tiff_io_float_none.tif");
+	const String malformed_path = AppendFileName(output_root, "tiff_io_malformed.tif");
+	const String truncated_path = AppendFileName(output_root, "tiff_io_truncated.tif");
+	const String tiled_path = AppendFileName(output_root, "tiff_io_tiled.tif");
+	const String multipage_path = AppendFileName(output_root, "tiff_io_multipage.tif");
+	const String separate_path = AppendFileName(output_root, "tiff_io_separate.tif");
 
 	FileDelete(rgba8_path);
 	FileDelete(rgba8_lzw_path);
@@ -378,6 +514,12 @@ CONSOLE_APP_MAIN
 	FileDelete(tiled_path);
 	FileDelete(multipage_path);
 	FileDelete(separate_path);
+	if(!EnsureWritableFile(rgba8_path, error)) {
+		printf("%s\n", ~error);
+		CleanupOutputRoot(output_root);
+		SetExitCode(1);
+		return;
+	}
 
 	TiffSaveOptions deflate_options;
 	deflate_options.compression = TiffCompression::Deflate;
@@ -386,11 +528,24 @@ CONSOLE_APP_MAIN
 	TiffSaveOptions none_options;
 	none_options.compression = TiffCompression::None;
 
+	TiffRgbaImage8 small_probe;
+	small_probe.width = 2;
+	small_probe.height = 2;
+	small_probe.pixels.SetCount(4);
+	small_probe.pixels[0] = {1, 2, 3, 4};
+	small_probe.pixels[1] = {5, 6, 7, 8};
+	small_probe.pixels[2] = {9, 10, 11, 12};
+	small_probe.pixels[3] = {13, 14, 15, 16};
+	Stage("TIFF codec probe NONE", ProbeCodecRgba8(output_root, "NONE", TiffCompression::None, small_probe), passed, failed);
+	Stage("TIFF codec probe LZW", ProbeCodecRgba8(output_root, "LZW", TiffCompression::Lzw, small_probe), passed, failed);
+	Stage("TIFF codec probe Deflate", ProbeCodecRgba8(output_root, "Deflate", TiffCompression::Deflate, small_probe), passed, failed);
+
 	TestImageF src8 = GenerateRoundtripTestPattern(256, 192, false);
 	TestImage8 expected8 = QuantizeToRgba8(src8);
 	TiffRgbaImage8 tiff8 = ToTiffRgbaImage8(expected8);
 	if(!SaveTiffRgba8(~rgba8_path, tiff8, deflate_options, &error)) {
 		printf("TIFF IO RGBA8 Deflate: FAIL (%s)\n", IsNull(error) ? "unknown" : ~error);
+		CleanupOutputRoot(output_root);
 		SetExitCode(1);
 		return;
 	}
@@ -401,6 +556,7 @@ CONSOLE_APP_MAIN
 	TiffRgbaImage8 loaded8;
 	if(!LoadTiffRgba8(~rgba8_path, loaded8, &error)) {
 		printf("TIFF IO RGBA8 load: FAIL (%s)\n", IsNull(error) ? "unknown" : ~error);
+		CleanupOutputRoot(output_root);
 		SetExitCode(1);
 		return;
 	}
@@ -415,6 +571,7 @@ CONSOLE_APP_MAIN
 	TiffRgbaImage8 tiff8_lzw = ToTiffRgbaImage8(expected8_lzw);
 	if(!SaveTiffRgba8(~rgba8_lzw_path, tiff8_lzw, lzw_options, &error)) {
 		printf("TIFF IO RGBA8 LZW: FAIL (%s)\n", IsNull(error) ? "unknown" : ~error);
+		CleanupOutputRoot(output_root);
 		SetExitCode(1);
 		return;
 	}
@@ -425,6 +582,7 @@ CONSOLE_APP_MAIN
 	TiffRgbaImage8 loaded8_lzw;
 	if(!LoadTiffRgba8(~rgba8_lzw_path, loaded8_lzw, &error)) {
 		printf("TIFF IO RGBA8 LZW load: FAIL (%s)\n", IsNull(error) ? "unknown" : ~error);
+		CleanupOutputRoot(output_root);
 		SetExitCode(1);
 		return;
 	}
@@ -439,6 +597,7 @@ CONSOLE_APP_MAIN
 	TiffRgbaImage16 tiff16 = ToTiffRgbaImage16(expected16);
 	if(!SaveTiffRgba16(~rgba16_path, tiff16, deflate_options, &error)) {
 		printf("TIFF IO RGBA16 Deflate: FAIL (%s)\n", IsNull(error) ? "unknown" : ~error);
+		CleanupOutputRoot(output_root);
 		SetExitCode(1);
 		return;
 	}
@@ -449,6 +608,7 @@ CONSOLE_APP_MAIN
 	TiffRgbaImage16 loaded16;
 	if(!LoadTiffRgba16(~rgba16_path, loaded16, &error)) {
 		printf("TIFF IO RGBA16 load: FAIL (%s)\n", IsNull(error) ? "unknown" : ~error);
+		CleanupOutputRoot(output_root);
 		SetExitCode(1);
 		return;
 	}
@@ -462,6 +622,7 @@ CONSOLE_APP_MAIN
 	TiffRgbaImageF tiffF = ToTiffRgbaImageF(expectedf);
 	if(!SaveTiffRgbaF(~float_path, tiffF, none_options, &error)) {
 		printf("TIFF IO Float32 NONE: FAIL (%s)\n", IsNull(error) ? "unknown" : ~error);
+		CleanupOutputRoot(output_root);
 		SetExitCode(1);
 		return;
 	}
@@ -472,6 +633,7 @@ CONSOLE_APP_MAIN
 	TiffRgbaImageF loadedf;
 	if(!LoadTiffRgbaF(~float_path, loadedf, &error)) {
 		printf("TIFF IO Float32 load: FAIL (%s)\n", IsNull(error) ? "unknown" : ~error);
+		CleanupOutputRoot(output_root);
 		SetExitCode(1);
 		return;
 	}
@@ -486,27 +648,47 @@ CONSOLE_APP_MAIN
 	TestImage8 fixture_image = QuantizeToRgba8(fixture_src);
 	TiffRgbaImage8 tiled_image = ToTiffRgbaImage8(fixture_image);
 	fixture_ok = WriteTiledRgba8(~tiled_path, tiled_image);
+	if(!fixture_ok) {
+		CleanupOutputRoot(output_root);
+		SetExitCode(1);
+		return;
+	}
 	Stage("TIFF fixture tiled creation", fixture_ok, passed, failed);
 	fixture_ok = fixture_ok && ValidateTiledFixture(~tiled_path);
 	Stage("TIFF fixture tiled low-level validation", fixture_ok, passed, failed);
-	fixture_ok = fixture_ok && LoadFailure8(~tiled_path, "tiled TIFF is not supported");
+	fixture_ok = fixture_ok && LoadFailure8(~tiled_path, "TIFF read failed: tiled TIFF is not supported | errors=0 warnings=0");
 	Stage("TIFF fixture tiled rejection", fixture_ok, passed, failed);
 
 	fixture_ok = WriteTwoDirectoryRgba8(~multipage_path);
+	if(!fixture_ok) {
+		CleanupOutputRoot(output_root);
+		SetExitCode(1);
+		return;
+	}
 	Stage("TIFF fixture multi-directory creation", fixture_ok, passed, failed);
 	fixture_ok = fixture_ok && ValidateMultiDirectoryFixture(~multipage_path);
 	Stage("TIFF fixture multi-directory low-level validation", fixture_ok, passed, failed);
-	fixture_ok = fixture_ok && LoadFailure8(~multipage_path, "multi-directory TIFF is not supported");
+	fixture_ok = fixture_ok && LoadFailure8(~multipage_path, "TIFF read failed: multi-directory TIFF is not supported | errors=0 warnings=0");
 	Stage("TIFF fixture multi-directory rejection", fixture_ok, passed, failed);
 
 	fixture_ok = WritePlanarSeparateRgba8(~separate_path);
+	if(!fixture_ok) {
+		CleanupOutputRoot(output_root);
+		SetExitCode(1);
+		return;
+	}
 	Stage("TIFF fixture planar-separate creation", fixture_ok, passed, failed);
 	fixture_ok = fixture_ok && ValidatePlanarSeparateFixture(~separate_path);
 	Stage("TIFF fixture planar-separate low-level validation", fixture_ok, passed, failed);
-	fixture_ok = fixture_ok && LoadFailure8(~separate_path, "unsupported TIFF tag values");
+	fixture_ok = fixture_ok && LoadFailure8(~separate_path, "TIFF read failed: unsupported TIFF tag values | errors=0 warnings=0");
 	Stage("TIFF fixture planar-separate rejection", fixture_ok, passed, failed);
 
 	fixture_ok = WriteMalformedHeaderFile(~malformed_path);
+	if(!fixture_ok) {
+		CleanupOutputRoot(output_root);
+		SetExitCode(1);
+		return;
+	}
 	Stage("TIFF fixture malformed-header creation", fixture_ok, passed, failed);
 	fixture_ok = fixture_ok && LoadFailure8(~malformed_path, NULL);
 	Stage("TIFF fixture malformed-header rejection", fixture_ok, passed, failed);
@@ -525,5 +707,6 @@ CONSOLE_APP_MAIN
 	Stage("TIFF truncated rejection", truncated_rejected, passed, failed);
 
 	printf("SUMMARY passed=%d failed=%d\n", passed, failed);
+	CleanupOutputRoot(output_root);
 	SetExitCode(failed ? 1 : 0);
 }
