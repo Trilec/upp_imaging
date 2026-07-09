@@ -335,6 +335,141 @@ void RoundtripViewerWindow::SetRunState(int state, const String& message)
 	UpdateStatus();
 }
 
+static bool ContainsString(const Vector<String>& values, const String& value)
+{
+	for(const String& item : values) {
+		if(item == value)
+			return true;
+	}
+	return false;
+}
+
+static void CopyTestImage(const TestImageF& src, TestImageF& dst)
+{
+	dst.width = src.width;
+	dst.height = src.height;
+	dst.pixels.SetCount(src.pixels.GetCount());
+	for(int i = 0; i < src.pixels.GetCount(); ++i)
+		dst.pixels[i] = src.pixels[i];
+}
+
+bool RoundtripViewerWindow::IsOcioEnabled() const
+{
+	return (int)ocio_enable_drop_.GetSelectedData() != 0;
+}
+
+String RoundtripViewerWindow::GetDropdownValue(const UiDropdown& drop) const
+{
+	const int selection = drop.GetSelection();
+	if(selection < 0)
+		return String();
+	return AsString(drop.GetSelectedData());
+}
+
+void RoundtripViewerWindow::SetDropdownValues(UiDropdown& drop, const Vector<String>& values, const String& selected_value)
+{
+	drop.Clear();
+	if(values.IsEmpty()) {
+		drop.Add("none", String());
+		drop.Select(0);
+		return;
+	}
+	int selected_index = 0;
+	for(int i = 0; i < values.GetCount(); ++i) {
+		drop.Add(values[i], values[i]);
+		if(values[i] == selected_value)
+			selected_index = i;
+	}
+	drop.Select(selected_index);
+}
+
+String RoundtripViewerWindow::GetOcioSummary() const
+{
+	if(!IsOcioEnabled())
+		return "OCIO: off";
+	const String config_name = GetDropdownValue(ocio_config_drop_);
+	if(config_name.IsEmpty())
+		return "OCIO: on / none";
+	return OcioPreview::DescribeSelection(config_name, GetDropdownValue(ocio_source_drop_), GetDropdownValue(ocio_display_drop_), GetDropdownValue(ocio_view_drop_));
+}
+
+String RoundtripViewerWindow::GetOcioErrorText() const
+{
+	return ocio_error_;
+}
+
+void RoundtripViewerWindow::UpdateOcioSelections()
+{
+	if(!IsOcioEnabled() || !ocio_config_) {
+		SetDropdownValues(ocio_source_drop_, Vector<String>(), String());
+		SetDropdownValues(ocio_display_drop_, Vector<String>(), String());
+		SetDropdownValues(ocio_view_drop_, Vector<String>(), String());
+		return;
+	}
+
+	Vector<String> source_names = OcioPreview::GetColorSpaceNames(ocio_config_);
+	String source = GetDropdownValue(ocio_source_drop_);
+	if(!ContainsString(source_names, source))
+		source = OcioPreview::GetDefaultSourceColorSpace(ocio_config_);
+	SetDropdownValues(ocio_source_drop_, source_names, source);
+	if(!ContainsString(source_names, GetDropdownValue(ocio_source_drop_)) && !source_names.IsEmpty())
+		SetDropdownValues(ocio_source_drop_, source_names, source_names[0]);
+
+	Vector<String> display_names = OcioPreview::GetDisplayNames(ocio_config_);
+	String display = GetDropdownValue(ocio_display_drop_);
+	if(!ContainsString(display_names, display))
+		display = OcioPreview::GetDefaultDisplay(ocio_config_);
+	SetDropdownValues(ocio_display_drop_, display_names, display);
+	if(display.IsEmpty() && !display_names.IsEmpty())
+		display = display_names[0];
+	else
+		display = GetDropdownValue(ocio_display_drop_);
+
+	Vector<String> view_names = OcioPreview::GetViewNames(ocio_config_, display);
+	String view = GetDropdownValue(ocio_view_drop_);
+	if(!ContainsString(view_names, view))
+		view = OcioPreview::GetDefaultView(ocio_config_, display);
+	SetDropdownValues(ocio_view_drop_, view_names, view);
+
+	if(GetDropdownValue(ocio_display_drop_).IsEmpty() && !display_names.IsEmpty())
+		SetDropdownValues(ocio_display_drop_, display_names, display_names[0]);
+	if(GetDropdownValue(ocio_view_drop_).IsEmpty() && !view_names.IsEmpty())
+		SetDropdownValues(ocio_view_drop_, view_names, view_names[0]);
+}
+
+void RoundtripViewerWindow::UpdateOcioConfig()
+{
+	if(ocio_controls_updating_)
+		return;
+	ocio_controls_updating_ = true;
+	ocio_error_.Clear();
+	if(IsOcioEnabled()) {
+		const String config_name = GetDropdownValue(ocio_config_drop_);
+		if(config_name.IsEmpty())
+			ocio_config_.reset();
+		else if(!OcioPreview::LoadBuiltinConfig(config_name, ocio_config_, ocio_error_))
+			ocio_config_.reset();
+	}
+	else {
+		ocio_config_.reset();
+	}
+	UpdateOcioSelections();
+	ocio_controls_updating_ = false;
+	UpdateDetails();
+	RefreshViews();
+}
+
+void RoundtripViewerWindow::SyncOcioDisplayViews()
+{
+	if(ocio_controls_updating_)
+		return;
+	ocio_controls_updating_ = true;
+	UpdateOcioSelections();
+	ocio_controls_updating_ = false;
+	UpdateDetails();
+	RefreshViews();
+}
+
 RoundtripViewerWindow::RoundtripViewerWindow()
 {
 	Title("Imaging round-trip viewer");
@@ -348,17 +483,25 @@ RoundtripViewerWindow::RoundtripViewerWindow()
 	root_.SetInset(DPI(10));
 
 	root_.Add(top_row_).Fit().AlignSelf(UiBoxLayout::Align::Stretch);
+	root_.Add(ocio_row_).Fit().AlignSelf(UiBoxLayout::Align::Stretch);
 	root_.Add(panes_row_).Expand(1).AlignSelf(UiBoxLayout::Align::Stretch);
 	root_.Add(bottom_col_).Fit().AlignSelf(UiBoxLayout::Align::Stretch);
 
 	top_row_.SetGap(DPI(8));
 	top_row_.SetAlignItems(UiBoxLayout::Align::Center);
+	ocio_row_.SetGap(DPI(6));
+	ocio_row_.SetAlignItems(UiBoxLayout::Align::Center);
 	panes_row_.SetGap(DPI(10));
 	bottom_col_.SetGap(DPI(4));
 
 	profile_label_.SetText("Profile").NoWantFocus().IgnoreMouse();
 	display_label_.SetText("Display").NoWantFocus().IgnoreMouse();
 	gain_label_.SetText("Gain").NoWantFocus().IgnoreMouse();
+	ocio_label_.SetText("OCIO").NoWantFocus().IgnoreMouse();
+	ocio_config_label_.SetText("Config").NoWantFocus().IgnoreMouse();
+	ocio_source_label_.SetText("Source").NoWantFocus().IgnoreMouse();
+	ocio_display_label_.SetText("Display").NoWantFocus().IgnoreMouse();
+	ocio_view_label_.SetText("View").NoWantFocus().IgnoreMouse();
 	run_button_.SetText("Run Round-trip");
 
 	profile_drop_.Add("EXR HALF + ZIP", (int)PROFILE_EXR_HALF_ZIP);
@@ -378,6 +521,19 @@ RoundtripViewerWindow::RoundtripViewerWindow()
 	gain_drop_.Add("64x", 64);
 	gain_drop_.Add("256x", 256);
 	gain_drop_.Select(0);
+	ocio_enable_drop_.Add("Off", 0);
+	ocio_enable_drop_.Add("On", 1);
+	ocio_enable_drop_.Select(0);
+	ocio_config_drop_.Add("Off / none", String());
+	for(const String& name : OcioPreview::GetBuiltinConfigNames())
+		ocio_config_drop_.Add(name, name);
+	ocio_config_drop_.Select(0);
+	ocio_source_drop_.Add("none", String());
+	ocio_source_drop_.Select(0);
+	ocio_display_drop_.Add("none", String());
+	ocio_display_drop_.Select(0);
+	ocio_view_drop_.Add("none", String());
+	ocio_view_drop_.Select(0);
 
 	top_row_.Add(profile_label_).Fit();
 	top_row_.Add(profile_drop_).Fixed(DPI(160));
@@ -387,6 +543,17 @@ RoundtripViewerWindow::RoundtripViewerWindow()
 	top_row_.Add(gain_drop_).Fixed(DPI(110));
 	top_row_.Add(run_button_).Fixed(DPI(142));
 	top_row_.Add(status_label_).Expand(1).AlignSelf(UiBoxLayout::Align::Center);
+
+	ocio_row_.Add(ocio_label_).Fit();
+	ocio_row_.Add(ocio_enable_drop_).Fixed(DPI(74));
+	ocio_row_.Add(ocio_config_label_).Fit();
+	ocio_row_.Add(ocio_config_drop_).Fixed(DPI(280));
+	ocio_row_.Add(ocio_source_label_).Fit();
+	ocio_row_.Add(ocio_source_drop_).Fixed(DPI(160));
+	ocio_row_.Add(ocio_display_label_).Fit();
+	ocio_row_.Add(ocio_display_drop_).Fixed(DPI(150));
+	ocio_row_.Add(ocio_view_label_).Fit();
+	ocio_row_.Add(ocio_view_drop_).Fixed(DPI(150));
 
 	generated_pane_.SetPaneTitle("Generated");
 	reloaded_pane_.SetPaneTitle("Reloaded");
@@ -404,9 +571,15 @@ RoundtripViewerWindow::RoundtripViewerWindow()
 	profile_drop_.WhenSelectData = [this](const Value&) { RunSelected(); };
 	display_drop_.WhenSelectData = [this](const Value&) { RefreshViews(); };
 	gain_drop_.WhenSelectData = [this](const Value&) { RefreshViews(); };
+	ocio_enable_drop_.WhenSelectData = [this](const Value&) { UpdateOcioConfig(); };
+	ocio_config_drop_.WhenSelectData = [this](const Value&) { UpdateOcioConfig(); };
+	ocio_source_drop_.WhenSelectData = [this](const Value&) { RefreshViews(); UpdateDetails(); };
+	ocio_display_drop_.WhenSelectData = [this](const Value&) { SyncOcioDisplayViews(); };
+	ocio_view_drop_.WhenSelectData = [this](const Value&) { RefreshViews(); UpdateDetails(); };
 	run_button_.WhenAction = [this] { RunSelected(); };
 
 	output_path_ = GetExeDirFile("roundtrip_viewer.exr");
+	UpdateOcioConfig();
 	UpdateStatus();
 	UpdateDetails();
 	RefreshViews();
@@ -637,8 +810,25 @@ void RoundtripViewerWindow::RunTiffProfile(const ProfileSpec& spec)
 void RoundtripViewerWindow::RefreshViews()
 {
 	DisplayKind kind = (DisplayKind)(int)display_drop_.GetSelectedData();
-	generated_pane_.SetPaneImage(MakeDisplayImage(generated_, kind));
-	reloaded_pane_.SetPaneImage(MakeDisplayImage(reloaded_, kind));
+	TestImageF preview_generated;
+	TestImageF preview_reloaded;
+	CopyTestImage(generated_, preview_generated);
+	CopyTestImage(reloaded_, preview_reloaded);
+	if(IsOcioEnabled() && ocio_config_) {
+		const String source = GetDropdownValue(ocio_source_drop_);
+		const String display = GetDropdownValue(ocio_display_drop_);
+		const String view = GetDropdownValue(ocio_view_drop_);
+		if(!source.IsEmpty() && !display.IsEmpty() && !view.IsEmpty()) {
+			String preview_error;
+			if(!OcioPreview::ApplyPreview(ocio_config_, source, display, view, generated_, preview_generated, preview_error) && ocio_error_.IsEmpty())
+				ocio_error_ = preview_error;
+			preview_error.Clear();
+			if(!OcioPreview::ApplyPreview(ocio_config_, source, display, view, reloaded_, preview_reloaded, preview_error) && ocio_error_.IsEmpty())
+				ocio_error_ = preview_error;
+		}
+	}
+	generated_pane_.SetPaneImage(MakeDisplayImage(preview_generated, kind));
+	reloaded_pane_.SetPaneImage(MakeDisplayImage(preview_reloaded, kind));
 	if(IsValidImage(generated_) && IsValidImage(reloaded_) && generated_.width == reloaded_.width && generated_.height == reloaded_.height)
 		difference_pane_.SetPaneImage(MakeDifferenceImage(generated_, reloaded_, GetGainValue(gain_drop_.GetSelectedData())));
 	else
@@ -675,9 +865,11 @@ void RoundtripViewerWindow::UpdateDetails()
 {
 	String size_text = output_size_ >= 0 ? Format("%lld bytes", output_size_) : String("n/a");
 	const ProfileSpec& spec = GetProfile((ProfileKind)(int)profile_drop_.GetSelectedData());
+	const String ocio_summary = GetOcioSummary();
 	if(spec.lossy) {
 		details_label_.SetText(Format(
-			"Profile: %s\nDimensions: %dx%d\nFile size: %s\nMax R error: %d\nMax G error: %d\nMax B error: %d\nMean absolute error: %.9g\nRMSE: %.9g\nPSNR: %.9g dB",
+			"%s\nProfile: %s\nDimensions: %dx%d\nFile size: %s\nMax R error: %d\nMax G error: %d\nMax B error: %d\nMean absolute error: %.9g\nRMSE: %.9g\nPSNR: %.9g dB",
+			ocio_summary,
 			AsString(profile_drop_.GetItemText(profile_drop_.GetSelection())),
 			generated_.width,
 			generated_.height,
@@ -691,7 +883,8 @@ void RoundtripViewerWindow::UpdateDetails()
 	}
 	else if(spec.format == FORMAT_TIFF && spec.tiff_kind == TIFF_RGBA16_DEFLATE) {
 		details_label_.SetText(Format(
-			"Profile: %s\nDimensions: %dx%d\nFile size: %s\nDifferent components: %d\nMax R error: %d\nMax G error: %d\nMax B error: %d\nMax A error: %d",
+			"%s\nProfile: %s\nDimensions: %dx%d\nFile size: %s\nDifferent components: %d\nMax R error: %d\nMax G error: %d\nMax B error: %d\nMax A error: %d",
+			ocio_summary,
 			AsString(profile_drop_.GetItemText(profile_drop_.GetSelection())),
 			generated_.width,
 			generated_.height,
@@ -704,7 +897,8 @@ void RoundtripViewerWindow::UpdateDetails()
 	}
 	else {
 		details_label_.SetText(Format(
-			"Profile: %s\nDimensions: %dx%d\nFile size: %s\nDifferent components: %d\nMax R error: %.9g\nMax G error: %.9g\nMax B error: %.9g\nMax A error: %.9g\nMean absolute error: %.9g\nRMSE: %.9g",
+			"%s\nProfile: %s\nDimensions: %dx%d\nFile size: %s\nDifferent components: %d\nMax R error: %.9g\nMax G error: %.9g\nMax B error: %.9g\nMax A error: %.9g\nMean absolute error: %.9g\nRMSE: %.9g",
+			ocio_summary,
 			AsString(profile_drop_.GetItemText(profile_drop_.GetSelection())),
 			generated_.width,
 			generated_.height,
@@ -718,7 +912,12 @@ void RoundtripViewerWindow::UpdateDetails()
 			comparison_.rmse));
 	}
 	path_label_.SetText(Format("Output path: %s", ~output_path_));
-	error_label_.SetText(IsNull(io_error_) ? "Load/save error: none" : Format("Load/save error: %s", ~io_error_));
+	String error_text = IsNull(io_error_) ? String("Load/save error: none") : Format("Load/save error: %s", ~io_error_);
+	if(IsNull(ocio_error_))
+		error_text << " | OCIO preview error: none";
+	else
+		error_text << " | OCIO preview error: " << ocio_error_;
+	error_label_.SetText(error_text);
 }
 
 byte RoundtripViewerWindow::ClampByte(float v)

@@ -1,0 +1,9 @@
+uses
+	Core,
+	imaging_roundtrip_viewer_ocio;
+
+mainconfig
+	"" = "CONSOLE";
+
+file
+	main.cpp;

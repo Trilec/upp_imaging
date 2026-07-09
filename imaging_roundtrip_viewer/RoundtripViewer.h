@@ -8,7 +8,11 @@
 #include <jpeg_io/JpegIO.h>
 #include <tiff_io/TiffIO.h>
 
+#include <imaging_roundtrip_viewer_ocio/OcioPreview.h>
+
 namespace Upp {
+
+namespace OCIO = OCIO_NAMESPACE;
 
 class PreviewPane : public UiBoxLayout {
 public:
@@ -76,18 +80,27 @@ private:
 	void RunSelected();
 	void RunProfile(ProfileKind kind);
 	void RunTiffProfile(const ProfileSpec& spec);
+	void UpdateOcioConfig();
+	void UpdateOcioSelections();
+	void SyncOcioDisplayViews();
 	void RefreshViews();
 	void UpdateStatus();
 	void UpdateDetails();
 	Image MakeDisplayImage(const TestImageF& img, DisplayKind kind) const;
 	Image MakeDifferenceImage(const TestImageF& a, const TestImageF& b, int gain) const;
+	String GetOcioSummary() const;
+	String GetOcioErrorText() const;
+	bool IsOcioEnabled() const;
 
 	static byte ClampByte(float v);
 	static float Clamp01(float v);
 	static byte BlendByte(byte fg, byte bg, float alpha);
+	static void SetDropdownValues(UiDropdown& drop, const Vector<String>& values, const String& selected_value);
+	String GetDropdownValue(const UiDropdown& drop) const;
 
 	UiBoxLayout root_ { UiBoxLayout::Direction::V };
 	UiBoxLayout top_row_ { UiBoxLayout::Direction::H };
+	UiBoxLayout ocio_row_ { UiBoxLayout::Direction::H };
 	UiBoxLayout panes_row_ { UiBoxLayout::Direction::H };
 	UiBoxLayout bottom_col_ { UiBoxLayout::Direction::V };
 	UiBoxLayout path_row_ { UiBoxLayout::Direction::H };
@@ -96,6 +109,11 @@ private:
 	UiLabel profile_label_;
 	UiLabel display_label_;
 	UiLabel gain_label_;
+	UiLabel ocio_label_;
+	UiLabel ocio_config_label_;
+	UiLabel ocio_source_label_;
+	UiLabel ocio_display_label_;
+	UiLabel ocio_view_label_;
 	UiLabel status_label_;
 	UiLabel details_label_;
 	UiLabel path_label_;
@@ -104,6 +122,11 @@ private:
 	UiDropdown profile_drop_;
 	UiDropdown display_drop_;
 	UiDropdown gain_drop_;
+	UiDropdown ocio_enable_drop_;
+	UiDropdown ocio_config_drop_;
+	UiDropdown ocio_source_drop_;
+	UiDropdown ocio_display_drop_;
+	UiDropdown ocio_view_drop_;
 	UiButton run_button_;
 
 	enum RunState { RUN_NOT_RUN = 0, RUN_RUNNING = 1, RUN_PASS = 2, RUN_FAIL = 3 };
@@ -120,6 +143,9 @@ private:
 	RoundtripComparison16 comparison16_;
 	LossyRgbComparison rgb_comparison_;
 	String io_error_;
+	String ocio_error_;
+	bool ocio_controls_updating_ = false;
+	OCIO::ConstConfigRcPtr ocio_config_;
 	String output_path_;
 	long long output_size_ = -1;
 };

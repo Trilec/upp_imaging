@@ -1,0 +1,8 @@
+uses
+	Core,
+	opencolorio,
+	imaging_roundtrip_test_support;
+
+file
+	OcioPreview.h,
+	OcioPreview.cpp;

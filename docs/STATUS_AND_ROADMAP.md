@@ -36,15 +36,17 @@
 - OpenColorIO CPU processing validated
 - OpenColorIO GPU GLSL and HLSL extraction validated
 - OpenColorIO built-in CG and Studio configs validated
+- OpenColorIO CPU preview integration added to the diagnostic viewer
+- OpenColorIO raw round-trip metrics remain unchanged
 - OpenColorIO actual GPU rendering not implemented
+- OpenColorIO export-through-OCIO not implemented
 - OpenColorIO system-monitor enumeration currently headless
 
 ## Next implementation order
 
-1. OCIO integration in the diagnostic image viewer
-2. OpenImageIO focused integration proof
-3. initial OIIO plugins: EXR, PNG, JPEG, TIFF
-4. LumaPix adapter
+1. OpenImageIO focused integration proof
+2. initial OIIO plugins: EXR, PNG, JPEG, TIFF
+3. LumaPix adapter
 
 OpenColorIO 2.5.2 is now packaged and validated.
 
