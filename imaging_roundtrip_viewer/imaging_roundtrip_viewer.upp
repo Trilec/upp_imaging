@@ -1,10 +1,12 @@
 uses
 	CtrlLib,
 	Ui,
+	opencolorio,
 	jpeg_io,
 	png_io,
 	openexr_io,
 	tiff_io,
+	imaging_roundtrip_viewer_ocio,
 	imaging_roundtrip_test_support;
 
 mainconfig

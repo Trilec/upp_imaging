@@ -1,6 +1,6 @@
 # OCIO Viewer Integration Plan
 
-Add OCIO into `imaging_roundtrip_viewer` as a CPU-side preview transform only.
+OCIO CPU preview integration is now in `imaging_roundtrip_viewer`.
 The decoded image stays raw for round-trip validation; OCIO affects preview panes, not file comparison.
 
 Planned controls:
@@ -17,6 +17,10 @@ Placement:
 - raw image feeds round-trip metrics unchanged
 - preview path applies OCIO before the current display conversion
 - GPU/bgfx rendering stays a later task
+
+Current behavior:
+- raw round-trip metrics remain unchanged
+- export-through-OCIO is not implemented
 
 Validation:
 - original image remains unchanged in memory

@@ -8,7 +8,7 @@
 - small format-specific IO helpers
 - automated numerical round-trip tests
 - a shared diagnostic viewer
-- foundations for future OpenColorIO and OpenImageIO integration
+- shared diagnostic viewer with optional OpenColorIO CPU preview
 
 ## Current state
 
@@ -28,7 +28,10 @@
 - OpenColorIO CPU processing is validated
 - OpenColorIO GPU GLSL and HLSL extraction is validated
 - OpenColorIO built-in CG and Studio configs are validated
+- OpenColorIO CPU preview is integrated into the shared viewer
+- OpenColorIO raw round-trip metrics remain unchanged
 - OpenColorIO actual GPU rendering is not implemented
+- OpenColorIO export-through-OCIO is not implemented
 - OpenColorIO system-monitor enumeration is currently headless
 - `CLANGx64` is the currently validated toolchain
 
