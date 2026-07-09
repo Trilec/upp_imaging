@@ -15,7 +15,8 @@ static float ClampFloat(float v, float lo, float hi)
 
 struct TiffMessageState
 {
-	String* error = NULL;
+	String first_error;
+	String first_warning;
 	int warnings = 0;
 	int errors = 0;
 };
@@ -35,8 +36,8 @@ static int TiffErrorHandler(TIFF*, void* user_data, const char* module, const ch
 	TiffMessageState* state = (TiffMessageState*)user_data;
 	if(state) {
 		++state->errors;
-		if(state->error)
-			*state->error = TiffFormatMessage(module, fmt, ap);
+		if(state->first_error.GetCount() == 0)
+			state->first_error = TiffFormatMessage(module, fmt, ap);
 	}
 	return 1;
 }
@@ -46,8 +47,8 @@ static int TiffWarningHandler(TIFF*, void* user_data, const char* module, const 
 	TiffMessageState* state = (TiffMessageState*)user_data;
 	if(state) {
 		++state->warnings;
-		if(state->error && IsNull(*state->error))
-			*state->error = TiffFormatMessage(module, fmt, ap);
+		if(state->first_warning.GetCount() == 0)
+			state->first_warning = TiffFormatMessage(module, fmt, ap);
 	}
 	return 1;
 }
@@ -66,13 +67,24 @@ static TIFF* OpenTiff(const char* path, const char* mode, TiffMessageState& stat
 {
 	TIFFOpenOptions* opts = OpenOptions(state);
 	if(!opts) {
-		if(state.error)
-			*state.error = "TIFFOpenOptionsAlloc failed";
 		return NULL;
 	}
 	TIFF* tif = TIFFOpenExt(path, mode, opts);
 	TIFFOpenOptionsFree(opts);
 	return tif;
+}
+
+static String BuildDiagnostic(const char* prefix, const TiffMessageState& state, const String& validation_error)
+{
+	String out = prefix;
+	if(!validation_error.IsEmpty())
+		out << ": " << validation_error;
+	out << Format(" | errors=%d warnings=%d", state.errors, state.warnings);
+	if(!state.first_error.IsEmpty())
+		out << " | first_error=" << state.first_error;
+	if(!state.first_warning.IsEmpty())
+		out << " | first_warning=" << state.first_warning;
+	return out;
 }
 
 static uint16_t CompressionTag(TiffCompression compression)
@@ -202,11 +214,10 @@ static bool SaveTiffTyped(const char* path, const TPixel* pixels, int width, int
 	}
 
 	TiffMessageState state;
-	state.error = error;
 	TIFF* tif = OpenTiff(path, "w", state);
 	if(!tif) {
-		if(error && IsNull(*error))
-			*error = "TIFF open for write failed";
+		if(error)
+			*error = BuildDiagnostic("TIFF open for write failed", state, validation_error);
 		return false;
 	}
 	bool ok = false;
@@ -223,6 +234,11 @@ static bool SaveTiffTyped(const char* path, const TPixel* pixels, int width, int
 			goto done;
 		}
 	}
+	if(!TIFFFlush(tif)) {
+		if(validation_error.IsEmpty())
+			validation_error = "TIFF flush failed";
+		goto done;
+	}
 	ok = true;
 
 	done:
@@ -232,8 +248,8 @@ static bool SaveTiffTyped(const char* path, const TPixel* pixels, int width, int
 			error->Clear();
 		return true;
 	}
-	if(error && IsNull(*error))
-		*error = IsNull(validation_error) ? "TIFF write failed" : validation_error;
+	if(error)
+		*error = BuildDiagnostic("TIFF write failed", state, validation_error);
 	FileDelete(path);
 	return false;
 }
@@ -251,11 +267,10 @@ static bool LoadTiffTyped(const char* path, TImage& image, uint16_t expected_bit
 		return false;
 	}
 	TiffMessageState state;
-	state.error = error;
 	TIFF* tif = OpenTiff(path, "r", state);
 	if(!tif) {
-		if(error && IsNull(*error))
-			*error = "TIFF open for read failed";
+		if(error)
+			*error = BuildDiagnostic("TIFF open for read failed", state, validation_error);
 		return false;
 	}
 	bool ok = false;
@@ -315,8 +330,8 @@ static bool LoadTiffTyped(const char* path, TImage& image, uint16_t expected_bit
 		return true;
 	}
 	image.Clear();
-	if(error && IsNull(*error))
-		*error = IsNull(validation_error) ? "TIFF read failed" : validation_error;
+	if(error)
+		*error = BuildDiagnostic("TIFF read failed", state, validation_error);
 	return false;
 }
 
