@@ -5,6 +5,7 @@
 #include "OpenEXRConfig.h"
 #include "OpenEXRConfigInternal.h"
 #include "Iex.h"
+#include "upstream/ImfArray.h"
 #include "ImathBox.h"
 #include "ImathVec.h"
 #include "IlmThread.h"
