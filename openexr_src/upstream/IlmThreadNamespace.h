@@ -1,0 +1,6 @@
+#ifndef INCLUDED_OPENEXR_SRC_UPSTREAM_ILMTHREADNAMESPACE_H
+#define INCLUDED_OPENEXR_SRC_UPSTREAM_ILMTHREADNAMESPACE_H
+
+#include <ilmthread_src/upstream/IlmThreadNamespace.h>
+
+#endif

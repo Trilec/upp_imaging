@@ -1,0 +1,12 @@
+#ifndef INCLUDED_IEX_CONFIG_H
+#define INCLUDED_IEX_CONFIG_H 1
+
+#pragma once
+
+#define IEX_INTERNAL_NAMESPACE_CUSTOM 0
+#define IEX_INTERNAL_NAMESPACE Iex_3_4
+
+#define IEX_NAMESPACE_CUSTOM 0
+#define IEX_NAMESPACE Iex
+
+#endif

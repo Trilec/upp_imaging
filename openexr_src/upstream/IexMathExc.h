@@ -1,0 +1,6 @@
+#ifndef INCLUDED_OPENEXR_SRC_UPSTREAM_IEXMATHEXC_H
+#define INCLUDED_OPENEXR_SRC_UPSTREAM_IEXMATHEXC_H
+
+#include <iex_src/upstream/IexMathExc.h>
+
+#endif

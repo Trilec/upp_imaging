@@ -3,5 +3,8 @@ description "OpenEXR preflight compile probe";
 uses
 	openexr_src;
 
+options
+	-I../openexr_src/upstream;
+
 file
 	main.cpp;

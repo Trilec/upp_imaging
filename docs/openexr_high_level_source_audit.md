@@ -417,7 +417,7 @@ Current strict/stable mapping that the next implementation task should respect:
 - `ilmthread_src` -> strict imported-source IlmThread
 - `openexr_core_src` -> lower-level OpenEXRCore source package
 - `openexr_core` -> user-facing OpenEXRCore wrapper
-- `openexr_src` -> currently only a preflight skeleton
+- `openexr_src` -> strict imported-source high-level OpenEXR package
 
 Recommendation from the current architecture:
 
@@ -426,7 +426,7 @@ Recommendation from the current architecture:
 
 Potential issue to watch:
 
-- `openexr_src` already carries a small probe surface and package-owned config copies. That should be kept aligned with the higher-level implementation package to avoid a mixed skeleton/full boundary.
+- `openexr_src` now carries the full high-level implementation set plus package-owned config copies; keep it aligned with the upstream 3.4.13 boundary.
 
 ## 11. Recommended openexr_src package structure
 
@@ -448,8 +448,8 @@ No split is currently forced by dependency or linker evidence. The upstream libr
 - Whether the package should expose all 118 upstream headers or a smaller stable subset plus internal-only package files.
 - Whether `openexr_version.h` should be kept as a package-local artifact or folded into a shared version-header convention later.
 - Whether `openexr_core_src` remains the right strict dependency for the high-level package, or whether the stable wrapper should be used for some app-facing layers later.
-- Whether the current `openexr_src` skeleton should keep its probe files once the real package exists, or whether those probes should be repurposed into a separate source-boundary test package.
+- Whether the current `openexr_src` probe should remain as the strict boundary test or be split into a separate package later.
 
-## 13. Exact next implementation task
+## 13. Implementation result
 
-Convert `openexr_src` from a probe skeleton into a strict imported-source high-level `OpenEXR` package that includes the full 96-file upstream `Imf*` implementation set, the required public headers, and the existing generated config headers, while wiring the package directly to `imath_src`, `iex_src`, `ilmthread_src`, and `openexr_core_src`.
+`openexr_src` has been converted into the strict imported-source high-level `OpenEXR` package. It includes the full 96-file upstream `Imf*` implementation set, the required public headers, and the existing generated config headers, and it wires directly to `imath_src`, `iex_src`, `ilmthread_src`, and `openexr_core_src`.

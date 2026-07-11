@@ -1,0 +1,6 @@
+#ifndef INCLUDED_OPENEXR_SRC_UPSTREAM_IEXBASEEXC_H
+#define INCLUDED_OPENEXR_SRC_UPSTREAM_IEXBASEEXC_H
+
+#include <iex_src/upstream/IexBaseExc.h>
+
+#endif

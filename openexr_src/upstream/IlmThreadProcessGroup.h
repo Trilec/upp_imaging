@@ -1,0 +1,6 @@
+#ifndef INCLUDED_OPENEXR_SRC_UPSTREAM_ILMTHREADPROCESSGROUP_H
+#define INCLUDED_OPENEXR_SRC_UPSTREAM_ILMTHREADPROCESSGROUP_H
+
+#include <ilmthread_src/upstream/IlmThreadProcessGroup.h>
+
+#endif
