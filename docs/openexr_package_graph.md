@@ -36,15 +36,16 @@ Current intended strict-source layering for the OpenEXR branch:
   - currently deferred until the compression/config surface is reduced or explicitly packaged
 
 - `openexr_src`
-  - later higher-level C++ OpenEXR image API layer
+  - high-level C++ OpenEXR image API layer
   - likely depends on `iex_src`, `ilmthread_src`, `openexr_core_src`, and `imath_src`
-  - currently remains only a preflight skeleton
+  - now implemented as the strict imported-source package
 
 Current tested lower layers:
 
 - `iex_src` added and test-backed
 - `ilmthread_src` added and test-backed
-- `openexr_core_src` still deferred
+- `openexr_core_src` added and test-backed
+- `openexr_src` added and test-backed
 - full OpenEXR read/write still deferred
 
 Current uncertainty:

@@ -1,0 +1,6 @@
+#ifndef INCLUDED_OPENEXR_SRC_UPSTREAM_ILMTHREADFORWARD_H
+#define INCLUDED_OPENEXR_SRC_UPSTREAM_ILMTHREADFORWARD_H
+
+#include <ilmthread_src/upstream/IlmThreadForward.h>
+
+#endif

@@ -1,0 +1,6 @@
+#ifndef INCLUDED_OPENEXR_SRC_UPSTREAM_ILMTHREADEXPORT_H
+#define INCLUDED_OPENEXR_SRC_UPSTREAM_ILMTHREADEXPORT_H
+
+#include <ilmthread_src/upstream/IlmThreadExport.h>
+
+#endif

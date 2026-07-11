@@ -28,7 +28,7 @@ Expected dependency direction:
 - `iex_src` is the strict upstream-source Iex lower layer
 - `ilmthread_src` is the strict upstream-source IlmThread lower layer and depends on `iex_src`
 - `openexr_core_src` is the first OpenEXRCore package attempt with a modest real implementation slice
-- `openexr_src` is currently only a preflight skeleton, not a full strict OpenEXR package yet
+- `openexr_src` is the strict imported-source high-level OpenEXR package and depends on `imath_src`, `iex_src`, `ilmthread_src`, and `openexr_core_src`
 - future OpenEXR packages will likely depend on Imath and may also depend on zlib
 - `fmt_src` is the strict upstream fmt header-only package
 - `fmt` is the user-facing fmt layer and currently depends on `fmt_src`
@@ -82,7 +82,7 @@ Current OpenEXR lower-layer policy:
 - `ilmthread_src` is packaged and tested as the threading layer
 - `openexr_core_src` now exists as a modest first package attempt and probe layer
 - full OpenEXRCore coverage is still deferred
-- `openexr_src` remains preflight only
+- `openexr_src` now builds and passes the strict source probe
 
 Conflict rule:
 

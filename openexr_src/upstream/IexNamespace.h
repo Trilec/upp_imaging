@@ -1,0 +1,6 @@
+#ifndef INCLUDED_OPENEXR_SRC_UPSTREAM_IEXNAMESPACE_H
+#define INCLUDED_OPENEXR_SRC_UPSTREAM_IEXNAMESPACE_H
+
+#include <iex_src/upstream/IexNamespace.h>
+
+#endif

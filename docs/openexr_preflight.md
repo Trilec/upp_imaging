@@ -1,5 +1,10 @@
 # OpenEXR Preflight
 
+## Current status
+
+- the preflight investigation has been converted into the working strict `openexr_src` package
+- `openexr_src_probe` now builds and runs successfully
+
 ## Version inspected
 
 - OpenEXR `3.4.13`
@@ -63,28 +68,29 @@ Recommended package direction:
 - `openexr_src`: strict imported-source package layer
 - `openexr`: user-facing package layer later, only after the strict package is proven
 
-For this task, only a preflight skeleton is added:
+What was added for the strict package:
 
-- `openexr_src/`: header/probe skeleton only
-- `openexr_src_probe/`: compile-time probe only
+- `openexr_src/`: full imported high-level source package with generated config and include bridges
+- `openexr_src_probe/`: strict boundary probe
 
-Current probe limitation discovered:
+Historical probe limitation that was resolved:
 
 - imported OpenEXR public headers such as `ImfRgba.h` include `<half.h>` directly
-- under the current U++ package include-path behavior, that needs an additional packaging decision before a broader OpenEXR header set can be used cleanly
-- the current probe therefore stays on the safer version/config/namespace surface instead of claiming broader header usability yet
+- the package now resolves that through the local source-boundary layout and imported bridge headers
+- the strict source package now exercises the broader high-level API surface successfully
 
 ## What should be attempted first next
 
-- package `OpenEXRCore` explicitly as the next strict source layer or document a smaller compression-disabled first pass if possible
-- decide whether to keep OpenEXR's current compression surface minimal for the first scanline RGBA round-trip
-- add a minimal strict OpenEXR library build before any EXR file read/write test
+- add a user-facing `openexr` wrapper package only if the stable boundary is needed
+- extend validation into an actual EXR file read/write round-trip if that becomes the next milestone
+- keep the generated-config and include-bridge policy aligned with upstream 3.4.13
 
 ## Deliberately not attempted yet
 
 - no full OpenEXR library package build
+- no user-facing `openexr` wrapper package
 - no EXR read/write round-trip
 - no OpenEXRUtil package
 - no Python bindings
 - no tools/examples/test data import
-- no claim of OpenEXR support yet
+- no claim of a stable wrapper package yet

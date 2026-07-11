@@ -1,0 +1,6 @@
+#ifndef INCLUDED_OPENEXR_SRC_UPSTREAM_IMATHMATRIX_H
+#define INCLUDED_OPENEXR_SRC_UPSTREAM_IMATHMATRIX_H
+
+#include <imath_src/ImathMatrix.h>
+
+#endif

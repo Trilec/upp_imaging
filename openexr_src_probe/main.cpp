@@ -1,9 +1,10 @@
 #include <stdio.h>
 
-#include <openexr_src/openexr_version.h>
-#include <openexr_src/ImfVersion.h>
-#include <openexr_src/upstream/ImfForward.h>
-#include <imath_src/half.h>
+#include <openexr_src/Imf.h>
+
+#ifndef UPP_IMAGING_LOCAL_OPENEXR_SOURCE_INCLUDE
+#error local OpenEXR source package not selected
+#endif
 
 int main()
 {
@@ -16,14 +17,27 @@ int main()
 	else
 		failed++;
 
-	OPENEXR_IMF_NAMESPACE::Header* header = 0;
-	IMATH_NAMESPACE::half h = 0.5f;
-	if(header == 0 && float(h) > 0.49f && float(h) < 0.51f)
+	Imf::Header header(4, 3);
+	if(header.dataWindow().min.x == 0 && header.dataWindow().min.y == 0 && header.dataWindow().max.x == 3 && header.dataWindow().max.y == 2)
 		passed++;
 	else
 		failed++;
 
-	printf("OpenEXR namespace/header probe: %s\n", failed ? "FAIL" : "OK");
+	header.channels().insert("R", Imf::Channel(Imf::HALF));
+	if(header.channels().findChannel("R") != 0)
+		passed++;
+	else
+		failed++;
+
+	Imf::FrameBuffer frameBuffer;
+	float pixel[4] = {0.25f, 0.5f, 0.75f, 1.0f};
+	frameBuffer.insert("R", Imf::Slice(Imf::FLOAT, reinterpret_cast<char*>(pixel), sizeof(float), sizeof(float)));
+	if(frameBuffer.findSlice("R") != 0)
+		passed++;
+	else
+		failed++;
+
+	printf("OpenEXR strict source probe: %s\n", failed ? "FAIL" : "OK");
 	printf("SUMMARY passed=%d failed=%d\n", passed, failed);
 	return failed ? 1 : 0;
 }

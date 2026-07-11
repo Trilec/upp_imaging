@@ -18,7 +18,7 @@
 - libdeflate: pass (`libdeflate_test` performs the same round trip through Core + libdeflate)
 - openjph_src: pass (`openjph_src_test` checks version macros and basic public types through the strict package)
 - openjph: pass (`openjph_test` checks version macros and basic public types through Core + openjph)
-- openexr_src preflight: pass (`openexr_src_probe` reports version 3.4.13 and namespace/header probe OK)
+- openexr_src: pass (`openexr_src_probe` reports version 3.4.13 and the strict source probe OK)
 - openexr_core_src attempt: pass (`openexr_core_src_probe` reports version 3.4.13, public headers OK, and compression enums OK)
 - iex_src: pass (`iex_src_test` throws and catches IEX_NAMESPACE::ArgExc through BaseExc)
 - ilmthread_src: pass (`ilmthread_src_test` reports supportsThreads() and verifies semaphore post/wait)

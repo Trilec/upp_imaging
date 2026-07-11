@@ -1,0 +1,6 @@
+#ifndef INCLUDED_OPENEXR_SRC_UPSTREAM_IMATHVEC_H
+#define INCLUDED_OPENEXR_SRC_UPSTREAM_IMATHVEC_H
+
+#include <imath_src/ImathVec.h>
+
+#endif

@@ -65,14 +65,14 @@ Notes:
 - SHA-256: `1ED0CEE48AC8C77DA235C8CA8AB85D031D43CD790EDA36AF87FED4CF316CF2DF`
 - License: BSD-3-Clause
 - Date inspected: 2026-06-28
-- Files modified after import: No imported upstream files modified in the preflight subset
+- Files modified after import: repository-owned wrapper/header and config files were added around the imported upstream source tree
 
 Notes:
 
 - This task does not add full OpenEXR support.
-- A minimal public/header subset was imported into `openexr_src/upstream/` for compile-time probing only.
-- A repository-owned generated config header `openexr_src/upstream/OpenEXRConfig.h` was created from upstream `cmake/OpenEXRConfig.h.in` using values derived from the inspected release.
-- Full OpenEXR packaging will require additional libraries and generated config headers, especially for `Iex`, `IlmThread`, and `OpenEXRCore`.
+- `openexr_src` now carries the full high-level OpenEXR source package for 3.4.13.
+- Repository-owned generated config and bridge headers remain in `openexr_src/upstream/` to preserve the strict source boundary.
+- The package depends directly on `imath_src`, `iex_src`, `ilmthread_src`, and `openexr_core_src`.
 
 ## Iex
 
