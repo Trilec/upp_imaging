@@ -36,7 +36,8 @@ Strict upstream OpenImageIO utility package for U++.
 
 - the strict probe lives in `openimageio_util_src_probe`
 - current build target: `CLANGx64`
-- known upstream warnings: none yet recorded for this package
+- probe status: pass
+- inherited warnings: `FMT_HEADER_ONLY` redefinition, non-portable `Imath/half.h` include, deprecated `benchmark` / `callback_t` uses
 
 ## Deferred work
 
