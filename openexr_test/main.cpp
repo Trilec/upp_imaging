@@ -60,6 +60,20 @@ namespace
         return Imf::Rgba(r, g, b, a);
     }
 
+    void CompileOnlyPublicHeaderProbe()
+    {
+        Imf::Array2D<Imf::Rgba> pixels(1, 1);
+        Imf::Header header(4, 3);
+        Imf::FrameBuffer frameBuffer;
+        Imf::RgbaInputFile* input = 0;
+        Imf::RgbaOutputFile* output = 0;
+        (void)pixels;
+        (void)header;
+        (void)frameBuffer;
+        (void)input;
+        (void)output;
+    }
+
     void FillSource(Imf::Array2D<Imf::Rgba>& pixels)
     {
         const Imf::Rgba pattern[kHeight][kWidth] = {
@@ -144,6 +158,8 @@ namespace
 int main()
 {
     Result result;
+
+    CompileOnlyPublicHeaderProbe();
 
     const char* const workspace = "out/openexr_test";
     const std::string exrPath = std::string(workspace) + "/stable_roundtrip.exr";

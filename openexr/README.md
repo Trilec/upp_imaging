@@ -1,7 +1,9 @@
 # openexr
 
 User-facing OpenEXR package with a stable `openexr/...` include path.
-Delegates to `openexr_src` and does not compile the OpenEXR implementation again.
+Applications depend on `openexr` and include `<openexr/Imf.h>`.
+They do not add `openexr_src` include directories.
+The wrapper delegates to `openexr_src` internally and keeps the strict package available only for source-boundary validation.
 
 Status:
 
