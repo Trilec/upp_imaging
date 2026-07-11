@@ -1,0 +1,49 @@
+description "Strict upstream OpenImageIO 3.1.15.0 utility source package";
+
+noblitz;
+
+options
+	-Iupstream,
+	-DOpenImageIO_Util_EXPORTS,
+	-DOIIO_STATIC_DEFINE=1,
+	-DWIN32_LEAN_AND_MEAN,
+	-DNOMINMAX,
+	-DNOGDI,
+	-DVC_EXTRALEAN;
+
+uses
+	imath,
+	fmt,
+	robinmap;
+
+library(WIN32) psapi;
+
+file
+	OIIOUtil.h,
+	README.md,
+	upstream/OpenImageIO/oiioversion.h,
+	upstream/OpenImageIO/detail/fmt/format.h,
+	upstream/OpenImageIO/detail/fmt/ostream.h,
+	upstream/OpenImageIO/detail/fmt/printf.h,
+	upstream/OpenImageIO/detail/fmt/std.h,
+	upstream/tsl/robin_map.h,
+	upstream/libutil/SHA1.h,
+	upstream/libutil/stb_sprintf.h,
+	upstream/libutil/argparse.cpp,
+	upstream/libutil/benchmark.cpp,
+	upstream/libutil/errorhandler.cpp,
+	upstream/libutil/farmhash.cpp,
+	upstream/libutil/filesystem.cpp,
+	upstream/libutil/fmath.cpp,
+	upstream/libutil/filter.cpp,
+	upstream/libutil/hashes.cpp,
+	upstream/libutil/paramlist.cpp,
+	upstream/libutil/plugin.cpp,
+	upstream/libutil/SHA1.cpp,
+	upstream/libutil/strutil.cpp,
+	upstream/libutil/sysutil.cpp,
+	upstream/libutil/thread.cpp,
+	upstream/libutil/timer.cpp,
+	upstream/libutil/typedesc.cpp,
+	upstream/libutil/ustring.cpp,
+	upstream/libutil/xxhash.cpp;
