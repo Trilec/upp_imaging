@@ -1,24 +1,27 @@
 # Architecture
 
-`upp_imaging` is layered to keep upstream validation, application-facing APIs, testing, and diagnostics separate.
+`upp_imaging` keeps upstream validation, public APIs, helpers, testing, and diagnostics separate.
 
 ## Layering
 
 ```text
-strict imported-source package
+Pinned strict source packages
         ↓
-stable user-facing package
+Stable public packages
+        ├── direct codec APIs
+        └── OpenColorIO
         ↓
-small format IO helper
+Narrow format helpers
         ↓
-automated round-trip test
+Future OpenImageIO abstraction
         ↓
-shared visual viewer
-        ↓
-future OpenImageIO / OpenColorIO / LumaPix integration
+Future LumaPix/application adapters
+
+Automated tests validate each layer.
+The viewer remains supplementary.
 ```
 
-## Strict source packages
+## Pinned strict source foundations
 
 Examples:
 
@@ -30,6 +33,12 @@ Examples:
 - `iex_src`
 - `ilmthread_src`
 - `openexr_core_src`
+- `openexr_src`
+- `libjpeg_turbo_src`
+- `libtiff_src`
+- `opencolorio_src`
+- `fmt_src`
+- `robinmap_src`
 
 Purpose:
 
@@ -38,7 +47,7 @@ Purpose:
 - prove imported-source linkage
 - never contain fake replacements for missing upstream APIs
 
-## Stable user-facing packages
+## Stable public packages
 
 Examples:
 
@@ -48,20 +57,28 @@ Examples:
 - `libdeflate`
 - `openjph`
 - `openexr_core`
+- `openexr`
+- `libjpeg_turbo`
+- `libtiff`
+- `opencolorio`
+- `fmt`
+- `robinmap`
 
 Purpose:
 
 - stable U++ package dependency
 - stable public include path
-- hide source-package layout from application code
-- permit compatibility handling such as libpng symbol prefixing
+- hide strict source-package filesystem layout from application code
+- permit compatibility handling such as libpng symbol prefixing and OpenEXR boundary shims
 
-## Format IO helpers
+## Narrow format helpers
 
-Current examples:
+Examples:
 
 - `openexr_io`
 - `png_io`
+- `jpeg_io`
+- `tiff_io`
 
 Purpose:
 
@@ -70,50 +87,36 @@ Purpose:
 - honest supported subset
 - useful errors and clean failure handling
 
-## Test infrastructure
+## Tests and probes
 
-`imaging_roundtrip_test_support` is format-neutral and must remain dependent only on `Core`.
-
-It provides:
-
-- deterministic colour/alpha/HDR test charts
-- RGBA8 quantisation
-- exact comparison
-- tolerance-capable floating comparison
-- numerical diagnostics
-
-## Viewer
-
-`imaging_roundtrip_viewer` is a diagnostic application, not the authority for correctness.
+- `probe` means a fast package/header/object boundary check
+- `test` means behavioral or numerical validation
+- `viewer` means supplementary visual diagnostics
 
 Numerical comparison controls PASS/FAIL.
 
-The visual panes provide:
-
-- `Generated`
-- `Reloaded`
-- `Difference`
+The visual panes provide generated, reloaded, and difference views, but they never outrank the numerical result.
 
 ## Architectural rules
 
 1. Do not create fake implementations of upstream APIs.
 2. Ordinary applications do not depend directly on `_src`.
-3. Format helpers stay narrow.
-4. Automated comparison is authoritative.
-5. Viewer inspection is supplementary.
-6. Generated images and executables belong under ignored output directories.
-7. Machine-specific U++ nest configuration is not committed.
-8. Format-neutral test code must not depend on a codec.
-9. Add one dependency or format slice at a time.
-10. Do not claim support that has not been tested.
+3. Public packages must hide strict-source filesystem layout from consumers.
+4. Format helpers stay narrow.
+5. Automated comparison is authoritative.
+6. Viewer inspection is supplementary.
+7. Generated images and executables belong under ignored output directories.
+8. Machine-specific U++ nest configuration is not committed.
+9. Format-neutral test code must not depend on a codec.
+10. Add one dependency or format slice at a time.
+11. Do not claim support that has not been tested.
 
-## Continuation checklist
+## Repository strategy
 
-- inspect the status document first
-- verify package names and APIs against code
-- preserve package layering
-- add automated round-trip coverage
-- extend the existing viewer when appropriate
-- run the relevant regression matrix
-- update status only after acceptance
-- keep future work marked as planned
+`upp_imaging` remains one U++ nest containing many independently usable packages.
+
+Separate `upp_openimageio` or `upp_opencolorio` repositories are not being created yet.
+
+A later split may be considered only if release cadence, ownership, distribution, or application integration needs justify it.
+
+Stable package boundaries provide the useful separation now without duplicating vendored source or coordinating multiple repositories.
