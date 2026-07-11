@@ -9,6 +9,7 @@ Current meaning:
 - it keeps repository-owned generated config headers and include bridges alongside the imported sources
 - `openexr_src_probe` verifies the strict source boundary and package version
 - `openexr_src_test` now exercises a deterministic 4 x 3 scanline RGBA HALF round-trip and malformed-file rejection
+- `openexr` is the stable application-facing wrapper above this package
 
 ## Upstream preflight target
 
@@ -20,5 +21,4 @@ Current meaning:
 
 - strict source-boundary package for the high-level OpenEXR API
 - package-level compile/run probe passes
-- no user-facing `openexr` wrapper package yet
 - this does not broaden the `openexr_io` helper boundary
