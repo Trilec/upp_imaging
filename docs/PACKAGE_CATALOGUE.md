@@ -39,6 +39,12 @@ Primary navigation for `upp_imaging`.
 - Primary validation target: `opencolorio_test`, `opencolorio_gui_link_test`
 - Current status: packaged and validated under CLANGx64
 
+### `openimageio_prereq_test`
+- Purpose: coexistence test for the planned OpenImageIO prerequisite stack
+- Depends on: `openexr`, `imath`, `zlib`, `libpng`, `libjpeg_turbo`, `libtiff`, `opencolorio`, `fmt`, `robinmap`
+- Primary validation target: `openimageio_prereq_test`
+- Current status: passes under CLANGx64
+
 ### `imath`
 - Purpose: stable Imath math and half-float package
 - Pinned upstream version: 3.2.2
@@ -193,6 +199,9 @@ Ordinary applications must not depend directly on `_src` packages.
 ### OpenColorIO
 - `opencolorio_src_test`, `opencolorio_test`, `opencolorio_gui_link_test`
 - Integration checks: `ocio_dependencies_test`, `ocio_dependencies_gui_link_test`
+
+### OpenImageIO prerequisites
+- `openimageio_prereq_test`
 
 ### Dependency foundations
 - `zlib_src_test`, `zlib_test`
