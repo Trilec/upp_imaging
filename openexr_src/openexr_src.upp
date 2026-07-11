@@ -8,7 +8,6 @@ uses
 	ilmthread_src,
 	openexr_core_src;
 
-options(BUILDER_OPTION) NOWARNINGS;
 options
 	-Iupstream;
 library(WIN32) kernel32;

@@ -2,7 +2,7 @@
 
 ## Current status
 
-- the preflight investigation has been converted into the working strict `openexr_src` package
+- the strict `openexr_src` package now exists and builds successfully
 - `openexr_src_probe` now builds and runs successfully
 
 ## Version inspected
@@ -51,7 +51,7 @@ Likely generated or config-managed files for a real package attempt include:
 - `IlmThreadConfig.h`
 - possibly config-managed namespace/export/version wrappers per library
 
-This preflight package includes a repository-owned `OpenEXRConfig.h` derived from upstream `cmake/OpenEXRConfig.h.in`, but does not yet attempt the full generated-config set required for a real library build.
+This package includes repository-owned generated config and bridge headers derived from the upstream 3.4.13 release, and it now builds the full high-level source target.
 
 Lower-layer progress in this task:
 
@@ -87,7 +87,6 @@ Historical probe limitation that was resolved:
 
 ## Deliberately not attempted yet
 
-- no full OpenEXR library package build
 - no user-facing `openexr` wrapper package
 - no EXR read/write round-trip
 - no OpenEXRUtil package

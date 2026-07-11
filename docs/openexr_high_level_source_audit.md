@@ -2,7 +2,7 @@
 
 ## 1. Purpose
 
-Audit the upstream OpenEXR 3.4.13 high-level `Imf*` source boundary so `openexr_src` can be turned from a probe skeleton into a real imported-source package later, without rediscovering upstream structure.
+Audit the upstream OpenEXR 3.4.13 high-level `Imf*` source boundary so `openexr_src` can be implemented as a strict imported-source package without rediscovering upstream structure.
 
 ## 2. Upstream version and authority
 
