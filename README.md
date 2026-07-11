@@ -27,6 +27,7 @@ Narrow U++ IO helpers:
 - strict and stable 4 x 3 RGBA HALF ZIP round-trips pass exactly
 - `openexr_io` remains the narrow HALF/FLOAT, NONE/ZIP scanline helper
 - OpenColorIO 2.5.2 is packaged and validated
+- OpenImageIO prerequisite coexistence testing passes under `CLANGx64`
 - PNG, JPEG, and TIFF application packages are present with their narrow helpers
 - `CLANGx64` is the currently validated toolchain
 
@@ -49,7 +50,7 @@ Narrow U++ IO helpers:
 
 ## Next milestone
 
-OpenImageIO prerequisite coexistence testing and source/dependency audit.
+OpenImageIO source/dependency audit.
 
 ## Documentation links
 

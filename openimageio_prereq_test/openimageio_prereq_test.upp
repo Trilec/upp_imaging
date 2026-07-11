@@ -1,0 +1,16 @@
+description "OpenImageIO prerequisite stable-package coexistence test";
+
+uses
+	openexr,
+	imath,
+	zlib,
+	libpng,
+	libjpeg_turbo,
+	libtiff,
+	opencolorio,
+	fmt,
+	robinmap;
+
+file
+	main.cpp,
+	README.md;

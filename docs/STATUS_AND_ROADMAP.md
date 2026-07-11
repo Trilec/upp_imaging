@@ -46,7 +46,7 @@
 
 ## Next implementation order
 
-1. OpenImageIO prerequisite coexistence test
+1. OpenImageIO prerequisite coexistence test - complete
 2. OpenImageIO source/dependency audit
 3. strict OpenImageIO package foundation
 4. stable OpenImageIO package boundary
@@ -54,6 +54,8 @@
 6. LumaPix adapter
 
 OpenColorIO 2.5.2 is packaged and validated.
+
+The OpenImageIO prerequisite coexistence test now passes under CLANGx64.
 
 We are not manually implementing every format supported by OpenImageIO before packaging OpenImageIO.
 

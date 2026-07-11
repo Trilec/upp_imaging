@@ -117,6 +117,10 @@ Current planned prerequisite direction:
 - `fmt`
 - `robinmap`
 
+Current prerequisite coexistence check:
+
+- `openimageio_prereq_test` passes against the stable prerequisite stack under CLANGx64
+
 Conflict rule:
 
 - do not link strict and stable implementations of the same library into one normal application executable
