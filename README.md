@@ -1,93 +1,59 @@
 # upp_imaging
 
-`upp_imaging` is a reusable U++ imaging nest providing:
+## Purpose
 
-- pinned third-party packages
-- strict imported-source validation
-- stable user-facing packages
-- small format-specific IO helpers
-- automated numerical round-trip tests
-- a shared diagnostic viewer
-- shared diagnostic viewer with optional OpenColorIO CPU preview
+`upp_imaging` is a U++ imaging nest with pinned third-party packages, strict source validation, stable public APIs, narrow format helpers, tests, and diagnostics.
 
-## Current state
+## What applications should use
 
-- `OpenEXRCore` 3.4.13 is packaged and working
-- EXR scanline RGBA `HALF` and `FLOAT` load/save works
-- EXR `NONE` and `ZIP` compression paths are tested
-- `libpng` 1.6.58 is packaged and symbol-prefixed
-- PNG RGBA8 load/save works
-- `libjpeg-turbo` 3.2.0 is packaged and working
-- JPEG RGB8 load/save works through `jpeg_io`
-- `libtiff` 4.7.2 is packaged and working
-- TIFF RGBA8, RGBA16, and Float32 load/save works
-- TIFF NONE, LZW, and Deflate paths are tested
-- EXR, PNG, and JPEG are exercised in the shared viewer
-- TIFF profiles are exercised in the shared viewer
-- OpenColorIO 2.5.2 core is packaged
-- OpenColorIO CPU processing is validated
-- OpenColorIO GPU GLSL and HLSL extraction is validated
-- OpenColorIO built-in CG and Studio configs are validated
-- OpenColorIO CPU preview is integrated into the shared viewer
-- OpenColorIO preview errors clear after a later successful refresh
-- OpenColorIO raw round-trip metrics remain unchanged
-- OpenColorIO actual GPU rendering is not implemented
-- OpenColorIO export-through-OCIO is not implemented
-- OpenColorIO system-monitor enumeration is currently headless
+Direct upstream-style APIs:
+
+- `openexr`
+- `opencolorio`
+- `libpng`
+- `libjpeg_turbo`
+- `libtiff`
+
+Narrow U++ IO helpers:
+
+- `openexr_io`
+- `png_io`
+- `jpeg_io`
+- `tiff_io`
+
+## Current major capabilities
+
+- strict and stable OpenEXR 3.4.13 high-level packages exist
+- strict and stable 4 x 3 RGBA HALF ZIP round-trips pass exactly
+- `openexr_io` remains the narrow HALF/FLOAT, NONE/ZIP scanline helper
+- OpenColorIO 2.5.2 is packaged and validated
+- PNG, JPEG, and TIFF application packages are present with their narrow helpers
 - `CLANGx64` is the currently validated toolchain
 
-## Current limits
+## Repository package categories
 
-EXR does not yet support:
+- strict imported-source packages: `_src`
+- stable application-facing packages: `openexr`, `openexr_core`, `opencolorio`, `imath`, `zlib`, `libpng`, `libjpeg_turbo`, `libtiff`, `libdeflate`, `openjph`, `fmt`, `robinmap`
+- narrow format helpers: `openexr_io`, `png_io`, `jpeg_io`, `tiff_io`
+- tests and probes: package-specific validation targets
+- shared infrastructure: `imaging_roundtrip_test_support`, viewer diagnostics
 
-- tiled files
-- multipart files
-- deep files
-- arbitrary layers/channels
-- metadata preservation
-- non-zero data-window origins
+## Current limitations
 
-PNG does not yet preserve:
+- OpenEXR high-level support is validated for scanline RGBA HALF ZIP only
+- OpenEXRCore remains a narrower subset
+- OpenColorIO actual GPU rendering is not implemented
+- OpenColorIO export-through-OCIO is not implemented
+- OpenColorIO system-monitor enumeration is headless
+- OpenImageIO is not implemented yet
 
-- metadata
-- ICC profiles
-- gamma policy
-- source colour type
-- source bit depth above normalized RGBA8
+## Next milestone
 
-TIFF support is intentionally limited to:
+OpenImageIO prerequisite coexistence testing and source/dependency audit.
 
-- classic TIFF only
-- one directory
-- scanline layout
-- contiguous RGBA
-- top-left orientation
-- unassociated alpha
-- no tiled input
-- no planar-separate input
-- no palette, grayscale, or CMYK input
-- no metadata or ICC preservation
-- no JPEG-compressed TIFF
-- no BigTIFF claim
+## Documentation links
 
-## Package selection
-
-- use `openexr_io` for ordinary supported EXR RGBA load/save
-- use `png_io` for ordinary PNG RGBA8 load/save
-- use `jpeg_io` for ordinary JPEG RGB8 load/save
-- use `tiff_io` for the supported typed TIFF subset
-- use `openexr_core` and `libpng` only when direct lower-level upstream APIs are required
-- use `libtiff` only when direct upstream TIFF APIs are required
-- do not consume `_src` packages from ordinary application code
-
-## Docs
-
+- `docs/PACKAGE_CATALOGUE.md`
 - `docs/ARCHITECTURE.md`
-- `docs/USAGE.md`
 - `docs/STATUS_AND_ROADMAP.md`
-
-## Notes
-
-- build output belongs under ignored output directories such as `out/`
-- machine-specific U++ nest configuration is local-only
-- `GitHubOut.var.example` documents the symbolic nest requirement
+- `docs/package_layout.md`

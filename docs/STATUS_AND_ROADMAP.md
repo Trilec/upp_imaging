@@ -10,9 +10,10 @@
 | Iex | OpenEXR 3.4.13 stack | `iex_src` | — | — | Green | — | Lower layer complete |
 | IlmThread | OpenEXR 3.4.13 stack | `ilmthread_src` | — | — | Green | — | Lower layer complete |
 | OpenEXRCore | 3.4.13 | `openexr_core_src` | `openexr_core` | `openexr_io` | Green | Green | Scanline RGBA subset complete |
+| OpenEXR high-level | 3.4.13 | `openexr_src` | `openexr` | — | Strict and stable exact RGBA HALF ZIP round-trip | — | Stable package boundary complete |
 | JPEG | 3.2.0 | `libjpeg_turbo_src` | `libjpeg_turbo` | `jpeg_io` | Green | Green | RGB8 lossy subset complete |
 | TIFF | 4.7.2 | `libtiff_src` | `libtiff` | `tiff_io` | Green | Green | Typed RGBA subset complete |
-| OpenColorIO | 2.5.2 | `opencolorio_src` | `opencolorio` | `opencolorio_src_test`, `opencolorio_test`, `opencolorio_gui_link_test` | Green | Green | Core packaged |
+| OpenColorIO | 2.5.2 | `opencolorio_src` | `opencolorio` | — | Green | Green | Packaged and validated |
 | OpenImageIO | planned | — | — | — | — | — | Format abstraction |
 | LumaPix adapter | planned | — | — | — | — | — | Final integration |
 
@@ -45,11 +46,14 @@
 
 ## Next implementation order
 
-1. OpenImageIO focused integration proof
-2. initial OIIO plugins: EXR, PNG, JPEG, TIFF
-3. LumaPix adapter
+1. OpenImageIO prerequisite coexistence test
+2. OpenImageIO source/dependency audit
+3. strict OpenImageIO package foundation
+4. stable OpenImageIO package boundary
+5. baseline EXR/PNG/JPEG/TIFF OpenImageIO validation
+6. LumaPix adapter
 
-OpenColorIO 2.5.2 is now packaged and validated.
+OpenColorIO 2.5.2 is packaged and validated.
 
 We are not manually implementing every format supported by OpenImageIO before packaging OpenImageIO.
 
