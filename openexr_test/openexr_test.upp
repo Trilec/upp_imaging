@@ -1,0 +1,11 @@
+description "Stable OpenEXR 3.4.13 high-level file round-trip test";
+
+uses
+	openexr;
+
+options
+	-I../openexr_src
+	-I../openexr_src/upstream;
+
+file
+	main.cpp;
