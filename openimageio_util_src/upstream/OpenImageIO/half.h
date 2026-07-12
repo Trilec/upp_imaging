@@ -12,7 +12,7 @@
 #    define IMATH_HALF_NO_LOOKUP_TABLE
 #endif
 
-#include <Imath/half.h>
+#include <imath/half.h>
 
 
 #if defined(FMT_VERSION) && !defined(OIIO_HALF_FORMATTER)
