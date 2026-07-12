@@ -49,7 +49,7 @@
 #    endif
 #endif
 
-#include <OpenImageIO/oiioversion.h>
+#include "oiioversion.h"
 #include <OpenImageIO/export.h>
 
 // Detect which compiler and version we're using

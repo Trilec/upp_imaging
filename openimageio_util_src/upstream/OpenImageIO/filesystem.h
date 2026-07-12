@@ -26,8 +26,8 @@
 #include <string>
 #include <vector>
 
-#include <OpenImageIO/export.h>
-#include <OpenImageIO/oiioversion.h>
+#include "export.h"
+#include "oiioversion.h"
 #include <OpenImageIO/span.h>
 #include <OpenImageIO/strutil.h>
 #include <OpenImageIO/string_view.h>

@@ -8,7 +8,7 @@
 #include <memory>
 #include <vector>
 
-#include <OpenImageIO/export.h>
+#include "export.h"
 #include <OpenImageIO/string_view.h>
 #include <OpenImageIO/typedesc.h>
 #include <OpenImageIO/ustring.h>

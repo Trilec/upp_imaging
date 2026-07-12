@@ -13,9 +13,9 @@
 #include <functional>
 #include <iostream>
 
-#include <OpenImageIO/export.h>
+#include "export.h"
 #include <OpenImageIO/function_view.h>
-#include <OpenImageIO/oiioversion.h>
+#include "oiioversion.h"
 #include <OpenImageIO/platform.h>
 #include <OpenImageIO/span.h>
 #include <OpenImageIO/strutil.h>

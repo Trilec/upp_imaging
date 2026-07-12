@@ -21,6 +21,7 @@ library(WIN32) psapi;
 file
 	OIIOUtil.h,
 	README.md,
+	upstream/OpenImageIO/export.h,
 	upstream/OpenImageIO/oiioversion.h,
 	upstream/OpenImageIO/detail/fmt/format.h,
 	upstream/OpenImageIO/detail/fmt/ostream.h,

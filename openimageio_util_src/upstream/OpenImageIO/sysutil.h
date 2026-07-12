@@ -20,8 +20,8 @@
 #    include <malloc.h>  // for alloca
 #endif
 
-#include <OpenImageIO/export.h>
-#include <OpenImageIO/oiioversion.h>
+#include "export.h"
+#include "oiioversion.h"
 #include <OpenImageIO/platform.h>
 #include <OpenImageIO/string_view.h>
 

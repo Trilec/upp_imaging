@@ -59,7 +59,7 @@ namespace OIIO = OpenImageIO;
 #define OIIO_NAMESPACE_USING using namespace OIIO;
 #define OIIO_CURRENT_NAMESPACE OpenImageIO::v3_1
 
-#include <OpenImageIO/nsversions.h>
+#include "nsversions.h"
 
 #define OIIO_PLUGIN_VERSION 27
 

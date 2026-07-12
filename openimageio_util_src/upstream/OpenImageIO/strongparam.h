@@ -7,7 +7,7 @@
 
 #include <type_traits>
 
-#include <OpenImageIO/oiioversion.h>
+#include "oiioversion.h"
 
 OIIO_NAMESPACE_3_1_BEGIN
 

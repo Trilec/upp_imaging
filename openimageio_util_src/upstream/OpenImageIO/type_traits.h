@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include <OpenImageIO/oiioversion.h>
+#include "oiioversion.h"
 #include <OpenImageIO/platform.h>
 
 

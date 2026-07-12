@@ -15,7 +15,7 @@
 #include <vector>
 
 #include <OpenImageIO/dassert.h>
-#include <OpenImageIO/oiioversion.h>
+#include "oiioversion.h"
 #include <OpenImageIO/platform.h>
 #include <OpenImageIO/detail/fmt.h>
 

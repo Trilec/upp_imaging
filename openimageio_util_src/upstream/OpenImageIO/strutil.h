@@ -22,9 +22,9 @@
 #include <utility>
 #include <vector>
 
-#include <OpenImageIO/export.h>
+#include "export.h"
 #include <OpenImageIO/hash.h>
-#include <OpenImageIO/oiioversion.h>
+#include "oiioversion.h"
 #include <OpenImageIO/platform.h>
 #include <OpenImageIO/string_view.h>
 

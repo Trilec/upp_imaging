@@ -14,8 +14,8 @@
 #include <stdexcept>
 #include <string>
 
-#include <OpenImageIO/export.h>
-#include <OpenImageIO/oiioversion.h>
+#include "export.h"
+#include "oiioversion.h"
 #include <OpenImageIO/platform.h>
 #include <OpenImageIO/detail/fmt.h>
 
