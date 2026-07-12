@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include <OpenImageIO/export.h>
-#include <OpenImageIO/oiioversion.h>
+#include "export.h"
+#include "oiioversion.h"
 #include <OpenImageIO/strutil.h>
 
 

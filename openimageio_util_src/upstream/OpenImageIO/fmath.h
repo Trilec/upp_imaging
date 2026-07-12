@@ -40,7 +40,7 @@
 #include <OpenImageIO/bit.h>
 #include <OpenImageIO/span.h>
 #include <OpenImageIO/dassert.h>
-#include <OpenImageIO/oiioversion.h>
+#include "oiioversion.h"
 #include <OpenImageIO/platform.h>
 #include <OpenImageIO/simd.h>
 

@@ -106,7 +106,7 @@
 #define SHA1_H_A545E61D43E9404E8D736869AB3CBFE7
 
 #include <OpenImageIO/export.h>
-#include <OpenImageIO/oiioversion.h>
+#include "../OpenImageIO/oiioversion.h"
 #include <OpenImageIO/platform.h>
 
 #if !defined(SHA1_UTILITY_FUNCTIONS) && !defined(SHA1_NO_UTILITY_FUNCTIONS)

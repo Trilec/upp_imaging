@@ -7,7 +7,7 @@
 
 #include <cstddef>
 
-#include <OpenImageIO/oiioversion.h>
+#include "oiioversion.h"
 #include <OpenImageIO/platform.h>
 
 

@@ -15,7 +15,7 @@
 #include <vector>
 
 #include <OpenImageIO/attrdelegate.h>
-#include <OpenImageIO/export.h>
+#include "export.h"
 #include <OpenImageIO/memory.h>
 #include <OpenImageIO/strongparam.h>
 #include <OpenImageIO/typedesc.h>

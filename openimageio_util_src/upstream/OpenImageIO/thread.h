@@ -26,8 +26,8 @@
 
 #include <OpenImageIO/atomic.h>
 #include <OpenImageIO/dassert.h>
-#include <OpenImageIO/export.h>
-#include <OpenImageIO/oiioversion.h>
+#include "export.h"
+#include "oiioversion.h"
 #include <OpenImageIO/platform.h>
 
 
