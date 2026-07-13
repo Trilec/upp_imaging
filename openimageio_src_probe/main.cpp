@@ -8,6 +8,10 @@
 #error strict OpenImageIO source marker not selected
 #endif
 
+#ifndef UPP_IMAGING_LOCAL_OPENIMAGEIO_UTIL_SOURCE_INCLUDE
+#error strict OpenImageIO utility marker not selected
+#endif
+
 namespace oiio = OIIO;
 
 struct Result {

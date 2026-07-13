@@ -1,9 +1,5 @@
 description "Strict OpenImageIO main source probe";
 
-options
-	-I../openimageio_util_src/upstream/OpenImageIO,
-	-I../openimageio_src/upstream/OpenImageIO;
-
 uses
 	openimageio_src;
 
