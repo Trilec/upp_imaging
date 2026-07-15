@@ -53,7 +53,7 @@ int main()
     spec.attribute("label", "no-file-io");
     std::string label;
     const bool spec_ok = spec.width == 4 && spec.height == 3 && spec.nchannels == 4
-        && spec.format == oiio::TypeDesc::FLOAT && spec.getattribute("label", label) && label == "no-file-io";
+        && spec.format == oiio::TypeDesc::FLOAT && spec.get_string_attribute("label") == "no-file-io";
     Check(result, spec_ok, "PASS ImageSpec");
 
     oiio::ImageBuf buf(spec);

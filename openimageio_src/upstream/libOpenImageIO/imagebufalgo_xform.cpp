@@ -19,7 +19,7 @@
 #include <OpenImageIO/imagebufalgo_util.h>
 #include <OpenImageIO/thread.h>
 
-#include <Imath/ImathBox.h>
+#include <imath/Imath/ImathBox.h>
 
 OIIO_NAMESPACE_3_1_BEGIN
 

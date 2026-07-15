@@ -16,6 +16,7 @@ Strict upstream OpenImageIO 3.1.15.0 main-library package for U++.
 
 ## Dependencies
 
+- `OpenImageIO`
 - `openimageio_util_src`
 - `openexr`
 - `imath`
@@ -38,3 +39,4 @@ Strict upstream OpenImageIO 3.1.15.0 main-library package for U++.
 - probe target: `openimageio_src_probe`
 - strict markers: main and utility markers are both required
 - no-file-I/O probe only
+- probe uses the static `OIIO` API path

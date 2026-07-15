@@ -10,7 +10,7 @@
 #ifndef OPENIMAGEIO_IMAGECACHE_PVT_H
 #define OPENIMAGEIO_IMAGECACHE_PVT_H
 
-#include <tsl/robin_map.h>
+#include <robinmap/robin_map.h>
 
 #include <OpenImageIO/Imath.h>
 #include <OpenImageIO/export.h>

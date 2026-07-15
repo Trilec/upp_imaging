@@ -16,9 +16,9 @@
 // DEPRECATED(3.0)
 #define OIIO_USING_IMATH 3
 
-#include <Imath/ImathColor.h>
-#include <Imath/ImathMatrix.h>
-#include <Imath/ImathVec.h>
+#include <imath/Imath/ImathColor.h>
+#include <imath/Imath/ImathMatrix.h>
+#include <imath/Imath/ImathVec.h>
 
 
 /// Custom fmtlib formatters for Imath types.

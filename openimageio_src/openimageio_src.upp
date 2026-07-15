@@ -8,7 +8,6 @@ options
 	-I../libtiff,
 	-Iupstream/libOpenImageIO,
 	-Iupstream/libtexture,
-	-I../openimageio_util_src/upstream,
 	-DOpenImageIO_EXPORTS,
 	-DOIIO_STATIC_DEFINE=1,
 	-DWIN32_LEAN_AND_MEAN,
@@ -19,6 +18,7 @@ options
 	-DOIIO_OPENEXR_CORE_DEFAULT=1;
 
 uses
+	OpenImageIO,
 	openimageio_util_src,
 	openexr,
 	imath,
