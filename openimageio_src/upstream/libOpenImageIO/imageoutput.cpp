@@ -9,7 +9,7 @@
 #include <memory>
 #include <vector>
 
-#include <tsl/robin_map.h>
+#include <robinmap/robin_map.h>
 
 #include <OpenImageIO/dassert.h>
 #include <OpenImageIO/deepdata.h>

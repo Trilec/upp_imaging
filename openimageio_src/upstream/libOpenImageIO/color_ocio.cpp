@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-#include <tsl/robin_map.h>
+#include <robinmap/robin_map.h>
 
 #include <OpenImageIO/Imath.h>
 

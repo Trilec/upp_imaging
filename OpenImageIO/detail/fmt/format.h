@@ -1,6 +1,6 @@
 #ifndef UPP_IMAGING_OPENIMAGEIO_DETAIL_FMT_FORMAT_H
 #define UPP_IMAGING_OPENIMAGEIO_DETAIL_FMT_FORMAT_H
 
-#include <fmt_src/format.h>
+#include <fmt/format.h>
 
 #endif

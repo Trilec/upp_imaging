@@ -12,6 +12,7 @@ options
 	-DVC_EXTRALEAN;
 
 uses
+	OpenImageIO,
 	imath,
 	fmt,
 	robinmap;
@@ -21,12 +22,6 @@ library(WIN32) psapi;
 file
 	OIIOUtil.h,
 	README.md,
-	upstream/OpenImageIO/export.h,
-	upstream/OpenImageIO/oiioversion.h,
-	upstream/OpenImageIO/detail/fmt/format.h,
-	upstream/OpenImageIO/detail/fmt/ostream.h,
-	upstream/OpenImageIO/detail/fmt/printf.h,
-	upstream/OpenImageIO/detail/fmt/std.h,
 	upstream/tsl/robin_map.h,
 	upstream/libutil/SHA1.h,
 	upstream/libutil/stb_sprintf.h,

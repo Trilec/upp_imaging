@@ -1,7 +1,6 @@
 description "Strict OpenImageIO utility source probe";
 
 options
-	-I../openimageio_util_src/upstream;
 	-DOpenImageIO_EXPORTS=1;
 	-DOpenImageIO_Util_EXPORTS=1;
 	-DOIIO_STATIC_DEFINE=1;

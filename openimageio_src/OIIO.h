@@ -8,6 +8,10 @@
 #define UPP_IMAGING_LOCAL_OPENIMAGEIO_UTIL_SOURCE_INCLUDE 1
 #endif
 
+#ifndef OIIO_STATIC_DEFINE
+#define OIIO_STATIC_DEFINE 1
+#endif
+
 #include <OpenImageIO/argparse.h>
 #include <OpenImageIO/benchmark.h>
 #include <OpenImageIO/errorhandler.h>

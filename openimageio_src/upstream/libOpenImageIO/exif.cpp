@@ -11,7 +11,7 @@
 #include <sstream>
 #include <vector>
 
-#include <tsl/robin_map.h>
+#include <robinmap/robin_map.h>
 
 #include <OpenImageIO/fmath.h>
 #include <OpenImageIO/imageio.h>
