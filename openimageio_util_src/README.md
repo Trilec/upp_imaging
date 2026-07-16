@@ -17,8 +17,9 @@ Strict upstream OpenImageIO utility package for U++.
 
 - imports the audited 18-source utility target
 - exposes the minimum strict utility umbrella at `#include <openimageio_util_src/OIIOUtil.h>`
-- defines `UPP_IMAGING_LOCAL_OPENIMAGEIO_UTIL_SOURCE_INCLUDE`
 - keeps the main `OpenImageIO` library, image plugins, and image I/O out of scope
+- utility marker owner: `openimageio_util_src/OIIOUtil.h`
+- static macro owner for consumers: the umbrellas define `OIIO_STATIC_DEFINE`
 
 ## Source count
 
@@ -55,16 +56,16 @@ Strict upstream OpenImageIO utility package for U++.
 
 ## Generated version header
 
-- `upstream/OpenImageIO/oiioversion.h` is repository-owned and derived from upstream `src/include/OpenImageIO/oiioversion.h.in`
+- `OpenImageIO/oiioversion.h` is repository-owned and derived from upstream `src/include/OpenImageIO/oiioversion.h.in`
 - pinned values: `3.1.15.0`
 - namespace: `OpenImageIO::v3_1`
 
 ## Forwarding Shims
 
-- `OpenImageIO/detail/fmt/format.h` -> `fmt_src/format.h`
-- `OpenImageIO/detail/fmt/ostream.h` -> `fmt_src/upstream/ostream.h`
-- `OpenImageIO/detail/fmt/printf.h` -> `fmt_src/upstream/printf.h`
-- `OpenImageIO/detail/fmt/std.h` -> `fmt_src/upstream/std.h`
+- `OpenImageIO/detail/fmt/format.h` -> `fmt/format.h`
+- `OpenImageIO/detail/fmt/ostream.h` -> `fmt/upstream/ostream.h`
+- `OpenImageIO/detail/fmt/printf.h` -> `fmt/upstream/printf.h`
+- `OpenImageIO/detail/fmt/std.h` -> `fmt/upstream/std.h`
 - `upstream/tsl/robin_map.h` -> `robinmap/robin_map.h`
 - all of these are thin forwarding headers; no implementation code, no macro games
 
@@ -74,6 +75,12 @@ Strict upstream OpenImageIO utility package for U++.
 - kept utility-required internal headers and generated utility headers only
 - removed main-library-only headers such as `imageio`, `imagebuf`, `imagecache`, `color`, `deepdata`, `texture`, `tiffutils`, `Imath`, and `detail/pugixml`
 - the strict umbrella stays utility-only and does not expose `imageio.h`, `imagebuf.h`, `imagebufalgo.h`, `imagecache.h`, `color.h`, or `texture.h`
+
+## Probe Policy
+
+- no consumer probe defines package export macros
+- no consumer probe needs a private include path
+- the umbrella headers supply `OIIO_STATIC_DEFINE`
 
 ## Config Fixes
 

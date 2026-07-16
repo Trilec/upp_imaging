@@ -360,7 +360,7 @@ enum class TextAlignY { Baseline, Top, Bottom, Center };
 /// `share/fonts`, or `Library/Fonts`) underneath the directories in
 /// environment variables `$HOME`, `$SystemRoot`, `$OpenImageIO_ROOT`; (c) a
 /// number of common system font areas, including `/usr/share/fonts`,
-/// `/Library/fonts`, and `C:/Windows/fonts`; (d) in fonts directories one
+/// `/Library/fonts`, and Windows fonts directories; (d) in fonts directories one
 /// level up from the place where the currently running binary lives.
 bool OIIO_API render_text (ImageBuf &dst, int x, int y, string_view text,
                            int fontsize=16, string_view fontname="",
