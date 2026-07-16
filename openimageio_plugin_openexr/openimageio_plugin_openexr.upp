@@ -1,0 +1,11 @@
+description "OpenImageIO OpenEXR plugin registration package";
+
+uses
+	openimageio_src,
+	openexr,
+	imath,
+	openexr_io;
+
+file
+	OpenImageIOOpenEXRPlugin.cpp,
+	README.md;
