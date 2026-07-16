@@ -1,0 +1,11 @@
+description "Deterministic OpenImageIO IO test";
+
+uses
+	openimageio,
+	opencolorio;
+
+file
+	main.cpp,
+	input_test.cube,
+	output_test.cube,
+	README.md;

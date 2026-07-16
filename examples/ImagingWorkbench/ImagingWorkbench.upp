@@ -1,0 +1,10 @@
+description "Small OpenImageIO imaging workbench";
+
+uses
+	CtrlLib,
+	openimageio,
+	opencolorio;
+
+file
+	ImagingWorkbench.cpp,
+	README.md;

@@ -1,0 +1,11 @@
+description "OpenImageIO PNG plugin registration package";
+
+uses
+	openimageio_src,
+	libpng,
+	zlib,
+	png_io;
+
+file
+	OpenImageIOPNGPlugin.cpp,
+	README.md;
