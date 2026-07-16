@@ -1,10 +1,5 @@
 description "Strict OpenImageIO main source probe";
 
-options
-	-DOpenImageIO_EXPORTS=1,
-	-DOpenImageIO_Util_EXPORTS=1,
-	-DOIIO_STATIC_DEFINE=1;
-
 uses
 	openimageio_src;
 
