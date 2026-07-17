@@ -1,0 +1,6 @@
+#ifndef INCLUDED_OPENEXR_SRC_UPSTREAM_IMATHBOX_H
+#define INCLUDED_OPENEXR_SRC_UPSTREAM_IMATHBOX_H
+
+#include <imath_src/ImathBox.h>
+
+#endif

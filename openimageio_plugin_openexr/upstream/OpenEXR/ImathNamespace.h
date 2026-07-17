@@ -1,0 +1,6 @@
+#ifndef INCLUDED_OPENEXR_SRC_UPSTREAM_IMATHNAMESPACE_H
+#define INCLUDED_OPENEXR_SRC_UPSTREAM_IMATHNAMESPACE_H
+
+#include <imath_src/upstream/ImathNamespace.h>
+
+#endif

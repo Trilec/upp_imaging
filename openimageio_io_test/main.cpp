@@ -132,17 +132,16 @@ int main()
     std::printf("registered_input_formats=%s\nregistered_output_formats=%s\nregistered_extensions=%s\n",
                 input_formats.c_str(), output_formats.c_str(), extensions.c_str());
     Check(input_formats.find("openexr") != std::string::npos,
-          "OpenEXR registration", passed, failed);
+          "OpenEXR registered", passed, failed);
     Check(output_formats.find("openexr") != std::string::npos,
-          "OpenEXR output registration", passed, failed);
+          "OpenEXR output registered", passed, failed);
     Check(input_formats.find("png") != std::string::npos,
-          "PNG registration", passed, failed);
+          "PNG registered", passed, failed);
     Check(output_formats.find("png") != std::string::npos,
-          "PNG output registration", passed, failed);
+          "PNG output registered", passed, failed);
 
     const std::string root = std::string("openimageio_io_test_tmp");
-    const std::string input_lut = std::filesystem::absolute(root + "/input_test.cube").string();
-    const std::string output_lut = std::filesystem::absolute(root + "/output_test.cube").string();
+    const std::string lut = std::filesystem::absolute(root + "/test_transform.cube").string();
     const std::string source_exr = root + "/source.exr";
     const std::string output_png = root + "/output.png";
     const std::string output_exr = root + "/output_reopened.exr";
@@ -152,13 +151,17 @@ int main()
     std::remove(source_exr.c_str());
     std::remove(output_png.c_str());
     std::remove(output_exr.c_str());
-    std::remove(input_lut.c_str());
-    std::remove(output_lut.c_str());
+    std::remove(lut.c_str());
 
     std::vector<float> source_pixels;
     ImageBuf source = MakeSource(source_pixels);
     Check(source.spec().width == WIDTH && source.spec().height == HEIGHT,
           "synthetic source", passed, failed);
+    Check(source.spec().format == TypeDesc::FLOAT && source.spec().nchannels == CHANNELS,
+          "source type and channels", passed, failed);
+    Check(source.spec().get_string_attribute("oiio:ColorSpace") == "linear"
+              && source.spec().get_string_attribute("test:source") == "synthetic",
+          "metadata", passed, failed);
 
     std::vector<float> layer_pixels;
     ImageBuf layer = MakeLayer(layer_pixels);
@@ -166,20 +169,16 @@ int main()
     Check(!working.has_error(), "alpha composite", passed, failed);
 
     std::string error;
-    Check(WriteLut(input_lut, "0.0 0.0 0.0\n1.0 1.0 1.0\n"),
-          "input LUT asset", passed, failed);
-    Check(WriteLut(output_lut, "1.0 0.0 0.0\n0.0 1.0 1.0\n"),
-          "output LUT asset", passed, failed);
-    bool input_ok = ApplyLut(working, input_lut, OCIO::TRANSFORM_DIR_FORWARD, error);
+    Check(WriteLut(lut, "1.0 1.0 1.0\n0.0 0.0 0.0\n"),
+          "LUT asset", passed, failed);
+    bool input_ok = ApplyLut(working, lut, OCIO::TRANSFORM_DIR_FORWARD, error);
     if(!input_ok)
         std::printf("input LUT error: %s\n", error.c_str());
-    Check(input_ok,
-          "incoming LUT", passed, failed);
-    bool output_ok = ApplyLut(working, output_lut, OCIO::TRANSFORM_DIR_FORWARD, error);
-    if(!output_ok)
-        std::printf("output LUT error: %s\n", error.c_str());
-    Check(output_ok,
-          "outgoing LUT", passed, failed);
+    float transformed[4] = {};
+    working.getpixel(8, 8, transformed);
+    std::printf("lut_pixel=%.6f %.6f %.6f %.6f\n", transformed[0], transformed[1], transformed[2], transformed[3]);
+    Check(input_ok && transformed[0] < 0.6f,
+          "OpenColorIO LUT", passed, failed);
 
     bool exr_write = SaveImage(source_exr.c_str(), working, &error);
     if(!exr_write)
@@ -191,8 +190,9 @@ int main()
         std::printf("EXR read error: %s\n", error.c_str());
     Check(exr_read, "EXR read", passed, failed);
     Check(reopened_exr.spec().width == WIDTH && reopened_exr.spec().height == HEIGHT
-              && reopened_exr.spec().nchannels == CHANNELS,
-          "metadata", passed, failed);
+              && reopened_exr.spec().nchannels == CHANNELS
+              && reopened_exr.spec().format == TypeDesc::FLOAT,
+          "EXR specification", passed, failed);
     bool png_write = SaveImage(output_png.c_str(), reopened_exr, &error);
     if(!png_write)
         std::printf("PNG write error: %s\n", error.c_str());
@@ -217,14 +217,13 @@ int main()
     std::remove(source_exr.c_str());
     std::remove(output_png.c_str());
     std::remove(output_exr.c_str());
-    std::remove(input_lut.c_str());
-    std::remove(output_lut.c_str());
+    std::remove(lut.c_str());
     const bool cleaned = std::filesystem::remove_all(root) >= 0
                       && !std::filesystem::exists(root);
     Check(cleaned, "cleanup", passed, failed);
 
     std::printf("source_size=32x24\nsource_channels=4\ninput_format=exr\noutput_format=png\n"
-                "input_lut=input_test.cube\noutput_lut=output_test.cube\n"
+                "lut=test_transform.cube\n"
                 "SUMMARY passed=%d failed=%d\n", passed, failed);
     return failed ? 1 : 0;
 }

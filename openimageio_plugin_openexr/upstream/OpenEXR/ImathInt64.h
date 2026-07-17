@@ -1,0 +1,6 @@
+#ifndef INCLUDED_OPENEXR_SRC_UPSTREAM_IMATHINT64_H
+#define INCLUDED_OPENEXR_SRC_UPSTREAM_IMATHINT64_H
+
+#include <imath_src/upstream/ImathInt64.h>
+
+#endif
