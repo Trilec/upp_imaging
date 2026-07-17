@@ -29,6 +29,7 @@ file
 	upstream/pngprefix.h,
 	upstream/pngpriv.h,
 	upstream/pngstruct.h,
+	libpng16/png.h,
 	upstream/README,
 	upstream/LICENSE,
 	upstream/AUTHORS,

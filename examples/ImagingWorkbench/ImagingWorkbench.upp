@@ -1,0 +1,10 @@
+description "Interactive imaging workbench MVP";
+
+uses
+	CtrlLib,
+	oiio,
+	opencolorio;
+
+file
+	ImagingWorkbench.cpp,
+	README.md;
