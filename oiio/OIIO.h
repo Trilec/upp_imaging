@@ -1,6 +1,6 @@
 #pragma once
 
-#define UPP_IMAGING_LOCAL_OPENIMAGEIO_INCLUDE 1
+#define UPP_IMAGING_LOCAL_OIIO_INCLUDE 1
 
 #include <openimageio_src/OIIO.h>
 

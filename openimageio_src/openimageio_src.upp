@@ -4,8 +4,8 @@ noblitz;
 
 options
 	-I.,
-	-I../openimageio_headers,
-	-I../openimageio_headers/OpenImageIO/detail/pugixml,
+	-I../OpenImageIO,
+	-I../OpenImageIO/detail/pugixml,
 	-I../imath,
 	-I../libtiff,
 	-Iupstream/libOpenImageIO,
@@ -20,7 +20,7 @@ options
 	-DOIIO_OPENEXR_CORE_DEFAULT=1;
 
 uses
-	openimageio_headers,
+	OpenImageIO,
 	openimageio_util_src,
 	openexr,
 	imath,

@@ -6,13 +6,12 @@ uses
 	zlib;
 
 options
-	-I../openimageio_headers,
+	-I../OpenImageIO,
 	-I../openimageio_src,
 	-I../openimageio_src/upstream/libOpenImageIO,
 	-I../libpng,
 	-I../libpng/upstream,
 	-I../libtiff_src/upstream/libtiff,
-	-Iupstream,
 	-Iupstream/png.imageio,
 	-DOIIO_STATIC_DEFINE=1;
 

@@ -4,7 +4,7 @@ noblitz;
 
 options
 	-Iupstream,
-	-I../openimageio_headers,
+	-I../OpenImageIO,
 	-DOpenImageIO_Util_EXPORTS,
 	-DOIIO_STATIC_DEFINE=1,
 	-DWIN32_LEAN_AND_MEAN,
@@ -13,7 +13,7 @@ options
 	-DVC_EXTRALEAN;
 
 uses
-	openimageio_headers,
+	OpenImageIO,
 	imath,
 	fmt,
 	robinmap;

@@ -1,4 +1,4 @@
-#include "OpenImageIO.h"
+#include "OIIO.h"
 
 #include <mutex>
 

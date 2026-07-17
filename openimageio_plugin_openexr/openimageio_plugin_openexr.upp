@@ -6,12 +6,12 @@ uses
 	imath;
 
 options
-	-I../openimageio_headers,
+	-I../OpenImageIO,
 	-I../openimageio_src,
 	-I../openimageio_src/upstream/libOpenImageIO,
 	-I../openexr_src,
 	-I../openexr_src/upstream,
-	-Iupstream,
+	-I../openexr,
 	-Iupstream/openexr.imageio,
 	-DOIIO_STATIC_DEFINE=1;
 

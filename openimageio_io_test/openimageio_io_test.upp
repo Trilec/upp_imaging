@@ -1,11 +1,8 @@
 description "Deterministic OpenImageIO IO test";
 
 uses
-	openimageio,
+	oiio,
 	opencolorio;
-
-options
-	-I../openimageio_headers;
 
 file
 	main.cpp,

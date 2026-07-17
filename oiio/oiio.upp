@@ -1,0 +1,11 @@
+description "Stable application-facing OpenImageIO package";
+
+uses
+	openimageio_src,
+	openimageio_plugin_openexr,
+	openimageio_plugin_png;
+
+file
+	OIIO.h,
+	OIIO.cpp,
+	README.md;
