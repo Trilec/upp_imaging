@@ -45,6 +45,10 @@ static bool ApplyLut(ImageBuf& image, const String& filename,
 		OCIO::ConstProcessorRcPtr processor = OCIO::Config::Create()->getProcessor(transform);
 		OCIO::ConstCPUProcessorRcPtr cpu = processor->getDefaultCPUProcessor();
 		const ImageSpec& spec = image.spec();
+		if(spec.nchannels != 1 && spec.nchannels != 3 && spec.nchannels != 4) {
+			error = "LUT processing supports only 1, 3, or 4 channel images";
+			return false;
+		}
 		std::vector<float> pixels(spec.width * spec.height * spec.nchannels);
 		ROI roi = image.roi();
 		if(!image.get_pixels(roi, TypeDesc::FLOAT, pixels.data(),
@@ -54,7 +58,16 @@ static bool ApplyLut(ImageBuf& image, const String& filename,
 			return false;
 		}
 		OCIO::PackedImageDesc desc(pixels.data(), spec.width, spec.height, spec.nchannels);
+		std::vector<float> alpha;
+		if(spec.nchannels == 4) {
+			alpha.resize((size_t)spec.width * spec.height);
+			for(size_t i = 0; i < alpha.size(); ++i)
+				alpha[i] = pixels[i * 4 + 3];
+		}
 		cpu->apply(desc);
+		if(spec.nchannels == 4)
+			for(size_t i = 0; i < alpha.size(); ++i)
+				pixels[i * 4 + 3] = alpha[i];
 		if(!image.set_pixels(roi, TypeDesc::FLOAT, pixels.data(),
 		                     spec.nchannels * sizeof(float),
 		                     spec.width * spec.nchannels * sizeof(float), AutoStride)) {
@@ -114,15 +127,22 @@ public:
 class Workbench : public TopWindow {
 	typedef Workbench CLASSNAME;
 	Button open, save, input_lut, output_lut, bypass, rectangle, ellipse, fit, actual;
+	Option bake_output_lut;
 	ParentCtrl toolbar, layers_area, info_area, property_area, status_area;
 	ArrayCtrl layer_list;
 	Button up, down, remove, hide;
 	Label info, status;
+	Label property_caption;
+	EditString layer_name;
+	Option layer_visible;
+	ColorPusher layer_color;
+	EditDoubleSpin layer_opacity;
+	EditIntSpin layer_x, layer_y, layer_width, layer_height;
 	ImageCanvas canvas;
 
 	ImageBuf source;
 	Image preview;
-	String filename, input_lut_path, output_lut_path;
+	String filename, last_saved_filename, input_lut_path, output_lut_path;
 	bool input_enabled = true;
 	bool output_enabled = true;
 	Vector<Layer> layers;
@@ -150,6 +170,16 @@ class Workbench : public TopWindow {
 		hide.SetRect(160, 270, 224, 296);
 		remove.SetRect(8, 302, 224, 328);
 		info.SetRect(8, 50, 242, 260);
+		property_caption.SetRect(8, 268, 242, 302);
+		layer_name.SetRect(8, 308, 242, 334);
+		layer_visible.SetRect(8, 338, 242, 364);
+		layer_color.SetRect(8, 368, 242, 394);
+		layer_opacity.SetRect(8, 398, 242, 424);
+		layer_x.SetRect(8, 428, 122, 454);
+		layer_y.SetRect(128, 428, 242, 454);
+		layer_width.SetRect(8, 458, 122, 484);
+		layer_height.SetRect(128, 458, 242, 484);
+		bake_output_lut.SetRect(8, 490, 242, 516);
 		status.SetRect(8, 2, sz.cx - 8, 22);
 	}
 
@@ -165,12 +195,55 @@ class Workbench : public TopWindow {
 			layer_list.Add(layer.name, layer.visible ? "Visible" : "Hidden");
 	}
 
+	void UpdateProperties()
+	{
+		int row = layer_list.GetCursor();
+		bool shape = row > 0 && row < layers.GetCount();
+		layer_name.Enable(shape);
+		layer_visible.Enable(shape);
+		layer_color.Enable(shape);
+		layer_opacity.Enable(shape);
+		layer_x.Enable(shape);
+		layer_y.Enable(shape);
+		layer_width.Enable(shape);
+		layer_height.Enable(shape);
+		if(!shape)
+			return;
+		const Layer& layer = layers[row];
+		layer_name.SetData(layer.name);
+		layer_visible.Set(layer.visible);
+		layer_color.SetData(layer.color);
+		layer_opacity.SetData(layer.opacity);
+		layer_x.SetData(layer.position.x);
+		layer_y.SetData(layer.position.y);
+		layer_width.SetData(layer.size.cx);
+		layer_height.SetData(layer.size.cy);
+	}
+
+	void ApplyProperties()
+	{
+		int row = layer_list.GetCursor();
+		if(row <= 0 || row >= layers.GetCount())
+			return;
+		Layer& layer = layers[row];
+		layer.name = AsString(layer_name.GetData());
+		layer.visible = layer_visible.Get();
+		layer.color = Color(layer_color.GetData());
+		layer.opacity = (float)std::clamp((double)layer_opacity.GetData(), 0.0, 1.0);
+		layer.position.x = (int)layer_x.GetData();
+		layer.position.y = (int)layer_y.GetData();
+		layer.size.cx = std::max(1, (int)layer_width.GetData());
+		layer.size.cy = std::max(1, (int)layer_height.GetData());
+		RefreshLayerList();
+		layer_list.SetCursor(row);
+		Rebuild();
+	}
+
 	ImageBuf MakeShape(const Layer& layer, Size sz) const
 	{
 		ImageSpec spec(sz.cx, sz.cy, 4, TypeDesc::FLOAT);
 		spec.alpha_channel = 3;
-		std::vector<float> pixels((size_t)sz.cx * sz.cy * 4, 0.0f);
-		ImageBuf result(spec, pixels.data());
+		ImageBuf result(spec);
 		float color[4] = { layer.color.GetR() / 255.0f,
 		                   layer.color.GetG() / 255.0f,
 		                   layer.color.GetB() / 255.0f,
@@ -188,8 +261,7 @@ class Workbench : public TopWindow {
 					double dy = (y - layer.position.y - layer.size.cy / 2.0) /
 					            std::max(1.0, layer.size.cy / 2.0);
 					if(dx * dx + dy * dy <= 1.0 && x >= 0 && y >= 0 && x < sz.cx && y < sz.cy) {
-						float* p = pixels.data() + ((size_t)y * sz.cx + x) * 4;
-						p[0] = color[0]; p[1] = color[1]; p[2] = color[2]; p[3] = color[3];
+						result.setpixel(x, y, color);
 					}
 				}
 		}
@@ -223,7 +295,8 @@ class Workbench : public TopWindow {
 			return;
 		}
 		const ImageSpec& spec = source.spec();
-		String text = "File: " + filename + "\n";
+		String text = "Source: " + filename + "\n";
+		text << "Last saved: " << last_saved_filename << "\n";
 		text << "Size: " << spec.width << " x " << spec.height << "\n";
 		text << "Channels: " << spec.nchannels << "\n";
 		text << "Type: " << spec.format.c_str() << "\n";
@@ -302,7 +375,7 @@ class Workbench : public TopWindow {
 		String path = select.Get();
 		bool png = ToLower(GetFileExt(path)) == ".png";
 		ImageBuf output;
-		if(!BuildWorking(output, error, png)) {
+		if(!BuildWorking(output, error, png || bake_output_lut.Get())) {
 			Exclamation("Unable to process image:\n" + String(error.c_str()));
 			return;
 		}
@@ -315,7 +388,8 @@ class Workbench : public TopWindow {
 			Exclamation("Saved image could not be reopened:\n" + String(error.c_str()));
 			return;
 		}
-		filename = path;
+		last_saved_filename = path;
+		UpdateInfo();
 		SetStatus("Saved and reopened: " + path);
 	}
 
@@ -349,7 +423,7 @@ class Workbench : public TopWindow {
 	void MoveLayer(int delta)
 	{
 		int row = layer_list.GetCursor();
-		if(row <= 1 || row + delta <= 0 || row + delta >= layers.GetCount()) return;
+		if(row <= 0 || row + delta <= 0 || row + delta >= layers.GetCount()) return;
 		Swap(layers[row], layers[row + delta]);
 		RefreshLayerList();
 		layer_list.SetCursor(row + delta);
@@ -409,6 +483,23 @@ public:
 		layers_area.Add(layer_list); layers_area.Add(up.SetLabel("Move Up")); layers_area.Add(down.SetLabel("Move Down"));
 		layers_area.Add(hide.SetLabel("Hide/Show")); layers_area.Add(remove.SetLabel("Delete"));
 		info_area.Add(info); status_area.Add(status);
+		info_area.Add(property_caption.SetText("Selected shape properties"));
+		info_area.Add(layer_name); info_area.Add(layer_visible.SetLabel("Visible"));
+		info_area.Add(layer_color); info_area.Add(layer_opacity);
+		info_area.Add(layer_x); info_area.Add(layer_y); info_area.Add(layer_width); info_area.Add(layer_height);
+		info_area.Add(bake_output_lut.SetLabel("Bake output LUT for EXR"));
+		layer_name.SetText("Name");
+		layer_color.WithText(true).WithHex(true);
+		layer_opacity.MinMax(0, 1);
+		layer_x.MinMax(-100000, 100000); layer_y.MinMax(-100000, 100000);
+		layer_width.MinMax(1, 100000); layer_height.MinMax(1, 100000);
+		layer_list.WhenSel = THISBACK(UpdateProperties);
+		layer_name.WhenAction = THISBACK(ApplyProperties);
+		layer_visible.WhenAction = THISBACK(ApplyProperties);
+		layer_color.WhenAction = THISBACK(ApplyProperties);
+		layer_opacity.WhenAction = THISBACK(ApplyProperties);
+		layer_x.WhenAction = THISBACK(ApplyProperties); layer_y.WhenAction = THISBACK(ApplyProperties);
+		layer_width.WhenAction = THISBACK(ApplyProperties); layer_height.WhenAction = THISBACK(ApplyProperties);
 		open <<= THISBACK(Open); save <<= THISBACK(Save);
 		input_lut <<= THISBACK1(SelectLut, true); output_lut <<= THISBACK1(SelectLut, false);
 		bypass <<= THISBACK(ToggleLuts);

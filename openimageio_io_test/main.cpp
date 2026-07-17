@@ -118,10 +118,11 @@ static bool WriteLut(const std::string& path, const char* values)
     return out.good();
 }
 
-int main()
+int main(int argc, char** argv)
 {
     int passed = 0;
     int failed = 0;
+    const bool keep_files = argc > 1 && std::string(argv[1]) == "--keep-files";
     InitializeOpenImageIO();
 
     Check(true, "stable OpenImageIO marker", passed, failed);
@@ -140,11 +141,13 @@ int main()
     Check(output_formats.find("png") != std::string::npos,
           "PNG output registered", passed, failed);
 
-    const std::string root = std::string("openimageio_io_test_tmp");
-    const std::string lut = std::filesystem::absolute(root + "/test_transform.cube").string();
-    const std::string source_exr = root + "/source.exr";
-    const std::string output_png = root + "/output.png";
-    const std::string output_exr = root + "/output_reopened.exr";
+    const std::string root = std::string("openimageio_io_test_fixtures");
+    const std::string absolute_root = std::filesystem::absolute(root).string();
+    const std::string lut = absolute_root + "/input_test.cube";
+    const std::string output_lut = absolute_root + "/output_test.cube";
+    const std::string source_exr = absolute_root + "/workbench_input.exr";
+    const std::string output_png = absolute_root + "/workbench_input.png";
+    const std::string output_exr = absolute_root + "/workbench_output.exr";
 
     std::filesystem::create_directories(root);
 
@@ -152,6 +155,7 @@ int main()
     std::remove(output_png.c_str());
     std::remove(output_exr.c_str());
     std::remove(lut.c_str());
+    std::remove(output_lut.c_str());
 
     std::vector<float> source_pixels;
     ImageBuf source = MakeSource(source_pixels);
@@ -170,7 +174,8 @@ int main()
 
     std::string error;
     Check(WriteLut(lut, "1.0 1.0 1.0\n0.0 0.0 0.0\n"),
-          "LUT asset", passed, failed);
+           "LUT asset", passed, failed);
+    WriteLut(output_lut, "0.0 0.0 0.0\n1.0 1.0 1.0\n");
     bool input_ok = ApplyLut(working, lut, OCIO::TRANSFORM_DIR_FORWARD, error);
     if(!input_ok)
         std::printf("input LUT error: %s\n", error.c_str());
@@ -214,13 +219,20 @@ int main()
         std::printf("final EXR read error: %s\n", error.c_str());
     Check(final_exr_read, "reopen saved files", passed, failed);
 
-    std::remove(source_exr.c_str());
-    std::remove(output_png.c_str());
-    std::remove(output_exr.c_str());
-    std::remove(lut.c_str());
-    const bool cleaned = std::filesystem::remove_all(root) >= 0
-                      && !std::filesystem::exists(root);
+    if(!keep_files) {
+        std::remove(source_exr.c_str());
+        std::remove(output_png.c_str());
+        std::remove(output_exr.c_str());
+        std::remove(lut.c_str());
+        std::remove(output_lut.c_str());
+    }
+    const bool cleaned = keep_files || (std::filesystem::remove_all(root) >= 0
+                      && !std::filesystem::exists(root));
     Check(cleaned, "cleanup", passed, failed);
+    if(keep_files)
+        std::printf("fixtures_root=%s\nworkbench_input.exr=%s\nworkbench_input.png=%s\ninput_test.cube=%s\noutput_test.cube=%s\n",
+                    absolute_root.c_str(), source_exr.c_str(), output_png.c_str(),
+                    lut.c_str(), output_lut.c_str());
 
     std::printf("source_size=32x24\nsource_channels=4\ninput_format=exr\noutput_format=png\n"
                 "lut=test_transform.cube\n"
