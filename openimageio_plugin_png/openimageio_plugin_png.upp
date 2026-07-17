@@ -3,9 +3,23 @@ description "OpenImageIO PNG plugin registration package";
 uses
 	openimageio_src,
 	libpng,
-	zlib,
-	png_io;
+	zlib;
+
+options
+	-I../openimageio_headers,
+	-I../openimageio_src,
+	-I../openimageio_src/upstream/libOpenImageIO,
+	-I../libpng,
+	-I../libpng/upstream,
+	-I../libtiff_src/upstream/libtiff,
+	-Iupstream,
+	-Iupstream/png.imageio,
+	-DOIIO_STATIC_DEFINE=1;
 
 file
-	OpenImageIOPNGPlugin.cpp,
+	upstream/png.imageio/pnginput.cpp,
+	upstream/png.imageio/pngoutput.cpp,
+	upstream/png.imageio/png_pvt.h,
+	RegisterPNG.h,
+	RegisterPNG.cpp,
 	README.md;

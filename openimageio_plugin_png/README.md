@@ -1,5 +1,5 @@
 # openimageio_plugin_png
 
-Statically registers the PNG format with OpenImageIO. The current U++ adapter
-uses the repository's existing `png_io` implementation and requires no plugin
-search path.
+Statically registers the pinned OpenImageIO 3.1.15.0 PNG plugin sources with
+OpenImageIO. The package exposes the OIIO creator/extension registration
+without dynamic plugin lookup.

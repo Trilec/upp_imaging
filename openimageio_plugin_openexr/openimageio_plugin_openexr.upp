@@ -3,9 +3,22 @@ description "OpenImageIO OpenEXR plugin registration package";
 uses
 	openimageio_src,
 	openexr,
-	imath,
-	openexr_io;
+	imath;
+
+options
+	-I../openimageio_headers,
+	-I../openimageio_src,
+	-I../openimageio_src/upstream/libOpenImageIO,
+	-I../openexr_src,
+	-I../openexr_src/upstream,
+	-Iupstream,
+	-Iupstream/openexr.imageio,
+	-DOIIO_STATIC_DEFINE=1;
 
 file
-	OpenImageIOOpenEXRPlugin.cpp,
+	upstream/openexr.imageio/exrinput.cpp,
+	upstream/openexr.imageio/exroutput.cpp,
+	upstream/openexr.imageio/exr_pvt.h,
+	RegisterOpenEXR.h,
+	RegisterOpenEXR.cpp,
 	README.md;

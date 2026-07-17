@@ -4,8 +4,10 @@ uses
 	openimageio,
 	opencolorio;
 
+options
+	-I../openimageio_headers;
+
 file
 	main.cpp,
-	input_test.cube,
-	output_test.cube,
+	test_transform.cube,
 	README.md;

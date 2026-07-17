@@ -1,0 +1,6 @@
+#ifndef INCLUDED_OPENEXR_SRC_UPSTREAM_OPENEXR_COMPRESSION_H
+#define INCLUDED_OPENEXR_SRC_UPSTREAM_OPENEXR_COMPRESSION_H
+
+#include <openexr_core_src/upstream/openexr_compression.h>
+
+#endif
