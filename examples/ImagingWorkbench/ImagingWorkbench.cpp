@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <memory>
+#include <sstream>
 #include <vector>
 
 namespace Upp {
@@ -12,7 +13,6 @@ namespace {
 struct PreviewMapping {
 	Vector<int> rgb;
 	int alpha = -1;
-	String label;
 	bool grayscale = false;
 };
 
@@ -24,26 +24,20 @@ static int ClampByte(float value)
 	return (int)(value * 255.0f + 0.5f);
 }
 
-static bool HasAny(const Vector<String>& names, const String& value)
-{
-	for(const String& name : names)
-		if(name == value)
-			return true;
-	return false;
-}
-
-static int FindIndex(const Vector<String>& names, const String& value)
-{
-	for(int i = 0; i < names.GetCount(); ++i)
-		if(names[i] == value)
-			return i;
-	return -1;
-}
-
 static String ShortChannelName(const String& name)
 {
 	int dot = name.ReverseFind('.');
 	return dot >= 0 ? name.Mid(dot + 1) : name;
+}
+
+static int FindIndexByLeaf(const Vector<String>& names, const String& value)
+{
+	String target = ToUpper(value);
+	for(int i = 0; i < names.GetCount(); ++i) {
+		if(ToUpper(ShortChannelName(names[i])) == target)
+			return i;
+	}
+	return -1;
 }
 
 static String ChannelPrefix(const String& name)
@@ -85,8 +79,32 @@ static String HumanBytes(int64 bytes)
 	return Format("%.1f %s", value, unit);
 }
 
+static String TypeDescText(const OIIO::TypeDesc& type)
+{
+	std::ostringstream ss;
+	ss << type;
+	return String(ss.str());
+}
+
+static String StringFromView(const OIIO::string_view& view)
+{
+	return String(view.data(), (int)view.size());
+}
+
+static int ResolveAlphaChannel(const OIIO::ImageSpec& spec, const Vector<String>& names)
+{
+	if(spec.alpha_channel >= 0 && spec.alpha_channel < spec.nchannels)
+		return spec.alpha_channel;
+	int index = FindIndexByLeaf(names, "A");
+	if(index >= 0)
+		return index;
+	index = FindIndexByLeaf(names, "Alpha");
+	if(index >= 0)
+		return index;
+	return -1;
+}
+
 static PreviewMapping ResolvePreviewMapping(const OIIO::ImageSpec& spec,
-	                                          const Vector<ImageChannelGroup>& groups,
 	                                          String& choice)
 {
 	Vector<String> names;
@@ -96,10 +114,10 @@ static PreviewMapping ResolvePreviewMapping(const OIIO::ImageSpec& spec,
 	PreviewMapping map;
 	choice.Clear();
 
-	int r = FindIndex(names, "R");
-	int g = FindIndex(names, "G");
-	int b = FindIndex(names, "B");
-	int a = FindIndex(names, "A");
+	int r = FindIndexByLeaf(names, "R");
+	int g = FindIndexByLeaf(names, "G");
+	int b = FindIndexByLeaf(names, "B");
+	int a = ResolveAlphaChannel(spec, names);
 	if(r >= 0 && g >= 0 && b >= 0) {
 		map.rgb.Add(r);
 		map.rgb.Add(g);
@@ -107,26 +125,6 @@ static PreviewMapping ResolvePreviewMapping(const OIIO::ImageSpec& spec,
 		map.alpha = a;
 		choice = a >= 0 ? "RGBA" : "RGB";
 		return map;
-	}
-
-	for(const ImageChannelGroup& group : groups) {
-		if(group.subimage != 0)
-			continue;
-		String prefix = group.name;
-		if(prefix.IsEmpty())
-			continue;
-		int rg = FindIndex(names, prefix + ".R");
-		int gg = FindIndex(names, prefix + ".G");
-		int bg = FindIndex(names, prefix + ".B");
-		if(rg >= 0 && gg >= 0 && bg >= 0) {
-			map.rgb.Add(rg);
-			map.rgb.Add(gg);
-			map.rgb.Add(bg);
-			int aa = FindIndex(names, prefix + ".A");
-			map.alpha = aa;
-			choice = aa >= 0 ? prefix + ".RGBA" : prefix + ".RGB";
-			return map;
-		}
 	}
 
 	if(spec.nchannels == 1) {
@@ -150,6 +148,37 @@ static PreviewMapping ResolvePreviewMapping(const OIIO::ImageSpec& spec,
 	return map;
 }
 
+static String SaveExtensionForFormat(const String& format)
+{
+	return ToUpper(format) == "PNG" ? String(".png") : String(".exr");
+}
+
+static bool ValidateSaveExtension(String& path, const String& format, String& error)
+{
+	String desired = SaveExtensionForFormat(format);
+	String ext = ToLower(GetFileExt(path));
+	if(ext.IsEmpty()) {
+		path = ForceExt(path, desired);
+		return true;
+	}
+	if(ext != ".exr" && ext != ".png") {
+		error = "unsupported output extension";
+		return false;
+	}
+	if(ext != desired) {
+		String msg = "The filename extension does not match the selected format.\n\n";
+		msg << "Selected format: " << format << "\n";
+		msg << "Filename: " << GetFileName(path) << "\n\n";
+		msg << "Choose Yes to correct the extension automatically.";
+		if(PromptYesNo(msg) != 1) {
+			error = "filename extension does not match selected format";
+			return false;
+		}
+		path = ForceExt(path, desired);
+	}
+	return true;
+}
+
 } // namespace
 
 ImagingWorkbench::ImagingWorkbench()
@@ -162,7 +191,22 @@ void ImagingWorkbench::BindActions()
 {
 	quit_button.WhenAction = [=] { Close(); };
 	load_button.WhenAction = [=] { DoLoad(); };
+	save_split_button.WhenAction = [=] { DoSave(); };
+	save_split_button.WhenSelect = [=](int, const Value& data) { DoSaveFormat(data); };
 	fit_view_button.WhenAction = [=] { canvas.SetFitMode(true); UpdateCanvasZoomLabel(); };
+}
+
+bool ImagingWorkbench::HotKey(dword key)
+{
+	if(key == K_CTRL_O) {
+		DoLoad();
+		return true;
+	}
+	if(key == K_CTRL_S) {
+		DoSave();
+		return true;
+	}
+	return false;
 }
 
 void ImagingWorkbench::Paint(Draw& w)
@@ -318,8 +362,8 @@ void ImagingWorkbench::ScanSourceMetadata()
 		const OIIO::ImageSpec& spec = input->spec();
 		ImageSubimageInfo info;
 		info.size = Size(spec.width, spec.height);
-		info.pixel_type = spec.format.c_str();
-		info.color_space = spec.get_string_attribute("oiio:ColorSpace", "").c_str();
+		info.pixel_type = TypeDescText(spec.format);
+		info.color_space = StringFromView(spec.get_string_attribute("oiio:ColorSpace"));
 		info.channel_count = spec.nchannels;
 		subimages.Add(info);
 		Vector<String> names;
@@ -390,7 +434,7 @@ void ImagingWorkbench::BuildPreviewImage()
 	for(const std::string& name : spec.channelnames)
 		names.Add(name.c_str());
 
-	PreviewMapping mapping = ResolvePreviewMapping(spec, channel_groups, preview_choice);
+	PreviewMapping mapping = ResolvePreviewMapping(spec, preview_choice);
 	if(mapping.rgb.IsEmpty()) {
 		canvas.ClearImage();
 		return;
@@ -429,6 +473,191 @@ void ImagingWorkbench::BuildPreviewImage()
 	canvas.SetFitMode(true);
 }
 
+void ImagingWorkbench::DoSave()
+{
+	DoSaveFormat(last_save_format);
+}
+
+void ImagingWorkbench::DoSaveFormat(const Value& data)
+{
+	String format = ToUpper(AsString(data));
+	if(format != "EXR" && format != "PNG")
+		format = "EXR";
+	last_save_format = format;
+
+	if(!source_image.initialized()) {
+		Exclamation("Load an image before saving.");
+		SetStatus("Save failed: no image loaded");
+		return;
+	}
+
+	FileSel selector;
+	if(format == "PNG")
+		selector.Type("PNG", "*.png");
+	else
+		selector.Type("EXR", "*.exr");
+	selector.DefaultExt(format == "PNG" ? "png" : "exr");
+	String seed = last_saved_filename.IsEmpty() ? source_filename : last_saved_filename;
+	if(seed.IsEmpty())
+		seed = "image" + SaveExtensionForFormat(format);
+	selector.DefaultName(GetFileTitle(seed) + SaveExtensionForFormat(format));
+	if(!seed.IsEmpty())
+		selector.ActiveDir(GetFileFolder(seed));
+
+	if(!selector.ExecuteSaveAs(format == "PNG" ? "Save PNG" : "Save EXR"))
+		return;
+
+	String path = selector.Get();
+	String error;
+	if(!SaveCurrentImage(path, format, error)) {
+		Exclamation("Save failed:\n" + error);
+		SetStatus("Save failed: " + error);
+		return;
+	}
+
+	last_saved_filename = path;
+	SetStatus("Saved and verified: " + path);
+}
+
+bool ImagingWorkbench::SaveCurrentImage(String& path, const String& format, String& error)
+{
+	if(!source_image.initialized()) {
+		error = "no image loaded";
+		return false;
+	}
+
+	if(!ValidateSaveExtension(path, format, error))
+		return false;
+
+	std::string io_error;
+	OIIO::ImageSpec expected_spec;
+	std::vector<std::string> expected_names;
+	int expected_alpha = -1;
+	int expected_channels = 0;
+	const OIIO::ImageSpec& source_spec = source_image.spec();
+
+	if(ToUpper(format) == "EXR") {
+		expected_spec = source_spec;
+		expected_names = source_spec.channelnames;
+		expected_channels = source_spec.nchannels;
+		expected_alpha = source_spec.alpha_channel;
+		if(!UppImaging::SaveImage(path.Begin(), source_image, &io_error)) {
+			error = io_error.c_str();
+			return false;
+		}
+	}
+	else {
+		String choice = preview_choice;
+		PreviewMapping mapping = ResolvePreviewMapping(source_spec, choice);
+		if(mapping.rgb.IsEmpty()) {
+			error = "no displayable preview channels";
+			return false;
+		}
+
+		std::vector<float> source_pixels((size_t)source_spec.width * source_spec.height * source_spec.nchannels);
+		if(!source_image.get_pixels(source_image.roi(), OIIO::TypeDesc::FLOAT, source_pixels.data(),
+			                       source_spec.nchannels * sizeof(float),
+			                       source_spec.width * source_spec.nchannels * sizeof(float), OIIO::AutoStride)) {
+			error = source_image.geterror();
+			return false;
+		}
+
+		expected_channels = mapping.alpha >= 0 ? 4 : 3;
+		expected_alpha = mapping.alpha >= 0 ? expected_channels - 1 : -1;
+		expected_names.clear();
+		if(mapping.alpha >= 0) {
+			expected_names.push_back("R");
+			expected_names.push_back("G");
+			expected_names.push_back("B");
+			expected_names.push_back("A");
+		}
+		else {
+			expected_names.push_back("R");
+			expected_names.push_back("G");
+			expected_names.push_back("B");
+		}
+
+		std::vector<float> output_pixels((size_t)source_spec.width * source_spec.height * expected_channels);
+		for(int y = 0; y < source_spec.height; ++y) {
+			for(int x = 0; x < source_spec.width; ++x) {
+				const float* src = source_pixels.data() + ((size_t)y * source_spec.width + x) * source_spec.nchannels;
+				float* dst = output_pixels.data() + ((size_t)y * source_spec.width + x) * expected_channels;
+				if(mapping.grayscale) {
+					float gray = src[mapping.rgb[0]];
+					dst[0] = gray;
+					dst[1] = gray;
+					dst[2] = gray;
+				}
+				else {
+					dst[0] = src[mapping.rgb[0]];
+					dst[1] = src[mapping.rgb[1]];
+					dst[2] = src[mapping.rgb[2]];
+				}
+				if(expected_channels == 4)
+					dst[3] = src[mapping.alpha];
+			}
+		}
+
+		expected_spec = OIIO::ImageSpec(source_spec.width, source_spec.height, expected_channels, OIIO::TypeDesc::FLOAT);
+		expected_spec.channelnames = expected_names;
+		expected_spec.alpha_channel = expected_alpha;
+		String source_cs = StringFromView(source_spec.get_string_attribute("oiio:ColorSpace"));
+		if(!source_cs.IsEmpty())
+			expected_spec.attribute("oiio:ColorSpace", source_cs.Begin());
+
+		OIIO::ImageBuf png_buf(expected_spec);
+		if(!png_buf.set_pixels(png_buf.roi(), OIIO::TypeDesc::FLOAT, output_pixels.data(),
+					       OIIO::AutoStride, OIIO::AutoStride, OIIO::AutoStride)) {
+			error = png_buf.geterror();
+			return false;
+		}
+
+		if(!UppImaging::SaveImage(path.Begin(), png_buf, &io_error)) {
+			error = io_error.c_str();
+			return false;
+		}
+	}
+
+	OIIO::ImageBuf reopened;
+	if(!UppImaging::LoadImage(path.Begin(), reopened, &io_error)) {
+		error = String("saved file cannot be reopened: ") + io_error.c_str();
+		return false;
+	}
+
+	if(reopened.spec().width != expected_spec.width || reopened.spec().height != expected_spec.height) {
+		error = "reopened file dimensions do not match saved output";
+		return false;
+	}
+	if(reopened.spec().nchannels != expected_channels) {
+		error = "reopened file channel count does not match saved output";
+		return false;
+	}
+	if(reopened.spec().alpha_channel != expected_alpha) {
+		error = "reopened file alpha metadata does not match saved output";
+		return false;
+	}
+
+	float probe[8] = {};
+	reopened.getpixel(0, 0, probe);
+	if(!std::isfinite(probe[0])) {
+		error = "saved file pixel probe failed";
+		return false;
+	}
+
+	if(ToUpper(format) == "EXR") {
+		if(reopened.spec().channelnames != expected_names) {
+			error = "saved EXR channel names changed";
+			return false;
+		}
+		if(reopened.spec().alpha_channel != source_spec.alpha_channel) {
+			error = "saved EXR alpha metadata changed";
+			return false;
+		}
+	}
+
+	return true;
+}
+
 void ImagingWorkbench::UpdateLayersPage()
 {
 	UiTreeModel& model = layers_tree.GetInternalModel();
@@ -446,7 +675,7 @@ void ImagingWorkbench::UpdateLayersPage()
 
 	const OIIO::ImageSpec& spec = source_image.spec();
 	String basename = GetFileName(source_filename);
-	String color_space = spec.get_string_attribute("oiio:ColorSpace", "").c_str();
+	String color_space = StringFromView(spec.get_string_attribute("oiio:ColorSpace"));
 	if(color_space.IsEmpty())
 		color_space = "(none)";
 
@@ -456,7 +685,7 @@ void ImagingWorkbench::UpdateLayersPage()
 		channel_names.Add(name.c_str());
 	channel_text = JoinChannels(channel_names);
 
-	String source_type = spec.format.c_str();
+	String source_type = TypeDescText(spec.format);
 	String summary;
 	summary << basename << "\n";
 	summary << resolution_text << "\n";
@@ -483,7 +712,7 @@ void ImagingWorkbench::UpdateLayersPage()
 			sub_item.description = Format("%d channels / preview %s", subinfo->channel_count, preview_choice);
 		}
 		else {
-			sub_item.right_text = Format("%d x %d / %s", spec.width, spec.height, spec.format.c_str());
+		sub_item.right_text = Format("%d x %d / %s", spec.width, spec.height, TypeDescText(spec.format));
 			sub_item.description = Format("%d channels / preview %s", spec.nchannels, preview_choice);
 		}
 		UiTreeNodeRef sub_node = model.AddChild(file_node, sub_item);
@@ -549,6 +778,7 @@ void ImagingWorkbench::DoLoad()
 	UpdateDisplayState();
 	UpdateLayersPage();
 	canvas.SetFitMode(true);
+	save_split_button.Enable();
 	fit_view_button.Enable();
 	SetStatus("Loaded: " + GetFileName(path));
 }

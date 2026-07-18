@@ -32,6 +32,7 @@ protected:
 	virtual void BindActions() override;
 	virtual void PostBuild() override;
 	virtual void Paint(Draw& w) override;
+	virtual bool HotKey(dword key) override;
 
 private:
 	void DoLoad();
@@ -41,6 +42,9 @@ private:
 	void UpdateSelectionSummary();
 	void ScanSourceMetadata();
 	void BuildPreviewImage();
+	void DoSave();
+	void DoSaveFormat(const Value& data);
+	bool SaveCurrentImage(String& path, const String& format, String& error);
 	void SetStatus(const String& text);
 	String FormatBytes(int64 bytes) const;
 	String DescribePreviewChoice() const;
@@ -59,6 +63,8 @@ private:
 	OIIO::ImageBuf source_image;
 	Image preview_image;
 	String source_filename;
+	String last_saved_filename;
+	String last_save_format = "EXR";
 	String last_error;
 	Vector<ImageChannelGroup> channel_groups;
 	Vector<ImageSubimageInfo> subimages;
