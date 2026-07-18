@@ -28,6 +28,29 @@ struct Layer : Moveable<Layer> {
 	Size size;
 };
 
+struct LutSlot {
+	String label;
+	String filename;
+	bool enabled = false;
+	bool forward = true;
+	Label title;
+	Label path;
+	Button select;
+	Button clear;
+	Option toggle_enabled;
+	Option toggle_forward;
+};
+
+static String LayerTypeName(LayerKind kind)
+{
+	switch(kind) {
+	case LAYER_BASE: return "Base";
+	case LAYER_RECTANGLE: return "Rectangle";
+	case LAYER_ELLIPSE: return "Ellipse";
+	}
+	return "Unknown";
+}
+
 static int ToByte(float value)
 {
 	return (int)std::clamp(value * 255.0f + 0.5f, 0.0f, 255.0f);
@@ -126,8 +149,9 @@ public:
 
 class Workbench : public TopWindow {
 	typedef Workbench CLASSNAME;
-	Button open, save, input_lut, output_lut, bypass, rectangle, ellipse, fit, actual;
-	Option bake_output_lut;
+	Button open, save, rectangle, ellipse, fit, actual;
+	Option bypass, bake_output_lut;
+	LutSlot input_slot, output_slot;
 	ParentCtrl toolbar, layers_area, info_area, property_area, status_area;
 	ArrayCtrl layer_list;
 	Button up, down, remove, hide;
@@ -142,44 +166,49 @@ class Workbench : public TopWindow {
 
 	ImageBuf source;
 	Image preview;
-	String filename, last_saved_filename, input_lut_path, output_lut_path;
-	bool input_enabled = true;
-	bool output_enabled = true;
+	String filename, last_saved_filename;
 	Vector<Layer> layers;
 
 	void Layout() override
 	{
 		Size sz = GetSize();
-		toolbar.SetRect(0, 0, sz.cx, 42);
-		layers_area.SetRect(0, 42, 232, sz.cy - 24);
-		info_area.SetRect(sz.cx - 250, 42, sz.cx, sz.cy - 24);
-		canvas.SetRect(232, 42, sz.cx - 250, sz.cy - 24);
-		status_area.SetRect(0, sz.cy - 24, sz.cx, sz.cy);
+		const int toolbar_h = 42;
+		const int status_h = 24;
+		const int left_w = 230;
+		const int right_w = 280;
+		const int body_top = toolbar_h;
+		const int body_bottom = sz.cy - status_h;
+		const int body_h = std::max(0, body_bottom - body_top);
+		toolbar.SetRect(0, 0, sz.cx, toolbar_h);
+		layers_area.SetRect(0, body_top, left_w, body_bottom);
+		info_area.SetRect(sz.cx - right_w, body_top, sz.cx, body_bottom);
+		canvas.SetRect(left_w, body_top, sz.cx - right_w, body_bottom);
+		status_area.SetRect(0, body_bottom, sz.cx, sz.cy);
 		open.SetRect(8, 7, 62, 34);
 		save.SetRect(68, 7, 132, 34);
-		input_lut.SetRect(138, 7, 222, 34);
-		output_lut.SetRect(228, 7, 320, 34);
-		bypass.SetRect(326, 7, 410, 34);
-		rectangle.SetRect(416, 7, 505, 34);
-		ellipse.SetRect(511, 7, 590, 34);
-		fit.SetRect(596, 7, 646, 34);
-		actual.SetRect(652, 7, 708, 34);
-		layer_list.SetRect(8, 48, 224, 260);
-		up.SetRect(8, 270, 78, 296);
-		down.SetRect(84, 270, 154, 296);
-		hide.SetRect(160, 270, 224, 296);
-		remove.SetRect(8, 302, 224, 328);
-		info.SetRect(8, 50, 242, 260);
-		property_caption.SetRect(8, 268, 242, 302);
-		layer_name.SetRect(8, 308, 242, 334);
-		layer_visible.SetRect(8, 338, 242, 364);
-		layer_color.SetRect(8, 368, 242, 394);
-		layer_opacity.SetRect(8, 398, 242, 424);
-		layer_x.SetRect(8, 428, 122, 454);
-		layer_y.SetRect(128, 428, 242, 454);
-		layer_width.SetRect(8, 458, 122, 484);
-		layer_height.SetRect(128, 458, 242, 484);
-		bake_output_lut.SetRect(8, 490, 242, 516);
+		bypass.SetRect(140, 7, 232, 34);
+		rectangle.SetRect(240, 7, 336, 34);
+		ellipse.SetRect(342, 7, 430, 34);
+		fit.SetRect(438, 7, 490, 34);
+		actual.SetRect(496, 7, 552, 34);
+		layer_list.SetRect(8, 48, left_w - 8, body_h - 92);
+		up.SetRect(8, body_h - 38, 76, body_h - 12);
+		down.SetRect(80, body_h - 38, 148, body_h - 12);
+		hide.SetRect(152, body_h - 38, 220, body_h - 12);
+		remove.SetRect(8, body_h - 66, 220, body_h - 40);
+		info.SetRect(8, 8, right_w - 16, 102);
+		LayoutLutSlot(input_slot, 8, 112, right_w - 16);
+		LayoutLutSlot(output_slot, 8, 220, right_w - 16);
+		bake_output_lut.SetRect(8, 326, right_w - 16, 350);
+		property_caption.SetRect(8, 356, right_w - 16, 378);
+		layer_name.SetRect(8, 382, right_w - 16, 408);
+		layer_visible.SetRect(8, 412, right_w - 16, 438);
+		layer_color.SetRect(8, 442, right_w - 16, 468);
+		layer_opacity.SetRect(8, 472, right_w - 16, 498);
+		layer_x.SetRect(8, 502, 100, 528);
+		layer_y.SetRect(106, 502, right_w - 16, 528);
+		layer_width.SetRect(8, 532, 100, 558);
+		layer_height.SetRect(106, 532, right_w - 16, 558);
 		status.SetRect(8, 2, sz.cx - 8, 22);
 	}
 
@@ -188,11 +217,79 @@ class Workbench : public TopWindow {
 		status.SetText(text);
 	}
 
+	void SetLutSlot(LutSlot& slot, const String& filename)
+	{
+		slot.filename = filename;
+		slot.path.SetText(filename.IsEmpty() ? "(none)" : filename);
+	}
+
+	bool IsLutActive(const LutSlot& slot) const
+	{
+		return slot.enabled && !bypass.Get() && !slot.filename.IsEmpty();
+	}
+
+	bool SupportsTransforms() const
+	{
+		return source.initialized() && (source.spec().nchannels == 3 || source.spec().nchannels == 4);
+	}
+
+	bool SupportsShapeLayers() const
+	{
+		return source.initialized() && (source.spec().nchannels == 3 || source.spec().nchannels == 4);
+	}
+
+	void UpdateAvailability()
+	{
+		bool have_source = source.initialized();
+		bool transforms = SupportsTransforms();
+		bool shapes = SupportsShapeLayers();
+		input_slot.select.Enable(have_source);
+		input_slot.clear.Enable(have_source && !input_slot.filename.IsEmpty());
+		input_slot.toggle_enabled.Enable(have_source && transforms);
+		input_slot.toggle_forward.Enable(have_source && transforms);
+		output_slot.select.Enable(have_source);
+		output_slot.clear.Enable(have_source && !output_slot.filename.IsEmpty());
+		output_slot.toggle_enabled.Enable(have_source && transforms);
+		output_slot.toggle_forward.Enable(have_source && transforms);
+		bake_output_lut.Enable(have_source && transforms);
+		bypass.Enable(have_source && transforms);
+		rectangle.Enable(have_source && shapes);
+		ellipse.Enable(have_source && shapes);
+		if(!transforms) {
+			input_slot.enabled = false;
+			output_slot.enabled = false;
+			input_slot.toggle_enabled.Set(false);
+			output_slot.toggle_enabled.Set(false);
+		}
+		if(!have_source) {
+			SetStatus("Open an EXR or PNG to begin");
+		}
+		else if(!transforms) {
+			SetStatus(source.spec().nchannels > 4
+				? "Preview only: images with more than 4 channels disable LUTs and shapes in this MVP"
+				: "Preview only: 1-channel images disable LUTs and shapes in this MVP");
+		}
+	}
+
+	void LayoutLutSlot(LutSlot& slot, int x, int y, int w)
+	{
+		slot.title.SetRect(x, y, x + w, y + 20);
+		slot.path.SetRect(x, y + 20, x + w, y + 40);
+		int half = (w - 4) / 2;
+		slot.select.SetRect(x, y + 46, x + half, y + 70);
+		slot.clear.SetRect(x + half + 4, y + 46, x + w, y + 70);
+		slot.toggle_enabled.SetRect(x, y + 74, x + half, y + 98);
+		slot.toggle_forward.SetRect(x + half + 4, y + 74, x + w, y + 98);
+	}
+
 	void RefreshLayerList()
 	{
 		layer_list.Reset();
 		for(const Layer& layer : layers)
-			layer_list.Add(layer.name, layer.visible ? "Visible" : "Hidden");
+			layer_list.Add(layer.visible ? "Visible" : "Hidden",
+			               layer.name,
+			               LayerTypeName(layer.kind),
+			               FormatDouble(layer.opacity, 2));
 	}
 
 	void UpdateProperties()
@@ -268,22 +365,36 @@ class Workbench : public TopWindow {
 		return result;
 	}
 
-	bool BuildWorking(ImageBuf& working, std::string& error, bool include_output) const
+	bool BuildWorking(ImageBuf& working, std::string& error, bool bake_output) const
 	{
 		if(!source.initialized()) {
 			error = "no image is loaded";
 			return false;
 		}
 		working = source;
-		if(input_enabled && !ApplyLut(working, input_lut_path,
-		                              OCIO::TRANSFORM_DIR_FORWARD, error))
+		if(IsLutActive(input_slot) && !SupportsTransforms()) {
+			error = "LUTs are only available for RGB/RGBA images in this MVP";
 			return false;
-		for(int i = 1; i < layers.GetCount(); ++i)
-			if(layers[i].visible)
-				working = ImageBufAlgo::over(MakeShape(layers[i],
-				                                     Size(working.spec().width, working.spec().height)), working);
-		if(include_output && output_enabled && !ApplyLut(working, output_lut_path,
-		                                                  OCIO::TRANSFORM_DIR_FORWARD, error))
+		}
+		if(IsLutActive(input_slot) && !ApplyLut(working, input_slot.filename,
+			                                    input_slot.forward ? OCIO::TRANSFORM_DIR_FORWARD
+			                                                     : OCIO::TRANSFORM_DIR_INVERSE,
+			                                    error))
+			return false;
+		if(layers.GetCount() > 1) {
+			if(!SupportsShapeLayers()) {
+				error = "Shape layers are only available for RGB/RGBA images in this MVP";
+				return false;
+			}
+			for(int i = 1; i < layers.GetCount(); ++i)
+				if(layers[i].visible)
+					working = ImageBufAlgo::over(MakeShape(layers[i],
+					                             Size(working.spec().width, working.spec().height)), working);
+		}
+		if(bake_output && IsLutActive(output_slot) && !ApplyLut(working, output_slot.filename,
+			                                             output_slot.forward ? OCIO::TRANSFORM_DIR_FORWARD
+			                                                                : OCIO::TRANSFORM_DIR_INVERSE,
+			                                             error))
 			return false;
 		return true;
 	}
@@ -310,11 +421,16 @@ class Workbench : public TopWindow {
 
 	void Rebuild()
 	{
+		if(!source.initialized()) {
+			canvas.SetImage(Image());
+			return;
+		}
 		std::string error;
 		ImageBuf working;
-		if(!BuildWorking(working, error, true)) {
-			SetStatus("Processing error: " + String(error.c_str()));
-			return;
+		bool ok = BuildWorking(working, error, true);
+		if(!ok) {
+			SetStatus("Preview warning: " + String(error.c_str()));
+			working = source;
 		}
 		ImageSpec spec = working.spec();
 		std::vector<float> pixels((size_t)spec.width * spec.height * spec.nchannels);
@@ -335,7 +451,8 @@ class Workbench : public TopWindow {
 			}
 		preview = buffer;
 		canvas.SetImage(preview);
-		SetStatus("Ready: " + filename);
+		if(ok)
+			SetStatus("Ready: " + filename);
 	}
 
 	void Open()
@@ -351,13 +468,17 @@ class Workbench : public TopWindow {
 			return;
 		}
 		filename = select.Get();
+		last_saved_filename.Clear();
 		source = loaded;
 		layers.Clear();
 		Layer base;
 		base.name = "Raster base";
 		layers.Add(base);
 		RefreshLayerList();
+		layer_list.SetCursor(0);
+		UpdateProperties();
 		UpdateInfo();
+		UpdateAvailability();
 		Rebuild();
 	}
 
@@ -373,7 +494,16 @@ class Workbench : public TopWindow {
 			return;
 		std::string error;
 		String path = select.Get();
-		bool png = ToLower(GetFileExt(path)) == ".png";
+		String ext = ToLower(GetFileExt(path));
+		if(ext.IsEmpty()) {
+			Exclamation("Please choose a .exr or .png filename.");
+			return;
+		}
+		if(ext != ".exr" && ext != ".png") {
+			Exclamation("Unsupported save extension. Use .exr or .png.");
+			return;
+		}
+		bool png = ext == ".png";
 		ImageBuf output;
 		if(!BuildWorking(output, error, png || bake_output_lut.Get())) {
 			Exclamation("Unable to process image:\n" + String(error.c_str()));
@@ -388,6 +518,19 @@ class Workbench : public TopWindow {
 			Exclamation("Saved image could not be reopened:\n" + String(error.c_str()));
 			return;
 		}
+		if(reopened.spec().width != output.spec().width || reopened.spec().height != output.spec().height
+		   || reopened.spec().nchannels != output.spec().nchannels) {
+			Exclamation("Saved image reopened with mismatched dimensions or channels.");
+			return;
+		}
+		float sample[4] = {};
+		ROI roi(0, 1, 0, 1, 0, 1, 0, reopened.spec().nchannels);
+		if(!reopened.get_pixels(roi, TypeDesc::FLOAT, sample,
+		                       reopened.spec().nchannels * sizeof(float),
+		                       reopened.spec().nchannels * sizeof(float), AutoStride)) {
+			Exclamation("Saved image reopened but pixel access failed.");
+			return;
+		}
 		last_saved_filename = path;
 		UpdateInfo();
 		SetStatus("Saved and reopened: " + path);
@@ -395,18 +538,41 @@ class Workbench : public TopWindow {
 
 	void SelectLut(bool input)
 	{
+		LutSlot& slot = input ? input_slot : output_slot;
 		FileSel select;
 		select.Type("Color LUT", "*.cube");
 		if(!select.ExecuteOpen(input ? "Select input LUT" : "Select output LUT"))
 			return;
-		if(input) input_lut_path = select.Get();
-		else output_lut_path = select.Get();
+		SetLutSlot(slot, select.Get());
+		UpdateAvailability();
+		Rebuild();
+	}
+
+	void ClearLut(bool input)
+	{
+		LutSlot& slot = input ? input_slot : output_slot;
+		SetLutSlot(slot, String());
+		UpdateAvailability();
+		Rebuild();
+	}
+
+	void UpdateLutSlot(bool input)
+	{
+		LutSlot& slot = input ? input_slot : output_slot;
+		slot.enabled = slot.toggle_enabled.Get();
+		slot.forward = slot.toggle_forward.Get();
+		UpdateAvailability();
 		Rebuild();
 	}
 
 	void AddShape(LayerKind kind)
 	{
-		if(!source.initialized()) return;
+		if(!source.initialized())
+			return;
+		if(!SupportsShapeLayers()) {
+			Exclamation("Shape layers are only available for RGB/RGBA images in this MVP.");
+			return;
+		}
 		Layer layer;
 		layer.kind = kind;
 		layer.name = kind == LAYER_RECTANGLE ? "Rectangle" : "Ellipse";
@@ -417,6 +583,8 @@ class Workbench : public TopWindow {
 		layer.opacity = 0.55f;
 		layers.Add(layer);
 		RefreshLayerList();
+		layer_list.SetCursor(layers.GetCount() - 1);
+		UpdateProperties();
 		Rebuild();
 	}
 
@@ -427,6 +595,7 @@ class Workbench : public TopWindow {
 		Swap(layers[row], layers[row + delta]);
 		RefreshLayerList();
 		layer_list.SetCursor(row + delta);
+		UpdateProperties();
 		Rebuild();
 	}
 
@@ -437,6 +606,7 @@ class Workbench : public TopWindow {
 		layers[row].visible = !layers[row].visible;
 		RefreshLayerList();
 		layer_list.SetCursor(row);
+		UpdateProperties();
 		Rebuild();
 	}
 
@@ -446,12 +616,14 @@ class Workbench : public TopWindow {
 		if(row <= 0 || row >= layers.GetCount()) return;
 		layers.Remove(row);
 		RefreshLayerList();
+		layer_list.SetCursor(std::max(0, std::min(row, layers.GetCount() - 1)));
+		UpdateProperties();
 		Rebuild();
 	}
 
 	void ToggleLuts()
 	{
-		input_enabled = output_enabled = !(input_enabled || output_enabled);
+		UpdateAvailability();
 		Rebuild();
 	}
 
@@ -474,19 +646,47 @@ public:
 	Workbench()
 	{
 		Title("ImagingWorkbench").Sizeable().Zoomable();
+		SetMinSize(Size(980, 700));
 		Add(toolbar); Add(layers_area); Add(info_area); Add(canvas); Add(status_area);
 		toolbar.Add(open.SetLabel("Open")); toolbar.Add(save.SetLabel("Save As"));
-		toolbar.Add(input_lut.SetLabel("Input LUT")); toolbar.Add(output_lut.SetLabel("Output LUT"));
 		toolbar.Add(bypass.SetLabel("Bypass LUTs")); toolbar.Add(rectangle.SetLabel("Add Rectangle"));
 		toolbar.Add(ellipse.SetLabel("Add Ellipse")); toolbar.Add(fit.SetLabel("Fit"));
 		toolbar.Add(actual.SetLabel("100%"));
+		layer_list.AddColumn("Visibility");
+		layer_list.AddColumn("Name");
+		layer_list.AddColumn("Type");
+		layer_list.AddColumn("Opacity");
 		layers_area.Add(layer_list); layers_area.Add(up.SetLabel("Move Up")); layers_area.Add(down.SetLabel("Move Down"));
 		layers_area.Add(hide.SetLabel("Hide/Show")); layers_area.Add(remove.SetLabel("Delete"));
 		info_area.Add(info); status_area.Add(status);
+		input_slot.title.SetText("Input LUT");
+		output_slot.title.SetText("Output LUT");
+		SetLutSlot(input_slot, String());
+		SetLutSlot(output_slot, String());
+		input_slot.select.SetLabel("Select");
+		input_slot.clear.SetLabel("Clear");
+		input_slot.toggle_enabled.SetLabel("Enabled");
+		input_slot.toggle_forward.SetLabel("Forward");
+		output_slot.select.SetLabel("Select");
+		output_slot.clear.SetLabel("Clear");
+		output_slot.toggle_enabled.SetLabel("Enabled");
+		output_slot.toggle_forward.SetLabel("Forward");
+		input_slot.enabled = false;
+		output_slot.enabled = false;
+		input_slot.forward = true;
+		output_slot.forward = true;
+		input_slot.toggle_enabled.Set(false);
+		input_slot.toggle_forward.Set(true);
+		output_slot.toggle_enabled.Set(false);
+		output_slot.toggle_forward.Set(true);
 		info_area.Add(property_caption.SetText("Selected shape properties"));
 		info_area.Add(layer_name); info_area.Add(layer_visible.SetLabel("Visible"));
 		info_area.Add(layer_color); info_area.Add(layer_opacity);
 		info_area.Add(layer_x); info_area.Add(layer_y); info_area.Add(layer_width); info_area.Add(layer_height);
+		info_area.Add(input_slot.title); info_area.Add(input_slot.path); info_area.Add(input_slot.select);
+		info_area.Add(input_slot.clear); info_area.Add(input_slot.toggle_enabled); info_area.Add(input_slot.toggle_forward);
+		info_area.Add(output_slot.title); info_area.Add(output_slot.path); info_area.Add(output_slot.select);
+		info_area.Add(output_slot.clear); info_area.Add(output_slot.toggle_enabled); info_area.Add(output_slot.toggle_forward);
 		info_area.Add(bake_output_lut.SetLabel("Bake output LUT for EXR"));
 		layer_name.SetText("Name");
 		layer_color.WithText(true).WithHex(true);
@@ -501,13 +701,20 @@ public:
 		layer_x.WhenAction = THISBACK(ApplyProperties); layer_y.WhenAction = THISBACK(ApplyProperties);
 		layer_width.WhenAction = THISBACK(ApplyProperties); layer_height.WhenAction = THISBACK(ApplyProperties);
 		open <<= THISBACK(Open); save <<= THISBACK(Save);
-		input_lut <<= THISBACK1(SelectLut, true); output_lut <<= THISBACK1(SelectLut, false);
+		input_slot.select <<= THISBACK1(SelectLut, true); input_slot.clear <<= THISBACK1(ClearLut, true);
+		output_slot.select <<= THISBACK1(SelectLut, false); output_slot.clear <<= THISBACK1(ClearLut, false);
+		input_slot.toggle_enabled.WhenAction = THISBACK1(UpdateLutSlot, true);
+		input_slot.toggle_forward.WhenAction = THISBACK1(UpdateLutSlot, true);
+		output_slot.toggle_enabled.WhenAction = THISBACK1(UpdateLutSlot, false);
+		output_slot.toggle_forward.WhenAction = THISBACK1(UpdateLutSlot, false);
 		bypass <<= THISBACK(ToggleLuts);
 		rectangle <<= THISBACK1(AddShape, LAYER_RECTANGLE); ellipse <<= THISBACK1(AddShape, LAYER_ELLIPSE);
 		fit <<= THISBACK(FitCanvas); actual <<= THISBACK(ActualCanvas);
 		up <<= THISBACK1(MoveLayer, -1); down <<= THISBACK1(MoveLayer, 1);
 		hide <<= THISBACK(ToggleLayer); remove <<= THISBACK(RemoveLayer);
+		bake_output_lut.WhenAction = THISBACK(Rebuild);
 		SetStatus("Ready");
+		UpdateAvailability();
 	}
 };
 

@@ -41,7 +41,7 @@ static ImageBuf MakeSource(std::vector<float>& pixels)
     return ImageBuf(spec, pixels.data());
 }
 
-static ImageBuf MakeLayer(std::vector<float>& pixels)
+static ImageBuf MakeRectangleLayer(std::vector<float>& pixels)
 {
     pixels.assign(WIDTH * HEIGHT * CHANNELS, 0.0f);
     ImageSpec spec(WIDTH, HEIGHT, CHANNELS, TypeDesc::FLOAT);
@@ -50,6 +50,16 @@ static ImageBuf MakeLayer(std::vector<float>& pixels)
 
     const float rectangle[] = {1.0f, 0.0f, 0.0f, 0.5f};
     ImageBufAlgo::render_box(layer, 4, 4, 15, 15, rectangle, true);
+    return layer;
+}
+
+static ImageBuf MakeEllipseLayer(std::vector<float>& pixels)
+{
+    pixels.assign(WIDTH * HEIGHT * CHANNELS, 0.0f);
+    ImageSpec spec(WIDTH, HEIGHT, CHANNELS, TypeDesc::FLOAT);
+    spec.alpha_channel = 3;
+    ImageBuf layer(spec, pixels.data());
+
     for(int y = 0; y < HEIGHT; ++y) {
         for(int x = 0; x < WIDTH; ++x) {
             const float dx = (x - 20.0f) / 6.0f;
@@ -141,21 +151,22 @@ int main(int argc, char** argv)
     Check(output_formats.find("png") != std::string::npos,
           "PNG output registered", passed, failed);
 
-    const std::string root = std::string("openimageio_io_test_fixtures");
-    const std::string absolute_root = std::filesystem::absolute(root).string();
-    const std::string lut = absolute_root + "/input_test.cube";
-    const std::string output_lut = absolute_root + "/output_test.cube";
-    const std::string source_exr = absolute_root + "/workbench_input.exr";
-    const std::string output_png = absolute_root + "/workbench_input.png";
-    const std::string output_exr = absolute_root + "/workbench_output.exr";
+    const std::filesystem::path root = std::filesystem::temp_directory_path() / "opencode" / "openimageio_io_test_fixtures";
+    const std::filesystem::path absolute_root = std::filesystem::absolute(root);
+    const std::filesystem::path lut = absolute_root / "input_test.cube";
+    const std::filesystem::path output_lut = absolute_root / "output_test.cube";
+    const std::filesystem::path source_exr = absolute_root / "workbench_input.exr";
+    const std::filesystem::path output_png = absolute_root / "workbench_input.png";
+    const std::filesystem::path output_exr = absolute_root / "workbench_output.exr";
 
+    std::filesystem::remove_all(root);
     std::filesystem::create_directories(root);
 
-    std::remove(source_exr.c_str());
-    std::remove(output_png.c_str());
-    std::remove(output_exr.c_str());
-    std::remove(lut.c_str());
-    std::remove(output_lut.c_str());
+    std::remove(source_exr.string().c_str());
+    std::remove(output_png.string().c_str());
+    std::remove(output_exr.string().c_str());
+    std::remove(lut.string().c_str());
+    std::remove(output_lut.string().c_str());
 
     std::vector<float> source_pixels;
     ImageBuf source = MakeSource(source_pixels);
@@ -167,16 +178,27 @@ int main(int argc, char** argv)
               && source.spec().get_string_attribute("test:source") == "synthetic",
           "metadata", passed, failed);
 
-    std::vector<float> layer_pixels;
-    ImageBuf layer = MakeLayer(layer_pixels);
-    ImageBuf working = ImageBufAlgo::over(layer, source);
-    Check(!working.has_error(), "alpha composite", passed, failed);
+    std::vector<float> rect_pixels;
+    std::vector<float> ellipse_pixels;
+    ImageBuf rectangle = MakeRectangleLayer(rect_pixels);
+    ImageBuf ellipse = MakeEllipseLayer(ellipse_pixels);
+    ImageBuf rect_then_ellipse = ImageBufAlgo::over(ellipse, ImageBufAlgo::over(rectangle, source));
+    ImageBuf ellipse_then_rect = ImageBufAlgo::over(rectangle, ImageBufAlgo::over(ellipse, source));
+    float rect_pixel[4] = {};
+    float ellipse_pixel[4] = {};
+	rect_then_ellipse.getpixel(15, 12, rect_pixel);
+	ellipse_then_rect.getpixel(15, 12, ellipse_pixel);
+    Check(!rect_then_ellipse.has_error() && !ellipse_then_rect.has_error()
+              && (!Near(rect_pixel[0], ellipse_pixel[0]) || !Near(rect_pixel[1], ellipse_pixel[1])
+                  || !Near(rect_pixel[2], ellipse_pixel[2]) || !Near(rect_pixel[3], ellipse_pixel[3])),
+          "layer order changes composite", passed, failed);
+    ImageBuf working = rect_then_ellipse;
 
     std::string error;
-    Check(WriteLut(lut, "1.0 1.0 1.0\n0.0 0.0 0.0\n"),
+    Check(WriteLut(lut.string(), "1.0 1.0 1.0\n0.0 0.0 0.0\n"),
            "LUT asset", passed, failed);
-    WriteLut(output_lut, "0.0 0.0 0.0\n1.0 1.0 1.0\n");
-    bool input_ok = ApplyLut(working, lut, OCIO::TRANSFORM_DIR_FORWARD, error);
+    WriteLut(output_lut.string(), "0.0 0.0 0.0\n1.0 1.0 1.0\n");
+    bool input_ok = ApplyLut(working, lut.string(), OCIO::TRANSFORM_DIR_FORWARD, error);
     if(!input_ok)
         std::printf("input LUT error: %s\n", error.c_str());
     float transformed[4] = {};
@@ -185,12 +207,12 @@ int main(int argc, char** argv)
     Check(input_ok && transformed[0] < 0.6f,
           "OpenColorIO LUT", passed, failed);
 
-    bool exr_write = SaveImage(source_exr.c_str(), working, &error);
+    bool exr_write = SaveImage(source_exr.string().c_str(), working, &error);
     if(!exr_write)
         std::printf("EXR write error: %s\n", error.c_str());
     Check(exr_write, "EXR write", passed, failed);
     ImageBuf reopened_exr;
-    bool exr_read = LoadImage(source_exr.c_str(), reopened_exr, &error);
+    bool exr_read = LoadImage(source_exr.string().c_str(), reopened_exr, &error);
     if(!exr_read)
         std::printf("EXR read error: %s\n", error.c_str());
     Check(exr_read, "EXR read", passed, failed);
@@ -198,41 +220,41 @@ int main(int argc, char** argv)
               && reopened_exr.spec().nchannels == CHANNELS
               && reopened_exr.spec().format == TypeDesc::FLOAT,
           "EXR specification", passed, failed);
-    bool png_write = SaveImage(output_png.c_str(), reopened_exr, &error);
+    bool png_write = SaveImage(output_png.string().c_str(), reopened_exr, &error);
     if(!png_write)
         std::printf("PNG write error: %s\n", error.c_str());
     Check(png_write, "PNG write", passed, failed);
     ImageBuf reopened_png;
-    bool png_read = LoadImage(output_png.c_str(), reopened_png, &error);
+    bool png_read = LoadImage(output_png.string().c_str(), reopened_png, &error);
     if(!png_read)
         std::printf("PNG read error: %s\n", error.c_str());
     Check(png_read, "PNG read", passed, failed);
     Check(reopened_png.spec().width == WIDTH && reopened_png.spec().height == HEIGHT,
           "PNG dimensions", passed, failed);
-    bool second_exr_write = SaveImage(output_exr.c_str(), reopened_png, &error);
+    bool second_exr_write = SaveImage(output_exr.string().c_str(), reopened_png, &error);
     if(!second_exr_write)
         std::printf("PNG to EXR error: %s\n", error.c_str());
     Check(second_exr_write, "PNG to EXR conversion", passed, failed);
     ImageBuf final_exr;
-    bool final_exr_read = LoadImage(output_exr.c_str(), final_exr, &error);
+    bool final_exr_read = LoadImage(output_exr.string().c_str(), final_exr, &error);
     if(!final_exr_read)
         std::printf("final EXR read error: %s\n", error.c_str());
     Check(final_exr_read, "reopen saved files", passed, failed);
 
     if(!keep_files) {
-        std::remove(source_exr.c_str());
-        std::remove(output_png.c_str());
-        std::remove(output_exr.c_str());
-        std::remove(lut.c_str());
-        std::remove(output_lut.c_str());
+        std::remove(source_exr.string().c_str());
+        std::remove(output_png.string().c_str());
+        std::remove(output_exr.string().c_str());
+        std::remove(lut.string().c_str());
+        std::remove(output_lut.string().c_str());
     }
     const bool cleaned = keep_files || (std::filesystem::remove_all(root) >= 0
                       && !std::filesystem::exists(root));
     Check(cleaned, "cleanup", passed, failed);
     if(keep_files)
         std::printf("fixtures_root=%s\nworkbench_input.exr=%s\nworkbench_input.png=%s\ninput_test.cube=%s\noutput_test.cube=%s\n",
-                    absolute_root.c_str(), source_exr.c_str(), output_png.c_str(),
-                    lut.c_str(), output_lut.c_str());
+                    absolute_root.string().c_str(), source_exr.string().c_str(), output_png.string().c_str(),
+                    lut.string().c_str(), output_lut.string().c_str());
 
     std::printf("source_size=32x24\nsource_channels=4\ninput_format=exr\noutput_format=png\n"
                 "lut=test_transform.cube\n"
