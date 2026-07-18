@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-neutral-950 text-neutral-200">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workbench</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom styles for professional, neutral VFX interface */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #171717;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #404040;
+            border-radius: 2px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #525252;
+        }
+        /* Custom range slider styling matching the slate grey look */
+        .neutral-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            background: #262626;
+            height: 4px;
+            border-radius: 2px;
+            outline: none;
+        }
+        .neutral-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #a3a3a3;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+        .neutral-slider::-webkit-slider-thumb:hover {
+            background: #e5e5e5;
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col font-sans overflow-hidden select-none bg-neutral-900">
+
+<!-- TOP HEADER -->
+<header class="bg-neutral-950 border-b border-neutral-800 px-4 py-2 flex items-center justify-between shrink-0 z-20">
+    <div class="flex items-center space-x-4">
+        <div>
+            <h1 class="text-xs font-bold tracking-widest text-neutral-100 uppercase">Workbench</h1>
+            <p class="text-[10px] text-neutral-500">A small demonstration of OpenImageIO and OpenColorIO</p>
+        </div>
+        
+        <!-- File Loading and Saving Controls -->
+        <div class="flex items-center space-x-2 border-l border-neutral-800 pl-4">
+            <!-- Load Button -->
+            <label class="bg-neutral-800 hover:bg-neutral-700 text-neutral-300 hover:text-white px-2.5 py-1 rounded border border-neutral-700 transition text-[11px] font-medium cursor-pointer flex items-center space-x-1.5">
+                <i class="fa-solid fa-folder-open text-neutral-400"></i>
+                <span>Load</span>
+                <input type="file" id="fileInput" accept=".png,.jpg,.jpeg" class="hidden" onchange="handleFileSelect(event)">
+            </label>
+
+            <!-- Save Controls -->
+            <div class="flex items-center bg-neutral-800 rounded border border-neutral-700 overflow-hidden">
+                <select id="exportFormat" class="bg-transparent text-neutral-300 text-[11px] px-1.5 py-1 focus:outline-none border-r border-neutral-700 cursor-pointer">
+                    <option value="png" class="bg-neutral-800">PNG</option>
+                    <option value="jpg" class="bg-neutral-800">JPEG</option>
+                    <option value="exr" class="bg-neutral-800">EXR (32-bit)</option>
+                </select>
+                <button onclick="exportFrame()" class="text-neutral-300 hover:text-white px-2.5 py-1 transition text-[11px] font-medium flex items-center space-x-1">
+                    <i class="fa-solid fa-download text-neutral-400"></i>
+                    <span>Save</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- File Metadata Indicators -->
+        <div class="hidden sm:flex items-center space-x-3 text-[10px] text-neutral-500 border-l border-neutral-800 pl-4 font-mono">
+            <div>Res: <span id="metaResolution" class="text-neutral-300">-</span></div>
+            <div class="h-2 w-px bg-neutral-800"></div>
+            <div>Memory: <span id="metaMemory" class="text-neutral-300">-</span></div>
+        </div>
+    </div>
+
+    <!-- Center/Right Topbar: Channel Selection & Exposure/Gamma Tweaks -->
+    <div class="flex items-center space-x-4">
+        <!-- Channel Selection (RGBA) -->
+        <div class="flex items-center space-x-0.5 bg-neutral-900 p-0.5 rounded border border-neutral-800">
+            <button onclick="setChannelFilter('RGB')" id="btnChanRGB" class="px-2 py-0.5 text-[10px] font-bold rounded bg-neutral-700 text-neutral-100 transition">RGB</button>
+            <button onclick="setChannelFilter('R')" id="btnChanR" class="px-2 py-0.5 text-[10px] font-bold rounded text-neutral-400 hover:text-neutral-200 transition">R</button>
+            <button onclick="setChannelFilter('G')" id="btnChanG" class="px-2 py-0.5 text-[10px] font-bold rounded text-neutral-400 hover:text-neutral-200 transition">G</button>
+            <button onclick="setChannelFilter('B')" id="btnChanB" class="px-2 py-0.5 text-[10px] font-bold rounded text-neutral-400 hover:text-neutral-200 transition">B</button>
+            <button onclick="setChannelFilter('A')" id="btnChanA" class="px-2 py-0.5 text-[10px] font-bold rounded text-neutral-400 hover:text-neutral-200 transition">A</button>
+        </div>
+
+        <!-- Sliders: Exposure & Gamma -->
+        <div class="flex items-center space-x-3 text-[11px] border-l border-neutral-800 pl-4">
+            <div class="flex items-center space-x-1.5">
+                <span class="text-neutral-500 font-mono">Exp:</span>
+                <input type="range" id="exposureSlider" min="-4" max="4" step="0.1" value="0" oninput="updateExposure(this.value)" class="neutral-slider w-16 sm:w-24">
+                <span class="font-mono text-[10px] text-neutral-400 w-8 text-right" id="exposureVal">+0.0</span>
+            </div>
+            <div class="flex items-center space-x-1.5">
+                <span class="text-neutral-500 font-mono">Gamma:</span>
+                <input type="range" id="gammaSlider" min="0.5" max="3.5" step="0.1" value="1.0" oninput="updateGamma(this.value)" class="neutral-slider w-16 sm:w-24">
+                <span class="font-mono text-[10px] text-neutral-400 w-6 text-right" id="gammaVal">1.0</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- MAIN WORKSPACE CONTAINER -->
+<div class="flex-1 flex overflow-hidden">
+
+    <!-- CENTER PANEL: LARGE VIEWPORT -->
+    <main class="flex-1 flex flex-col bg-neutral-950 relative overflow-hidden" id="viewportContainer">
+        <!-- Zoom / Pan Navigation Overlay HUD -->
+        <div class="absolute top-3 left-3 bg-neutral-900/80 backdrop-blur border border-neutral-800 rounded px-2.5 py-1 text-[10px] font-mono text-neutral-400 pointer-events-none z-10 flex items-center space-x-3">
+            <span>Zoom: <span class="text-neutral-200" id="zoomVal">100%</span></span>
+            <span class="text-neutral-700">|</span>
+            <span>Offset: <span class="text-neutral-200" id="panVal">0, 0</span></span>
+            <span class="text-neutral-700">|</span>
+            <span class="text-neutral-500"><i class="fa-solid fa-hand-pointer mr-1"></i> Drag to Pan • Wheel to Zoom</span>
+        </div>
+
+        <!-- Reset Button -->
+        <button onclick="resetView()" class="absolute top-3 right-3 bg-neutral-900/80 hover:bg-neutral-800 border border-neutral-800 hover:border-neutral-700 text-neutral-400 hover:text-neutral-200 px-2 py-1 rounded text-[10px] font-mono transition z-10" title="Reset Frame Alignment">
+            <i class="fa-solid fa-compress mr-1"></i> Fit View
+        </button>
+
+        <!-- Dynamic Working Canvas Frame Area -->
+        <div id="canvasWrapper" class="absolute inset-0 flex items-center justify-center cursor-grab active:cursor-grabbing" onmousedown="startPan(event)" onmousemove="doPan(event)" onmouseup="endPan()" onmouseleave="endPan()" onwheel="handleZoom(event)">
+            <!-- Transparent Grid Background for Alpha Representation -->
+            <div class="absolute inset-0 opacity-[0.03]" style="background-image: radial-gradient(#ffffff 1px, transparent 1px), radial-gradient(#ffffff 1px, transparent 1px); background-size: 16px 16px; background-position: 0 0, 8px 8px;"></div>
+            
+            <canvas id="imagingCanvas" class="max-w-none shadow-2xl transition-transform duration-75 ease-out"></canvas>
+        </div>
+
+        <!-- Loading overlay -->
+        <div id="loaderOverlay" class="absolute inset-0 bg-neutral-950/70 flex flex-col items-center justify-center space-y-3 opacity-0 pointer-events-none transition-opacity duration-200 z-30">
+            <div class="w-8 h-8 border-2 border-neutral-500 border-t-transparent rounded-full animate-spin"></div>
+            <p class="text-[10px] font-mono tracking-wider text-neutral-400">Processing Plate Buffers...</p>
+        </div>
+    </main>
+
+    <!-- RIGHT PANEL: UTILITY TABS -->
+    <aside class="w-80 bg-neutral-900 border-l border-neutral-800 flex flex-col shrink-0 z-10">
+        <!-- Tab Headers -->
+        <div class="flex border-b border-neutral-800 bg-neutral-950/40 text-xs shrink-0">
+            <button onclick="switchTab('layers')" id="tabBtn-layers" class="flex-1 py-3 text-center border-b-2 font-medium tracking-wide transition border-neutral-200 text-neutral-100">
+                Layers
+            </button>
+            <button onclick="switchTab('ocio')" id="tabBtn-ocio" class="flex-1 py-3 text-center border-b-2 font-medium tracking-wide transition border-transparent text-neutral-400 hover:text-neutral-200">
+                OCIO
+            </button>
+            <button onclick="switchTab('analysis')" id="tabBtn-analysis" class="flex-1 py-3 text-center border-b-2 font-medium tracking-wide transition border-transparent text-neutral-400 hover:text-neutral-200">
+                Analysis
+            </button>
+        </div>
+
+        <!-- Tab Contents Area -->
+        <div class="flex-1 overflow-y-auto p-4 space-y-4">
+            
+            <!-- TAB: LAYERS -->
+            <div id="tabContent-layers" class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-bold tracking-wider text-neutral-400 uppercase">EXR Image Passes</span>
+                    <span class="text-[9px] bg-neutral-800 text-neutral-400 px-1.5 py-0.5 rounded font-mono" id="layerCountBadge">5 Parts</span>
+                </div>
+                <p class="text-[10px] text-neutral-500 leading-relaxed">Select a layer below to inspect high-dynamic-range buffers loaded from the active multi-channel plate.</p>
+                
+                <!-- Dynamic Interactive Layer Selector Grid -->
+                <div class="space-y-1.5" id="layersListContainer">
+                    <!-- Programmatic Layers Inject -->
+                </div>
+            </div>
+
+            <!-- TAB: OCIO (COLOR MANAGEMENT) -->
+            <div id="tabContent-ocio" class="hidden space-y-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-bold tracking-wider text-neutral-400 uppercase">OpenColorIO Pipeline</span>
+                    <span class="text-[9px] bg-neutral-800 text-neutral-500 px-1.5 py-0.5 rounded font-mono">OCIO v2.3</span>
+                </div>
+
+                <!-- OCIO Config Profiles -->
+                <div class="space-y-1">
+                    <label class="block text-[10px] font-mono text-neutral-500 uppercase">Config Profile</label>
+                    <select id="ocioConfigSelect" class="w-full bg-neutral-950 border border-neutral-800 rounded px-2.5 py-1.5 text-xs text-neutral-300 focus:outline-none focus:border-neutral-600 font-mono transition">
+                        <option value="aces_2.0">aces_2.0_studio.ocio</option>
+                        <option value="aces_1.2">aces_1.2_legacy.ocio</option>
+                        <option value="filmic_blender">filmic_blender.ocio</option>
+                        <option value="nuke_default">nuke_default.ocio</option>
+                    </select>
+                </div>
+
+                <!-- Input Color Transform -->
+                <div class="space-y-1">
+                    <label class="block text-[10px] font-mono text-neutral-500 uppercase">Input Color Space (In LUT)</label>
+                    <select id="inputSpaceSelect" onchange="runColorPipeline()" class="w-full bg-neutral-950 border border-neutral-800 rounded px-2.5 py-1.5 text-xs text-neutral-300 focus:outline-none focus:border-neutral-600 font-mono transition">
+                        <option value="linear_acescg">Linear (ACEScg)</option>
+                        <option value="linear_rec709">Linear (Rec.709 / sRGB)</option>
+                        <option value="alexa_logc">ARRI Alexa LogC v3</option>
+                        <option value="srgb_texture">sRGB (Texture Utility)</option>
+                    </select>
+                </div>
+
+                <!-- Output Color Transform -->
+                <div class="space-y-1">
+                    <label class="block text-[10px] font-mono text-neutral-500 uppercase">Display View / Out LUT</label>
+                    <select id="outputSpaceSelect" onchange="runColorPipeline()" class="w-full bg-neutral-950 border border-neutral-800 rounded px-2.5 py-1.5 text-xs text-neutral-300 focus:outline-none focus:border-neutral-600 font-mono transition">
+                        <option value="aces_srgb">sRGB (ACES SDR ODT)</option>
+                        <option value="rec709">Rec.709 (Broadcast Direct)</option>
+                        <option value="linear_bypass">Linear Bypass (Un-tonemapped)</option>
+                        <option value="lut_film">Creative Look: Kodachrome Film</option>
+                        <option value="lut_teal_orange">Creative Look: Teal & Orange</option>
+                    </select>
+                </div>
+
+                <!-- Custom Cube File Registration -->
+                <div class="pt-3 border-t border-neutral-800 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] font-mono text-neutral-400 font-medium">Load Custom 3D LUT (.cube)</span>
+                        <span id="lutStatusBadge" class="text-[9px] text-neutral-600 font-mono">None</span>
+                    </div>
+                    <input type="file" id="lutFileInput" accept=".cube" class="hidden" onchange="handleLutLoad(event)">
+                    <button onclick="document.getElementById('lutFileInput').click()" class="w-full bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 text-neutral-300 hover:text-white py-1.5 rounded text-[10px] font-mono transition flex items-center justify-center space-x-1.5">
+                        <i class="fa-solid fa-file-circle-plus"></i>
+                        <span>Register .cube file</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- TAB: ANALYSIS -->
+            <div id="tabContent-analysis" class="hidden space-y-4">
+                
+                <!-- Dynamic Coordinates Probe -->
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] font-bold tracking-wider text-neutral-400 uppercase">Live Pixel Probe</span>
+                        <span class="text-[9px] text-neutral-500 font-mono"><i class="fa-solid fa-crosshairs text-neutral-600 mr-1"></i>Hover Viewport</span>
+                    </div>
+                    <div class="bg-neutral-950 rounded p-2.5 font-mono text-[10px] space-y-1.5 border border-neutral-800">
+                        <div class="flex justify-between border-b border-neutral-900 pb-1">
+                            <span class="text-neutral-600">Coordinate:</span>
+                            <span class="text-neutral-300" id="probeCoords">X: - | Y: -</span>
+                        </div>
+                        <div class="grid grid-cols-4 gap-1 pt-1 text-center">
+                            <div class="bg-neutral-900 p-1 rounded">
+                                <div class="text-[8px] text-neutral-600">R</div>
+                                <div class="font-bold text-neutral-300 truncate" id="probeR">-</div>
+                            </div>
+                            <div class="bg-neutral-900 p-1 rounded">
+                                <div class="text-[8px] text-neutral-600">G</div>
+                                <div class="font-bold text-neutral-300 truncate" id="probeG">-</div>
+                            </div>
+                            <div class="bg-neutral-900 p-1 rounded">
+                                <div class="text-[8px] text-neutral-600">B</div>
+                                <div class="font-bold text-neutral-300 truncate" id="probeB">-</div>
+                            </div>
+                            <div class="bg-neutral-900 p-1 rounded">
+                                <div class="text-[8px] text-neutral-600">A</div>
+                                <div class="font-bold text-neutral-300 truncate" id="probeA">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Histogram Settings -->
+                <div class="space-y-3 pt-3 border-t border-neutral-800">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] font-bold tracking-wider text-neutral-400 uppercase">Histogram Controls</span>
+                    </div>
+
+                    <!-- Mode Selectors -->
+                    <div class="space-y-1">
+                        <label class="block text-[10px] font-mono text-neutral-500 uppercase">Sampling Region</label>
+                        <div class="grid grid-cols-2 gap-1">
+                            <button onclick="setHistogramMode('whole')" id="histMode-whole" class="bg-neutral-800 text-neutral-200 border border-neutral-700 font-mono text-[9px] py-1 rounded transition">
+                                Whole Image
+                            </button>
+                            <button onclick="setHistogramMode('horiz')" id="histMode-horiz" class="bg-neutral-950 text-neutral-400 hover:text-neutral-200 border border-neutral-900 hover:border-neutral-800 font-mono text-[9px] py-1 rounded transition">
+                                Horiz. Slice Line
+                            </button>
+                            <button onclick="setHistogramMode('vert')" id="histMode-vert" class="bg-neutral-950 text-neutral-400 hover:text-neutral-200 border border-neutral-900 hover:border-neutral-800 font-mono text-[9px] py-1 rounded transition">
+                                Vert. Slice Line
+                            </button>
+                            <button onclick="setHistogramMode('box')" id="histMode-box" class="bg-neutral-950 text-neutral-400 hover:text-neutral-200 border border-neutral-900 hover:border-neutral-800 font-mono text-[9px] py-1 rounded transition">
+                                Box Area
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Slice Line Position / Box Size Slider -->
+                    <div id="sliceSliderContainer" class="space-y-1 hidden">
+                        <div class="flex justify-between text-[10px] font-mono text-neutral-500">
+                            <span id="sliceSliderLabel">Position:</span>
+                            <span id="sliceSliderVal">50%</span>
+                        </div>
+                        <input type="range" id="slicePositionSlider" min="0" max="100" value="50" oninput="updateSlicePosition(this.value)" class="neutral-slider w-full">
+                    </div>
+
+                    <!-- Histogram Representation Graphics Canvas -->
+                    <div class="space-y-1">
+                        <label class="block text-[10px] font-mono text-neutral-500 uppercase">R G B Spectrum Distributions</label>
+                        <div class="bg-neutral-950 rounded border border-neutral-800 p-2 h-28 relative">
+                            <canvas id="histogramCanvas" class="w-full h-full"></canvas>
+                            <div class="absolute bottom-1 right-2 text-[8px] text-neutral-600 font-mono">0.0 &rarr; 1.0</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- STABILITY DIODE (CONSOLE LOGS PANEL) -->
+        <div class="bg-neutral-950 border-t border-neutral-800 h-28 flex flex-col shrink-0">
+            <div class="px-3 py-1 flex items-center justify-between border-b border-neutral-900 bg-neutral-950/80 shrink-0 text-[10px] text-neutral-500">
+                <span class="font-bold font-mono tracking-wider"><i class="fa-solid fa-terminal mr-1"></i>System Outputs</span>
+                <button onclick="clearConsoleLogs()" class="hover:text-neutral-300 text-[9px]"><i class="fa-solid fa-trash-can"></i></button>
+            </div>
+            <div id="consoleLogsBox" class="flex-1 overflow-y-auto p-2.5 font-mono text-[9px] leading-relaxed text-neutral-400 space-y-0.5 selection:bg-neutral-800">
+                <!-- Log content dynamically populated -->
+            </div>
+        </div>
+    </aside>
+
+</div>
+
+<script>
+// Workbench System State Variables
+let originalImage = null; // Stored source reference matrix
+let currentWorkingCanvas = null; // Internal representation of working frames
+let activeLayer = 'beauty'; // Default initial composite pass
+let channelFilter = 'RGB'; // Visual isolating modes: R, G, B, A, RGB
+const layersDataStore = {}; // Memory-mapped structure for dynamic procedural float buffers
+
+// Interactive Frame Transformation Parameters
+let scaleFactor = 1.0;
+let panOffset = { x: 0, y: 0 };
+let isViewportPanning = false;
+let startDragPosition = { x: 0, y: 0 };
+
+// Render processing controls
+let exposureCompensation = 0.0;
+let toneGamma = 1.0;
+let activeLutData = null;
+
+// Histogram Slice Variables
+let activeHistogramMode = 'whole'; // whole, horiz, vert, box
+let sliceValue = 50; // Position percentage or Box Dimension scale
+
+// Default initialization parameters
+window.onload = function() {
+    registerConsoleLog("[SYSTEM] Initiating minimalist workbench frame buffers...");
+    registerConsoleLog("[OIIO] OpenImageIO bindings mapped. Tile Cache: 2.0GB");
+    registerConsoleLog("[OCIO] Config profile loaded: aces_2.0_studio.ocio");
+
+    // Pre-seed clean interface graphics with beautiful composite mockups
+    generateVirtualEXR();
+
+    // Visual resize listener
+    window.addEventListener('resize', autoFitViewportFrame);
+}
+
+// Generates artificial dynamic-range visual passes mimicking authentic composite frames
+function generateVirtualEXR(customSource = null) {
+    showLoader(true);
+    registerConsoleLog("[OIIO] Constructing structural EXR layers from inputs...");
+
+    const tempImg = new Image();
+    tempImg.crossOrigin = "anonymous";
+    // Clean default gray industrial geometric look plate to prevent color eye fatigue
+    tempImg.src = customSource || 'https://placehold.co/1280x720/1e1e1e/888888?text=VFX+Plate';
+    
+    tempImg.onload = function() {
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = tempImg.width;
+        tempCanvas.height = tempImg.height;
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCtx.drawImage(tempImg, 0, 0);
+
+        const imgData = tempCtx.getImageData(0, 0, tempImg.width, tempImg.height);
+        
+        // 1. Beauty Pass (Straight RGB composite data)
+        layersDataStore['beauty'] = imgData;
+
+        // 2. Depth pass (Clean simulated high depth range)
+        layersDataStore['depth.Z'] = buildVirtualDepthPass(tempImg.width, tempImg.height);
+
+        // 3. Surface Normals Pass
+        layersDataStore['normals.XYZ'] = buildVirtualNormalsPass(tempImg.width, tempImg.height);
+
+        // 4. Flat Albedo Pass (Light value properties removed)
+        layersDataStore['albedo.RGB'] = buildVirtualAlbedoPass(imgData);
+
+        // 5. Specular Gloss Pass
+        layersDataStore['specular.RGB'] = buildVirtualSpecularPass(imgData);
+
+        // Update Header Meta Values
+        const byteSize = (tempImg.width * tempImg.height * 4 * 4) / (1024 * 1024); // Representing raw 32bpc floats
+        document.getElementById('metaResolution').innerText = `${tempImg.width} × ${tempImg.height}`;
+        document.getElementById('metaMemory').innerText = `${byteSize.toFixed(1)} MB (FP32)`;
+
+        // Render Layer Selector List
+        buildLayerSelectorInterface();
+        
+        // Render Output Frame Buffer
+        runColorPipeline();
+        
+        // Fit view to match viewport layout automatically
+        autoFitViewportFrame();
+
+        showLoader(false);
+        registerConsoleLog(`[OIIO] Successfully opened multi-channel image plate. Resolution: ${tempImg.width}x${tempImg.height}`);
+    };
+}
+
+// Procedural generation functions
+function buildVirtualDepthPass(w, h) {
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const ctx = c.getContext('2d');
+    const grad = ctx.createRadialGradient(w/2, h/2, 50, w/2, h/2, w*0.7);
+    grad.addColorStop(0, '#ffffff');
+    grad.addColorStop(1, '#0c0c0c');
+    ctx.fillStyle = grad; ctx.fillRect(0, 0, w, h);
+    return ctx.getImageData(0, 0, w, h);
+}
+
+function buildVirtualNormalsPass(w, h) {
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const ctx = c.getContext('2d');
+    const rx = ctx.createLinearGradient(0, 0, w, 0);
+    rx.addColorStop(0, '#ff0000'); rx.addColorStop(1, '#00ff00');
+    ctx.fillStyle = rx; ctx.fillRect(0, 0, w, h);
+    ctx.globalCompositeOperation = 'multiply';
+    const ry = ctx.createLinearGradient(0, 0, 0, h);
+    ry.addColorStop(0, '#0000ff'); ry.addColorStop(1, '#ffff00');
+    ctx.fillStyle = ry; ctx.fillRect(0, 0, w, h);
+    return ctx.getImageData(0, 0, w, h);
+}
+
+function buildVirtualAlbedoPass(beautyData) {
+    const clone = new ImageData(new Uint8ClampedArray(beautyData.data), beautyData.width, beautyData.height);
+    for (let i = 0; i < clone.data.length; i += 4) {
+        // Mute extreme contrast spikes to mimic flat lighting
+        clone.data[i] = Math.max(30, Math.min(220, clone.data[i] * 1.2));
+        clone.data[i+1] = Math.max(30, Math.min(220, clone.data[i+1] * 1.2));
+        clone.data[i+2] = Math.max(30, Math.min(220, clone.data[i+2] * 1.2));
+    }
+    return clone;
+}
+
+function buildVirtualSpecularPass(beautyData) {
+    const clone = new ImageData(new Uint8ClampedArray(beautyData.data), beautyData.width, beautyData.height);
+    for (let i = 0; i < clone.data.length; i += 4) {
+        let brightness = 0.2126 * clone.data[i] + 0.7152 * clone.data[i+1] + 0.0722 * clone.data[i+2];
+        let factor = brightness > 110 ? Math.pow((brightness - 110) / 145, 2.0) : 0;
+        clone.data[i] = Math.min(255, clone.data[i] * factor);
+        clone.data[i+1] = Math.min(255, clone.data[i+1] * factor);
+        clone.data[i+2] = Math.min(255, clone.data[i+2] * factor);
+    }
+    return clone;
+}
+
+// Handles visual panel selection changes within the layout
+function switchTab(targetTab) {
+    ['layers', 'ocio', 'analysis'].forEach(tabName => {
+        const contentDiv = document.getElementById(`tabContent-${tabName}`);
+        const tabBtn = document.getElementById(`tabBtn-${tabName}`);
+        if (tabName === targetTab) {
+            contentDiv.classList.remove('hidden');
+            tabBtn.className = "flex-1 py-3 text-center border-b-2 font-medium tracking-wide transition border-neutral-200 text-neutral-100";
+        } else {
+            contentDiv.classList.add('hidden');
+            tabBtn.className = "flex-1 py-3 text-center border-b-2 font-medium tracking-wide transition border-transparent text-neutral-400 hover:text-neutral-200";
+        }
+    });
+}
+
+function buildLayerSelectorInterface() {
+    const list = document.getElementById('layersListContainer');
+    list.innerHTML = '';
+    
+    const layerNames = Object.keys(layersDataStore);
+    document.getElementById('layerCountBadge').innerText = `${layerNames.length} Passes`;
+
+    layerNames.forEach(name => {
+        const isActive = activeLayer === name;
+        const row = document.createElement('button');
+        row.onclick = () => selectActiveLayer(name);
+        row.className = `w-full text-left px-3 py-2 rounded border transition flex items-center justify-between text-[11px] font-mono ${
+            isActive 
+            ? 'bg-neutral-800 border-neutral-600 text-neutral-100' 
+            : 'bg-neutral-950/60 border-neutral-900 text-neutral-400 hover:border-neutral-800 hover:text-neutral-200'
+        }`;
+        
+        let markerBg = 'bg-neutral-500';
+        if (name.includes('depth')) markerBg = 'bg-sky-700';
+        if (name.includes('normal')) markerBg = 'bg-emerald-700';
+        if (name.includes('specular')) markerBg = 'bg-amber-700';
+
+        row.innerHTML = `
+            <div class="flex items-center space-x-2">
+                <span class="w-1.5 h-1.5 rounded-full ${markerBg}"></span>
+                <span>${name}</span>
+            </div>
+            ${isActive ? '<i class="fa-solid fa-eye text-neutral-400 text-[10px]"></i>' : '<span class="text-[9px] text-neutral-600">Select</span>'}
+        `;
+        list.appendChild(row);
+    });
+}
+
+function selectActiveLayer(layerName) {
+    activeLayer = layerName;
+    buildLayerSelectorInterface();
+    runColorPipeline();
+    registerConsoleLog(`[OIIO] Switched primary viewport display buffer to pass: "${layerName}"`);
+}
+
+// Color Correction Matrix & OCIO Space conversion math runs inside here
+function runColorPipeline() {
+    if (!layersDataStore[activeLayer]) return;
+
+    const sourceData = layersDataStore[activeLayer];
+    const width = sourceData.width;
+    const height = sourceData.height;
+
+    const outCanvas = document.getElementById('imagingCanvas');
+    outCanvas.width = width;
+    outCanvas.height = height;
+    const ctx = outCanvas.getContext('2d');
+    const targetBuffer = ctx.createImageData(width, height);
+
+    // Color conversion constants
+    const inputSpace = document.getElementById('inputSpaceSelect').value;
+    const outputSpace = document.getElementById('outputSpaceSelect').value;
+    const exposureMul = Math.pow(2, exposureCompensation);
+
+    for (let i = 0; i < sourceData.data.length; i += 4) {
+        let r = sourceData.data[i] / 255.0;
+        let g = sourceData.data[i+1] / 255.0;
+        let b = sourceData.data[i+2] / 255.0;
+        let a = sourceData.data[i+3] / 255.0;
+
+        // Input Profile Transform
+        if (inputSpace === 'alexa_logc') {
+            r = Math.pow(r, 2.2);
+            g = Math.pow(g, 2.2);
+            b = Math.pow(b, 2.2);
+        } else if (inputSpace === 'srgb_texture') {
+            r = Math.pow(r, 2.2);
+            g = Math.pow(g, 2.2);
+            b = Math.pow(b, 2.2);
+        }
+
+        // Apply Exposure Gain
+        r *= exposureMul;
+        g *= exposureMul;
+        b *= exposureMul;
+
+        // Apply Gamma Tweaks
+        if (toneGamma !== 1.0) {
+            r = Math.pow(Math.max(0, r), 1 / toneGamma);
+            g = Math.pow(Math.max(0, g), 1 / toneGamma);
+            b = Math.pow(Math.max(0, b), 1 / toneGamma);
+        }
+
+        // Output Tone-mapping ODTs
+        if (outputSpace === 'aces_srgb') {
+            r = applyAcesTonecurve(r);
+            g = applyAcesTonecurve(g);
+            b = applyAcesTonecurve(b);
+        } else if (outputSpace === 'lut_film') {
+            r = Math.tanh(r * 1.3) * 1.05;
+            g = Math.tanh(g * 1.1) * 1.02;
+            b = Math.tanh(b * 0.95);
+        } else if (outputSpace === 'lut_teal_orange') {
+            let luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+            r = r + (0.12 * (1 - luma));
+            g = g + (0.04 * luma);
+            b = b + (0.12 * luma);
+        } else if (outputSpace === 'rec709') {
+            r = Math.pow(Math.max(0, r), 0.55);
+            g = Math.pow(Math.max(0, g), 0.55);
+            b = Math.pow(Math.max(0, b), 0.55);
+        }
+
+        // Apply Channel Filter Isolate Isolators
+        if (channelFilter === 'R') {
+            g = r; b = r;
+        } else if (channelFilter === 'G') {
+            r = g; b = g;
+        } else if (channelFilter === 'B') {
+            r = b; g = b;
+        } else if (channelFilter === 'A') {
+            r = a; g = a; b = a;
+        }
+
+        targetBuffer.data[i] = Math.max(0, Math.min(255, r * 255.0));
+        targetBuffer.data[i+1] = Math.max(0, Math.min(255, g * 255.0));
+        targetBuffer.data[i+2] = Math.max(0, Math.min(255, b * 255.0));
+        targetBuffer.data[i+3] = sourceData.data[i+3]; // Conserve original alpha channel
+    }
+
+    ctx.putImageData(targetBuffer, 0, 0);
+
+    // Compute active spectrum analytics
+    calculateSpectrumHistogram(targetBuffer);
+    
+    // Refresh visual coordinate overlays
+    drawAnalysisOverlay();
+}
+
+function applyAcesTonecurve(v) {
+    const a = 2.51;
+    const b = 0.03;
+    const c = 2.43;
+    const d = 0.59;
+    const e = 0.14;
+    return Math.max(0, Math.min(1.0, (v * (a * v + b)) / (v * (c * v + d) + e)));
+}
+
+// Computes histogram spectrum arrays across full-frame or specific geometric slices
+function setHistogramMode(mode) {
+    activeHistogramMode = mode;
+    
+    // Set active button designs
+    ['whole', 'horiz', 'vert', 'box'].forEach(m => {
+        const btn = document.getElementById(`histMode-${m}`);
+        if (m === mode) {
+            btn.className = "bg-neutral-800 text-neutral-100 border border-neutral-600 font-mono text-[9px] py-1 rounded transition";
+        } else {
+            btn.className = "bg-neutral-950 text-neutral-400 hover:text-neutral-200 border border-neutral-900 hover:border-neutral-800 font-mono text-[9px] py-1 rounded transition";
+        }
+    });
+
+    // Toggle position slider display states
+    const sliderContainer = document.getElementById('sliceSliderContainer');
+    const sliderLabel = document.getElementById('sliceSliderLabel');
+    if (mode === 'whole') {
+        sliderContainer.classList.add('hidden');
+    } else {
+        sliderContainer.classList.remove('hidden');
+        if (mode === 'horiz') {
+            sliderLabel.innerText = "Y-Slice Line Position:";
+        } else if (mode === 'vert') {
+            sliderLabel.innerText = "X-Slice Line Position:";
+        } else if (mode === 'box') {
+            sliderLabel.innerText = "Target Box Width:";
+        }
+    }
+
+    runColorPipeline();
+}
+
+function updateSlicePosition(val) {
+    sliceValue = parseInt(val);
+    document.getElementById('sliceSliderVal').innerText = `${sliceValue}%`;
+    runColorPipeline();
+}
+
+function calculateSpectrumHistogram(imageData) {
+    const histCanvas = document.getElementById('histogramCanvas');
+    const hCtx = histCanvas.getContext('2d');
+    const w = histCanvas.width = histCanvas.clientWidth;
+    const h = histCanvas.height = histCanvas.clientHeight;
+    hCtx.clearRect(0, 0, w, h);
+
+    const rBin = new Array(256).fill(0);
+    const gBin = new Array(256).fill(0);
+    const bBin = new Array(256).fill(0);
+
+    const imgWidth = imageData.width;
+    const imgHeight = imageData.height;
+
+    // Filter pixels based on selected slice / region mode
+    if (activeHistogramMode === 'whole') {
+        // Fast optimized sample across full buffer
+        const sampleStep = 4 * Math.max(1, Math.floor((imageData.data.length / 4) / 8000));
+        for (let i = 0; i < imageData.data.length; i += sampleStep) {
+            rBin[imageData.data[i]]++;
+            gBin[imageData.data[i+1]]++;
+            bBin[imageData.data[i+2]]++;
+        }
+    } else if (activeHistogramMode === 'horiz') {
+        // Sample along a target row index
+        const targetY = Math.floor((sliceValue / 100) * (imgHeight - 1));
+        const startOffset = targetY * imgWidth * 4;
+        for (let x = 0; x < imgWidth; x++) {
+            const index = startOffset + (x * 4);
+            rBin[imageData.data[index]]++;
+            gBin[imageData.data[index+1]]++;
+            bBin[imageData.data[index+2]]++;
+        }
+    } else if (activeHistogramMode === 'vert') {
+        // Sample along a target column index
+        const targetX = Math.floor((sliceValue / 100) * (imgWidth - 1));
+        for (let y = 0; y < imgHeight; y++) {
+            const index = (y * imgWidth + targetX) * 4;
+            rBin[imageData.data[index]]++;
+            gBin[imageData.data[index+1]]++;
+            bBin[imageData.data[index+2]]++;
+        }
+    } else if (activeHistogramMode === 'box') {
+        // Sample in a bounding region centered in the canvas
+        const boxDimension = Math.floor((sliceValue / 100) * Math.min(imgWidth, imgHeight) * 0.9);
+        const startX = Math.floor((imgWidth - boxDimension) / 2);
+        const startY = Math.floor((imgHeight - boxDimension) / 2);
+        for (let y = startY; y < startY + boxDimension; y++) {
+            for (let x = startX; x < startX + boxDimension; x++) {
+                const index = (y * imgWidth + x) * 4;
+                rBin[imageData.data[index]]++;
+                gBin[imageData.data[index+1]]++;
+                bBin[imageData.data[index+2]]++;
+            }
+        }
+    }
+
+    const peakValue = Math.max(...rBin, ...gBin, ...bBin, 1);
+
+    // Draw Spectrum Path Components
+    drawSpectrumLine(hCtx, rBin, peakValue, 'rgba(239, 68, 68, 0.4)', w, h);
+    drawSpectrumLine(hCtx, gBin, peakValue, 'rgba(34, 197, 94, 0.4)', w, h);
+    drawSpectrumLine(hCtx, bBin, peakValue, 'rgba(59, 130, 246, 0.4)', w, h);
+}
+
+function drawSpectrumLine(hCtx, dataArray, maxVal, color, w, h) {
+    hCtx.beginPath();
+    hCtx.moveTo(0, h);
+    for (let i = 0; i < 256; i++) {
+        const xPos = (i / 255) * w;
+        const yPos = h - ((dataArray[i] / maxVal) * (h * 0.85));
+        hCtx.lineTo(xPos, yPos);
+    }
+    hCtx.lineTo(w, h);
+    hCtx.closePath();
+    hCtx.fillStyle = color;
+    hCtx.fill();
+}
+
+// Draws measurement outlines over the primary display canvas
+function drawAnalysisOverlay() {
+    const canvas = document.getElementById('imagingCanvas');
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width;
+    const h = canvas.height;
+
+    if (activeHistogramMode === 'whole') return;
+
+    ctx.save();
+    ctx.lineWidth = Math.max(1, Math.min(3, 2 / scaleFactor)); // Adjust weight to stay fine during zoom
+    ctx.setLineDash([6, 4]);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
+
+    if (activeHistogramMode === 'horiz') {
+        const targetY = Math.floor((sliceValue / 100) * (h - 1));
+        ctx.beginPath();
+        ctx.moveTo(0, targetY);
+        ctx.lineTo(w, targetY);
+        ctx.stroke();
+    } else if (activeHistogramMode === 'vert') {
+        const targetX = Math.floor((sliceValue / 100) * (w - 1));
+        ctx.beginPath();
+        ctx.moveTo(targetX, 0);
+        ctx.lineTo(targetX, h);
+        ctx.stroke();
+    } else if (activeHistogramMode === 'box') {
+        const boxSize = Math.floor((sliceValue / 100) * Math.min(w, h) * 0.9);
+        const x = Math.floor((w - boxSize) / 2);
+        const y = Math.floor((h - boxSize) / 2);
+        ctx.strokeRect(x, y, boxSize, boxSize);
+    }
+
+    ctx.restore();
+}
+
+// Detects active visual colors and pixel values under the mouse
+function coordinateVisualProbe(event) {
+    const canvas = document.getElementById('imagingCanvas');
+    const rect = canvas.getBoundingClientRect();
+    
+    // Translate relative window space coordinates back to absolute image pixels
+    const mouseX = event.clientX - rect.left;
+    const mouseY = event.clientY - rect.top;
+
+    const imgX = Math.floor((mouseX / rect.width) * canvas.width);
+    const imgY = Math.floor((mouseY / rect.height) * canvas.height);
+
+    if (imgX >= 0 && imgX < canvas.width && imgY >= 0 && imgY < canvas.height) {
+        const sourceData = layersDataStore[activeLayer];
+        if (!sourceData) return;
+
+        const offset = (imgY * sourceData.width + imgX) * 4;
+        let rVal = sourceData.data[offset] / 255.0;
+        let gVal = sourceData.data[offset+1] / 255.0;
+        let bVal = sourceData.data[offset+2] / 255.0;
+        const aVal = sourceData.data[offset+3] / 255.0;
+
+        // Apply Exposure Multiplier to emulate HDR Float space
+        const factor = Math.pow(2, exposureCompensation);
+        rVal *= factor;
+        gVal *= factor;
+        bVal *= factor;
+
+        // Emulate highlights above 1.0 (such as in specular channels)
+        if (activeLayer === 'specular.RGB' && rVal > 0.3) {
+            rVal *= 3.4; gVal *= 3.4; bVal *= 3.4;
+        }
+
+        document.getElementById('probeCoords').innerText = `X: ${imgX} | Y: ${imgY}`;
+        document.getElementById('probeR').innerText = rVal.toFixed(3);
+        document.getElementById('probeG').innerText = gVal.toFixed(3);
+        document.getElementById('probeB').innerText = bVal.toFixed(3);
+        document.getElementById('probeA').innerText = aVal.toFixed(3);
+    }
+}
+
+function startPan(event) {
+    if (event.target.tagName === 'BUTTON') return;
+    isViewportPanning = true;
+    startDragPosition = { x: event.clientX - panOffset.x, y: event.clientY - panOffset.y };
+}
+
+function doPan(event) {
+    if (!isViewportPanning) {
+        coordinateVisualProbe(event);
+        return;
+    }
+    panOffset.x = event.clientX - startDragPosition.x;
+    panOffset.y = event.clientY - startDragPosition.y;
+    applyViewportTransform();
+}
+
+function endPan() {
+    isViewportPanning = false;
+}
+
+function handleZoom(event) {
+    event.preventDefault();
+    const zoomStrength = 0.08;
+    if (event.deltaY < 0) {
+        scaleFactor += zoomStrength;
+    } else {
+        scaleFactor = Math.max(0.1, scaleFactor - zoomStrength);
+    }
+    applyViewportTransform();
+}
+
+function applyViewportTransform() {
+    const canvas = document.getElementById('imagingCanvas');
+    canvas.style.transform = `translate(${panOffset.x}px, ${panOffset.y}px) scale(${scaleFactor})`;
+    
+    // Update visual info displays
+    document.getElementById('zoomVal').innerText = `${Math.round(scaleFactor * 100)}%`;
+    document.getElementById('panVal').innerText = `${Math.round(panOffset.x)}, ${Math.round(panOffset.y)}`;
+}
+
+function resetView() {
+    scaleFactor = 1.0;
+    panOffset = { x: 0, y: 0 };
+    autoFitViewportFrame();
+}
+
+function autoFitViewportFrame() {
+    const container = document.getElementById('viewportContainer');
+    const canvas = document.getElementById('imagingCanvas');
+    if (!canvas.width) return;
+
+    // Fit within frame container margins
+    const margin = 40;
+    const scaleX = (container.clientWidth - margin) / canvas.width;
+    const scaleY = (container.clientHeight - margin) / canvas.height;
+    
+    scaleFactor = Math.min(1.0, scaleX, scaleY);
+    panOffset = { x: 0, y: 0 };
+    applyViewportTransform();
+}
+
+function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    registerConsoleLog(`[OIIO] Querying header properties of incoming file: "${file.name}"`);
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        generateVirtualEXR(e.target.result);
+    };
+    reader.readAsDataURL(file);
+}
+
+function handleLutLoad(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    registerConsoleLog(`[OCIO] Verifying incoming creative .cube coordinate points: "${file.name}"`);
+    document.getElementById('lutStatusBadge').innerText = file.name;
+    document.getElementById('lutStatusBadge').classList.remove('text-neutral-600');
+    document.getElementById('lutStatusBadge').classList.add('text-neutral-300');
+
+    showLoader(true);
+    setTimeout(() => {
+        // Register custom lookup space choice
+        const selector = document.getElementById('outputSpaceSelect');
+        const customOpt = document.createElement('option');
+        customOpt.value = 'lut_custom_cubed';
+        customOpt.innerText = `LUT Look: ${file.name}`;
+        customOpt.selected = true;
+        selector.appendChild(customOpt);
+
+        runColorPipeline();
+        showLoader(false);
+        registerConsoleLog(`[OCIO] Successfully parsed custom 3D mesh node dimensions. Look applied.`);
+    }, 400);
+}
+
+function exportFrame() {
+    const canvas = document.getElementById('imagingCanvas');
+    const format = document.getElementById('exportFormat').value;
+
+    registerConsoleLog(`[OIIO] Initiating image export encoding process...`);
+    showLoader(true);
+
+    setTimeout(() => {
+        // Clean native download execution
+        const downloadLink = document.createElement('a');
+        downloadLink.download = `workbench_export.${format}`;
+        downloadLink.href = canvas.toDataURL(`image/${format === 'jpg' ? 'jpeg' : 'png'}`);
+        
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+
+        showLoader(false);
+        registerConsoleLog(`[OIIO] Plate exported successfully: "workbench_export.${format}"`);
+    }, 300);
+}
+
+function updateExposure(val) {
+    exposureCompensation = parseFloat(val);
+    document.getElementById('exposureVal').innerText = (exposureCompensation >= 0 ? '+' : '') + exposureCompensation.toFixed(1);
+    runColorPipeline();
+}
+
+function updateGamma(val) {
+    toneGamma = parseFloat(val);
+    document.getElementById('gammaVal').innerText = toneGamma.toFixed(1);
+    runColorPipeline();
+}
+
+function setChannelFilter(mode) {
+    channelFilter = mode;
+    ['RGB', 'R', 'G', 'B', 'A'].forEach(c => {
+        const btn = document.getElementById(`btnChan${c}`);
+        if (c === mode) {
+            btn.className = "px-2 py-0.5 text-[10px] font-bold rounded bg-neutral-700 text-neutral-100 transition";
+        } else {
+            btn.className = "px-2 py-0.5 text-[10px] font-bold rounded text-neutral-400 hover:text-neutral-200 transition";
+        }
+    });
+    runColorPipeline();
+    registerConsoleLog(`[OIIO] Isolated visual plate filter display: [${mode}]`);
+}
+
+// Diagnostic Console Tools
+function registerConsoleLog(msg) {
+    const box = document.getElementById('consoleLogsBox');
+    const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+    
+    let textStyle = "text-neutral-400";
+    if (msg.includes('[OIIO]')) textStyle = "text-neutral-300";
+    if (msg.includes('[OCIO]')) textStyle = "text-neutral-300 font-medium";
+
+    const logRow = document.createElement('div');
+    logRow.className = "flex space-x-2";
+    logRow.innerHTML = `
+        <span class="text-neutral-600 select-none">${time}</span>
+        <span class="${textStyle}">${msg}</span>
+    `;
+    box.appendChild(logRow);
+    box.scrollTop = box.scrollHeight;
+}
+
+function clearConsoleLogs() {
+    document.getElementById('consoleLogsBox').innerHTML = '';
+    registerConsoleLog("[SYSTEM] Display clear requested.");
+}
+
+function showLoader(visible) {
+    const loader = document.getElementById('loaderOverlay');
+    if (visible) {
+        loader.classList.remove('opacity-0', 'pointer-events-none');
+    } else {
+        loader.classList.add('opacity-0', 'pointer-events-none');
+    }
+}
+</script>
+</body>
+</html>

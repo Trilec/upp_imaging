@@ -2,9 +2,16 @@ description "Interactive imaging workbench MVP";
 
 uses
 	CtrlLib,
+	Ui,
 	oiio,
 	opencolorio;
 
 file
+	ImagingWorkbench.generated.cpp,
+	ImagingCanvas.cpp,
 	ImagingWorkbench.cpp,
+	main.cpp,
 	README.md;
+
+mainconfig
+	"" = "GUI";

@@ -174,10 +174,10 @@ UiBaseEdit::Style Makeexposure_float_editStyle()
 	// Shadow override.
 	s.metrics.shadow.enabled = false;
 	// Text/icon override.
-	s.palette.ink[ST_NORMAL] = Color(55, 65, 81);
-	s.palette.ink[ST_HOT] = Color(55, 65, 81);
-	s.palette.ink[ST_PRESSED] = Color(55, 65, 81);
-	s.palette.ink[ST_DISABLED] = DisabledColor(Color(55, 65, 81));
+	s.palette.ink[ST_NORMAL] = Color(224, 224, 224);
+	s.palette.ink[ST_HOT] = Color(224, 224, 224);
+	s.palette.ink[ST_PRESSED] = Color(224, 224, 224);
+	s.palette.ink[ST_DISABLED] = DisabledColor(Color(224, 224, 224));
 	return s;
 }
 
@@ -203,12 +203,12 @@ UiBaseEdit::Style Makegamma_float_editStyle()
 	return s;
 }
 
-UiScrollPanel::Style MakescrollpanelStyle()
+UiScrollPanel::Style Makecanvas_scroll_panelStyle()
 {
-	// Source node: scrollpanel / UiScrollPanel
+	// Source node: canvas_scroll_panel / UiScrollPanel
 	// Move this method to GeneratedDesignerTheme.cpp if splitting the generated app.
 	// Base role: Subtle. Designer appearance overrides applied below.
-	// Designer appearance override for scrollpanel.
+	// Designer appearance override for canvas_scroll_panel.
 	// Role base: Subtle.
 	// Remove this block to return to theme defaults.
 	UiScrollPanel::Style s = UiTheme::ResolveScrollPanel(UiRole::Subtle);
@@ -364,13 +364,13 @@ private:
 		// DESIGNER CODEGEN CONTRACT ERROR: PageSlot missing setup hook
 		// DESIGNER CODEGEN CONTRACT ERROR: PageSlot missing setup hook
 		// DESIGNER CODEGEN CONTRACT ERROR: PageSlot missing setup hook
-		boxlayout.SetDirection(UiDirection::V).SetGap(DPI(0), DPI(0)).SetInset(DPI(0)).SetWrap(UiBoxWrap::None);
-		boxlayout_02.SetDirection(UiDirection::V).SetGap(DPI(0), DPI(0)).SetInset(DPI(0)).SetWrap(UiBoxWrap::None);
+		center_layout_horz.SetDirection(UiDirection::V).SetGap(DPI(0), DPI(0)).SetInset(DPI(0)).SetWrap(UiBoxWrap::None);
+		tool_layout.SetDirection(UiDirection::V).SetGap(DPI(0), DPI(0)).SetInset(DPI(0)).SetWrap(UiBoxWrap::None);
 		panel.SetCustomStyle(UiTheme::ResolvePanel(UiRole::Subtle));
 		panel.SetSizeMin(DPI(0), DPI(0));
 		panel.SetInset(DPI(0));
-		scrollpanel.SetInset(DPI(0));
-		scrollpanel.SetScrollMode(UIPANELSCROLL_AUTO);
+		canvas_scroll_panel.SetInset(DPI(0));
+		canvas_scroll_panel.SetScrollMode(UIPANELSCROLL_AUTO);
 		boxlayout_03.SetDirection(UiDirection::H).SetGap(DPI(8), DPI(8)).SetInset(DPI(4)).SetWrap(UiBoxWrap::None);
 		label.SetCustomStyle(UiTheme::ResolveLabel(UiRole::Subtle));
 		label.SetText("Zoom:");
@@ -424,7 +424,7 @@ private:
 		rbg_tool.SetCustomStyle(Makerbg_toolStyle());
 		exposure_float_edit.SetCustomStyle(Makeexposure_float_editStyle());
 		gamma_float_edit.SetCustomStyle(Makegamma_float_editStyle());
-		scrollpanel.SetCustomStyle(MakescrollpanelStyle());
+		canvas_scroll_panel.SetCustomStyle(Makecanvas_scroll_panelStyle());
 	}
 
 	void BuildLayout()
@@ -447,11 +447,11 @@ private:
 		main_top_layout.Add(boxlayout_04).Expand(1).MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
 		boxlayout_04.Add(load_button).Fixed(DPI(80)).MinCross(DPI(0));
 		boxlayout_04.Add(save_split_button).Fixed(DPI(80)).MinCross(DPI(0));
-		boxlayout_04.Add(quit_button).Fixed(DPI(80)).MinCross(DPI(0));
+		boxlayout_04.Add(quit_button).Fixed(DPI(78)).MinCross(DPI(0));
 		mainColumn.Add(center_layout).Expand(1).MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
-		center_layout.Add(boxlayout).Expand(1).MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
-		boxlayout.Add(boxlayout_02).Expand(1).MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
-		boxlayout_02.Add(panel).Fit().MinCross(DPI(0));
+		center_layout.Add(center_layout_horz).Expand(1).MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
+		center_layout_horz.Add(tool_layout).Expand(1).MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
+		tool_layout.Add(panel).Fit().MinCross(DPI(0));
 		boxlayout_03.Add(label).Fit().MinCross(DPI(0));
 		boxlayout_03.Add(label_02).Fit().MinCross(DPI(0));
 		boxlayout_03.Add(fit_view_button).Fit().MinCross(DPI(0));
@@ -471,7 +471,7 @@ private:
 		}
 		boxlayout_03.Add(colour_label).Fit().MinCross(DPI(0));
 		boxlayout_03.Add(color_info).Fit().MinCross(DPI(0));
-		boxlayout_02.Add(scrollpanel).Expand(1).MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
+		tool_layout.Add(canvas_scroll_panel).Expand(1).MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
 		center_layout.Add(right_tab_panel).Fit().MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
 	}
 
@@ -509,10 +509,10 @@ private:
 	ParentCtrl pageA;
 	ParentCtrl pageB;
 	ParentCtrl pageC;
-	UiBoxLayout boxlayout;
-	UiBoxLayout boxlayout_02;
+	UiBoxLayout center_layout_horz;
+	UiBoxLayout tool_layout;
 	UiPanel panel;
-	UiScrollPanel scrollpanel;
+	UiScrollPanel canvas_scroll_panel;
 	UiBoxLayout boxlayout_03;
 	UiLabel label;
 	UiLabel label_02;
