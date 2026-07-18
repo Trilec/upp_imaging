@@ -52,6 +52,22 @@ static UiScrollPanel::Style MakeCanvasScrollStyle()
 	return s;
 }
 
+static UiTitleCard::Style MakeTitleCardStyle()
+{
+	UiTitleCard::Style s = UiTheme::ResolveTitleCard(UiRole::Standard);
+	s.metrics.face_enabled = false;
+	s.metrics.frame_enabled = false;
+	s.metrics.radius = DPI(18);
+	s.card_line_side = UiAlign::RIGHT;
+	s.card_line_length = LARGE;
+	s.card_line_style = SOLID;
+	s.card_line_thickness = DPI(2);
+	s.card_line_color_enabled = true;
+	s.card_line_color = Color(52, 52, 52);
+	s.metrics.shadow.enabled = false;
+	return s;
+}
+
 ImagingWorkbenchLayout::ImagingWorkbenchLayout()
 {
 	InitWindow();
@@ -59,14 +75,14 @@ ImagingWorkbenchLayout::ImagingWorkbenchLayout()
 	BuildControls();
 	ApplyAppearanceOverrides();
 	BuildLayout();
-	BindActions();
-	PostBuild();
 }
 
 void ImagingWorkbenchLayout::InitWindow()
 {
-	Title("ImagingWorkbench").Sizeable().Zoomable();
-	SetMinSize(Size(DPI(1138), DPI(631)));
+	Title("ImagingWorkbench");
+	Sizeable().Zoomable();
+	SetRect(0, 0, DPI(1138), DPI(631));
+	SetMinSize(Size(DPI(900), DPI(520)));
 }
 
 void ImagingWorkbenchLayout::InitThemeContext()
@@ -77,8 +93,8 @@ void ImagingWorkbenchLayout::BuildControls()
 {
 	mainColumn.SetDirection(UiDirection::V).SetGap(DPI(0), DPI(4)).SetInset(DPI(8)).SetWrap(UiBoxWrap::None);
 	main_top_layout.SetDirection(UiDirection::H).SetGap(DPI(3), DPI(0)).SetInset(DPI(0)).SetWrap(UiBoxWrap::None);
-	center_layout.SetDirection(UiDirection::V).SetGap(DPI(0), DPI(0)).SetInset(DPI(0)).SetWrap(UiBoxWrap::None);
-	center_layout_horz.SetDirection(UiDirection::H).SetGap(DPI(8), DPI(8)).SetInset(DPI(0)).SetWrap(UiBoxWrap::None);
+	center_layout.SetDirection(UiDirection::H).SetGap(DPI(8), DPI(8)).SetInset(DPI(0)).SetWrap(UiBoxWrap::None);
+	center_layout_horz.SetDirection(UiDirection::V).SetGap(DPI(0), DPI(0)).SetInset(DPI(0)).SetWrap(UiBoxWrap::None);
 	tool_layout.SetDirection(UiDirection::V).SetGap(DPI(0), DPI(0)).SetInset(DPI(0)).SetWrap(UiBoxWrap::None);
 	boxlayout_03.SetDirection(UiDirection::H).SetGap(DPI(8), DPI(8)).SetInset(DPI(4)).SetWrap(UiBoxWrap::None);
 	boxlayout_04.SetDirection(UiDirection::H).SetGap(DPI(8), DPI(8)).SetInset(DPI(8)).SetWrap(UiBoxWrap::Flow).SetWrapAutoResize(true);
@@ -87,11 +103,17 @@ void ImagingWorkbenchLayout::BuildControls()
 	right_tab.SetCustomStyle(UiTheme::ResolveTab(UiRole::Accent, UITAB_UNDERLINE));
 	right_tab.SetVisual(UITAB_UNDERLINE).SetPlacement(UiAlign::TOP).SetExpandTabs(false).EnableCloseButtons(false).EnableDragHandles(false);
 	right_tab.SetTabFont(SansSerifZ(11)).SetTabIconSize(DPI(16)).SetTabIconSide(UiAlign::LEFT);
+	tool_layout.SetDirection(UiDirection::V).SetGap(DPI(0), DPI(0)).SetInset(DPI(0)).SetWrap(UiBoxWrap::None);
+	panel.SetCustomStyle(UiTheme::ResolvePanel(UiRole::Subtle));
+	panel.SetSizeMin(DPI(0), DPI(0));
+	panel.SetInset(DPI(0));
 	right_tab_panel.SetSizeMin(DPI(276), DPI(0));
 	right_tab_panel.SetInset(DPI(0));
 	canvas_scroll_panel.SetInset(DPI(0));
 	canvas_scroll_panel.SetScrollMode(UIPANELSCROLL_AUTO);
 
+	hidder_card.SetCustomStyle(MakeTitleCardStyle());
+	hidder_card.SetMinSize(Size(DPI(0), DPI(37)));
 	hidder_card.SetTitle("WORKBENCH").SetSubTitle("Demo of OpenImageIO and OpenColorIO").SetContentInset(DPI(0)).SetMediaGap(DPI(10)).SetMediaReserve(DPI(24)).SetMediaMin(DPI(15)).SetMediaAutoFit(false).SetMediaSide(UiAlign::LEFT).SetMediaAlign(UiAlign::CENTER, UiAlign::CENTER).ShowTitleLine(false).ShowCardLine(true).SetTextAlign(UiAlign::LEFT, UiAlign::CENTER);
 	hidder_card.SetMedia(ICON_BRAND_NEWLOGO_V5_48(), Size(DPI(18), DPI(18)));
 	quit_button.SetText("Quit").SetContentInset(DPI(6)).SetContentGap(DPI(4));
@@ -148,7 +170,6 @@ void ImagingWorkbenchLayout::BuildControls()
 
 void ImagingWorkbenchLayout::ApplyAppearanceOverrides()
 {
-	hidder_card.SetCustomStyle(UiTheme::ResolveTitleCard(UiRole::Standard));
 	quit_button.SetCustomStyle(UiTheme::ResolveButton(UiRole::Alert));
 	load_button.SetCustomStyle(UiTheme::ResolveButton(UiRole::Accent));
 	save_split_button.SetCustomStyle(UiTheme::ResolveButton(UiRole::Accent));
@@ -172,6 +193,8 @@ void ImagingWorkbenchLayout::ApplyAppearanceOverrides()
 void ImagingWorkbenchLayout::BuildLayout()
 {
 	Add(mainColumn);
+	mainColumn.HSizePosZ(0, 0);
+	mainColumn.VSizePosZ(0, 0);
 	mainColumn.Add(main_top_layout).Fit().MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
 	main_top_layout.Add(hidder_card).Fit().MinCross(DPI(37)).AlignSelf(UiBoxLayout::Align::Stretch);
 	main_top_layout.Add(drop_controls_layout).Expand(1).MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
@@ -188,10 +211,11 @@ void ImagingWorkbenchLayout::BuildLayout()
 
 	mainColumn.Add(center_layout).Expand(1).MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
 	center_layout.Add(center_layout_horz).Expand(1).MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
-	center_layout_horz.Add(tool_layout).Expand(1).MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
-	tool_layout.Add(boxlayout_03).Fit().MinCross(DPI(0));
-	tool_layout.Add(canvas_scroll_panel).Expand(1).MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
 	center_layout.Add(right_tab_panel).Fit().MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
+	center_layout_horz.Add(tool_layout).Expand(1).MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
+	tool_layout.Add(panel).Fit().MinCross(DPI(0));
+	panel.Add(boxlayout_03.SizePos());
+	tool_layout.Add(canvas_scroll_panel).Expand(1).MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
 	right_tab_panel.Add(right_tab.SizePos());
 
 	boxlayout_03.Add(label).Fit().MinCross(DPI(0));
@@ -216,17 +240,17 @@ void ImagingWorkbenchLayout::BuildLayout()
 
 	// Top control grid exactly follows the designer node order.
 	drop_controls_layout.Add(resolution, 0, 0, false, false);
-	drop_controls_layout.Add(res_label, 0, 1, true, false);
-	drop_controls_layout.Add(memory, 0, 2, false, false);
-	drop_controls_layout.Add(memory_label, 0, 3, true, false);
-	drop_controls_layout.Add(rgba_layout, 0, 4, true, false);
-	drop_controls_layout.Add(exposure, 0, 5, false, false);
-	drop_controls_layout.Add(exposure_slider, 1, 5, true, false);
-	drop_controls_layout.Add(exposure_float_edit, 1, 6, true, false);
-	drop_controls_layout.Add(gamma, 1, 0, false, false);
-	drop_controls_layout.Add(gamma_slider, 1, 1, true, false);
-	drop_controls_layout.Add(gamma_float_edit, 1, 2, true, false);
-	drop_controls_layout.Add(rbg_tool, 1, 4, true, false);
+	drop_controls_layout.Add(memory, 0, 1, false, false);
+	drop_controls_layout.Add(rbg_tool, 0, 2, true, false);
+	drop_controls_layout.Add(exposure, 0, 3, false, false);
+	drop_controls_layout.Add(gamma, 0, 5, false, false);
+	drop_controls_layout.Add(res_label, 1, 0, true, false);
+	drop_controls_layout.Add(memory_label, 1, 1, true, false);
+	drop_controls_layout.Add(rgba_layout, 1, 2, true, false);
+	drop_controls_layout.Add(exposure_slider, 1, 3, true, false);
+	drop_controls_layout.Add(exposure_float_edit, 1, 4, true, false);
+	drop_controls_layout.Add(gamma_slider, 1, 5, true, false);
+	drop_controls_layout.Add(gamma_float_edit, 1, 6, true, false);
 
 	rgba_layout.Add(r_too).Expand(1).MinCross(DPI(0));
 	rgba_layout.Add(g_tool).Expand(1).MinCross(DPI(0));
