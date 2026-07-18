@@ -87,6 +87,10 @@ void ImagingWorkbenchLayout::InitWindow()
 
 void ImagingWorkbenchLayout::InitThemeContext()
 {
+	UiThemeContext ctx = UiTheme::GetContext();
+	ctx.preset = UiThemePreset::Minimal;
+	ctx.mode = UiThemeMode::Dark;
+	UiTheme::Set(ctx);
 }
 
 void ImagingWorkbenchLayout::BuildControls()
@@ -130,7 +134,7 @@ void ImagingWorkbenchLayout::BuildControls()
 	save_split_button.SetPopupMinWidth(DPI(220));
 	save_split_button.SetAlign(UiAlign::CENTER, UiAlign::CENTER);
 	save_split_button.SetIconSide(UiAlign::LEFT);
-	save_split_button.Add("EXR", "EXR").Add("PNG", "PNG").Add("JPG", "JPG");
+	save_split_button.Add("EXR", "EXR").Add("PNG", "PNG");
 
 	resolution.SetText("Resolution").SetAlign(UiAlign::LEFT, UiAlign::CENTER).SetIconSide(UiAlign::LEFT).SetContentGap(DPI(6)).SetIconScaleToContent(false);
 	memory.SetText("Memory").SetAlign(UiAlign::LEFT, UiAlign::CENTER).SetIconSide(UiAlign::LEFT).SetContentGap(DPI(6)).SetIconScaleToContent(false);
@@ -152,7 +156,7 @@ void ImagingWorkbenchLayout::BuildControls()
 	gamma_float_edit.SetValue(1.0);
 
 	label.SetText("Zoom:").SetAlign(UiAlign::LEFT, UiAlign::CENTER).SetIconSide(UiAlign::LEFT).SetContentGap(DPI(6)).SetIconScaleToContent(false);
-	label_02.SetText("62%").SetAlign(UiAlign::LEFT, UiAlign::CENTER).SetIconSide(UiAlign::LEFT).SetContentGap(DPI(6)).SetIconScaleToContent(false);
+	label_02.SetText("—").SetAlign(UiAlign::LEFT, UiAlign::CENTER).SetIconSide(UiAlign::LEFT).SetContentGap(DPI(6)).SetIconScaleToContent(false);
 	fit_view_button.SetText("").SetContentInset(DPI(4)).SetContentGap(DPI(4)).SetAlign(UiAlign::LEFT, UiAlign::CENTER).SetIconSide(UiAlign::LEFT).SetIcon(ICON_DESIGN_ARROWS_OUTPUT_48()).SetIconSize(DPI(15), DPI(15));
 	xy_label.SetText("XY:").SetAlign(UiAlign::LEFT, UiAlign::CENTER).SetIconSide(UiAlign::LEFT).SetContentGap(DPI(6)).SetIconScaleToContent(false);
 	xy_info.SetText("100,100").SetAlign(UiAlign::LEFT, UiAlign::CENTER).SetIconSide(UiAlign::LEFT).SetContentGap(DPI(6)).SetIconScaleToContent(false);
