@@ -79,8 +79,6 @@ private:
 	static bool IsRGBChannelName(const String& name);
 	static bool IsAlphaChannelName(const String& name);
 	static String GroupPrefix(const String& name);
-	static String ShortChannelName(const String& name);
-	static float ApplyExposureGamma(float value, double exposure_stops, double gamma);
 
 	ImagingCanvas canvas;
 	UiBoxLayout layers_layout;
@@ -93,7 +91,6 @@ private:
 	OIIO::ImageBuf source_image;
 	Image preview_image;
 	Size preview_size;
-	Vector<float> preview_pixels;
 	Vector<float> probe_pixels;
 	String source_filename;
 	String last_saved_filename;
@@ -107,7 +104,6 @@ private:
 	double exposure_stops = 0.0;
 	double display_gamma = 1.0;
 	bool syncing_view_controls = false;
-	String preview_choice;
 	String resolution_text;
 	String memory_text;
 };

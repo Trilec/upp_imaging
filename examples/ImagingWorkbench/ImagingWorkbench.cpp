@@ -24,16 +24,6 @@ static String ShortChannelNameText(const String& name)
 	return dot >= 0 ? name.Mid(dot + 1) : name;
 }
 
-static int FindIndexByLeaf(const Vector<String>& names, const String& value)
-{
-	String target = ToUpper(value);
-	for(int i = 0; i < names.GetCount(); ++i) {
-		if(ToUpper(ShortChannelNameText(names[i])) == target)
-			return i;
-	}
-	return -1;
-}
-
 static String ChannelPrefix(const String& name)
 {
 	int dot = name.ReverseFind('.');
@@ -112,19 +102,6 @@ static float ApplyExposureGammaText(float value, double exposure_stops, double g
 	if(!std::isfinite(scaled))
 		scaled = 0.0;
 	return (float)scaled;
-}
-
-static int ResolveAlphaChannel(const OIIO::ImageSpec& spec, const Vector<String>& names)
-{
-	if(spec.alpha_channel >= 0 && spec.alpha_channel < spec.nchannels)
-		return spec.alpha_channel;
-	int index = FindIndexByLeaf(names, "A");
-	if(index >= 0)
-		return index;
-	index = FindIndexByLeaf(names, "Alpha");
-	if(index >= 0)
-		return index;
-	return -1;
 }
 
 static String SaveExtensionForFormat(const String& format)
@@ -324,16 +301,6 @@ String ImagingWorkbench::GroupPrefix(const String& name)
 	return ChannelPrefix(name);
 }
 
-String ImagingWorkbench::ShortChannelName(const String& name)
-{
-	return ShortChannelNameText(name);
-}
-
-float ImagingWorkbench::ApplyExposureGamma(float value, double exposure_stops, double gamma)
-{
-	return ApplyExposureGammaText(value, exposure_stops, gamma);
-}
-
 String ImagingWorkbench::DescribeChannelView() const
 {
 	return ChannelViewName(channel_view);
@@ -484,17 +451,17 @@ void ImagingWorkbench::UpdateProbe(Point image_point)
 	}
 
 	const int index = (image_point.y * preview_size.cx + image_point.x) * 4;
-	if(index < 0 || index + 3 >= preview_pixels.GetCount()) {
+	if(index < 0 || index + 3 >= probe_pixels.GetCount()) {
 		ClearProbe();
 		return;
 	}
 
 	xy_info.SetText(Format("%d, %d", image_point.x, image_point.y));
 	color_info.SetText(Format("%s, %s, %s, %s",
-		FormatProbeValue(preview_pixels[index + 0]),
-		FormatProbeValue(preview_pixels[index + 1]),
-		FormatProbeValue(preview_pixels[index + 2]),
-		FormatProbeValue(preview_pixels[index + 3])));
+		FormatProbeValue(probe_pixels[index + 0]),
+		FormatProbeValue(probe_pixels[index + 1]),
+		FormatProbeValue(probe_pixels[index + 2]),
+		FormatProbeValue(probe_pixels[index + 3])));
 }
 
 void ImagingWorkbench::UpdateCanvasZoomLabel()
@@ -537,7 +504,7 @@ void ImagingWorkbench::UpdateSelectionSummary()
 	const PreviewGroup& group = preview_groups[selected_preview_group];
 	String text;
 	text << "Selected: " << DescribeSelectedGroup() << "\n";
-	if(selected_preview_group >= 0 && selected_preview_group < subimages.GetCount()) {
+	if(group.subimage >= 0 && group.subimage < subimages.GetCount()) {
 		const ImageSubimageInfo& info = subimages[group.subimage];
 		text << Format("Subimage %d: %d x %d / %s / %d channels\n",
 			group.subimage, info.size.cx, info.size.cy, info.pixel_type, info.channel_count);
@@ -555,7 +522,6 @@ void ImagingWorkbench::UpdatePreviewSelection()
 	if(!node.IsValid()) {
 		selected_preview_group = -1;
 		UpdateViewerControls();
-		BuildPreviewImage();
 		UpdateSelectionSummary();
 		return;
 	}
@@ -577,9 +543,7 @@ void ImagingWorkbench::UpdatePreviewSelection()
 void ImagingWorkbench::ScanSourceMetadata()
 {
 	preview_groups.Clear();
-	preview_choice.Clear();
 	selected_preview_group = -1;
-	preview_pixels.Clear();
 	probe_pixels.Clear();
 	subimages.Clear();
 	subimage_count = 0;
@@ -600,163 +564,177 @@ void ImagingWorkbench::ScanSourceMetadata()
 		info.channel_count = spec.nchannels;
 		subimages.Add(info);
 
-		Vector<String> names;
-		for(const std::string& name : spec.channelnames)
-			names.Add(name.c_str());
+		if(subimage == 0) {
+			Vector<String> names;
+			for(const std::string& name : spec.channelnames)
+				names.Add(name.c_str());
 
-		Vector<int> used;
-		used.SetCount(names.GetCount(), 0);
+			struct TempGroup : Moveable<TempGroup> {
+				String name;
+				String channels_text;
+				int subimage = 0;
+				int channel_count = 0;
+				int red = -1;
+				int green = -1;
+				int blue = -1;
+				int alpha = -1;
+				int single_channel = -1;
+			};
 
-		struct TempGroup : Moveable<TempGroup> {
-			String name;
-			String channels_text;
-			int subimage = 0;
-			int channel_count = 0;
-			int red = -1;
-			int green = -1;
-			int blue = -1;
-			int alpha = -1;
-			int single_channel = -1;
-		};
+			Vector<TempGroup> prefix_groups;
+			auto find_or_add_prefix = [&](const String& prefix) -> int {
+				for(int i = 0; i < prefix_groups.GetCount(); ++i)
+					if(prefix_groups[i].name == prefix)
+						return i;
+				TempGroup group;
+				group.name = prefix;
+				group.subimage = subimage;
+				prefix_groups.Add(group);
+				return prefix_groups.GetCount() - 1;
+			};
 
-		Vector<TempGroup> prefix_groups;
-		auto find_or_add_prefix = [&](const String& prefix) -> int {
-			for(int i = 0; i < prefix_groups.GetCount(); ++i)
-				if(prefix_groups[i].name == prefix)
-					return i;
-			TempGroup group;
-			group.name = prefix;
-			group.subimage = subimage;
-			prefix_groups.Add(group);
-			return prefix_groups.GetCount() - 1;
-		};
-
-		for(int i = 0; i < names.GetCount(); ++i) {
-			String prefix = GroupPrefix(names[i]);
-			if(prefix.IsEmpty())
-				continue;
-		String leaf = ShortChannelNameText(names[i]);
-			TempGroup& group = prefix_groups[find_or_add_prefix(prefix)];
-			if(!group.channels_text.IsEmpty())
-				group.channels_text << ' ';
-			group.channels_text << leaf;
-			++group.channel_count;
-			if(leaf == "R") group.red = i;
-			else if(leaf == "G") group.green = i;
-			else if(leaf == "B") group.blue = i;
-			else if(IsAlphaChannelName(leaf)) group.alpha = i;
-			else if(group.single_channel < 0) group.single_channel = i;
-			used[i] = 1;
-		}
-
-		auto find_unprefixed_leaf = [&](const String& leaf) -> int {
-			for(int i = 0; i < names.GetCount(); ++i)
-				if(!used[i] && GroupPrefix(names[i]).IsEmpty() && ToUpper(ShortChannelNameText(names[i])) == ToUpper(leaf))
-					return i;
-			return -1;
-		};
-
-		auto mark_used = [&](int index) {
-			if(index >= 0 && index < used.GetCount())
-				used[index] = 1;
-		};
-
-		int r = find_unprefixed_leaf("R");
-		int g = find_unprefixed_leaf("G");
-		int b = find_unprefixed_leaf("B");
-		int a = -1;
-		if(spec.alpha_channel >= 0 && spec.alpha_channel < names.GetCount() && GroupPrefix(names[spec.alpha_channel]).IsEmpty())
-			a = spec.alpha_channel;
-		if(a < 0)
-			a = find_unprefixed_leaf("A");
-		if(a < 0)
-			a = find_unprefixed_leaf("ALPHA");
-
-		if(r >= 0 && g >= 0 && b >= 0) {
-			PreviewGroup group;
-			group.subimage = subimage;
-			group.red = r;
-			group.green = g;
-			group.blue = b;
-			group.alpha = a;
-			group.channel_count = 3 + (a >= 0 ? 1 : 0);
-			group.channels_text = a >= 0 ? "R G B A" : "R G B";
-			group.name = a >= 0 ? "RGBA" : "RGB";
-			preview_groups.Add(group);
-			mark_used(r); mark_used(g); mark_used(b); mark_used(a);
-		}
-
-		Vector<int> color_left;
-		Vector<int> alpha_left;
-		for(int i = 0; i < names.GetCount(); ++i) {
-			if(used[i] || !GroupPrefix(names[i]).IsEmpty())
-				continue;
-			if(IsAlphaChannelName(ShortChannelNameText(names[i])))
-				alpha_left.Add(i);
-			else
-				color_left.Add(i);
-		}
-
-		if(color_left.GetCount() == 1 && alpha_left.GetCount() >= 1) {
-			int idx = color_left[0];
-			PreviewGroup group;
-			group.subimage = subimage;
-			group.single_channel = idx;
-			group.alpha = alpha_left[0];
-			group.channel_count = 2;
-			group.channels_text = ShortChannelNameText(names[idx]) + " " + ShortChannelNameText(names[alpha_left[0]]);
-			group.name = ShortChannelNameText(names[idx]) + " + Alpha";
-			preview_groups.Add(group);
-			mark_used(idx);
-			mark_used(alpha_left[0]);
-			color_left.Clear();
-			alpha_left.Clear();
-		}
-
-		for(int idx : color_left) {
-			PreviewGroup group;
-			group.subimage = subimage;
-			group.single_channel = idx;
-			group.channel_count = 1;
-			group.channels_text = ShortChannelNameText(names[idx]);
-			group.name = group.channels_text;
-			preview_groups.Add(group);
-			mark_used(idx);
-		}
-
-		if(color_left.IsEmpty() && alpha_left.GetCount() == 1) {
-			int idx = alpha_left[0];
-			PreviewGroup group;
-			group.subimage = subimage;
-			group.single_channel = idx;
-			group.alpha = idx;
-			group.channel_count = 1;
-			group.channels_text = ShortChannelNameText(names[idx]);
-			group.name = group.channels_text;
-			preview_groups.Add(group);
-			mark_used(idx);
-		}
-
-		for(const TempGroup& group : prefix_groups) {
-			PreviewGroup out;
-			out.subimage = subimage;
-			out.name = group.name;
-			out.channels_text = group.channels_text;
-			out.channel_count = group.channel_count;
-			out.red = group.red;
-			out.green = group.green;
-			out.blue = group.blue;
-			out.alpha = group.alpha;
-			out.single_channel = group.single_channel;
-			if(out.name.IsEmpty()) {
-				if(out.HasRGB())
-					out.name = out.HasAlpha() ? "RGBA" : "RGB";
-				else if(out.HasSingle())
-					out.name = out.channels_text;
-				else
-					out.name = "Channels";
+			for(int i = 0; i < names.GetCount(); ++i) {
+				String prefix = GroupPrefix(names[i]);
+				if(prefix.IsEmpty())
+					continue;
+				String leaf = ShortChannelNameText(names[i]);
+				TempGroup& group = prefix_groups[find_or_add_prefix(prefix)];
+				if(!group.channels_text.IsEmpty())
+					group.channels_text << ' ';
+				group.channels_text << leaf;
+				++group.channel_count;
+				String upper_leaf = ToUpper(leaf);
+				if(upper_leaf == "R") group.red = i;
+				else if(upper_leaf == "G") group.green = i;
+				else if(upper_leaf == "B") group.blue = i;
+				else if(IsAlphaChannelName(leaf)) group.alpha = i;
+				else if(group.single_channel < 0) group.single_channel = i;
 			}
-			preview_groups.Add(out);
+
+			auto find_unprefixed_leaf = [&](const String& leaf) -> int {
+				for(int i = 0; i < names.GetCount(); ++i)
+					if(GroupPrefix(names[i]).IsEmpty() && ToUpper(ShortChannelNameText(names[i])) == ToUpper(leaf))
+						return i;
+				return -1;
+			};
+
+			int r = find_unprefixed_leaf("R");
+			int g = find_unprefixed_leaf("G");
+			int b = find_unprefixed_leaf("B");
+			int a = -1;
+			if(spec.alpha_channel >= 0 && spec.alpha_channel < names.GetCount() && GroupPrefix(names[spec.alpha_channel]).IsEmpty())
+				a = spec.alpha_channel;
+			if(a < 0)
+				a = find_unprefixed_leaf("A");
+			if(a < 0)
+				a = find_unprefixed_leaf("ALPHA");
+
+			if(r >= 0 && g >= 0 && b >= 0) {
+				PreviewGroup group;
+				group.subimage = subimage;
+				group.red = r;
+				group.green = g;
+				group.blue = b;
+				group.alpha = a;
+				group.channel_count = 3 + (a >= 0 ? 1 : 0);
+				group.channels_text = a >= 0 ? "R G B A" : "R G B";
+				group.name = a >= 0 ? "RGBA" : "RGB";
+				preview_groups.Add(group);
+			}
+
+			Vector<int> color_left;
+			Vector<int> alpha_left;
+			Vector<int> used;
+			used.SetCount(names.GetCount(), 0);
+			if(r >= 0) used[r] = 1;
+			if(g >= 0) used[g] = 1;
+			if(b >= 0) used[b] = 1;
+			if(a >= 0) used[a] = 1;
+			for(int i = 0; i < names.GetCount(); ++i) {
+				if(used[i] || !GroupPrefix(names[i]).IsEmpty())
+					continue;
+				if(IsAlphaChannelName(ShortChannelNameText(names[i])))
+					alpha_left.Add(i);
+				else
+					color_left.Add(i);
+			}
+
+			if(color_left.GetCount() == 1 && alpha_left.GetCount() >= 1) {
+				int idx = color_left[0];
+				PreviewGroup group;
+				group.subimage = subimage;
+				group.single_channel = idx;
+				group.alpha = alpha_left[0];
+				group.channel_count = 2;
+				group.channels_text = ShortChannelNameText(names[idx]) + " " + ShortChannelNameText(names[alpha_left[0]]);
+				group.name = ShortChannelNameText(names[idx]) + " + Alpha";
+				preview_groups.Add(group);
+				color_left.Clear();
+				alpha_left.Clear();
+			}
+
+			for(int idx : color_left) {
+				PreviewGroup group;
+				group.subimage = subimage;
+				group.single_channel = idx;
+				group.channel_count = 1;
+				group.channels_text = ShortChannelNameText(names[idx]);
+				group.name = group.channels_text;
+				preview_groups.Add(group);
+			}
+
+			if(color_left.IsEmpty() && alpha_left.GetCount() == 1) {
+				int idx = alpha_left[0];
+				PreviewGroup group;
+				group.subimage = subimage;
+				group.single_channel = idx;
+				group.alpha = idx;
+				group.channel_count = 1;
+				group.channels_text = ShortChannelNameText(names[idx]);
+				group.name = group.channels_text;
+				preview_groups.Add(group);
+			}
+
+			for(const TempGroup& group : prefix_groups) {
+				bool color_like = group.red >= 0 && group.green >= 0 && group.blue >= 0;
+				for(int i = 0; i < names.GetCount(); ++i) {
+					if(GroupPrefix(names[i]) != group.name)
+						continue;
+					String upper_leaf = ToUpper(ShortChannelNameText(names[i]));
+					if(upper_leaf != "R" && upper_leaf != "G" && upper_leaf != "B" && upper_leaf != "A" && upper_leaf != "ALPHA") {
+						color_like = false;
+						break;
+					}
+				}
+
+				if(color_like) {
+					PreviewGroup out;
+					out.subimage = subimage;
+					out.name = group.name;
+					out.channels_text = group.channels_text;
+					out.channel_count = group.channel_count;
+					out.red = group.red;
+					out.green = group.green;
+					out.blue = group.blue;
+					out.alpha = group.alpha;
+					if(out.name.IsEmpty())
+						out.name = out.HasAlpha() ? "RGBA" : "RGB";
+					preview_groups.Add(out);
+				}
+				else {
+					for(int i = 0; i < names.GetCount(); ++i) {
+						if(GroupPrefix(names[i]) != group.name)
+							continue;
+						PreviewGroup out;
+						out.subimage = subimage;
+						out.single_channel = i;
+						out.channel_count = 1;
+						out.channels_text = ShortChannelNameText(names[i]);
+						out.name = group.name + "." + out.channels_text;
+						preview_groups.Add(out);
+					}
+				}
+			}
 		}
 	}
 
@@ -766,7 +744,6 @@ void ImagingWorkbench::ScanSourceMetadata()
 void ImagingWorkbench::BuildPreviewImage()
 {
 	preview_image = Image();
-	preview_pixels.Clear();
 	probe_pixels.Clear();
 	preview_size = Size();
 	if(!source_image.initialized()) {
@@ -800,9 +777,7 @@ void ImagingWorkbench::BuildPreviewImage()
 	}
 
 	preview_size = Size(spec.width, spec.height);
-	preview_pixels.SetCount((size_t)spec.width * spec.height * 4);
 	probe_pixels.SetCount((size_t)spec.width * spec.height * 4);
-	preview_choice = DescribeSelectedGroup() + " / " + DescribeChannelView();
 
 	auto source_at = [&](const float* src, int index) -> float {
 		return index >= 0 ? src[index] : 0.0f;
@@ -825,9 +800,9 @@ void ImagingWorkbench::BuildPreviewImage()
 			float src_b = group.HasRGB() ? source_at(src, group.blue) : source_at(src, group.single_channel);
 			float src_a = group.HasAlpha() ? source_at(src, group.alpha) : 1.0f;
 
-				float tone_r = ApplyExposureGammaText(src_r, exposure_stops, display_gamma);
-				float tone_g = ApplyExposureGammaText(src_g, exposure_stops, display_gamma);
-				float tone_b = ApplyExposureGammaText(src_b, exposure_stops, display_gamma);
+			float tone_r = ApplyExposureGammaText(src_r, exposure_stops, display_gamma);
+			float tone_g = ApplyExposureGammaText(src_g, exposure_stops, display_gamma);
+			float tone_b = ApplyExposureGammaText(src_b, exposure_stops, display_gamma);
 
 			float out_r = tone_r;
 			float out_g = tone_g;
@@ -867,12 +842,7 @@ void ImagingWorkbench::BuildPreviewImage()
 			}
 
 			write_pixel(dst, out_r, out_g, out_b, out_a);
-			float* preview_slot = &preview_pixels[((size_t)y * spec.width + x) * 4];
 			float* probe_slot = &probe_pixels[((size_t)y * spec.width + x) * 4];
-			preview_slot[0] = out_r;
-			preview_slot[1] = out_g;
-			preview_slot[2] = out_b;
-			preview_slot[3] = out_a;
 			probe_slot[0] = probe_r;
 			probe_slot[1] = probe_g;
 			probe_slot[2] = probe_b;
@@ -988,27 +958,6 @@ bool ImagingWorkbench::SaveCurrentImage(String& path, const String& format, Stri
 		}
 		else if(group.HasSingle()) {
 			src_r = src_g = src_b = group.single_channel;
-		}
-
-		if(channel_view == ChannelView::Red || channel_view == ChannelView::Green || channel_view == ChannelView::Blue) {
-			int channel_index = channel_view == ChannelView::Red ? src_r : channel_view == ChannelView::Green ? src_g : src_b;
-			if(channel_index < 0) {
-				error = "selected preview group does not support the current channel view";
-				return false;
-			}
-			src_r = src_g = src_b = channel_index;
-		}
-		else if(channel_view == ChannelView::Alpha) {
-			if(group.HasAlpha())
-				src_r = src_g = src_b = group.alpha;
-			else if(group.HasSingle())
-				src_r = src_g = src_b = group.single_channel;
-			else if(group.HasRGB())
-				src_r = src_g = src_b = group.red;
-			else {
-				error = "selected preview group has no alpha channel";
-				return false;
-			}
 		}
 
 		if(src_r < 0 || src_g < 0 || src_b < 0) {
@@ -1170,42 +1119,51 @@ void ImagingWorkbench::UpdateLayersPage()
 		}
 		UiTreeNodeRef sub_node = model.AddChild(file_node, sub_item);
 
-		for(int group_index = 0; group_index < preview_groups.GetCount(); ++group_index) {
-			const PreviewGroup& group = preview_groups[group_index];
-			if(group.subimage != subimage)
-				continue;
-			UiModelItem group_item;
-			group_item.text = group.name;
-			group_item.right_text = group.channels_text;
-			group_item.description = Format("%d channel%s", group.channel_count, group.channel_count == 1 ? "" : "s");
-			group_item.data = group_index;
-			UiTreeNodeRef group_node = model.AddChild(sub_node, group_item);
-			if(!first_group_node.IsValid())
-				first_group_node = group_node;
-			for(const std::string& channel_name : spec.channelnames) {
-				String channel = channel_name.c_str();
-				String prefix = GroupPrefix(channel);
-				String leaf = ShortChannelNameText(channel);
-				bool belongs = false;
-				if(!group.name.IsEmpty() && prefix == group.name)
-					belongs = true;
-				else if(group.HasRGB() && prefix.IsEmpty() && (leaf == "R" || leaf == "G" || leaf == "B" || leaf == "A" || leaf == "ALPHA"))
-					belongs = true;
-				else if(group.HasSingle() && prefix.IsEmpty() && group.single_channel >= 0 && channel == String(spec.channelnames[group.single_channel].c_str()))
-					belongs = true;
-				if(!belongs)
+		if(subimage == 0) {
+			for(int group_index = 0; group_index < preview_groups.GetCount(); ++group_index) {
+				const PreviewGroup& group = preview_groups[group_index];
+				if(group.subimage != subimage)
 					continue;
-				UiModelItem channel_item;
-				channel_item.text = channel;
-				channel_item.description = Format("subimage %d channel", subimage);
-				channel_item.enabled = false;
-				model.AddChild(group_node, channel_item);
+				UiModelItem group_item;
+				group_item.text = group.name;
+				group_item.right_text = group.channels_text;
+				group_item.description = Format("%d channel%s", group.channel_count, group.channel_count == 1 ? "" : "s");
+				group_item.data = group_index;
+				UiTreeNodeRef group_node = model.AddChild(sub_node, group_item);
+				if(!first_group_node.IsValid())
+					first_group_node = group_node;
+				for(const std::string& channel_name : spec.channelnames) {
+					String channel = channel_name.c_str();
+					String prefix = GroupPrefix(channel);
+					String leaf = ShortChannelNameText(channel);
+					bool belongs = false;
+					if(!group.name.IsEmpty() && prefix == group.name)
+						belongs = true;
+					else if(group.HasRGB() && prefix.IsEmpty() && (leaf == "R" || leaf == "G" || leaf == "B" || leaf == "A" || leaf == "ALPHA"))
+						belongs = true;
+					else if(group.HasSingle() && prefix.IsEmpty() && group.single_channel >= 0 && channel == String(spec.channelnames[group.single_channel].c_str()))
+						belongs = true;
+					if(!belongs)
+						continue;
+					UiModelItem channel_item;
+					channel_item.text = channel;
+					channel_item.description = Format("subimage %d channel", subimage);
+					channel_item.enabled = false;
+					model.AddChild(group_node, channel_item);
+				}
 			}
+		}
+		else {
+			UiModelItem preview_na;
+			preview_na.text = "Preview not yet supported";
+			preview_na.description = "Metadata only; selectable preview is limited to subimage 0.";
+			preview_na.enabled = false;
+			model.AddChild(sub_node, preview_na);
 		}
 	}
 
 	if(first_group_node.IsValid())
-		layers_tree.SetCursor(first_group_node);
+		layers_tree.SelectNode(first_group_node);
 	else {
 		layers_tree.ClearSelection();
 		selected_preview_group = -1;
@@ -1248,7 +1206,6 @@ void ImagingWorkbench::DoLoad()
 	source_filename = path;
 	last_error.Clear();
 	ScanSourceMetadata();
-	BuildPreviewImage();
 	UpdateDisplayState();
 	UpdateLayersPage();
 	canvas.SetFitMode(true);
