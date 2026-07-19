@@ -58,11 +58,48 @@ void ImagingCanvas::SetPlaceholderText(const String& text)
 	Refresh();
 }
 
+bool ImagingCanvas::ViewToImage(Point view_point, Point& image_point) const
+{
+	if(IsNull(image) || source_size.cx <= 0 || source_size.cy <= 0 || image_rect.IsEmpty())
+		return false;
+	if(!image_rect.Contains(view_point))
+		return false;
+
+	double scale_x = (double)source_size.cx / max(1, image_rect.GetWidth());
+	double scale_y = (double)source_size.cy / max(1, image_rect.GetHeight());
+	int x = (int)std::floor((view_point.x - image_rect.left) * scale_x);
+	int y = (int)std::floor((view_point.y - image_rect.top) * scale_y);
+	if(x < 0 || y < 0 || x >= source_size.cx || y >= source_size.cy)
+		return false;
+	image_point = Point(x, y);
+	return true;
+}
+
 void ImagingCanvas::Layout()
 {
 	Ctrl::Layout();
 	UpdateViewState();
 	WhenViewChanged();
+}
+
+void ImagingCanvas::MouseMove(Point p, dword keyflags)
+{
+	Point image_point;
+	if(ViewToImage(p, image_point)) {
+		if(WhenImageMouseMove)
+			WhenImageMouseMove(image_point);
+	}
+	else if(WhenImageMouseLeave) {
+		WhenImageMouseLeave();
+	}
+	Ctrl::MouseMove(p, keyflags);
+}
+
+void ImagingCanvas::MouseLeave()
+{
+	if(WhenImageMouseLeave)
+		WhenImageMouseLeave();
+	Ctrl::MouseLeave();
 }
 
 void ImagingCanvas::UpdateViewState()

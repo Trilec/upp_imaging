@@ -18,12 +18,17 @@ public:
 	Size GetSourceSize() const;
 	double GetDisplayedScale() const;
 	void SetPlaceholderText(const String& text);
+	bool ViewToImage(Point view_point, Point& image_point) const;
 
 	Event<> WhenViewChanged;
+	Event<Point> WhenImageMouseMove;
+	Event<> WhenImageMouseLeave;
 
 protected:
 	virtual void Paint(Draw& w) override;
 	virtual void Layout() override;
+	virtual void MouseMove(Point p, dword keyflags) override;
+	virtual void MouseLeave() override;
 
 private:
 	void UpdateViewState();
