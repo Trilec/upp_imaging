@@ -232,7 +232,7 @@ void ImagingWorkbenchLayout::BuildLayout()
 		spacer.LineEnabled(true).LineOrientation(UiSpacerLineOrientation::Vertical).LineAlign(UiCrossAlign::Center).LineThickness(DPI(2)).LineDash(SOLID).LineInset(DPI(0)).LineColorEnabled(true).LineColor(Color(52, 52, 52));
 	}
 	boxlayout_03.Add(xy_label).Fit().MinCross(DPI(0));
-	boxlayout_03.Add(xy_info).Fit().MinCross(DPI(0));
+	boxlayout_03.Add(xy_info).Fixed(DPI(90)).MinCross(DPI(0));
 	{
 		auto spacer = boxlayout_03.AddSpacer(1);
 		spacer.Fit().MinMain(DPI(10));
@@ -240,7 +240,7 @@ void ImagingWorkbenchLayout::BuildLayout()
 		spacer.LineEnabled(true).LineOrientation(UiSpacerLineOrientation::Vertical).LineAlign(UiCrossAlign::Center).LineThickness(DPI(2)).LineDash(SOLID).LineInset(DPI(0)).LineColorEnabled(true).LineColor(Color(52, 52, 52));
 	}
 	boxlayout_03.Add(colour_label).Fit().MinCross(DPI(0));
-	boxlayout_03.Add(color_info).Fit().MinCross(DPI(0));
+	boxlayout_03.Add(color_info).Expand(1).MinMain(DPI(210)).MinCross(DPI(0));
 
 	// Top control grid exactly follows the designer node order.
 	drop_controls_layout.Add(resolution, 0, 0, false, false);

@@ -12,6 +12,7 @@ public:
 	ImagingCanvas();
 
 	void SetImage(const Image& image);
+	void SetDisplayImage(const Image& image, Size original_source_size);
 	void ClearImage();
 	void SetFitMode(bool fit);
 	bool HasImage() const;
@@ -34,6 +35,7 @@ private:
 	void UpdateViewState();
 
 	Image image;
+	Size display_size;
 	Size source_size;
 	Rect image_rect;
 	double displayed_scale = 0.0;
