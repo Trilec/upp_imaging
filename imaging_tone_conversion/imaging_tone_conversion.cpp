@@ -5,6 +5,8 @@
 
 namespace Upp {
 
+void BuildToneLut(Vector<float>& lut, double display_gamma);
+
 namespace {
 
 static int ClampByte(float value)
@@ -17,12 +19,23 @@ static int ClampByte(float value)
 
 } // namespace
 
-ToneLutConstants PrepareToneLut(double display_gamma)
+void UpdateToneExposure(ToneConversionState& tone, double exposure_stops)
 {
-	ToneLutConstants constants;
-	constants.display_gamma = std::isfinite(display_gamma) && display_gamma > 0.0 ? display_gamma : 1.0;
-	constants.inverse_gamma = 1.0f / (float)constants.display_gamma;
-	return constants;
+	if(!std::isfinite(exposure_stops))
+		exposure_stops = 0.0;
+	tone.exposure_scale = (float)std::pow(2.0, exposure_stops);
+	if(!std::isfinite(tone.exposure_scale))
+		tone.exposure_scale = exposure_stops > 0.0 ? 1.0e30f : 0.0f;
+}
+
+ToneConversionState PrepareToneConversion(double exposure_stops, double display_gamma)
+{
+	ToneConversionState tone;
+	UpdateToneExposure(tone, exposure_stops);
+	double gamma = std::isfinite(display_gamma) && display_gamma > 0.0 ? display_gamma : 1.0;
+	tone.inverse_gamma = 1.0f / (float)gamma;
+	BuildToneLut(tone.lut, gamma);
+	return tone;
 }
 
 float ApplyToneExposureGamma(float value, double exposure_stops, double gamma)
@@ -54,37 +67,35 @@ float ApplyToneExposureGamma(float value, double exposure_stops, double gamma)
 
 void BuildToneLut(Vector<float>& lut, double display_gamma)
 {
-	ToneLutConstants constants = PrepareToneLut(display_gamma);
 	static constexpr int TONE_LUT_SIZE = 65536;
 	lut.SetCount(TONE_LUT_SIZE);
+	float inverse_gamma = 1.0f / (float)((!std::isfinite(display_gamma) || display_gamma <= 0.0) ? 1.0 : display_gamma);
 	for(int i = 0; i < TONE_LUT_SIZE; ++i) {
 		float normalized = (float)i / (float)(TONE_LUT_SIZE - 1);
-		lut[i] = std::pow(normalized, constants.inverse_gamma);
+		lut[i] = std::pow(normalized, inverse_gamma);
 	}
 }
 
-byte ToneToByte(float value, double exposure_stops, const Vector<float>& lut)
+byte ToneToByte(float source_value, const ToneConversionState& tone)
 {
-	if(lut.IsEmpty())
+	if(tone.lut.IsEmpty())
 		return 0;
-	if(std::isnan(value) || value <= 0.0f)
+	if(std::isnan(source_value) || source_value <= 0.0f)
 		return 0;
-	if(value > 0.0f && !std::isfinite(value))
+	if(source_value > 0.0f && !std::isfinite(source_value))
 		return 255;
-	if(!std::isfinite(exposure_stops))
-		exposure_stops = 0.0;
-	double scaled = (double)value * std::pow(2.0, exposure_stops);
+	double scaled = (double)source_value * (double)tone.exposure_scale;
 	if(!std::isfinite(scaled))
 		return scaled > 0.0 ? 255 : 0;
 	if(scaled <= 0.0)
 		return 0;
 	if(scaled >= 1.0)
 		return 255;
-	double pos = scaled * (double)(lut.GetCount() - 1);
-	int idx0 = std::clamp((int)std::floor(pos), 0, lut.GetCount() - 1);
-	int idx1 = std::min(idx0 + 1, lut.GetCount() - 1);
+	double pos = scaled * (double)(tone.lut.GetCount() - 1);
+	int idx0 = std::clamp((int)std::floor(pos), 0, tone.lut.GetCount() - 1);
+	int idx1 = std::min(idx0 + 1, tone.lut.GetCount() - 1);
 	double frac = pos - idx0;
-	double blended = (1.0 - frac) * (double)lut[idx0] + frac * (double)lut[idx1];
+	double blended = (1.0 - frac) * (double)tone.lut[idx0] + frac * (double)tone.lut[idx1];
 	return (byte)ClampByte((float)blended);
 }
 

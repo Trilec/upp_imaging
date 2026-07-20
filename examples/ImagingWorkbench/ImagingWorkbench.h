@@ -5,6 +5,7 @@
 #include "ImagingCanvas.h"
 
 #include <imaging_preview_coalescing/imaging_preview_coalescing.h>
+#include <imaging_tone_conversion/imaging_tone_conversion.h>
 
 #include <oiio/OIIO.h>
 
@@ -126,6 +127,8 @@ private:
 	double exposure_stops = 0.0;
 	double display_gamma = 1.0;
 	bool syncing_view_controls = false;
+	ToneConversionState preview_tone;
+	double preview_tone_gamma = -1.0;
 	PreviewRenderCoalescer preview_render_coalescer;
 	String timing_summary;
 	String resolution_text;

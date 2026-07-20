@@ -1,0 +1,19 @@
+description "ImagingWorkbench timing and coordinate bench";
+
+uses
+	CtrlLib,
+	Ui,
+	imaging_preview_coalescing,
+	imaging_tone_conversion,
+	imaging_view_transform,
+	oiio,
+	opencolorio;
+
+mainconfig
+	"" = "CONSOLE";
+
+file
+	../examples/ImagingWorkbench/ImagingWorkbench.generated.cpp,
+	../examples/ImagingWorkbench/ImagingCanvas.cpp,
+	../examples/ImagingWorkbench/ImagingWorkbench.cpp,
+	imaging_workbench_bench_main.cpp;
