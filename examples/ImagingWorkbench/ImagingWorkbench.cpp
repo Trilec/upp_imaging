@@ -1,6 +1,7 @@
 #include "ImagingWorkbench.h"
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <memory>
 #include <sstream>
@@ -84,6 +85,25 @@ static String TypeDescText(const OIIO::TypeDesc& type)
 static String StringFromView(const OIIO::string_view& view)
 {
 	return String(view.data(), (int)view.size());
+}
+
+static Size ComputeProxySize(Size source_size)
+{
+	if(source_size.cx <= 0 || source_size.cy <= 0)
+		return Size();
+	double long_edge_scale = 1.0;
+	int long_edge = std::max(source_size.cx, source_size.cy);
+	if(long_edge > 2048)
+		long_edge_scale = 2048.0 / (double)long_edge;
+	double area_scale = 1.0;
+	double area = (double)source_size.cx * (double)source_size.cy;
+	if(area > 2000000.0)
+		area_scale = std::sqrt(2000000.0 / area);
+	double scale = std::min(long_edge_scale, area_scale);
+	scale = std::min(scale, 1.0);
+	int w = std::max(1, (int)std::round(source_size.cx * scale));
+	int h = std::max(1, (int)std::round(source_size.cy * scale));
+	return Size(w, h);
 }
 
 static float ApplyExposureGammaText(float value, double exposure_stops, double gamma)
@@ -175,12 +195,12 @@ void ImagingWorkbench::BindActions()
 	g_tool.WhenAction = [=] { ApplyChannelView(ChannelView::Green); };
 	b_tool.WhenAction = [=] { ApplyChannelView(ChannelView::Blue); };
 	a_tool.WhenAction = [=] { ApplyChannelView(ChannelView::Alpha); };
-	exposure_slider.WhenChanging = [=] { ApplyExposureStops(exposure_slider.GetValue()); };
-	exposure_slider.WhenAction = [=] { ApplyExposureStops(exposure_slider.GetValue()); };
-	exposure_float_edit.WhenAction = [=] { ApplyExposureStops(exposure_float_edit.GetValue()); };
-	gamma_slider.WhenChanging = [=] { ApplyDisplayGamma(gamma_slider.GetValue()); };
-	gamma_slider.WhenAction = [=] { ApplyDisplayGamma(gamma_slider.GetValue()); };
-	gamma_float_edit.WhenAction = [=] { ApplyDisplayGamma(gamma_float_edit.GetValue()); };
+	exposure_slider.WhenChanging = [=] { ApplyExposureStops(exposure_slider.GetValue(), false); };
+	exposure_slider.WhenAction = [=] { ApplyExposureStops(exposure_slider.GetValue(), true); };
+	exposure_float_edit.WhenAction = [=] { ApplyExposureStops(exposure_float_edit.GetValue(), true); };
+	gamma_slider.WhenChanging = [=] { ApplyDisplayGamma(gamma_slider.GetValue(), false); };
+	gamma_slider.WhenAction = [=] { ApplyDisplayGamma(gamma_slider.GetValue(), true); };
+	gamma_float_edit.WhenAction = [=] { ApplyDisplayGamma(gamma_float_edit.GetValue(), true); };
 }
 
 bool ImagingWorkbench::HotKey(dword key)
@@ -404,31 +424,31 @@ void ImagingWorkbench::ApplyChannelView(ChannelView view)
 		return;
 	channel_view = view;
 	UpdateViewerControls();
-	BuildPreviewImage();
+	SchedulePreviewRender(true);
 	UpdateSelectionSummary();
 	SetStatus("Preview: " + DescribePreviewChoice());
 }
 
-void ImagingWorkbench::ApplyExposureStops(double value)
+void ImagingWorkbench::ApplyExposureStops(double value, bool immediate)
 {
 	value = std::clamp(value, -4.0, 4.0);
 	if(syncing_view_controls || exposure_stops == value)
 		return;
 	exposure_stops = value;
 	UpdateViewerControls();
-	BuildPreviewImage();
+	SchedulePreviewRender(immediate);
 	UpdateSelectionSummary();
 	SetStatus("Preview: " + DescribePreviewChoice());
 }
 
-void ImagingWorkbench::ApplyDisplayGamma(double value)
+void ImagingWorkbench::ApplyDisplayGamma(double value, bool immediate)
 {
 	value = std::clamp(value, 0.5, 3.5);
 	if(syncing_view_controls || display_gamma == value)
 		return;
 	display_gamma = value;
 	UpdateViewerControls();
-	BuildPreviewImage();
+	SchedulePreviewRender(immediate);
 	UpdateSelectionSummary();
 	SetStatus("Preview: " + DescribePreviewChoice());
 }
@@ -441,27 +461,69 @@ void ImagingWorkbench::ClearProbe()
 
 void ImagingWorkbench::UpdateProbe(Point image_point)
 {
-	if(selected_preview_group < 0 || selected_preview_group >= preview_groups.GetCount() || preview_size.cx <= 0 || preview_size.cy <= 0) {
-		ClearProbe();
-		return;
-	}
-	if(image_point.x < 0 || image_point.y < 0 || image_point.x >= preview_size.cx || image_point.y >= preview_size.cy) {
+	if(selected_preview_group < 0 || selected_preview_group >= preview_groups.GetCount() || !canvas.ViewToImage(image_point, image_point)) {
 		ClearProbe();
 		return;
 	}
 
-	const int index = (image_point.y * preview_size.cx + image_point.x) * 4;
-	if(index < 0 || index + 3 >= probe_pixels.GetCount()) {
+	const OIIO::ImageSpec& spec = source_image.spec();
+	if(spec.width <= 0 || spec.height <= 0 || spec.nchannels <= 0) {
 		ClearProbe();
 		return;
+	}
+
+	if(probe_source_pixel.GetCount() < spec.nchannels)
+		probe_source_pixel.SetCount(spec.nchannels);
+	if(image_point.x < 0 || image_point.y < 0 || image_point.x >= spec.width || image_point.y >= spec.height) {
+		ClearProbe();
+		return;
+	}
+
+	source_image.getpixel(image_point.x, image_point.y, 0, OIIO::span<float>(probe_source_pixel.Begin(), probe_source_pixel.GetCount()));
+	const PreviewGroup& group = preview_groups[selected_preview_group];
+	auto channel_at = [&](int index) -> float {
+		return index >= 0 && index < probe_source_pixel.GetCount() ? probe_source_pixel[index] : 0.0f;
+	};
+	float src_r = group.HasRGB() ? channel_at(group.red) : channel_at(group.single_channel);
+	float src_g = group.HasRGB() ? channel_at(group.green) : channel_at(group.single_channel);
+	float src_b = group.HasRGB() ? channel_at(group.blue) : channel_at(group.single_channel);
+	float src_a = group.HasAlpha() ? channel_at(group.alpha) : 1.0f;
+
+	float tone_r = ApplyExposureGammaText(src_r, exposure_stops, display_gamma);
+	float tone_g = ApplyExposureGammaText(src_g, exposure_stops, display_gamma);
+	float tone_b = ApplyExposureGammaText(src_b, exposure_stops, display_gamma);
+	float out_r = tone_r;
+	float out_g = tone_g;
+	float out_b = tone_b;
+	float out_a = src_a;
+
+	switch(channel_view) {
+	case ChannelView::Red:
+		out_r = out_g = out_b = tone_r;
+		break;
+	case ChannelView::Green:
+		out_r = out_g = out_b = tone_g;
+		break;
+	case ChannelView::Blue:
+		out_r = out_g = out_b = tone_b;
+		break;
+	case ChannelView::Alpha:
+		out_r = out_g = out_b = src_a;
+		out_a = src_a;
+		break;
+	case ChannelView::RGB:
+	default:
+		if(group.HasSingle())
+			out_r = out_g = out_b = ApplyExposureGammaText(channel_at(group.single_channel), exposure_stops, display_gamma);
+		break;
 	}
 
 	xy_info.SetText(Format("%d, %d", image_point.x, image_point.y));
 	color_info.SetText(Format("%s, %s, %s, %s",
-		FormatProbeValue(probe_pixels[index + 0]),
-		FormatProbeValue(probe_pixels[index + 1]),
-		FormatProbeValue(probe_pixels[index + 2]),
-		FormatProbeValue(probe_pixels[index + 3])));
+		FormatProbeValue(out_r),
+		FormatProbeValue(out_g),
+		FormatProbeValue(out_b),
+		FormatProbeValue(out_a)));
 }
 
 void ImagingWorkbench::UpdateCanvasZoomLabel()
@@ -522,6 +584,7 @@ void ImagingWorkbench::UpdatePreviewSelection()
 	if(!node.IsValid()) {
 		selected_preview_group = -1;
 		UpdateViewerControls();
+		canvas.ClearImage();
 		UpdateSelectionSummary();
 		return;
 	}
@@ -534,17 +597,237 @@ void ImagingWorkbench::UpdatePreviewSelection()
 	if(selected_preview_group != index) {
 		selected_preview_group = index;
 		UpdateViewerControls();
-		BuildPreviewImage();
+		SchedulePreviewRender(true);
 	}
 	UpdateSelectionSummary();
 	SetStatus("Preview: " + DescribePreviewChoice());
+}
+
+void ImagingWorkbench::RecordTiming(const String& phase, double milliseconds, const PreviewProxy* proxy)
+{
+	String text = Format("%s %.1f ms", phase, milliseconds);
+	if(proxy && proxy->IsValid())
+		text << Format(" | proxy %d x %d (%d ch, %.1f MB)", proxy->proxy_size.cx, proxy->proxy_size.cy, proxy->channel_count,
+			(double)proxy->pixels.GetCount() * sizeof(float) / (1024.0 * 1024.0));
+	timing_summary = text;
+	SetStatus(text);
+}
+
+void ImagingWorkbench::SchedulePreviewRender(bool immediate)
+{
+	preview_render_pending = true;
+	if(immediate) {
+		preview_render_pending = false;
+		RenderPreviewFromProxy();
+		return;
+	}
+	if(preview_render_scheduled)
+		return;
+	preview_render_scheduled = true;
+	SetTimeCallback(24, [=] {
+		preview_render_scheduled = false;
+		if(preview_render_pending) {
+			preview_render_pending = false;
+			RenderPreviewFromProxy();
+		}
+	});
+}
+
+void ImagingWorkbench::BuildSelectedGroupProxy()
+{
+	if(selected_preview_group < 0 || selected_preview_group >= preview_groups.GetCount())
+		return;
+
+	const PreviewGroup& group = preview_groups[selected_preview_group];
+	Size source_size(source_image.spec().width, source_image.spec().height);
+	if(source_size.cx <= 0 || source_size.cy <= 0)
+		return;
+
+	Size proxy_size = ComputeProxySize(source_size);
+	if(proxy_size.cx <= 0 || proxy_size.cy <= 0)
+		return;
+
+	for(int i = 0; i < proxy_cache.GetCount(); ++i) {
+		PreviewProxy& cached = proxy_cache[i];
+		if(cached.group_index == selected_preview_group && cached.source_size == source_size && cached.proxy_size == proxy_size) {
+			if(i > 0)
+				proxy_cache.Swap(0, i);
+			return;
+		}
+	}
+
+	std::vector<int> channel_order;
+	channel_order.reserve(4);
+	PreviewProxy proxy;
+	proxy.group_index = selected_preview_group;
+	proxy.source_size = source_size;
+	proxy.proxy_size = proxy_size;
+	proxy.red = group.red;
+	proxy.green = group.green;
+	proxy.blue = group.blue;
+	proxy.alpha = group.alpha;
+	proxy.single_channel = group.single_channel;
+	proxy.has_alpha = group.HasAlpha();
+
+	if(group.HasRGB()) {
+		channel_order.push_back(group.red);
+		channel_order.push_back(group.green);
+		channel_order.push_back(group.blue);
+		proxy.channel_count = 3;
+		if(group.HasAlpha()) {
+			channel_order.push_back(group.alpha);
+			proxy.channel_count = 4;
+		}
+	}
+	else if(group.HasSingle()) {
+		channel_order.push_back(group.single_channel);
+		proxy.channel_count = 1;
+		if(group.HasAlpha()) {
+			channel_order.push_back(group.alpha);
+			proxy.channel_count = 2;
+		}
+	}
+	else if(group.HasAlpha()) {
+		channel_order.push_back(group.alpha);
+		proxy.channel_count = 1;
+	}
+
+	if(channel_order.empty())
+		return;
+
+	using Clock = std::chrono::steady_clock;
+	auto started = Clock::now();
+
+	OIIO::ImageBuf selected = OIIO::ImageBufAlgo::channels(source_image, (int)channel_order.size(),
+		OIIO::cspan<int>(channel_order.data(), (int)channel_order.size()));
+	if(selected.has_error()) {
+		last_error = selected.geterror();
+		return;
+	}
+
+	OIIO::ImageSpec proxy_spec(proxy_size.cx, proxy_size.cy, (int)channel_order.size(), OIIO::TypeDesc::FLOAT);
+	proxy_spec.channelnames.clear();
+	proxy_spec.alpha_channel = group.HasAlpha() ? (int)channel_order.size() - 1 : -1;
+	proxy_spec.z_channel = -1;
+	proxy_spec.channelformats.clear();
+	for(int i = 0; i < (int)channel_order.size(); ++i)
+		proxy_spec.channelnames.push_back(selected.spec().channelnames[i]);
+	OIIO::ImageBuf resized(proxy_spec);
+	if(!OIIO::ImageBufAlgo::resize(resized, selected, { { "filtername", "triangle" } })) {
+		last_error = resized.geterror();
+		return;
+	}
+
+	proxy.pixels.SetCount((size_t)proxy_size.cx * proxy_size.cy * proxy.channel_count);
+	if(!resized.get_pixels(resized.roi(), OIIO::TypeDesc::FLOAT, proxy.pixels.Begin(),
+				       proxy.channel_count * sizeof(float), proxy_size.cx * proxy.channel_count * sizeof(float), OIIO::AutoStride)) {
+		last_error = resized.geterror();
+		return;
+	}
+
+	auto elapsed = std::chrono::duration<double, std::milli>(Clock::now() - started).count();
+	proxy_cache.Add(pick(proxy));
+	int last = proxy_cache.GetCount() - 1;
+	if(last > 0)
+		proxy_cache.Swap(0, last);
+	if(proxy_cache.GetCount() > 2)
+		proxy_cache.Remove(2);
+	RecordTiming("proxy build", elapsed, &proxy_cache[0]);
+}
+
+void ImagingWorkbench::RenderPreviewFromProxy()
+{
+	if(selected_preview_group < 0 || selected_preview_group >= preview_groups.GetCount()) {
+		canvas.ClearImage();
+		return;
+	}
+
+	BuildSelectedGroupProxy();
+	const PreviewProxy* proxy = nullptr;
+	for(const PreviewProxy& cached : proxy_cache) {
+		if(cached.group_index == selected_preview_group) {
+			proxy = &cached;
+			break;
+		}
+	}
+	if(!proxy || !proxy->IsValid()) {
+		canvas.ClearImage();
+		return;
+	}
+
+	using Clock = std::chrono::steady_clock;
+	auto started = Clock::now();
+
+	preview_image = Image();
+	ImageBuffer buffer(Size(proxy->proxy_size.cx, proxy->proxy_size.cy));
+	const float* pixels = proxy->pixels.Begin();
+	for(int y = 0; y < proxy->proxy_size.cy; ++y) {
+		for(int x = 0; x < proxy->proxy_size.cx; ++x) {
+			const float* src = pixels + ((size_t)y * proxy->proxy_size.cx + x) * proxy->channel_count;
+			float src_r = 0.0f;
+			float src_g = 0.0f;
+			float src_b = 0.0f;
+			float src_a = proxy->has_alpha ? src[proxy->channel_count - 1] : 1.0f;
+			if(proxy->channel_count >= 3) {
+				src_r = src[0];
+				src_g = src[1];
+				src_b = src[2];
+			}
+			else {
+				src_r = src_g = src_b = src[0];
+			}
+
+			float tone_r = ApplyExposureGammaText(src_r, exposure_stops, display_gamma);
+			float tone_g = ApplyExposureGammaText(src_g, exposure_stops, display_gamma);
+			float tone_b = ApplyExposureGammaText(src_b, exposure_stops, display_gamma);
+
+			float out_r = tone_r;
+			float out_g = tone_g;
+			float out_b = tone_b;
+			float out_a = src_a;
+			switch(channel_view) {
+			case ChannelView::Red:
+				out_r = out_g = out_b = tone_r;
+				break;
+			case ChannelView::Green:
+				out_r = out_g = out_b = tone_g;
+				break;
+			case ChannelView::Blue:
+				out_r = out_g = out_b = tone_b;
+				break;
+			case ChannelView::Alpha:
+				out_r = out_g = out_b = src_a;
+				out_a = 1.0f;
+				break;
+			case ChannelView::RGB:
+			default:
+				if(proxy->channel_count == 1 || proxy->channel_count == 2) {
+					float gray = ApplyExposureGammaText(src[0], exposure_stops, display_gamma);
+					out_r = out_g = out_b = gray;
+				}
+				break;
+			}
+
+			RGBA& dst = buffer[y][x];
+			dst.r = ClampByte(out_r);
+			dst.g = ClampByte(out_g);
+			dst.b = ClampByte(out_b);
+			dst.a = ClampByte(out_a);
+		}
+	}
+
+	preview_image = buffer;
+	canvas.SetDisplayImage(preview_image, proxy->source_size);
+	UpdateCanvasZoomLabel();
+	auto elapsed = std::chrono::duration<double, std::milli>(Clock::now() - started).count();
+	RecordTiming(channel_view == ChannelView::RGB ? "RGB render" : channel_view == ChannelView::Red ? "R render" : channel_view == ChannelView::Green ? "G render" : channel_view == ChannelView::Blue ? "B render" : "A render", elapsed, proxy);
 }
 
 void ImagingWorkbench::ScanSourceMetadata()
 {
 	preview_groups.Clear();
 	selected_preview_group = -1;
-	probe_pixels.Clear();
+	proxy_cache.Clear();
 	subimages.Clear();
 	subimage_count = 0;
 
@@ -739,119 +1022,6 @@ void ImagingWorkbench::ScanSourceMetadata()
 	}
 
 	input->close();
-}
-
-void ImagingWorkbench::BuildPreviewImage()
-{
-	preview_image = Image();
-	probe_pixels.Clear();
-	preview_size = Size();
-	if(!source_image.initialized()) {
-		canvas.ClearImage();
-		return;
-	}
-
-	const OIIO::ImageSpec& spec = source_image.spec();
-	if(spec.width <= 0 || spec.height <= 0 || spec.nchannels <= 0) {
-		canvas.ClearImage();
-		return;
-	}
-	if(selected_preview_group < 0 || selected_preview_group >= preview_groups.GetCount()) {
-		canvas.ClearImage();
-		return;
-	}
-
-	const PreviewGroup& group = preview_groups[selected_preview_group];
-	if(group.subimage < 0) {
-		canvas.ClearImage();
-		return;
-	}
-
-	std::vector<float> pixels((size_t)spec.width * spec.height * spec.nchannels);
-	if(!source_image.get_pixels(source_image.roi(), OIIO::TypeDesc::FLOAT, pixels.data(),
-		                       spec.nchannels * sizeof(float),
-		                       spec.width * spec.nchannels * sizeof(float), OIIO::AutoStride)) {
-		last_error = source_image.geterror();
-		canvas.ClearImage();
-		return;
-	}
-
-	preview_size = Size(spec.width, spec.height);
-	probe_pixels.SetCount((size_t)spec.width * spec.height * 4);
-
-	auto source_at = [&](const float* src, int index) -> float {
-		return index >= 0 ? src[index] : 0.0f;
-	};
-
-	auto write_pixel = [&](RGBA& dst, float r, float g, float b, float a) {
-		dst.r = ClampByte(r);
-		dst.g = ClampByte(g);
-		dst.b = ClampByte(b);
-		dst.a = ClampByte(a);
-	};
-
-	ImageBuffer buffer(Size(spec.width, spec.height));
-	for(int y = 0; y < spec.height; ++y) {
-		for(int x = 0; x < spec.width; ++x) {
-			const float* src = pixels.data() + ((size_t)y * spec.width + x) * spec.nchannels;
-			RGBA& dst = buffer[y][x];
-			float src_r = group.HasRGB() ? source_at(src, group.red) : source_at(src, group.single_channel);
-			float src_g = group.HasRGB() ? source_at(src, group.green) : source_at(src, group.single_channel);
-			float src_b = group.HasRGB() ? source_at(src, group.blue) : source_at(src, group.single_channel);
-			float src_a = group.HasAlpha() ? source_at(src, group.alpha) : 1.0f;
-
-			float tone_r = ApplyExposureGammaText(src_r, exposure_stops, display_gamma);
-			float tone_g = ApplyExposureGammaText(src_g, exposure_stops, display_gamma);
-			float tone_b = ApplyExposureGammaText(src_b, exposure_stops, display_gamma);
-
-			float out_r = tone_r;
-			float out_g = tone_g;
-			float out_b = tone_b;
-			float out_a = src_a;
-
-			switch(channel_view) {
-			case ChannelView::Red:
-				out_r = out_g = out_b = tone_r;
-				break;
-			case ChannelView::Green:
-				out_r = out_g = out_b = tone_g;
-				break;
-			case ChannelView::Blue:
-				out_r = out_g = out_b = tone_b;
-				break;
-			case ChannelView::Alpha:
-				out_r = out_g = out_b = src_a;
-				out_a = 1.0f;
-				break;
-			case ChannelView::RGB:
-			default:
-				if(!group.HasRGB()) {
-					float gray = ApplyExposureGammaText(source_at(src, group.single_channel), exposure_stops, display_gamma);
-					out_r = out_g = out_b = gray;
-				}
-				break;
-			}
-
-			float probe_a = group.HasAlpha() ? src_a : 1.0f;
-			float probe_r = out_r;
-			float probe_g = out_g;
-			float probe_b = out_b;
-			if(channel_view == ChannelView::Alpha) {
-				probe_r = probe_g = probe_b = src_a;
-				probe_a = src_a;
-			}
-
-			write_pixel(dst, out_r, out_g, out_b, out_a);
-			float* probe_slot = &probe_pixels[((size_t)y * spec.width + x) * 4];
-			probe_slot[0] = probe_r;
-			probe_slot[1] = probe_g;
-			probe_slot[2] = probe_b;
-			probe_slot[3] = probe_a;
-		}
-	}
-	preview_image = buffer;
-	canvas.SetImage(preview_image);
-	canvas.SetFitMode(true);
 }
 
 void ImagingWorkbench::DoSave()
@@ -1169,6 +1339,7 @@ void ImagingWorkbench::UpdateLayersPage()
 		selected_preview_group = -1;
 		UpdateViewerControls();
 		ClearProbe();
+		canvas.ClearImage();
 		UpdateSelectionSummary();
 	}
 }
@@ -1184,34 +1355,51 @@ void ImagingWorkbench::DoLoad()
 	if(path.IsEmpty())
 		return;
 
+	String error;
+	if(!LoadImageFile(path, error, true)) {
+		Exclamation("Unable to open image:\n" + error);
+		SetStatus("Unable to load: " + error);
+		return;
+	}
+
+	SetStatus("Loaded: " + GetFileName(path));
+}
+
+bool ImagingWorkbench::LoadImageFile(const String& path, String& error, bool populate_ui)
+{
 	String ext = ToLower(GetFileExt(path));
 	if(ext != ".exr" && ext != ".png") {
-		Exclamation("Unsupported file type. Use EXR or PNG.");
-		SetStatus("Unable to load: unsupported extension");
-		return;
+		error = "unsupported extension";
+		return false;
 	}
 
 	SetStatus("Loading: " + GetFileName(path));
 
-	std::string error;
+	using Clock = std::chrono::steady_clock;
+	auto load_started = Clock::now();
+	std::string io_error;
 	OIIO::ImageBuf loaded;
-	if(!UppImaging::LoadImage(path.Begin(), loaded, &error)) {
-		last_error = error.c_str();
-		Exclamation("Unable to open image:\n" + String(error.c_str()));
-		SetStatus("Unable to load: " + String(error.c_str()));
-		return;
+	if(!UppImaging::LoadImage(path.Begin(), loaded, &io_error)) {
+		error = io_error.c_str();
+		last_error = error;
+		return false;
 	}
+	auto load_ms = std::chrono::duration<double, std::milli>(Clock::now() - load_started).count();
 
 	source_image = loaded;
 	source_filename = path;
+	probe_source_pixel.SetCount(source_image.spec().nchannels);
 	last_error.Clear();
 	ScanSourceMetadata();
 	UpdateDisplayState();
-	UpdateLayersPage();
-	canvas.SetFitMode(true);
+	if(populate_ui)
+		UpdateLayersPage();
+	else if(!preview_groups.IsEmpty())
+		selected_preview_group = 0;
 	save_split_button.Enable();
 	fit_view_button.Enable();
-	SetStatus("Loaded: " + GetFileName(path));
+	RecordTiming("file load", load_ms);
+	return true;
 }
 
 } // namespace Upp

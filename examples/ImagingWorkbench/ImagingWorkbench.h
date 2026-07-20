@@ -39,6 +39,22 @@ struct ImageSubimageInfo : Moveable<ImageSubimageInfo> {
 	int channel_count = 0;
 };
 
+struct PreviewProxy : Moveable<PreviewProxy> {
+	int group_index = -1;
+	Size source_size;
+	Size proxy_size;
+	int channel_count = 0;
+	int red = -1;
+	int green = -1;
+	int blue = -1;
+	int alpha = -1;
+	int single_channel = -1;
+	bool has_alpha = false;
+	Vector<float> pixels;
+
+	bool IsValid() const { return group_index >= 0 && proxy_size.cx > 0 && proxy_size.cy > 0 && channel_count > 0 && pixels.GetCount() > 0; }
+};
+
 class ImagingWorkbench : public ImagingWorkbenchLayout {
 public:
 	typedef ImagingWorkbench CLASSNAME;
@@ -53,6 +69,7 @@ protected:
 
 private:
 	void DoLoad();
+	bool LoadImageFile(const String& path, String& error, bool populate_ui = true);
 	void UpdateDisplayState();
 	void UpdateCanvasZoomLabel();
 	void UpdateLayersPage();
@@ -61,15 +78,18 @@ private:
 	void UpdatePreviewSelection();
 	void UpdateViewerControls();
 	void ApplyChannelView(ChannelView view);
-	void ApplyExposureStops(double value);
-	void ApplyDisplayGamma(double value);
-	void BuildPreviewImage();
+	void ApplyExposureStops(double value, bool immediate = false);
+	void ApplyDisplayGamma(double value, bool immediate = false);
+	void SchedulePreviewRender(bool immediate = false);
+	void BuildSelectedGroupProxy();
+	void RenderPreviewFromProxy();
 	void UpdateProbe(Point image_point);
 	void ClearProbe();
 	void DoSave();
 	void DoSaveFormat(const Value& data);
 	bool SaveCurrentImage(String& path, const String& format, String& error);
 	void SetStatus(const String& text);
+	void RecordTiming(const String& phase, double milliseconds, const PreviewProxy* proxy = nullptr);
 	String FormatBytes(int64 bytes) const;
 	String DescribePreviewChoice() const;
 	String DescribeChannelView() const;
@@ -90,8 +110,8 @@ private:
 
 	OIIO::ImageBuf source_image;
 	Image preview_image;
-	Size preview_size;
-	Vector<float> probe_pixels;
+	Vector<PreviewProxy> proxy_cache;
+	Vector<float> probe_source_pixel;
 	String source_filename;
 	String last_saved_filename;
 	String last_save_format = "EXR";
@@ -104,6 +124,9 @@ private:
 	double exposure_stops = 0.0;
 	double display_gamma = 1.0;
 	bool syncing_view_controls = false;
+	bool preview_render_pending = false;
+	bool preview_render_scheduled = false;
+	String timing_summary;
 	String resolution_text;
 	String memory_text;
 };
