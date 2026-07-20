@@ -109,7 +109,7 @@ static Size ComputeProxySize(Size source_size)
 static float ApplyExposureGammaText(float value, double exposure_stops, double gamma)
 {
 	if(!std::isfinite(value))
-		value = 0.0f;
+		return value > 0.0f ? 1.0f : 0.0f;
 	if(!std::isfinite(exposure_stops))
 		exposure_stops = 0.0;
 	if(!std::isfinite(gamma) || gamma <= 0.0)
@@ -122,6 +122,32 @@ static float ApplyExposureGammaText(float value, double exposure_stops, double g
 	if(!std::isfinite(scaled))
 		scaled = 0.0;
 	return (float)scaled;
+}
+
+static constexpr int TONE_LUT_SIZE = 65536;
+
+static void BuildToneLut(Vector<float>& lut, double display_gamma)
+{
+	lut.SetCount(TONE_LUT_SIZE);
+	float inverse_gamma = 1.0f / (float)((!std::isfinite(display_gamma) || display_gamma <= 0.0) ? 1.0 : display_gamma);
+	for(int i = 0; i < TONE_LUT_SIZE; ++i) {
+		float normalized = (float)i / (float)(TONE_LUT_SIZE - 1);
+		float corrected = std::pow(normalized, inverse_gamma);
+		lut[i] = corrected;
+	}
+}
+
+static byte ToneToByte(float scaled, const Vector<float>& lut)
+{
+	if(!std::isfinite(scaled) || scaled <= 0.0f)
+		return 0;
+	if(scaled >= 1.0f)
+		return 255;
+	double pos = (double)scaled * (double)(lut.GetCount() - 1);
+	int idx0 = std::clamp((int)std::floor(pos), 0, lut.GetCount() - 1);
+	int idx1 = std::min(idx0 + 1, lut.GetCount() - 1);
+	double frac = pos - idx0;
+	return (byte)ClampByte((float)((1.0 - frac) * (double)lut[idx0] + frac * (double)lut[idx1]));
 }
 
 static String SaveExtensionForFormat(const String& format)
@@ -266,8 +292,8 @@ void ImagingWorkbench::PostBuild()
 
 	canvas.SetPlaceholderText("Open an EXR or PNG to begin");
 	canvas.WhenViewChanged = [=] { UpdateCanvasZoomLabel(); };
-	canvas.WhenImageMouseMove = [=](Point p) { UpdateProbe(p); };
-	canvas.WhenImageMouseLeave = [=] { ClearProbe(); };
+	canvas.WhenSourcePixelMove = [=](Point p) { UpdateProbe(p); };
+	canvas.WhenSourcePixelLeave = [=] { ClearProbe(); };
 	canvas_scroll_panel.Content().Add(canvas.SizePos());
 
 	load_button.Enable();
@@ -423,7 +449,13 @@ void ImagingWorkbench::ApplyChannelView(ChannelView view)
 	if(syncing_view_controls || channel_view == view)
 		return;
 	channel_view = view;
-	UpdateViewerControls();
+	syncing_view_controls = true;
+	rbg_tool.SetChecked(channel_view == ChannelView::RGB);
+	r_too.SetChecked(channel_view == ChannelView::Red);
+	g_tool.SetChecked(channel_view == ChannelView::Green);
+	b_tool.SetChecked(channel_view == ChannelView::Blue);
+	a_tool.SetChecked(channel_view == ChannelView::Alpha);
+	syncing_view_controls = false;
 	SchedulePreviewRender(true);
 	UpdateSelectionSummary();
 	SetStatus("Preview: " + DescribePreviewChoice());
@@ -435,7 +467,10 @@ void ImagingWorkbench::ApplyExposureStops(double value, bool immediate)
 	if(syncing_view_controls || exposure_stops == value)
 		return;
 	exposure_stops = value;
-	UpdateViewerControls();
+	syncing_view_controls = true;
+	exposure_slider.SetValue(exposure_stops);
+	exposure_float_edit.SetValue(exposure_stops);
+	syncing_view_controls = false;
 	SchedulePreviewRender(immediate);
 	UpdateSelectionSummary();
 	SetStatus("Preview: " + DescribePreviewChoice());
@@ -447,7 +482,10 @@ void ImagingWorkbench::ApplyDisplayGamma(double value, bool immediate)
 	if(syncing_view_controls || display_gamma == value)
 		return;
 	display_gamma = value;
-	UpdateViewerControls();
+	syncing_view_controls = true;
+	gamma_slider.SetValue(display_gamma);
+	gamma_float_edit.SetValue(display_gamma);
+	syncing_view_controls = false;
 	SchedulePreviewRender(immediate);
 	UpdateSelectionSummary();
 	SetStatus("Preview: " + DescribePreviewChoice());
@@ -461,7 +499,7 @@ void ImagingWorkbench::ClearProbe()
 
 void ImagingWorkbench::UpdateProbe(Point image_point)
 {
-	if(selected_preview_group < 0 || selected_preview_group >= preview_groups.GetCount() || !canvas.ViewToImage(image_point, image_point)) {
+	if(selected_preview_group < 0 || selected_preview_group >= preview_groups.GetCount()) {
 		ClearProbe();
 		return;
 	}
@@ -472,8 +510,7 @@ void ImagingWorkbench::UpdateProbe(Point image_point)
 		return;
 	}
 
-	if(probe_source_pixel.GetCount() < spec.nchannels)
-		probe_source_pixel.SetCount(spec.nchannels);
+	probe_source_pixel.SetCount(spec.nchannels);
 	if(image_point.x < 0 || image_point.y < 0 || image_point.x >= spec.width || image_point.y >= spec.height) {
 		ClearProbe();
 		return;
@@ -615,9 +652,11 @@ void ImagingWorkbench::RecordTiming(const String& phase, double milliseconds, co
 
 void ImagingWorkbench::SchedulePreviewRender(bool immediate)
 {
+	int generation = ++preview_render_generation;
 	preview_render_pending = true;
 	if(immediate) {
 		preview_render_pending = false;
+		preview_render_scheduled = false;
 		RenderPreviewFromProxy();
 		return;
 	}
@@ -625,6 +664,8 @@ void ImagingWorkbench::SchedulePreviewRender(bool immediate)
 		return;
 	preview_render_scheduled = true;
 	SetTimeCallback(24, [=] {
+		if(generation != preview_render_generation)
+			return;
 		preview_render_scheduled = false;
 		if(preview_render_pending) {
 			preview_render_pending = false;
@@ -711,7 +752,7 @@ void ImagingWorkbench::BuildSelectedGroupProxy()
 	proxy_spec.z_channel = -1;
 	proxy_spec.channelformats.clear();
 	for(int i = 0; i < (int)channel_order.size(); ++i)
-		proxy_spec.channelnames.push_back(selected.spec().channelnames[i]);
+		proxy_spec.channelnames.push_back(source_image.spec().channelnames[channel_order[i]]);
 	OIIO::ImageBuf resized(proxy_spec);
 	if(!OIIO::ImageBufAlgo::resize(resized, selected, { { "filtername", "triangle" } })) {
 		last_error = resized.geterror();
@@ -761,58 +802,56 @@ void ImagingWorkbench::RenderPreviewFromProxy()
 	preview_image = Image();
 	ImageBuffer buffer(Size(proxy->proxy_size.cx, proxy->proxy_size.cy));
 	const float* pixels = proxy->pixels.Begin();
+	Vector<float> tone_lut;
+	BuildToneLut(tone_lut, display_gamma);
+	float exposure_scale = std::exp2((float)exposure_stops);
+	auto scale_value = [&](float value) -> float {
+		return std::isfinite(value) ? value * exposure_scale : 0.0f;
+	};
+	auto tone_byte = [&](float value) -> byte {
+		return ToneToByte(scale_value(value), tone_lut);
+	};
 	for(int y = 0; y < proxy->proxy_size.cy; ++y) {
 		for(int x = 0; x < proxy->proxy_size.cx; ++x) {
 			const float* src = pixels + ((size_t)y * proxy->proxy_size.cx + x) * proxy->channel_count;
-			float src_r = 0.0f;
-			float src_g = 0.0f;
-			float src_b = 0.0f;
 			float src_a = proxy->has_alpha ? src[proxy->channel_count - 1] : 1.0f;
-			if(proxy->channel_count >= 3) {
-				src_r = src[0];
-				src_g = src[1];
-				src_b = src[2];
-			}
-			else {
-				src_r = src_g = src_b = src[0];
-			}
-
-			float tone_r = ApplyExposureGammaText(src_r, exposure_stops, display_gamma);
-			float tone_g = ApplyExposureGammaText(src_g, exposure_stops, display_gamma);
-			float tone_b = ApplyExposureGammaText(src_b, exposure_stops, display_gamma);
-
-			float out_r = tone_r;
-			float out_g = tone_g;
-			float out_b = tone_b;
-			float out_a = src_a;
+			byte out_r = 0;
+			byte out_g = 0;
+			byte out_b = 0;
+			byte out_a = ClampByte(src_a);
 			switch(channel_view) {
 			case ChannelView::Red:
-				out_r = out_g = out_b = tone_r;
+				out_r = out_g = out_b = tone_byte(src[0]);
 				break;
 			case ChannelView::Green:
-				out_r = out_g = out_b = tone_g;
+				out_r = out_g = out_b = tone_byte(proxy->channel_count >= 3 ? src[1] : src[0]);
 				break;
 			case ChannelView::Blue:
-				out_r = out_g = out_b = tone_b;
+				out_r = out_g = out_b = tone_byte(proxy->channel_count >= 3 ? src[2] : src[0]);
 				break;
 			case ChannelView::Alpha:
-				out_r = out_g = out_b = src_a;
-				out_a = 1.0f;
+				out_r = out_g = out_b = ClampByte(src_a);
+				out_a = 255;
 				break;
 			case ChannelView::RGB:
 			default:
 				if(proxy->channel_count == 1 || proxy->channel_count == 2) {
-					float gray = ApplyExposureGammaText(src[0], exposure_stops, display_gamma);
+					byte gray = tone_byte(src[0]);
 					out_r = out_g = out_b = gray;
+				}
+				else {
+					out_r = tone_byte(src[0]);
+					out_g = tone_byte(src[1]);
+					out_b = tone_byte(src[2]);
 				}
 				break;
 			}
 
 			RGBA& dst = buffer[y][x];
-			dst.r = ClampByte(out_r);
-			dst.g = ClampByte(out_g);
-			dst.b = ClampByte(out_b);
-			dst.a = ClampByte(out_a);
+			dst.r = out_r;
+			dst.g = out_g;
+			dst.b = out_b;
+			dst.a = out_a;
 		}
 	}
 

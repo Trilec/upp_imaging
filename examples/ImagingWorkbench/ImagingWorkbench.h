@@ -126,6 +126,7 @@ private:
 	bool syncing_view_controls = false;
 	bool preview_render_pending = false;
 	bool preview_render_scheduled = false;
+	int preview_render_generation = 0;
 	String timing_summary;
 	String resolution_text;
 	String memory_text;

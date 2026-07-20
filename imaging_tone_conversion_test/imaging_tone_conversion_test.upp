@@ -1,0 +1,10 @@
+description "Deterministic tone conversion test";
+
+uses
+	Core;
+
+file
+	main.cpp;
+
+mainconfig
+	"" = "CONSOLE";

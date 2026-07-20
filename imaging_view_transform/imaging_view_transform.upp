@@ -1,0 +1,8 @@
+description "Pure source/view transform helpers for ImagingWorkbench";
+
+uses
+	Core;
+
+file
+	imaging_view_transform.h,
+	imaging_view_transform.cpp;
