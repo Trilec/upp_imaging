@@ -1,0 +1,8 @@
+description "Pure preview render coalescing helper for ImagingWorkbench";
+
+uses
+	Core;
+
+file
+	imaging_preview_coalescing.h,
+	imaging_preview_coalescing.cpp;

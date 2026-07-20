@@ -4,6 +4,8 @@
 #include "ImagingWorkbench.generated.h"
 #include "ImagingCanvas.h"
 
+#include <imaging_preview_coalescing/imaging_preview_coalescing.h>
+
 #include <oiio/OIIO.h>
 
 namespace Upp {
@@ -124,9 +126,7 @@ private:
 	double exposure_stops = 0.0;
 	double display_gamma = 1.0;
 	bool syncing_view_controls = false;
-	bool preview_render_pending = false;
-	bool preview_render_scheduled = false;
-	int preview_render_generation = 0;
+	PreviewRenderCoalescer preview_render_coalescer;
 	String timing_summary;
 	String resolution_text;
 	String memory_text;

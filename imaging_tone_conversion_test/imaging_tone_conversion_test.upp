@@ -1,7 +1,8 @@
 description "Deterministic tone conversion test";
 
 uses
-	Core;
+	Core,
+	imaging_tone_conversion;
 
 file
 	main.cpp;
