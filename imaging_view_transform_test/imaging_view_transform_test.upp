@@ -1,0 +1,11 @@
+description "Deterministic source/view transform test";
+
+uses
+	Core,
+	imaging_view_transform;
+
+file
+	main.cpp;
+
+mainconfig
+	"" = "CONSOLE";

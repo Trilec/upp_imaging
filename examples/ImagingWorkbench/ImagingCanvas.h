@@ -19,11 +19,10 @@ public:
 	Size GetSourceSize() const;
 	double GetDisplayedScale() const;
 	void SetPlaceholderText(const String& text);
-	bool ViewToImage(Point view_point, Point& image_point) const;
 
 	Event<> WhenViewChanged;
-	Event<Point> WhenImageMouseMove;
-	Event<> WhenImageMouseLeave;
+	Event<Point> WhenSourcePixelMove;
+	Event<> WhenSourcePixelLeave;
 
 protected:
 	virtual void Paint(Draw& w) override;
@@ -35,7 +34,7 @@ private:
 	void UpdateViewState();
 
 	Image image;
-	Size display_size;
+	Size proxy_size;
 	Size source_size;
 	Rect image_rect;
 	double displayed_scale = 0.0;
