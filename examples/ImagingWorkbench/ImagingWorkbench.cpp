@@ -754,10 +754,15 @@ void ImagingWorkbench::RenderPreviewFromProxy()
 	preview_image = Image();
 	ImageBuffer buffer(Size(proxy->proxy_size.cx, proxy->proxy_size.cy));
 	const float* pixels = proxy->pixels.Begin();
-	Vector<float> tone_lut;
-	BuildToneLut(tone_lut, display_gamma);
+	if(preview_tone.lut.IsEmpty() || preview_tone_gamma != display_gamma) {
+		double gamma = (!std::isfinite(display_gamma) || display_gamma <= 0.0) ? 1.0 : display_gamma;
+		BuildToneLut(preview_tone.lut, gamma);
+		preview_tone.inverse_gamma = (float)(1.0 / gamma);
+		preview_tone_gamma = display_gamma;
+	}
+	UpdateToneExposure(preview_tone, exposure_stops);
 	auto tone_byte = [&](float value) -> byte {
-		return ToneToByte(value, exposure_stops, tone_lut);
+		return ToneToByte(value, preview_tone);
 	};
 	for(int y = 0; y < proxy->proxy_size.cy; ++y) {
 		for(int x = 0; x < proxy->proxy_size.cx; ++x) {
