@@ -3,6 +3,8 @@ description "Interactive imaging workbench MVP";
 uses
 	CtrlLib,
 	Ui,
+	imaging_preview_coalescing,
+	imaging_tone_conversion,
 	imaging_view_transform,
 	oiio,
 	opencolorio;

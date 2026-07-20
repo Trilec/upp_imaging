@@ -1,5 +1,7 @@
 #include "ImagingWorkbench.h"
 
+#include <imaging_tone_conversion/imaging_tone_conversion.h>
+
 #include <algorithm>
 #include <chrono>
 #include <cmath>
@@ -104,50 +106,6 @@ static Size ComputeProxySize(Size source_size)
 	int w = std::max(1, (int)std::round(source_size.cx * scale));
 	int h = std::max(1, (int)std::round(source_size.cy * scale));
 	return Size(w, h);
-}
-
-static float ApplyExposureGammaText(float value, double exposure_stops, double gamma)
-{
-	if(!std::isfinite(value))
-		return value > 0.0f ? 1.0f : 0.0f;
-	if(!std::isfinite(exposure_stops))
-		exposure_stops = 0.0;
-	if(!std::isfinite(gamma) || gamma <= 0.0)
-		gamma = 1.0;
-	double scaled = (double)value * std::pow(2.0, exposure_stops);
-	if(!std::isfinite(scaled))
-		scaled = 0.0;
-	scaled = std::max(0.0, scaled);
-	scaled = std::pow(scaled, 1.0 / gamma);
-	if(!std::isfinite(scaled))
-		scaled = 0.0;
-	return (float)scaled;
-}
-
-static constexpr int TONE_LUT_SIZE = 65536;
-
-static void BuildToneLut(Vector<float>& lut, double display_gamma)
-{
-	lut.SetCount(TONE_LUT_SIZE);
-	float inverse_gamma = 1.0f / (float)((!std::isfinite(display_gamma) || display_gamma <= 0.0) ? 1.0 : display_gamma);
-	for(int i = 0; i < TONE_LUT_SIZE; ++i) {
-		float normalized = (float)i / (float)(TONE_LUT_SIZE - 1);
-		float corrected = std::pow(normalized, inverse_gamma);
-		lut[i] = corrected;
-	}
-}
-
-static byte ToneToByte(float scaled, const Vector<float>& lut)
-{
-	if(!std::isfinite(scaled) || scaled <= 0.0f)
-		return 0;
-	if(scaled >= 1.0f)
-		return 255;
-	double pos = (double)scaled * (double)(lut.GetCount() - 1);
-	int idx0 = std::clamp((int)std::floor(pos), 0, lut.GetCount() - 1);
-	int idx1 = std::min(idx0 + 1, lut.GetCount() - 1);
-	double frac = pos - idx0;
-	return (byte)ClampByte((float)((1.0 - frac) * (double)lut[idx0] + frac * (double)lut[idx1]));
 }
 
 static String SaveExtensionForFormat(const String& format)
@@ -526,9 +484,9 @@ void ImagingWorkbench::UpdateProbe(Point image_point)
 	float src_b = group.HasRGB() ? channel_at(group.blue) : channel_at(group.single_channel);
 	float src_a = group.HasAlpha() ? channel_at(group.alpha) : 1.0f;
 
-	float tone_r = ApplyExposureGammaText(src_r, exposure_stops, display_gamma);
-	float tone_g = ApplyExposureGammaText(src_g, exposure_stops, display_gamma);
-	float tone_b = ApplyExposureGammaText(src_b, exposure_stops, display_gamma);
+	float tone_r = ApplyToneExposureGamma(src_r, exposure_stops, display_gamma);
+	float tone_g = ApplyToneExposureGamma(src_g, exposure_stops, display_gamma);
+	float tone_b = ApplyToneExposureGamma(src_b, exposure_stops, display_gamma);
 	float out_r = tone_r;
 	float out_g = tone_g;
 	float out_b = tone_b;
@@ -551,7 +509,7 @@ void ImagingWorkbench::UpdateProbe(Point image_point)
 	case ChannelView::RGB:
 	default:
 		if(group.HasSingle())
-			out_r = out_g = out_b = ApplyExposureGammaText(channel_at(group.single_channel), exposure_stops, display_gamma);
+			out_r = out_g = out_b = ApplyToneExposureGamma(channel_at(group.single_channel), exposure_stops, display_gamma);
 		break;
 	}
 
@@ -652,25 +610,19 @@ void ImagingWorkbench::RecordTiming(const String& phase, double milliseconds, co
 
 void ImagingWorkbench::SchedulePreviewRender(bool immediate)
 {
-	int generation = ++preview_render_generation;
-	preview_render_pending = true;
 	if(immediate) {
-		preview_render_pending = false;
-		preview_render_scheduled = false;
+		preview_render_coalescer.RequestImmediate();
 		RenderPreviewFromProxy();
 		return;
 	}
-	if(preview_render_scheduled)
+	if(!preview_render_coalescer.RequestDeferred())
 		return;
-	preview_render_scheduled = true;
-	SetTimeCallback(24, [=] {
-		if(generation != preview_render_generation)
-			return;
-		preview_render_scheduled = false;
-		if(preview_render_pending) {
-			preview_render_pending = false;
+	int callback_id = preview_render_coalescer.scheduled_id;
+	SetTimeCallback(24, [this, callback_id] {
+		bool render_now = false;
+		preview_render_coalescer.ShouldRunCallback(callback_id, render_now);
+		if(render_now)
 			RenderPreviewFromProxy();
-		}
 	});
 }
 
@@ -804,12 +756,8 @@ void ImagingWorkbench::RenderPreviewFromProxy()
 	const float* pixels = proxy->pixels.Begin();
 	Vector<float> tone_lut;
 	BuildToneLut(tone_lut, display_gamma);
-	float exposure_scale = std::exp2((float)exposure_stops);
-	auto scale_value = [&](float value) -> float {
-		return std::isfinite(value) ? value * exposure_scale : 0.0f;
-	};
 	auto tone_byte = [&](float value) -> byte {
-		return ToneToByte(scale_value(value), tone_lut);
+		return ToneToByte(value, exposure_stops, tone_lut);
 	};
 	for(int y = 0; y < proxy->proxy_size.cy; ++y) {
 		for(int x = 0; x < proxy->proxy_size.cx; ++x) {

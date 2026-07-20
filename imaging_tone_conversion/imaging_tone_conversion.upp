@@ -1,0 +1,8 @@
+description "Shared tone conversion helpers for ImagingWorkbench";
+
+uses
+	Core;
+
+file
+	imaging_tone_conversion.h,
+	imaging_tone_conversion.cpp;
