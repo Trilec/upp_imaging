@@ -58,6 +58,14 @@ struct PreviewProxy : Moveable<PreviewProxy> {
 	bool IsValid() const { return group_index >= 0 && proxy_size.cx > 0 && proxy_size.cy > 0 && channel_count > 0 && pixels.GetCount() > 0; }
 };
 
+struct PreviewTimingBreakdown {
+	double tone_ms = 0.0;
+	double convert_ms = 0.0;
+	double publish_ms = 0.0;
+	double ui_ms = 0.0;
+	double total_ms = 0.0;
+};
+
 class ImagingWorkbench : public ImagingWorkbenchLayout {
 public:
 	typedef ImagingWorkbench CLASSNAME;
@@ -130,6 +138,7 @@ private:
 	ToneConversionState preview_tone;
 	double preview_tone_gamma = -1.0;
 	PreviewRenderCoalescer preview_render_coalescer;
+	PreviewTimingBreakdown preview_timing;
 	String timing_summary;
 	String resolution_text;
 	String memory_text;

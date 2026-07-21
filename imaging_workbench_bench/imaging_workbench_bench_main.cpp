@@ -61,25 +61,53 @@ static double Median(std::vector<double> values)
 	return values[values.size() / 2];
 }
 
-static std::vector<double> Measure(ImagingWorkbench& wb, int runs)
+struct RenderSample {
+	double tone = 0.0;
+	double convert = 0.0;
+	double publish = 0.0;
+	double total = 0.0;
+};
+
+static std::vector<RenderSample> Measure(ImagingWorkbench& wb, int runs)
 {
 	using Clock = std::chrono::steady_clock;
-	std::vector<double> times;
-	times.reserve(runs);
+	std::vector<RenderSample> samples;
+	samples.reserve(runs);
 	for(int i = 0; i < runs; ++i) {
 		auto start = Clock::now();
 		wb.RenderPreviewFromProxy();
-		times.push_back(std::chrono::duration<double, std::milli>(Clock::now() - start).count());
+		RenderSample sample;
+		sample.total = std::chrono::duration<double, std::milli>(Clock::now() - start).count();
+		sample.tone = wb.preview_timing.tone_ms;
+		sample.convert = wb.preview_timing.convert_ms;
+		sample.publish = wb.preview_timing.publish_ms;
+		samples.push_back(sample);
 	}
-	return times;
+	return samples;
 }
 
-static void PrintStats(const char* build, const char* source, const char* proxy, const char* mode, const std::vector<double>& times)
+static void PrintStats(const char* build, const char* source, const char* proxy, const char* mode, const std::vector<RenderSample>& samples)
 {
-	std::vector<double> sorted = times;
+	std::vector<double> totals;
+	std::vector<double> tone;
+	std::vector<double> convert;
+	std::vector<double> publish;
+	totals.reserve(samples.size());
+	tone.reserve(samples.size());
+	convert.reserve(samples.size());
+	publish.reserve(samples.size());
+	for(const RenderSample& sample : samples) {
+		totals.push_back(sample.total);
+		tone.push_back(sample.tone);
+		convert.push_back(sample.convert);
+		publish.push_back(sample.publish);
+	}
+	std::vector<double> sorted = totals;
 	std::sort(sorted.begin(), sorted.end());
 	std::printf("TIMING build=%s source=%s proxy=%s mode=%s runs=%d min=%.2f median=%.2f max=%.2f\n",
 		build, source, proxy, mode, (int)sorted.size(), sorted.front(), Median(sorted), sorted.back());
+	std::printf("PHASE build=%s source=%s proxy=%s mode=%s tone=%.2f convert=%.2f publish=%.2f total=%.2f\n",
+		build, source, proxy, mode, Median(tone), Median(convert), Median(publish), Median(totals));
 }
 
 static const char* BuildLabel()
@@ -91,51 +119,75 @@ static const char* BuildLabel()
 #endif
 }
 
-int main()
+int main(int argc, char** argv)
 {
+	bool quick = argc > 1 && String(argv[1]) == "--quick";
 	InitializeOpenImageIO();
 	std::filesystem::path root = TempRoot();
 	std::filesystem::remove_all(root);
 	std::filesystem::create_directories(root);
 
+	const std::filesystem::path mid = root / "mid.exr";
 	const std::filesystem::path small = root / "small.exr";
 	const std::filesystem::path large = root / "large.exr";
+	WriteFixture(mid, 800, 600, 4, { "R", "G", "B", "A" }, 3, MakePixels(800, 600, 4, 0.15f));
 	WriteFixture(small, 1000, 700, 4, { "R", "G", "B", "A" }, 3, MakePixels(1000, 700, 4, 0.1f));
 	WriteFixture(large, 2000, 1000, 4, { "R", "G", "B", "A" }, 3, MakePixels(2000, 1000, 4, 0.2f));
 
 	String error;
-	ImagingWorkbench small_wb;
-	String small_path = small.string().c_str();
-	small_wb.LoadImageFile(small_path, error, true);
-	for(ChannelView view : { ChannelView::RGB, ChannelView::Red, ChannelView::Green, ChannelView::Blue, ChannelView::Alpha }) {
-		small_wb.ApplyChannelView(view);
-		PrintStats(BuildLabel(), "1000x700", "1000x700", view == ChannelView::RGB ? "RGB" : view == ChannelView::Red ? "R" : view == ChannelView::Green ? "G" : view == ChannelView::Blue ? "B" : "A",
-			Measure(small_wb, 5));
+	String mid_path = mid.string().c_str();
+	ImagingWorkbench mid_wb;
+	mid_wb.LoadImageFile(mid_path, error, true);
+	int runs = quick ? 1 : 5;
+	if(quick) {
+		mid_wb.ApplyChannelView(ChannelView::RGB);
+		PrintStats(BuildLabel(), "800x600", "800x600", "RGB", Measure(mid_wb, runs));
 	}
-	small_wb.ApplyExposureStops(2.0, true);
-	PrintStats(BuildLabel(), "1000x700", "1000x700", "exposure", Measure(small_wb, 5));
-	small_wb.ApplyDisplayGamma(2.2, true);
-	PrintStats(BuildLabel(), "1000x700", "1000x700", "gamma", Measure(small_wb, 5));
+	else {
+		for(ChannelView view : { ChannelView::RGB, ChannelView::Red, ChannelView::Green, ChannelView::Blue, ChannelView::Alpha }) {
+			mid_wb.ApplyChannelView(view);
+			PrintStats(BuildLabel(), "800x600", "800x600", view == ChannelView::RGB ? "RGB" : view == ChannelView::Red ? "R" : view == ChannelView::Green ? "G" : view == ChannelView::Blue ? "B" : "A",
+				Measure(mid_wb, runs));
+		}
+		mid_wb.ApplyExposureStops(2.0, true);
+		PrintStats(BuildLabel(), "800x600", "800x600", "exposure", Measure(mid_wb, runs));
+		mid_wb.ApplyDisplayGamma(2.2, true);
+		PrintStats(BuildLabel(), "800x600", "800x600", "gamma", Measure(mid_wb, runs));
+	}
 
-	ImagingWorkbench large_wb;
-	String large_path = large.string().c_str();
-	large_wb.LoadImageFile(large_path, error, true);
-	for(ChannelView view : { ChannelView::RGB, ChannelView::Red, ChannelView::Green, ChannelView::Blue, ChannelView::Alpha }) {
-		large_wb.ApplyChannelView(view);
-		PrintStats(BuildLabel(), "2000x1000", "2000x1000", view == ChannelView::RGB ? "RGB" : view == ChannelView::Red ? "R" : view == ChannelView::Green ? "G" : view == ChannelView::Blue ? "B" : "A",
-			Measure(large_wb, 5));
+	if(!quick) {
+		ImagingWorkbench small_wb;
+		String small_path = small.string().c_str();
+		small_wb.LoadImageFile(small_path, error, true);
+		for(ChannelView view : { ChannelView::RGB, ChannelView::Red, ChannelView::Green, ChannelView::Blue, ChannelView::Alpha }) {
+			small_wb.ApplyChannelView(view);
+			PrintStats(BuildLabel(), "1000x700", "1000x700", view == ChannelView::RGB ? "RGB" : view == ChannelView::Red ? "R" : view == ChannelView::Green ? "G" : view == ChannelView::Blue ? "B" : "A",
+				Measure(small_wb, runs));
+		}
+		small_wb.ApplyExposureStops(2.0, true);
+		PrintStats(BuildLabel(), "1000x700", "1000x700", "exposure", Measure(small_wb, runs));
+		small_wb.ApplyDisplayGamma(2.2, true);
+		PrintStats(BuildLabel(), "1000x700", "1000x700", "gamma", Measure(small_wb, runs));
+
+		ImagingWorkbench large_wb;
+		String large_path = large.string().c_str();
+		large_wb.LoadImageFile(large_path, error, true);
+		for(ChannelView view : { ChannelView::RGB, ChannelView::Red, ChannelView::Green, ChannelView::Blue, ChannelView::Alpha }) {
+			large_wb.ApplyChannelView(view);
+			PrintStats(BuildLabel(), "2000x1000", "2000x1000", view == ChannelView::RGB ? "RGB" : view == ChannelView::Red ? "R" : view == ChannelView::Green ? "G" : view == ChannelView::Blue ? "B" : "A",
+				Measure(large_wb, runs));
+		}
+		large_wb.ApplyExposureStops(2.0, true);
+		PrintStats(BuildLabel(), "2000x1000", "2000x1000", "exposure", Measure(large_wb, runs));
+		large_wb.ApplyDisplayGamma(2.2, true);
+		PrintStats(BuildLabel(), "2000x1000", "2000x1000", "gamma", Measure(large_wb, runs));
 	}
-	large_wb.ApplyExposureStops(2.0, true);
-	PrintStats(BuildLabel(), "2000x1000", "2000x1000", "exposure", Measure(large_wb, 5));
-	large_wb.ApplyDisplayGamma(2.2, true);
-	PrintStats(BuildLabel(), "2000x1000", "2000x1000", "gamma", Measure(large_wb, 5));
 
 	ImagingCanvas canvas;
 	ImageBuffer image(Size(1000, 700));
 	canvas.SetRect(0, 0, 1000, 700);
 	canvas.SetDisplayImage(image, Size(1000, 700));
 	canvas.SetFitMode(true);
-	canvas.Layout();
 	Point source_point;
 	bool ok = ViewPointToSourcePoint(Point(0, 0), RectC(0, 0, 1000, 700), Size(1000, 700), source_point);
 	std::printf("ROW top-left source=1000x700 proxy=1000x700 display=0,0,1000,700 zoom=100%% mouse=0,0 result=%d,%d %s\n", source_point.x, source_point.y, ok && source_point == Point(0, 0) ? "PASS" : "FAIL");

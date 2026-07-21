@@ -249,7 +249,6 @@ void ImagingWorkbench::PostBuild()
 	pageC.Add(analysis_body.SizePos());
 
 	canvas.SetPlaceholderText("Open an EXR or PNG to begin");
-	canvas.WhenViewChanged = [=] { UpdateCanvasZoomLabel(); };
 	canvas.WhenSourcePixelMove = [=](Point p) { UpdateProbe(p); };
 	canvas.WhenSourcePixelLeave = [=] { ClearProbe(); };
 	canvas_scroll_panel.Content().Add(canvas.SizePos());
@@ -430,8 +429,6 @@ void ImagingWorkbench::ApplyExposureStops(double value, bool immediate)
 	exposure_float_edit.SetValue(exposure_stops);
 	syncing_view_controls = false;
 	SchedulePreviewRender(immediate);
-	UpdateSelectionSummary();
-	SetStatus("Preview: " + DescribePreviewChoice());
 }
 
 void ImagingWorkbench::ApplyDisplayGamma(double value, bool immediate)
@@ -445,8 +442,6 @@ void ImagingWorkbench::ApplyDisplayGamma(double value, bool immediate)
 	gamma_float_edit.SetValue(display_gamma);
 	syncing_view_controls = false;
 	SchedulePreviewRender(immediate);
-	UpdateSelectionSummary();
-	SetStatus("Preview: " + DescribePreviewChoice());
 }
 
 void ImagingWorkbench::ClearProbe()
@@ -613,6 +608,8 @@ void ImagingWorkbench::SchedulePreviewRender(bool immediate)
 	if(immediate) {
 		preview_render_coalescer.RequestImmediate();
 		RenderPreviewFromProxy();
+		UpdateSelectionSummary();
+		SetStatus("Preview: " + DescribePreviewChoice());
 		return;
 	}
 	if(!preview_render_coalescer.RequestDeferred())
@@ -750,6 +747,7 @@ void ImagingWorkbench::RenderPreviewFromProxy()
 
 	using Clock = std::chrono::steady_clock;
 	auto started = Clock::now();
+	auto tone_started = started;
 
 	preview_image = Image();
 	ImageBuffer buffer(Size(proxy->proxy_size.cx, proxy->proxy_size.cy));
@@ -761,10 +759,12 @@ void ImagingWorkbench::RenderPreviewFromProxy()
 		preview_tone_gamma = display_gamma;
 	}
 	UpdateToneExposure(preview_tone, exposure_stops);
+	preview_timing.tone_ms = std::chrono::duration<double, std::milli>(Clock::now() - tone_started).count();
+	auto convert_started = Clock::now();
 	auto tone_byte = [&](float value) -> byte {
 		return ToneToByte(value, preview_tone);
 	};
-	for(int y = 0; y < proxy->proxy_size.cy; ++y) {
+	auto render_row = [&](int y) {
 		for(int x = 0; x < proxy->proxy_size.cx; ++x) {
 			const float* src = pixels + ((size_t)y * proxy->proxy_size.cx + x) * proxy->channel_count;
 			float src_a = proxy->has_alpha ? src[proxy->channel_count - 1] : 1.0f;
@@ -806,12 +806,29 @@ void ImagingWorkbench::RenderPreviewFromProxy()
 			dst.b = out_b;
 			dst.a = out_a;
 		}
+	};
+	int pixel_count = proxy->proxy_size.cx * proxy->proxy_size.cy;
+#ifndef _DEBUG
+	if(pixel_count >= 1200000) {
+		OIIO::parallel_for((int64)0, (int64)proxy->proxy_size.cy, [&](int64 y) { render_row((int)y); }, OIIO::paropt(0, OIIO::paropt::SplitDir::Y, 1));
 	}
+	else {
+		for(int y = 0; y < proxy->proxy_size.cy; ++y)
+			render_row(y);
+	}
+#else
+	for(int y = 0; y < proxy->proxy_size.cy; ++y)
+		render_row(y);
+#endif
+	preview_timing.convert_ms = std::chrono::duration<double, std::milli>(Clock::now() - convert_started).count();
+	auto publish_started = Clock::now();
 
 	preview_image = buffer;
 	canvas.SetDisplayImage(preview_image, proxy->source_size);
 	UpdateCanvasZoomLabel();
+	preview_timing.publish_ms = std::chrono::duration<double, std::milli>(Clock::now() - publish_started).count();
 	auto elapsed = std::chrono::duration<double, std::milli>(Clock::now() - started).count();
+	preview_timing.total_ms = elapsed;
 	RecordTiming(channel_view == ChannelView::RGB ? "RGB render" : channel_view == ChannelView::Red ? "R render" : channel_view == ChannelView::Green ? "G render" : channel_view == ChannelView::Blue ? "B render" : "A render", elapsed, proxy);
 }
 
