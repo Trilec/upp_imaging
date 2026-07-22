@@ -139,7 +139,7 @@ static bool ValidateSaveExtension(String& path, const String& format, String& er
 	return true;
 }
 
-static UiToolButton::Style MakeChannelToolStyle(Color face)
+static UiToolButton::Style MakeWorkbenchChannelToolStyle(Color face)
 {
 	UiToolButton::Style s = UiTheme::ResolveToolButton(UiRole::Standard);
 	s.metrics.face_enabled = true;
@@ -212,11 +212,11 @@ void ImagingWorkbench::PostBuild()
 	g_tool.SetCheckable(true);
 	b_tool.SetCheckable(true);
 	a_tool.SetCheckable(true);
-	rbg_tool.SetCustomStyle(MakeChannelToolStyle(Color(48, 48, 48)));
-	r_too.SetCustomStyle(MakeChannelToolStyle(Color(48, 48, 48)));
-	g_tool.SetCustomStyle(MakeChannelToolStyle(Color(48, 48, 48)));
-	b_tool.SetCustomStyle(MakeChannelToolStyle(Color(48, 48, 48)));
-	a_tool.SetCustomStyle(MakeChannelToolStyle(Color(48, 48, 48)));
+	rbg_tool.SetCustomStyle(MakeWorkbenchChannelToolStyle(Color(48, 48, 48)));
+	r_too.SetCustomStyle(MakeWorkbenchChannelToolStyle(Color(48, 48, 48)));
+	g_tool.SetCustomStyle(MakeWorkbenchChannelToolStyle(Color(48, 48, 48)));
+	b_tool.SetCustomStyle(MakeWorkbenchChannelToolStyle(Color(48, 48, 48)));
+	a_tool.SetCustomStyle(MakeWorkbenchChannelToolStyle(Color(48, 48, 48)));
 	exposure_slider.SetRange(-4.0, 4.0).SetStep(0.1).SetValue(0.0);
 	exposure_float_edit.MinMax(-4.0, 4.0).Step(0.1).Precision(1).ShowSpin(true);
 	exposure_float_edit.SetValue(0.0);
