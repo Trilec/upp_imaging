@@ -6,10 +6,13 @@
 
 #include <imaging_preview_coalescing/imaging_preview_coalescing.h>
 #include <imaging_tone_conversion/imaging_tone_conversion.h>
+#include <imaging_roundtrip_viewer_ocio/OcioPreview.h>
 
 #include <oiio/OIIO.h>
 
 namespace Upp {
+
+namespace OCIO = OCIO_NAMESPACE;
 
 struct PreviewGroup : Moveable<PreviewGroup> {
 	String name;
@@ -88,12 +91,16 @@ private:
 	void ScanSourceMetadata();
 	void UpdatePreviewSelection();
 	void UpdateViewerControls();
+	void UpdateOcioControls();
 	void ApplyChannelView(ChannelView view);
 	void ApplyExposureStops(double value, bool immediate = false);
 	void ApplyDisplayGamma(double value, bool immediate = false);
 	void SchedulePreviewRender(bool immediate = false);
 	void BuildSelectedGroupProxy();
 	void RenderPreviewFromProxy();
+	bool ApplyOcioPreview(TestImageF& image, String& error) const;
+	String GetOcioSummary() const;
+	String GetImageColorSpace() const;
 	void UpdateProbe(Point image_point);
 	void ClearProbe();
 	void DoSave();
@@ -117,7 +124,18 @@ private:
 	UiTree layers_tree;
 	UiLabel layers_detail;
 	UiLabel ocio_body;
+	UiLabel ocio_enable_label;
+	UiLabel ocio_config_label;
+	UiLabel ocio_source_label;
+	UiLabel ocio_display_label;
+	UiLabel ocio_view_label;
+	UiLabel ocio_error;
 	UiLabel analysis_body;
+	UiDropdown ocio_enable_drop;
+	UiDropdown ocio_config_drop;
+	UiDropdown ocio_source_drop;
+	UiDropdown ocio_display_drop;
+	UiDropdown ocio_view_drop;
 
 	OIIO::ImageBuf source_image;
 	Image preview_image;
@@ -142,6 +160,8 @@ private:
 	String timing_summary;
 	String resolution_text;
 	String memory_text;
+	OCIO::ConstConfigRcPtr ocio_config;
+	bool ocio_controls_updating = false;
 };
 
 } // namespace Upp

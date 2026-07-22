@@ -56,6 +56,32 @@ static String JoinChannels(const Vector<String>& channels)
 	return out;
 }
 
+static bool ContainsString(const Vector<String>& values, const String& value)
+{
+	for(const String& item : values) {
+		if(item == value)
+			return true;
+	}
+	return false;
+}
+
+static void SetDropdownValues(UiDropdown& drop, const Vector<String>& values, const String& selected_value)
+{
+	drop.Clear();
+	if(values.IsEmpty()) {
+		drop.Add("none", String());
+		drop.Select(0);
+		return;
+	}
+	int selected_index = 0;
+	for(int i = 0; i < values.GetCount(); ++i) {
+		drop.Add(values[i], values[i]);
+		if(values[i] == selected_value)
+			selected_index = i;
+	}
+	drop.Select(selected_index);
+}
+
 static String ChannelViewName(ChannelView view)
 {
 	switch(view) {
@@ -224,6 +250,34 @@ void ImagingWorkbench::PostBuild()
 	gamma_float_edit.MinMax(0.5, 3.5).Step(0.1).Precision(1).ShowSpin(true);
 	gamma_float_edit.SetValue(1.0);
 
+	ocio_body.SetCustomStyle(UiTheme::ResolveLabel(UiRole::Subtle));
+	ocio_enable_label.SetCustomStyle(UiTheme::ResolveLabel(UiRole::Subtle));
+	ocio_config_label.SetCustomStyle(UiTheme::ResolveLabel(UiRole::Subtle));
+	ocio_source_label.SetCustomStyle(UiTheme::ResolveLabel(UiRole::Subtle));
+	ocio_display_label.SetCustomStyle(UiTheme::ResolveLabel(UiRole::Subtle));
+	ocio_view_label.SetCustomStyle(UiTheme::ResolveLabel(UiRole::Subtle));
+	ocio_error.SetCustomStyle(UiTheme::ResolveLabel(UiRole::Subtle));
+	ocio_body.SetText("OCIO display preview").SetAlign(UiAlign::LEFT, UiAlign::CENTER);
+	ocio_enable_label.SetText("Enabled").NoWantFocus().IgnoreMouse();
+	ocio_config_label.SetText("Config").NoWantFocus().IgnoreMouse();
+	ocio_source_label.SetText("Source").NoWantFocus().IgnoreMouse();
+	ocio_display_label.SetText("Display").NoWantFocus().IgnoreMouse();
+	ocio_view_label.SetText("View").NoWantFocus().IgnoreMouse();
+	ocio_error.SetText("OCIO preview is off.").SetAlign(UiAlign::LEFT, UiAlign::CENTER);
+	ocio_enable_drop.Add("Off", 0);
+	ocio_enable_drop.Add("On", 1);
+	ocio_enable_drop.Select(0);
+	ocio_config_drop.Add("Off / none", String());
+	for(const String& name : OcioPreview::GetBuiltinConfigNames())
+		ocio_config_drop.Add(name, name);
+	ocio_config_drop.Select(0);
+	ocio_source_drop.Add("none", String());
+	ocio_source_drop.Select(0);
+	ocio_display_drop.Add("none", String());
+	ocio_display_drop.Select(0);
+	ocio_view_drop.Add("none", String());
+	ocio_view_drop.Select(0);
+
 	layers_layout.SetDirection(UiDirection::V).SetGap(DPI(6), DPI(6)).SetInset(DPI(8)).SetWrap(UiBoxWrap::None);
 	layers_summary.SetCustomStyle(UiTheme::ResolveLabel(UiRole::Subtle));
 	layers_detail.SetCustomStyle(UiTheme::ResolveLabel(UiRole::Subtle));
@@ -238,10 +292,20 @@ void ImagingWorkbench::PostBuild()
 	layers_layout.Add(layers_detail).Fit().MinCross(DPI(0));
 	pageA.Add(layers_layout.SizePos());
 
-	ocio_body.SetCustomStyle(UiTheme::ResolveLabel(UiRole::Subtle));
-	ocio_body.SetText("OCIO controls will be connected after the image viewer and save path.")
-		.SetAlign(UiAlign::LEFT, UiAlign::CENTER);
-	pageB.Add(ocio_body.SizePos());
+	ocio_layout.SetDirection(UiDirection::V).SetGap(DPI(6), DPI(6)).SetInset(DPI(8)).SetWrap(UiBoxWrap::None);
+	ocio_layout.Add(ocio_body).Fit().MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
+	ocio_layout.Add(ocio_enable_label).Fit().MinCross(DPI(0));
+	ocio_layout.Add(ocio_enable_drop).Fit().MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
+	ocio_layout.Add(ocio_config_label).Fit().MinCross(DPI(0));
+	ocio_layout.Add(ocio_config_drop).Fit().MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
+	ocio_layout.Add(ocio_source_label).Fit().MinCross(DPI(0));
+	ocio_layout.Add(ocio_source_drop).Fit().MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
+	ocio_layout.Add(ocio_display_label).Fit().MinCross(DPI(0));
+	ocio_layout.Add(ocio_display_drop).Fit().MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
+	ocio_layout.Add(ocio_view_label).Fit().MinCross(DPI(0));
+	ocio_layout.Add(ocio_view_drop).Fit().MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
+	ocio_layout.Add(ocio_error).Fit().MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
+	pageB.Add(ocio_layout.SizePos());
 
 	analysis_body.SetCustomStyle(UiTheme::ResolveLabel(UiRole::Subtle));
 	analysis_body.SetText("Histogram and pixel analysis will be connected after viewer controls.")
@@ -252,6 +316,12 @@ void ImagingWorkbench::PostBuild()
 	canvas.WhenSourcePixelMove = [=](Point p) { UpdateProbe(p); };
 	canvas.WhenSourcePixelLeave = [=] { ClearProbe(); };
 	canvas_scroll_panel.Content().Add(canvas.SizePos());
+
+	ocio_enable_drop.WhenSelectData = [=](const Value&) { UpdateOcioControls(); };
+	ocio_config_drop.WhenSelectData = [=](const Value&) { UpdateOcioControls(); };
+	ocio_source_drop.WhenSelectData = [=](const Value&) { UpdateOcioControls(); };
+	ocio_display_drop.WhenSelectData = [=](const Value&) { UpdateOcioControls(); };
+	ocio_view_drop.WhenSelectData = [=](const Value&) { UpdateOcioControls(); };
 
 	load_button.Enable();
 	save_split_button.Disable();
@@ -277,6 +347,7 @@ void ImagingWorkbench::PostBuild()
 	layers_summary.SetText("Open an EXR or PNG to inspect channels and subimages.");
 	layers_detail.SetText("No image loaded.");
 	right_tab.SetActiveTab(0);
+	UpdateOcioControls();
 }
 
 void ImagingWorkbench::SetStatus(const String& text)
@@ -332,6 +403,128 @@ String ImagingWorkbench::DescribePreviewChoice() const
 		out = "Preview";
 	out << " / " << DescribeChannelView();
 	return out;
+}
+
+String ImagingWorkbench::GetImageColorSpace() const
+{
+	if(!source_image.initialized())
+		return String();
+	return StringFromView(source_image.spec().get_string_attribute("oiio:ColorSpace"));
+}
+
+String ImagingWorkbench::GetOcioSummary() const
+{
+	if((int)ocio_enable_drop.GetSelectedData() == 0)
+		return "OCIO: off";
+	const String config_name = AsString(ocio_config_drop.GetSelectedData());
+	if(config_name.IsEmpty())
+		return "OCIO: on / none";
+	return OcioPreview::DescribeSelection(config_name, AsString(ocio_source_drop.GetSelectedData()), AsString(ocio_display_drop.GetSelectedData()), AsString(ocio_view_drop.GetSelectedData()));
+}
+
+void ImagingWorkbench::UpdateOcioControls()
+{
+	if(ocio_controls_updating)
+		return;
+	ocio_controls_updating = true;
+
+	bool ocio_enabled = (int)ocio_enable_drop.GetSelectedData() != 0;
+	ocio_config_drop.Enable(ocio_enabled);
+	ocio_config.reset();
+	if(ocio_enabled && source_image.initialized()) {
+		const String config_name = AsString(ocio_config_drop.GetSelectedData());
+		if(config_name.IsEmpty())
+			ocio_error.SetText("OCIO preview config is not selected.");
+		else {
+			String load_error;
+			if(!OcioPreview::LoadBuiltinConfig(config_name, ocio_config, load_error)) {
+				ocio_error.SetText(load_error);
+				ocio_config.reset();
+			}
+		}
+	}
+	else if(ocio_enabled)
+		ocio_error.SetText("Load an image before enabling OCIO preview.");
+	else
+		ocio_error.SetText("OCIO preview is off.");
+
+	bool ocio_have_config = ocio_enabled && ocio_config;
+	ocio_source_drop.Enable(ocio_have_config);
+	ocio_display_drop.Enable(ocio_have_config);
+	ocio_view_drop.Enable(ocio_have_config);
+
+	if(!ocio_have_config) {
+		SetDropdownValues(ocio_source_drop, Vector<String>(), String());
+		SetDropdownValues(ocio_display_drop, Vector<String>(), String());
+		SetDropdownValues(ocio_view_drop, Vector<String>(), String());
+	}
+	else {
+		Vector<String> source_names = OcioPreview::GetColorSpaceNames(ocio_config);
+		String source = AsString(ocio_source_drop.GetSelectedData());
+		String image_color_space = GetImageColorSpace();
+		if(!ContainsString(source_names, source)) {
+			if(ContainsString(source_names, image_color_space))
+				source = image_color_space;
+			else
+				source = OcioPreview::GetDefaultSourceColorSpace(ocio_config);
+		}
+		SetDropdownValues(ocio_source_drop, source_names, source);
+
+		Vector<String> display_names = OcioPreview::GetDisplayNames(ocio_config);
+		String display = AsString(ocio_display_drop.GetSelectedData());
+		if(!ContainsString(display_names, display))
+			display = OcioPreview::GetDefaultDisplay(ocio_config);
+		SetDropdownValues(ocio_display_drop, display_names, display);
+		if(display.IsEmpty() && !display_names.IsEmpty())
+			display = display_names[0];
+		else
+			display = AsString(ocio_display_drop.GetSelectedData());
+
+		Vector<String> view_names = OcioPreview::GetViewNames(ocio_config, display);
+		String view = AsString(ocio_view_drop.GetSelectedData());
+		if(!ContainsString(view_names, view))
+			view = OcioPreview::GetDefaultView(ocio_config, display);
+		SetDropdownValues(ocio_view_drop, view_names, view);
+		if(AsString(ocio_display_drop.GetSelectedData()).IsEmpty() && !display_names.IsEmpty())
+			SetDropdownValues(ocio_display_drop, display_names, display_names[0]);
+		if(AsString(ocio_view_drop.GetSelectedData()).IsEmpty() && !view_names.IsEmpty())
+			SetDropdownValues(ocio_view_drop, view_names, view_names[0]);
+		ocio_error.SetText(String());
+	}
+
+	ocio_body.SetText(GetOcioSummary());
+	ocio_controls_updating = false;
+	UpdateSelectionSummary();
+	SchedulePreviewRender(true);
+}
+
+bool ImagingWorkbench::ApplyOcioPreview(TestImageF& image, String& error) const
+{
+	error.Clear();
+	if((int)ocio_enable_drop.GetSelectedData() == 0 || !ocio_config)
+		return false;
+	const String source = AsString(ocio_source_drop.GetSelectedData());
+	const String display = AsString(ocio_display_drop.GetSelectedData());
+	const String view = AsString(ocio_view_drop.GetSelectedData());
+	if(source.IsEmpty() || display.IsEmpty() || view.IsEmpty()) {
+		error = "OCIO preview selection is incomplete";
+		return false;
+	}
+	TestImageF src;
+	src.width = image.width;
+	src.height = image.height;
+	src.pixels.SetCount(image.pixels.GetCount());
+	for(int i = 0; i < image.pixels.GetCount(); ++i)
+		src.pixels[i] = image.pixels[i];
+	TestImageF dst;
+	if(!OcioPreview::ApplyPreview(ocio_config, source, display, view, src, dst, error))
+		return false;
+	image.width = dst.width;
+	image.height = dst.height;
+	image.pixels.SetCount(dst.pixels.GetCount());
+	for(int i = 0; i < dst.pixels.GetCount(); ++i)
+		image.pixels[i] = dst.pixels[i];
+	return true;
 }
 
 String ImagingWorkbench::FormatProbeValue(float value) const
@@ -751,7 +944,35 @@ void ImagingWorkbench::RenderPreviewFromProxy()
 
 	preview_image = Image();
 	ImageBuffer buffer(Size(proxy->proxy_size.cx, proxy->proxy_size.cy));
-	const float* pixels = proxy->pixels.Begin();
+	TestImageF ocio_image;
+	const float* proxy_pixels = proxy->pixels.Begin();
+	const decltype(ocio_image.pixels)::value_type* ocio_pixels = nullptr;
+	int render_channel_count = proxy->channel_count;
+	bool render_has_alpha = proxy->has_alpha;
+	String ocio_preview_error;
+	ocio_image.width = proxy->proxy_size.cx;
+	ocio_image.height = proxy->proxy_size.cy;
+	ocio_image.pixels.SetCount((size_t)proxy->proxy_size.cx * proxy->proxy_size.cy);
+	for(int y = 0; y < proxy->proxy_size.cy; ++y) {
+		for(int x = 0; x < proxy->proxy_size.cx; ++x) {
+			const float* src = proxy->pixels.Begin() + ((size_t)y * proxy->proxy_size.cx + x) * proxy->channel_count;
+			auto& dst = ocio_image.pixels[(size_t)y * proxy->proxy_size.cx + x];
+			if(proxy->channel_count >= 3) {
+				dst.r = src[0];
+				dst.g = src[1];
+				dst.b = src[2];
+			}
+			else {
+				dst.r = dst.g = dst.b = src[0];
+			}
+			dst.a = proxy->has_alpha ? src[proxy->channel_count - 1] : 1.0f;
+		}
+	}
+	if(ApplyOcioPreview(ocio_image, ocio_preview_error)) {
+		ocio_pixels = ocio_image.pixels.Begin();
+		render_channel_count = 4;
+		render_has_alpha = true;
+	}
 	if(preview_tone.lut.IsEmpty() || preview_tone_gamma != display_gamma) {
 		double gamma = (!std::isfinite(display_gamma) || display_gamma <= 0.0) ? 1.0 : display_gamma;
 		BuildToneLut(preview_tone.lut, gamma);
@@ -766,38 +987,68 @@ void ImagingWorkbench::RenderPreviewFromProxy()
 	};
 	auto render_row = [&](int y) {
 		for(int x = 0; x < proxy->proxy_size.cx; ++x) {
-			const float* src = pixels + ((size_t)y * proxy->proxy_size.cx + x) * proxy->channel_count;
-			float src_a = proxy->has_alpha ? src[proxy->channel_count - 1] : 1.0f;
+			const size_t index = (size_t)y * proxy->proxy_size.cx + x;
 			byte out_r = 0;
 			byte out_g = 0;
 			byte out_b = 0;
-			byte out_a = ClampByte(src_a);
-			switch(channel_view) {
-			case ChannelView::Red:
-				out_r = out_g = out_b = tone_byte(src[0]);
-				break;
-			case ChannelView::Green:
-				out_r = out_g = out_b = tone_byte(proxy->channel_count >= 3 ? src[1] : src[0]);
-				break;
-			case ChannelView::Blue:
-				out_r = out_g = out_b = tone_byte(proxy->channel_count >= 3 ? src[2] : src[0]);
-				break;
-			case ChannelView::Alpha:
-				out_r = out_g = out_b = ClampByte(src_a);
-				out_a = 255;
-				break;
-			case ChannelView::RGB:
-			default:
-				if(proxy->channel_count == 1 || proxy->channel_count == 2) {
-					byte gray = tone_byte(src[0]);
-					out_r = out_g = out_b = gray;
+			byte out_a = 255;
+			if(ocio_pixels) {
+				const auto& src = ocio_pixels[index];
+				float src_a = render_has_alpha ? src.a : 1.0f;
+				out_a = ClampByte(src_a);
+				switch(channel_view) {
+				case ChannelView::Red:
+					out_r = out_g = out_b = tone_byte(src.r);
+					break;
+				case ChannelView::Green:
+					out_r = out_g = out_b = tone_byte(src.g);
+					break;
+				case ChannelView::Blue:
+					out_r = out_g = out_b = tone_byte(src.b);
+					break;
+				case ChannelView::Alpha:
+					out_r = out_g = out_b = ClampByte(src_a);
+					out_a = 255;
+					break;
+				case ChannelView::RGB:
+				default:
+					out_r = tone_byte(src.r);
+					out_g = tone_byte(src.g);
+					out_b = tone_byte(src.b);
+					break;
 				}
-				else {
-					out_r = tone_byte(src[0]);
-					out_g = tone_byte(src[1]);
-					out_b = tone_byte(src[2]);
+			}
+			else {
+				const float* src = proxy_pixels + index * render_channel_count;
+				float src_a = render_has_alpha ? src[render_channel_count - 1] : 1.0f;
+				out_a = ClampByte(src_a);
+				switch(channel_view) {
+				case ChannelView::Red:
+					out_r = out_g = out_b = tone_byte(src[0]);
+					break;
+				case ChannelView::Green:
+					out_r = out_g = out_b = tone_byte(render_channel_count >= 3 ? src[1] : src[0]);
+					break;
+				case ChannelView::Blue:
+					out_r = out_g = out_b = tone_byte(render_channel_count >= 3 ? src[2] : src[0]);
+					break;
+				case ChannelView::Alpha:
+					out_r = out_g = out_b = ClampByte(src_a);
+					out_a = 255;
+					break;
+				case ChannelView::RGB:
+				default:
+					if(render_channel_count == 1 || render_channel_count == 2) {
+						byte gray = tone_byte(src[0]);
+						out_r = out_g = out_b = gray;
+					}
+					else {
+						out_r = tone_byte(src[0]);
+						out_g = tone_byte(src[1]);
+						out_b = tone_byte(src[2]);
+					}
+					break;
 				}
-				break;
 			}
 
 			RGBA& dst = buffer[y][x];
@@ -826,6 +1077,8 @@ void ImagingWorkbench::RenderPreviewFromProxy()
 	preview_image = buffer;
 	canvas.SetDisplayImage(preview_image, proxy->source_size);
 	UpdateCanvasZoomLabel();
+	if(!ocio_preview_error.IsEmpty())
+		ocio_error.SetText(ocio_preview_error);
 	preview_timing.publish_ms = std::chrono::duration<double, std::milli>(Clock::now() - publish_started).count();
 	auto elapsed = std::chrono::duration<double, std::milli>(Clock::now() - started).count();
 	preview_timing.total_ms = elapsed;
@@ -1401,6 +1654,7 @@ bool ImagingWorkbench::LoadImageFile(const String& path, String& error, bool pop
 	last_error.Clear();
 	ScanSourceMetadata();
 	UpdateDisplayState();
+	UpdateOcioControls();
 	if(populate_ui)
 		UpdateLayersPage();
 	else if(!preview_groups.IsEmpty())

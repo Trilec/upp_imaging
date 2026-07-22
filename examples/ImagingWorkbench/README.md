@@ -15,17 +15,16 @@ Current scope:
 - channel and pass selection
 - RGB, R, G, B, and A display modes
 - exposure and gamma inspection controls
+- OCIO config and display preview
 - Fit display
 - exact full-resolution float probing
 - bounded preview proxies for rendering
 
 Known limits:
-- no OCIO display pipeline yet
 - no histogram or analysis tools
 - no wheel zoom or panning
 - no JPEG or TIFF support
 - multipart EXR remains metadata-only for later subimages
 
 Next milestones:
-- real OCIO configuration and display processing
 - analysis functionality
