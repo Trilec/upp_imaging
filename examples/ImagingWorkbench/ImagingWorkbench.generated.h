@@ -58,6 +58,7 @@ protected:
 	ParentCtrl pageA;
 	ParentCtrl pageB;
 	ParentCtrl pageC;
+	UiBoxLayout ocio_layout;
 	UiLabel xy_label;
 	UiLabel xy_info;
 	UiLabel colour_label;
