@@ -109,6 +109,7 @@ int main()
 	Check(!wb.ocio_source_name.IsEmpty(), "source selected", passed, failed);
 	Check(wb.ocio_config_source_drop.GetCount() == 3, "config source options", passed, failed);
 	Check(wb.ocio_look_drop.GetCount() >= 1, "look options populated", passed, failed);
+	Check(wb.GetOcioSummary().Find("(") >= 0, "metadata/default/user source labels", passed, failed);
 
 	int build0 = wb.ocio_processor.build_count;
 	wb.ApplyExposureStops(1.0, true);
@@ -124,6 +125,7 @@ int main()
 		CompareSelection("selected source survives", wb.ocio_source_name, SelectedText(wb.ocio_source_drop), passed, failed);
 		Check(wb.ocio_display_name == display_before, "source keeps display", passed, failed);
 		Check(wb.ocio_view_name == view_before, "source keeps view", passed, failed);
+		Check(wb.GetOcioSummary().Find("(user)") >= 0, "user source label", passed, failed);
 	}
 
 	int source_build = wb.ocio_processor.build_count;
