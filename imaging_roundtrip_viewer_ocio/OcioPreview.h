@@ -14,6 +14,35 @@ namespace OcioPreview {
 
 namespace OCIO = OCIO_NAMESPACE;
 
+struct DisplayGammaState {
+	double gamma = -1.0;
+	float inverse_gamma = 1.0f;
+	Vector<float> lut;
+};
+
+struct OcioPreviewProcessor {
+	OCIO::ConstConfigRcPtr config;
+	OCIO::ConstCPUProcessorRcPtr cpu;
+	String config_name;
+	String source;
+	String display;
+	String view;
+	String look;
+	String lut;
+	int build_count = 0;
+
+	bool IsValid() const { return (bool)cpu; }
+	void Clear();
+	bool Update(const OCIO::ConstConfigRcPtr& new_config, const String& new_config_name,
+		const String& new_source, const String& new_display, const String& new_view,
+		const String& new_look, const String& new_lut, String& error);
+};
+
+float ApplySceneExposure(float value, float exposure_scale);
+void UpdateDisplayGamma(DisplayGammaState& gamma, double display_gamma);
+byte ApplyDisplayGammaToByte(float value, const DisplayGammaState& gamma);
+bool ApplyOcioProcessor(const OCIO::ConstCPUProcessorRcPtr& cpu, float* pixels, int width, int height, int channels, String& error);
+
 Vector<String> GetBuiltinConfigNames();
 bool LoadBuiltinConfig(const String& name, OCIO::ConstConfigRcPtr& config, String& error);
 

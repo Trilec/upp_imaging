@@ -62,7 +62,9 @@ struct PreviewProxy : Moveable<PreviewProxy> {
 };
 
 struct PreviewTimingBreakdown {
-	double tone_ms = 0.0;
+	double processor_ms = 0.0;
+	double buffer_ms = 0.0;
+	double ocio_ms = 0.0;
 	double convert_ms = 0.0;
 	double publish_ms = 0.0;
 	double ui_ms = 0.0;
@@ -98,7 +100,6 @@ private:
 	void SchedulePreviewRender(bool immediate = false);
 	void BuildSelectedGroupProxy();
 	void RenderPreviewFromProxy();
-	bool ApplyOcioPreview(TestImageF& image, String& error) const;
 	String GetOcioSummary() const;
 	String GetImageColorSpace() const;
 	void UpdateProbe(Point image_point);
@@ -152,9 +153,19 @@ private:
 	ChannelView channel_view = ChannelView::RGB;
 	double exposure_stops = 0.0;
 	double display_gamma = 1.0;
+	float exposure_scale = 1.0f;
 	bool syncing_view_controls = false;
-	ToneConversionState preview_tone;
-	double preview_tone_gamma = -1.0;
+	OcioPreview::DisplayGammaState preview_gamma;
+	Vector<float> preview_pixels;
+	OcioPreview::OcioPreviewProcessor ocio_processor;
+	String ocio_config_name;
+	String ocio_source_name;
+	String ocio_display_name;
+	String ocio_view_name;
+	bool ocio_source_from_metadata = false;
+	bool ocio_enabled = false;
+	bool ocio_processor_valid = false;
+	String ocio_error_text;
 	PreviewRenderCoalescer preview_render_coalescer;
 	PreviewTimingBreakdown preview_timing;
 	String timing_summary;
