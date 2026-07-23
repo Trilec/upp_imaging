@@ -16,15 +16,16 @@ Current scope:
 - RGB, R, G, B, and A display modes
 - exposure and gamma inspection controls
 - OCIO config and display preview
-- Fit display
-- exact full-resolution float probing
+- Fit display with cursor-centred wheel zoom and middle-button pan
+- zoom range is clamped from 5% to 3200% of Fit
+- exact full-resolution source probing through the current view transform
 - bounded preview proxies for rendering
 
 Known limits:
 - no histogram or analysis tools
-- no wheel zoom or panning
 - no JPEG or TIFF support
 - multipart EXR remains metadata-only for later subimages
+- Fit resets on new image load; manual navigation is preserved across preview changes when dimensions allow
 
 Next milestones:
 - analysis functionality

@@ -3,6 +3,8 @@
 
 #include <CtrlLib/CtrlLib.h>
 
+#include <imaging_view_transform/imaging_view_transform.h>
+
 namespace Upp {
 
 class ImagingCanvas : public Ctrl {
@@ -12,12 +14,15 @@ public:
 	ImagingCanvas();
 
 	void SetImage(const Image& image);
-	void SetDisplayImage(const Image& image, Size original_source_size);
+	void SetDisplayImage(const Image& image, Size original_source_size, bool reset_view = false);
 	void ClearImage();
 	void SetFitMode(bool fit);
 	bool HasImage() const;
 	Size GetSourceSize() const;
 	double GetDisplayedScale() const;
+	const ImageViewState& GetViewState() const;
+	const ImageViewGeometry& GetViewGeometry() const;
+	void SetViewState(const ImageViewState& state, bool keep_source_center = false);
 	void SetPlaceholderText(const String& text);
 
 	Event<> WhenViewChanged;
@@ -28,17 +33,41 @@ protected:
 	virtual void Paint(Draw& w) override;
 	virtual void Layout() override;
 	virtual void MouseMove(Point p, dword keyflags) override;
+	virtual void LeftDown(Point p, dword keyflags) override;
+	virtual void LeftDrag(Point p, dword keyflags) override;
+	virtual void LeftUp(Point p, dword keyflags) override;
+	virtual void MiddleDown(Point p, dword keyflags) override;
+	virtual void MiddleDrag(Point p, dword keyflags) override;
+	virtual void MiddleUp(Point p, dword keyflags) override;
+	virtual void MouseWheel(Point p, int zdelta, dword keyflags) override;
 	virtual void MouseLeave() override;
+	virtual void CancelMode() override;
 
 private:
-	void UpdateViewState();
+	static constexpr double MIN_ZOOM = 0.05;
+	static constexpr double MAX_ZOOM = 32.0;
+	static constexpr double WHEEL_STEP = 1.1;
+	void UpdateViewState(bool notify = false);
+	void RecomputeGeometry();
+	void ClampViewState();
+	void UpdateProbeFromPoint(Point p);
+	bool ViewToSource(Point p, Point& source_point) const;
+	void BeginPan(Point p);
+	void UpdatePan(Point p);
+	void EndPan();
+	void ZoomAt(Point p, double factor);
+	Pointf CurrentPanCenter() const;
+	Pointf CurrentSourcePointAtViewportCenter() const;
 
 	Image image;
 	Size proxy_size;
 	Size source_size;
-	Rect image_rect;
-	double displayed_scale = 0.0;
-	bool fit_mode = true;
+	ImageViewState view_state;
+	ImageViewGeometry view_geometry;
+	bool panning = false;
+	Point pan_start_mouse;
+	Pointf pan_start_pan;
+	Pointf pan_anchor_source;
 	String placeholder = "Stage A: canvas host";
 };
 

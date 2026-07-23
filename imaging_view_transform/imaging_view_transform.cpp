@@ -5,6 +5,59 @@
 
 namespace Upp {
 
+ImageViewGeometry BuildImageViewGeometry(Size viewport_size, Size display_size, Size source_size, const ImageViewState& state)
+{
+	ImageViewGeometry geometry;
+	geometry.viewport_size = viewport_size;
+	geometry.display_size = display_size;
+	geometry.source_size = source_size;
+	geometry.viewport_rect = Rectf(0, 0, viewport_size.cx, viewport_size.cy);
+	if(viewport_size.cx <= 0 || viewport_size.cy <= 0 || display_size.cx <= 0 || display_size.cy <= 0 || source_size.cx <= 0 || source_size.cy <= 0)
+		return geometry;
+
+	geometry.fit_scale = std::min((double)viewport_size.cx / (double)display_size.cx, (double)viewport_size.cy / (double)display_size.cy);
+	if(geometry.fit_scale <= 0.0)
+		geometry.fit_scale = 1.0;
+	geometry.view_scale = geometry.fit_scale * (state.mode == ViewMode::Fit ? 1.0 : std::max(0.05, std::min(state.zoom, 32.0)));
+	if(geometry.view_scale <= 0.0)
+		geometry.view_scale = geometry.fit_scale;
+
+	Pointf center(viewport_size.cx / 2.0, viewport_size.cy / 2.0);
+	Pointf pan = state.mode == ViewMode::Fit ? Pointf(display_size.cx / 2.0, display_size.cy / 2.0) : state.pan;
+	geometry.image_rect = Rectf(center.x - pan.x * geometry.view_scale, center.y - pan.y * geometry.view_scale,
+		                        display_size.cx * geometry.view_scale, display_size.cy * geometry.view_scale);
+	geometry.effective_zoom = geometry.view_scale * (source_size.cx > 1 && display_size.cx > 1 ? (double)(display_size.cx - 1) / (double)(source_size.cx - 1) : 1.0);
+	return geometry;
+}
+
+bool ImageViewGeometry::ViewToSource(Pointf view_point, Pointf& source_point) const
+{
+	if(!IsValid() || image_rect.IsEmpty() || !image_rect.Contains(view_point) || view_scale <= 0.0)
+		return false;
+	double display_x = (view_point.x - image_rect.left) / view_scale;
+	double display_y = (view_point.y - image_rect.top) / view_scale;
+	double source_scale_x = source_size.cx > 1 && display_size.cx > 1 ? (double)(source_size.cx - 1) / (double)(display_size.cx - 1) : 0.0;
+	double source_scale_y = source_size.cy > 1 && display_size.cy > 1 ? (double)(source_size.cy - 1) / (double)(display_size.cy - 1) : 0.0;
+	if(source_size.cx <= 1)
+		source_point.x = 0.0;
+	else
+		source_point.x = std::clamp(display_x * source_scale_x, 0.0, (double)(source_size.cx - 1));
+	if(source_size.cy <= 1)
+		source_point.y = 0.0;
+	else
+		source_point.y = std::clamp(display_y * source_scale_y, 0.0, (double)(source_size.cy - 1));
+	return true;
+}
+
+Pointf ImageViewGeometry::SourceToView(Pointf source_point) const
+{
+	if(!IsValid() || image_rect.IsEmpty() || view_scale <= 0.0)
+		return Pointf();
+	double display_x = source_size.cx > 1 && display_size.cx > 1 ? source_point.x * (double)(display_size.cx - 1) / (double)(source_size.cx - 1) : 0.0;
+	double display_y = source_size.cy > 1 && display_size.cy > 1 ? source_point.y * (double)(display_size.cy - 1) / (double)(source_size.cy - 1) : 0.0;
+	return Pointf(image_rect.left + display_x * view_scale, image_rect.top + display_y * view_scale);
+}
+
 Rect SourceViewFitRect(Size source_size, Size viewport_size, bool fit_mode)
 {
 	if(source_size.cx <= 0 || source_size.cy <= 0 || viewport_size.cx <= 0 || viewport_size.cy <= 0)

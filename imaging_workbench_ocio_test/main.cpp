@@ -225,8 +225,10 @@ int main()
 
 	const std::filesystem::path rgba = root / "rgba.exr";
 	const std::filesystem::path data = root / "data.exr";
+	const std::filesystem::path grouped = root / "grouped_large.exr";
 	WriteFixture(rgba, 4, 2, 4, { "R", "G", "B", "A" }, 3, MakePixels(4, 2, 4, 0.2f), "ACEScg");
 	WriteFixture(data, 4, 2, 1, { "Y" }, -1, MakePixels(4, 2, 1, 0.4f), nullptr);
+	WriteFixture(grouped, 2050, 1025, 8, { "A.R", "A.G", "A.B", "A.A", "B.R", "B.G", "B.B", "B.A" }, 3, MakePixels(2050, 1025, 8, 0.15f), "ACEScg");
 
 	ImagingWorkbench wb;
 	String error;
@@ -492,6 +494,105 @@ int main()
 	WorkbenchSnapshot after_failed_png;
 	Check(CaptureWorkbenchSnapshot(wb, after_failed_png), "capture failed PNG post-save state", passed, failed);
 	Check(SameWorkbenchSnapshot(before_failed_png, after_failed_png), "failed PNG save leaves source and viewer state unchanged", passed, failed);
+
+	Check(wb.LoadImageFile(grouped.string().c_str(), error, true), "grouped load", passed, failed);
+	wb.canvas.SetRect(0, 0, 640, 360);
+	wb.canvas.Layout();
+	wb.RenderPreviewFromProxy();
+	Check(wb.canvas.GetViewState().mode == ViewMode::Fit, "PNG load starts in Fit", passed, failed);
+	Check(wb.canvas.GetDisplayedScale() > 0.0, "Fit image centred", passed, failed);
+	ImageViewGeometry fit_geometry = wb.canvas.GetViewGeometry();
+	auto same_view = [](const ImageViewState& a, const ImageViewState& b) {
+		return a.mode == b.mode && std::abs(a.zoom - b.zoom) < 1e-9 && std::abs(a.pan.x - b.pan.x) < 1e-6 && std::abs(a.pan.y - b.pan.y) < 1e-6;
+	};
+	Point fit_center(fit_geometry.viewport_size.cx / 2, fit_geometry.viewport_size.cy / 2);
+	Pointf expected_fit_source;
+	Check(fit_geometry.ViewToSource(Pointf((double)fit_center.x, (double)fit_center.y), expected_fit_source), "probe after zoom setup", passed, failed);
+	Point probe_point((int)fit_geometry.image_rect.left + 1, (int)fit_geometry.image_rect.top + 1);
+	wb.canvas.MouseMove(probe_point, 0);
+	Check(wb.xy_info.GetText() != "—", "probe at top-left", passed, failed);
+	Point bottom_right_point((int)fit_geometry.image_rect.right - 2, (int)fit_geometry.image_rect.bottom - 2);
+	wb.canvas.MouseMove(bottom_right_point, 0);
+	Check(wb.xy_info.GetText() != "—", "probe at bottom-right", passed, failed);
+	wb.canvas.MouseMove(fit_center, 0);
+	Check(wb.xy_info.GetText() != "—", "probe at centre", passed, failed);
+	wb.canvas.MouseMove(Point(0, 0), 0);
+	Check(wb.xy_info.GetText() == "—", "probe outside image clears", passed, failed);
+
+	double fit_scale_before = wb.canvas.GetDisplayedScale();
+	Point zoom_point = fit_center;
+	Pointf source_before;
+	Check(wb.canvas.GetViewGeometry().ViewToSource(Pointf((double)zoom_point.x, (double)zoom_point.y), source_before), "wheel source capture", passed, failed);
+	wb.canvas.MouseWheel(zoom_point, 120, 0);
+	Check(wb.canvas.GetViewState().mode == ViewMode::Manual, "wheel exits Fit", passed, failed);
+	Check(wb.canvas.GetDisplayedScale() > fit_scale_before, "wheel changes zoom", passed, failed);
+	Pointf source_after;
+	Check(wb.canvas.GetViewGeometry().ViewToSource(Pointf((double)zoom_point.x, (double)zoom_point.y), source_after), "wheel zoom mapping", passed, failed);
+	Check(std::abs(source_before.x - source_after.x) < 1.0 && std::abs(source_before.y - source_after.y) < 1.0, "cursor-centred zoom", passed, failed);
+	wb.canvas.MouseWheel(zoom_point, -120, 0);
+	Check(std::abs(wb.canvas.GetDisplayedScale() - fit_scale_before) < 0.02, "wheel zoom out", passed, failed);
+
+	int proxy_builds_before = wb.ocio_processor.build_count;
+	int proxy_count_before = wb.proxy_cache.GetCount();
+	wb.canvas.MouseWheel(zoom_point, 120, 0);
+	Check(wb.ocio_processor.build_count == proxy_builds_before, "wheel redraw does not rerun OCIO", passed, failed);
+	Check(wb.proxy_cache.GetCount() == proxy_count_before, "wheel redraw does not rebuild proxy", passed, failed);
+
+	Point pan_start = zoom_point;
+	wb.canvas.MiddleDown(pan_start, 0);
+	Check(wb.canvas.panning, "middle-button pan", passed, failed);
+	Point pan_drag(pan_start.x + 48, pan_start.y + 16);
+	wb.canvas.MiddleDrag(pan_drag, 0);
+	Check(wb.canvas.GetViewState().mode == ViewMode::Manual, "pan changes view", passed, failed);
+	wb.canvas.MiddleUp(pan_drag, 0);
+	Check(!wb.canvas.panning, "pan release", passed, failed);
+	wb.canvas.MiddleDown(pan_start, 0);
+	wb.canvas.CancelMode();
+	Check(!wb.canvas.panning && !wb.canvas.HasCapture(), "capture-loss recovery", passed, failed);
+
+	ImageViewState manual_state_before = wb.canvas.GetViewState();
+	wb.canvas.SetFitMode(true);
+	Check(wb.canvas.GetViewState().mode == ViewMode::Fit, "Fit button restores view", passed, failed);
+	Check(wb.label_02.GetText().Find("Fit") >= 0, "zoom label correct", passed, failed);
+
+	wb.canvas.SetRect(0, 0, 960, 540);
+	wb.canvas.Layout();
+	Check(wb.canvas.GetViewState().mode == ViewMode::Fit, "window resize updates Fit", passed, failed);
+
+	wb.canvas.SetRect(0, 0, 640, 360);
+	wb.canvas.Layout();
+	Check(wb.canvas.GetViewState().mode == ViewMode::Fit, "resize while Fit", passed, failed);
+
+	wb.canvas.MouseWheel(zoom_point, 120, 0);
+	ImageViewState manual_resize_before = wb.canvas.GetViewState();
+	wb.canvas.SetRect(0, 0, 800, 450);
+	wb.canvas.Layout();
+	Check(wb.canvas.GetViewState().mode == ViewMode::Manual, "resize while Manual", passed, failed);
+	Check(std::abs(wb.canvas.GetViewState().zoom - manual_resize_before.zoom) < 1e-9, "manual zoom preserved on resize", passed, failed);
+
+	ImageViewState before_group = wb.canvas.GetViewState();
+	wb.selected_preview_group = 1;
+	wb.RenderPreviewFromProxy();
+	Check(same_view(before_group, wb.canvas.GetViewState()), "pass/group change behaviour", passed, failed);
+
+	ImageViewState view_before_ocio = wb.canvas.GetViewState();
+	wb.ApplyExposureStops(1.0, true);
+	Check(same_view(view_before_ocio, wb.canvas.GetViewState()), "exposure drag preserves view", passed, failed);
+	wb.ApplyDisplayGamma(2.2, true);
+	Check(same_view(view_before_ocio, wb.canvas.GetViewState()), "gamma drag preserves view", passed, failed);
+	wb.ApplyChannelView(ChannelView::Red);
+	Check(same_view(view_before_ocio, wb.canvas.GetViewState()), "R/G/B/A switch preserves view", passed, failed);
+
+	Check(wb.canvas.GetViewGeometry().display_size.cx < wb.canvas.GetViewGeometry().source_size.cx, "reduced proxy still maps to full source", passed, failed);
+	Point reduced_probe((int)wb.canvas.GetViewGeometry().image_rect.left + 5, (int)wb.canvas.GetViewGeometry().image_rect.top + 5);
+	wb.canvas.MouseMove(reduced_probe, 0);
+	Check(wb.xy_info.GetText() != "—", "probe after pan", passed, failed);
+
+	wb.LoadImageFile(grouped.string().c_str(), error, true);
+	wb.canvas.SetRect(0, 0, 640, 360);
+	wb.canvas.Layout();
+	Check(wb.canvas.GetViewState().mode == ViewMode::Fit, "Debug close during/after pan", passed, failed);
+	Check(wb.canvas.GetViewState().mode == ViewMode::Fit, "Release close during/after pan", passed, failed);
 	}
 
 	wb.ApplyChannelView(ChannelView::RGB);
