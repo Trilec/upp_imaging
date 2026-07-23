@@ -173,6 +173,26 @@ int main()
 	Check(wb.ocio_lut_path.IsEmpty(), "clear LUT", passed, failed);
 	Check(wb.ocio_processor.build_count == lut_build + 1, "clear LUT rebuilds once", passed, failed);
 
+	std::vector<float> source_pixel(4, 0.0f);
+	wb.source_image.getpixel(0, 0, 0, OIIO::span<float>(source_pixel.data(), (int)source_pixel.size()));
+	String save_error;
+	std::filesystem::path save_exr = root / "wb_save.exr";
+	String save_exr_path = save_exr.string().c_str();
+	Check(wb.SaveCurrentImage(save_exr_path, "EXR", save_error), "EXR save ignores OCIO/Look/LUT", passed, failed);
+	OIIO::ImageBuf reopened_exr;
+	std::string io_error;
+	Check(UppImaging::LoadImage(save_exr_path.Begin(), reopened_exr, &io_error), "EXR reopen", passed, failed);
+	float exr_pixel[4] = {};
+	reopened_exr.getpixel(0, 0, exr_pixel);
+	Check(exr_pixel[0] == source_pixel[0] && exr_pixel[1] == source_pixel[1] && exr_pixel[2] == source_pixel[2], "EXR save preserves source pixels", passed, failed);
+
+	std::filesystem::path save_png = root / "wb_save.png";
+	String save_png_path = save_png.string().c_str();
+	Check(wb.SaveCurrentImage(save_png_path, "PNG", save_error), "PNG save ignores OCIO/Look/LUT", passed, failed);
+	OIIO::ImageBuf reopened_png;
+	Check(UppImaging::LoadImage(save_png_path.Begin(), reopened_png, &io_error), "PNG reopen", passed, failed);
+	Check(reopened_png.spec().nchannels >= 3, "PNG reopen channel count", passed, failed);
+
 	wb.ApplyChannelView(ChannelView::RGB);
 	wb.RenderPreviewFromProxy();
 	Check(wb.ocio_preview_applied, "OCIO success uses transformed output", passed, failed);
