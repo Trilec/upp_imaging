@@ -93,7 +93,14 @@ private:
 	void ScanSourceMetadata();
 	void UpdatePreviewSelection();
 	void UpdateViewerControls();
-	void UpdateOcioControls();
+	enum class OcioControlChange {
+		Enable,
+		Config,
+		Source,
+		Display,
+		View,
+	};
+	void UpdateOcioControls(OcioControlChange change);
 	void ApplyChannelView(ChannelView view);
 	void ApplyExposureStops(double value, bool immediate = false);
 	void ApplyDisplayGamma(double value, bool immediate = false);
@@ -162,9 +169,13 @@ private:
 	String ocio_source_name;
 	String ocio_display_name;
 	String ocio_view_name;
+	String ocio_selected_source_name;
+	String ocio_selected_display_name;
+	String ocio_selected_view_name;
 	bool ocio_source_from_metadata = false;
 	bool ocio_enabled = false;
 	bool ocio_processor_valid = false;
+	bool ocio_preview_applied = false;
 	String ocio_error_text;
 	PreviewRenderCoalescer preview_render_coalescer;
 	PreviewTimingBreakdown preview_timing;
