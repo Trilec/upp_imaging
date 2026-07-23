@@ -375,6 +375,7 @@ void ImagingWorkbench::PostBuild()
 	pageC.Add(analysis_body.SizePos());
 
 	canvas.SetPlaceholderText("Open an EXR or PNG to begin");
+	canvas.WhenViewChanged = [=] { UpdateCanvasZoomLabel(); };
 	canvas.WhenSourcePixelMove = [=](Point p) { UpdateProbe(p); };
 	canvas.WhenSourcePixelLeave = [=] { ClearProbe(); };
 	canvas_scroll_panel.Content().Add(canvas.SizePos());
@@ -921,10 +922,11 @@ void ImagingWorkbench::UpdateCanvasZoomLabel()
 		label_02.SetText("—");
 		return;
 	}
-	int percent = (int)std::round(canvas.GetDisplayedScale() * 100.0);
-	if(percent < 1)
-		percent = 1;
-	label_02.SetText(Format("%d%%", percent));
+	double percent = std::max(1.0, canvas.GetDisplayedScale() * 100.0);
+	String text = Format("%.1f%%", percent);
+	if(canvas.GetViewState().mode == ViewMode::Fit)
+		text = "Fit · " + text;
+	label_02.SetText(text);
 }
 
 void ImagingWorkbench::UpdateDisplayState()
@@ -1294,7 +1296,8 @@ void ImagingWorkbench::RenderPreviewFromProxy()
 	auto publish_started = Clock::now();
 
 	preview_image = buffer;
-	canvas.SetDisplayImage(preview_image, proxy->source_size);
+	canvas.SetDisplayImage(preview_image, proxy->source_size, reset_canvas_view);
+	reset_canvas_view = false;
 	UpdateCanvasZoomLabel();
 	preview_timing.publish_ms = std::chrono::duration<double, std::milli>(Clock::now() - publish_started).count();
 	auto elapsed = std::chrono::duration<double, std::milli>(Clock::now() - started).count();
@@ -1930,6 +1933,7 @@ bool ImagingWorkbench::LoadImageFile(const String& path, String& error, bool pop
 
 	source_image = loaded;
 	source_filename = path;
+	reset_canvas_view = true;
 	probe_source_pixel.SetCount(source_image.spec().nchannels);
 	last_error.Clear();
 	ScanSourceMetadata();

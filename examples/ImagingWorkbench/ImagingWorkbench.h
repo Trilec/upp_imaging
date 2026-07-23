@@ -225,6 +225,7 @@ protected:
 	String timing_summary;
 	String resolution_text;
 	String memory_text;
+	bool reset_canvas_view = false;
 	OCIO::ConstConfigRcPtr ocio_config;
 	bool ocio_controls_updating = false;
 };
