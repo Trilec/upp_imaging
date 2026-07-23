@@ -135,13 +135,13 @@ static const char* BuildLabel()
 static void SetOcioEnabled(ImagingWorkbench& wb, bool enabled)
 {
 	wb.ocio_enable_drop.Select(enabled ? 1 : 0);
-	wb.UpdateOcioControls();
+	wb.UpdateOcioControls(ImagingWorkbench::OcioControlChange::Enable);
 }
 
 static void SelectOcioBuiltin(ImagingWorkbench& wb, int index)
 {
 	wb.ocio_config_drop.Select(index);
-	wb.UpdateOcioControls();
+	wb.UpdateOcioControls(ImagingWorkbench::OcioControlChange::Config);
 }
 
 static void PrintSingleStats(const char* build, const char* source, const char* proxy, const char* mode, const ImagingWorkbench& wb)
@@ -201,7 +201,7 @@ int main(int argc, char** argv)
 
 		if(wb.ocio_source_drop.GetCount() > 1) {
 			wb.ocio_source_drop.Select(1);
-			wb.UpdateOcioControls();
+			wb.UpdateOcioControls(ImagingWorkbench::OcioControlChange::Source);
 			PrintSingleStats(BuildLabel(), fixture.first, fixture.first, "OCIO selection change", wb);
 		}
 	}
