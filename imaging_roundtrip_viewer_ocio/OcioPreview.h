@@ -24,15 +24,21 @@ struct OcioPreviewProcessor {
 	OCIO::ConstConfigRcPtr config;
 	OCIO::ConstCPUProcessorRcPtr cpu;
 	String config_name;
+	String config_cache_id;
 	String source;
 	String display;
 	String view;
 	String look;
 	String lut;
+	OCIO::TransformDirection lut_direction = OCIO::TRANSFORM_DIR_FORWARD;
 	int build_count = 0;
 
 	bool IsValid() const { return (bool)cpu; }
 	void Clear();
+	bool Update(const OCIO::ConstConfigRcPtr& new_config, const String& new_config_name,
+		const String& new_source, const String& new_display, const String& new_view,
+		const String& new_look, const String& new_lut, OCIO::TransformDirection new_lut_direction,
+		String& error);
 	bool Update(const OCIO::ConstConfigRcPtr& new_config, const String& new_config_name,
 		const String& new_source, const String& new_display, const String& new_view,
 		const String& new_look, const String& new_lut, String& error);
@@ -45,9 +51,13 @@ bool ApplyOcioProcessor(const OCIO::ConstCPUProcessorRcPtr& cpu, float* pixels, 
 
 Vector<String> GetBuiltinConfigNames();
 bool LoadBuiltinConfig(const String& name, OCIO::ConstConfigRcPtr& config, String& error);
+bool LoadEnvironmentConfig(OCIO::ConstConfigRcPtr& config, String& error, String& identity);
+bool LoadConfigFile(const String& path, OCIO::ConstConfigRcPtr& config, String& error, String& identity);
 
 Vector<String> GetColorSpaceNames(const OCIO::ConstConfigRcPtr& config);
 String GetDefaultSourceColorSpace(const OCIO::ConstConfigRcPtr& config);
+
+Vector<String> GetLookNames(const OCIO::ConstConfigRcPtr& config);
 
 Vector<String> GetDisplayNames(const OCIO::ConstConfigRcPtr& config);
 String GetDefaultDisplay(const OCIO::ConstConfigRcPtr& config);
