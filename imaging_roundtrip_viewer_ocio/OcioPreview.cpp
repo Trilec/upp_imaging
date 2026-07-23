@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <exception>
 #include <cmath>
+#include <cstdlib>
+#include <filesystem>
 #include <vector>
 
 namespace Upp {
@@ -27,28 +29,43 @@ static void BuildGammaLut(Vector<float>& lut, double display_gamma)
 	}
 }
 
+static String CanonicalPath(const String& path)
+{
+	if(path.IsEmpty())
+		return String();
+	std::error_code ec;
+	std::filesystem::path fs = std::filesystem::weakly_canonical(std::filesystem::path(~path), ec);
+	if(ec)
+		fs = std::filesystem::absolute(std::filesystem::path(~path), ec);
+	return String(fs.string().c_str());
+}
+
 void OcioPreviewProcessor::Clear()
 {
 	config.reset();
 	cpu.reset();
 	config_name.Clear();
+	config_cache_id.Clear();
 	source.Clear();
 	display.Clear();
 	view.Clear();
 	look.Clear();
 	lut.Clear();
+	lut_direction = OCIO::TRANSFORM_DIR_FORWARD;
 }
 
 bool OcioPreviewProcessor::Update(const OCIO::ConstConfigRcPtr& new_config, const String& new_config_name,
 	const String& new_source, const String& new_display, const String& new_view,
-	const String& new_look, const String& new_lut, String& error)
+	const String& new_look, const String& new_lut, OCIO::TransformDirection new_lut_direction,
+	String& error)
 {
 	error.Clear();
-	if(config && config.get() == new_config.get() && config_name == new_config_name && source == new_source &&
-		display == new_display && view == new_view && look == new_look && lut == new_lut)
+	String new_cache_id = new_config ? String(new_config->getCacheID()) : String();
+	if(config && config.get() == new_config.get() && config_name == new_config_name && config_cache_id == new_cache_id &&
+		source == new_source && display == new_display && view == new_view && look == new_look &&
+		lut == new_lut && lut_direction == new_lut_direction)
 		return true;
 
-	Clear();
 	if(!new_config) {
 		error = "OCIO config is not loaded";
 		return false;
@@ -59,7 +76,27 @@ bool OcioPreviewProcessor::Update(const OCIO::ConstConfigRcPtr& new_config, cons
 	}
 
 	try {
-		OCIO::ConstProcessorRcPtr processor = new_config->getProcessor(~new_source, ~new_display, ~new_view, OCIO::TRANSFORM_DIR_FORWARD);
+		OCIO::GroupTransformRcPtr group = OCIO::GroupTransform::Create();
+		if(!new_look.IsEmpty() && new_look != "None") {
+			OCIO::LookTransformRcPtr look_transform = OCIO::LookTransform::Create();
+			look_transform->setSrc(~new_source);
+			look_transform->setDst(~new_source);
+			look_transform->setLooks(~new_look);
+			group->appendTransform(look_transform);
+		}
+		OCIO::DisplayViewTransformRcPtr display_transform = OCIO::DisplayViewTransform::Create();
+		display_transform->setSrc(~new_source);
+		display_transform->setDisplay(~new_display);
+		display_transform->setView(~new_view);
+		display_transform->setLooksBypass(true);
+		group->appendTransform(display_transform);
+		if(!new_lut.IsEmpty()) {
+			OCIO::FileTransformRcPtr lut_transform = OCIO::FileTransform::Create();
+			lut_transform->setSrc(~new_lut);
+			lut_transform->setDirection(new_lut_direction);
+			group->appendTransform(lut_transform);
+		}
+		OCIO::ConstProcessorRcPtr processor = new_config->getProcessor(group);
 		if(!processor) {
 			error = "OCIO processor creation failed";
 			return false;
@@ -72,11 +109,13 @@ bool OcioPreviewProcessor::Update(const OCIO::ConstConfigRcPtr& new_config, cons
 		config = new_config;
 		cpu = new_cpu;
 		config_name = new_config_name;
+		config_cache_id = new_cache_id;
 		source = new_source;
 		display = new_display;
 		view = new_view;
 		look = new_look;
 		lut = new_lut;
+		lut_direction = new_lut_direction;
 		++build_count;
 		return true;
 	}
@@ -90,6 +129,14 @@ bool OcioPreviewProcessor::Update(const OCIO::ConstConfigRcPtr& new_config, cons
 		error = "OCIO processor creation failed";
 	}
 	return false;
+}
+
+bool OcioPreviewProcessor::Update(const OCIO::ConstConfigRcPtr& new_config, const String& new_config_name,
+	const String& new_source, const String& new_display, const String& new_view,
+	const String& new_look, const String& new_lut, String& error)
+{
+	return Update(new_config, new_config_name, new_source, new_display, new_view, new_look, new_lut,
+		OCIO::TRANSFORM_DIR_FORWARD, error);
 }
 
 float ApplySceneExposure(float value, float exposure_scale)
@@ -212,6 +259,72 @@ bool LoadBuiltinConfig(const String& name, OCIO::ConstConfigRcPtr& config, Strin
 	}
 }
 
+bool LoadEnvironmentConfig(OCIO::ConstConfigRcPtr& config, String& error, String& identity)
+{
+	config.reset();
+	error.Clear();
+	identity.Clear();
+	const char* env = std::getenv("OCIO");
+	if(!env || !*env) {
+		error = "OCIO environment variable is absent";
+		return false;
+	}
+	identity = env;
+	try {
+		config = OCIO::Config::CreateFromEnv();
+		if(!config) {
+			error = "OCIO environment config could not be loaded";
+			return false;
+		}
+		config->validate();
+		return true;
+	}
+	catch(const OCIO::Exception& e) {
+		error = e.what();
+		return false;
+	}
+	catch(const std::exception& e) {
+		error = e.what();
+		return false;
+	}
+	catch(...) {
+		error = "OCIO environment config could not be loaded";
+		return false;
+	}
+}
+
+bool LoadConfigFile(const String& path, OCIO::ConstConfigRcPtr& config, String& error, String& identity)
+{
+	config.reset();
+	error.Clear();
+	identity = CanonicalPath(path);
+	if(path.IsEmpty()) {
+		error = "OCIO config file path is empty";
+		return false;
+	}
+	try {
+		config = OCIO::Config::CreateFromFile(~path);
+		if(!config) {
+			error = "OCIO config file could not be loaded";
+			return false;
+		}
+		config->validate();
+		return true;
+	}
+	catch(const OCIO::Exception& e) {
+		error = e.what();
+		return false;
+	}
+	catch(const std::exception& e) {
+		error = e.what();
+		return false;
+	}
+	catch(...) {
+		error = "OCIO config file could not be loaded";
+		return false;
+	}
+}
+
 static bool ContainsName(const Vector<String>& values, const String& value)
 {
 	for(const String& item : values) {
@@ -228,6 +341,19 @@ Vector<String> GetColorSpaceNames(const OCIO::ConstConfigRcPtr& config)
 		return names;
 	for(int i = 0; i < config->getNumColorSpaces(); ++i) {
 		const char* name = config->getColorSpaceNameByIndex(i);
+		if(name && *name)
+			names.Add(name);
+	}
+	return names;
+}
+
+Vector<String> GetLookNames(const OCIO::ConstConfigRcPtr& config)
+{
+	Vector<String> names;
+	if(!config)
+		return names;
+	for(int i = 0; i < config->getNumLooks(); ++i) {
+		const char* name = config->getLookNameByIndex(i);
 		if(name && *name)
 			names.Add(name);
 	}

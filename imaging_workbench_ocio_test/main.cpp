@@ -52,6 +52,21 @@ static bool WriteFixture(const std::filesystem::path& path, int width, int heigh
 	return UppImaging::SaveImage(path.string().c_str(), image, &error);
 }
 
+static bool WriteCurveLut(const std::filesystem::path& path)
+{
+	std::ofstream out(path, std::ios::binary);
+	if(!out)
+		return false;
+	out << "LUT_1D_SIZE 4\n";
+	out << "DOMAIN_MIN 0.0 0.0 0.0\n";
+	out << "DOMAIN_MAX 1.0 1.0 1.0\n";
+	out << "0.0 0.0 0.0\n";
+	out << "0.1 0.1 0.1\n";
+	out << "0.5 0.5 0.5\n";
+	out << "1.0 1.0 1.0\n";
+	return out.good();
+}
+
 static bool Check(bool condition, const char* label, int& passed, int& failed)
 {
 	std::printf("%s %s\n", condition ? "PASS" : "FAIL", label);
@@ -92,6 +107,8 @@ int main()
 	Check(wb.ocio_enabled, "enable OCIO", passed, failed);
 	Check(wb.ocio_processor_valid, "processor valid", passed, failed);
 	Check(!wb.ocio_source_name.IsEmpty(), "source selected", passed, failed);
+	Check(wb.ocio_config_source_drop.GetCount() == 3, "config source options", passed, failed);
+	Check(wb.ocio_look_drop.GetCount() >= 1, "look options populated", passed, failed);
 
 	int build0 = wb.ocio_processor.build_count;
 	wb.ApplyExposureStops(1.0, true);
@@ -130,6 +147,29 @@ int main()
 		Check(wb.ocio_config_name == SelectedText(wb.ocio_config_drop), "config selection retained", passed, failed);
 		Check(wb.ocio_processor.build_count >= source_build + 3, "config rebuilds processor", passed, failed);
 	}
+
+	if(wb.ocio_look_drop.GetCount() > 1) {
+		wb.ocio_look_drop.Select(1);
+		wb.UpdateOcioControls(ImagingWorkbench::OcioControlChange::Look);
+		Check(wb.ocio_look_name == SelectedText(wb.ocio_look_drop), "look selection retained", passed, failed);
+	}
+
+	std::filesystem::path lut_path = root / "workbench_curve.cube";
+	Check(WriteCurveLut(lut_path), "lut fixture written", passed, failed);
+	int lut_build = wb.ocio_processor.build_count;
+	wb.ocio_lut_path = lut_path.string().c_str();
+	wb.ocio_lut_requested_path.Clear();
+	wb.UpdateOcioControls(ImagingWorkbench::OcioControlChange::Lut);
+	Check(wb.ocio_processor.build_count == lut_build + 1, "lut load rebuilds once", passed, failed);
+	lut_build = wb.ocio_processor.build_count;
+	wb.ocio_lut_direction_drop.Select(1);
+	wb.UpdateOcioControls(ImagingWorkbench::OcioControlChange::LutDirection);
+	Check(wb.ocio_processor.build_count == lut_build + 1, "lut direction rebuilds once", passed, failed);
+	lut_build = wb.ocio_processor.build_count;
+	wb.ocio_lut_path.Clear();
+	wb.UpdateOcioControls(ImagingWorkbench::OcioControlChange::LutClear);
+	Check(wb.ocio_lut_path.IsEmpty(), "clear LUT", passed, failed);
+	Check(wb.ocio_processor.build_count == lut_build + 1, "clear LUT rebuilds once", passed, failed);
 
 	wb.ApplyChannelView(ChannelView::RGB);
 	wb.RenderPreviewFromProxy();

@@ -14,6 +14,18 @@ namespace Upp {
 
 namespace OCIO = OCIO_NAMESPACE;
 
+enum class OcioConfigSource {
+	Builtin,
+	Environment,
+	File,
+};
+
+enum class OcioSourceSelectionOrigin {
+	Metadata,
+	ConfigDefault,
+	User,
+};
+
 struct PreviewGroup : Moveable<PreviewGroup> {
 	String name;
 	String channels_text;
@@ -83,7 +95,7 @@ protected:
 	virtual void Paint(Draw& w) override;
 	virtual bool HotKey(dword key) override;
 
-private:
+	private:
 	void DoLoad();
 	bool LoadImageFile(const String& path, String& error, bool populate_ui = true);
 	void UpdateDisplayState();
@@ -93,12 +105,20 @@ private:
 	void ScanSourceMetadata();
 	void UpdatePreviewSelection();
 	void UpdateViewerControls();
+	void BrowseOcioConfigFile();
+	void BrowseOcioLutFile();
 	enum class OcioControlChange {
 		Enable,
+		ConfigSource,
 		Config,
+		ConfigFile,
 		Source,
 		Display,
 		View,
+		Look,
+		Lut,
+		LutDirection,
+		LutClear,
 	};
 	void UpdateOcioControls(OcioControlChange change);
 	void ApplyChannelView(ChannelView view);
@@ -133,17 +153,30 @@ private:
 	UiLabel layers_detail;
 	UiLabel ocio_body;
 	UiLabel ocio_enable_label;
+	UiLabel ocio_config_source_label;
 	UiLabel ocio_config_label;
+	UiLabel ocio_config_file_label;
+	UiLabel ocio_config_file_path_label;
 	UiLabel ocio_source_label;
 	UiLabel ocio_display_label;
 	UiLabel ocio_view_label;
+	UiLabel ocio_look_label;
+	UiLabel ocio_lut_label;
+	UiLabel ocio_lut_path_label;
+	UiLabel ocio_lut_direction_label;
 	UiLabel ocio_error;
 	UiLabel analysis_body;
 	UiDropdown ocio_enable_drop;
+	UiDropdown ocio_config_source_drop;
 	UiDropdown ocio_config_drop;
+	UiButton ocio_config_file_browse;
 	UiDropdown ocio_source_drop;
 	UiDropdown ocio_display_drop;
 	UiDropdown ocio_view_drop;
+	UiDropdown ocio_look_drop;
+	UiDropdown ocio_lut_direction_drop;
+	UiButton ocio_lut_browse;
+	UiButton ocio_lut_clear;
 
 	OIIO::ImageBuf source_image;
 	Image preview_image;
@@ -166,13 +199,23 @@ private:
 	Vector<float> preview_pixels;
 	OcioPreview::OcioPreviewProcessor ocio_processor;
 	String ocio_config_name;
+	String ocio_config_source_identity;
+	String ocio_config_cache_id;
+	OcioConfigSource ocio_config_source = OcioConfigSource::Builtin;
+	String ocio_config_file_requested_path;
+	String ocio_config_file_path;
 	String ocio_source_name;
 	String ocio_display_name;
 	String ocio_view_name;
+	String ocio_look_name;
+	String ocio_look_requested_name;
+	String ocio_lut_name;
+	String ocio_lut_requested_path;
+	String ocio_lut_path;
 	String ocio_selected_source_name;
 	String ocio_selected_display_name;
 	String ocio_selected_view_name;
-	bool ocio_source_from_metadata = false;
+	OcioSourceSelectionOrigin ocio_source_selection_origin = OcioSourceSelectionOrigin::ConfigDefault;
 	bool ocio_enabled = false;
 	bool ocio_processor_valid = false;
 	bool ocio_preview_applied = false;

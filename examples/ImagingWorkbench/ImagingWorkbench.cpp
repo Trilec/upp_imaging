@@ -6,6 +6,7 @@
 #include <chrono>
 #include <cmath>
 #include <memory>
+#include <filesystem>
 #include <sstream>
 #include <vector>
 
@@ -90,6 +91,26 @@ static String ChannelViewName(ChannelView view)
 	case ChannelView::Blue:  return "B";
 	case ChannelView::Alpha: return "A";
 	default:                 return "RGB";
+	}
+}
+
+static String OcioConfigSourceName(OcioConfigSource source)
+{
+	switch(source) {
+	case OcioConfigSource::Environment: return "Environment";
+	case OcioConfigSource::File: return "File";
+	case OcioConfigSource::Builtin:
+	default: return "Built-in";
+	}
+}
+
+static String OcioSourceOriginName(OcioSourceSelectionOrigin origin)
+{
+	switch(origin) {
+	case OcioSourceSelectionOrigin::Metadata: return "metadata";
+	case OcioSourceSelectionOrigin::User: return "user";
+	case OcioSourceSelectionOrigin::ConfigDefault:
+	default: return "default";
 	}
 }
 
@@ -254,31 +275,57 @@ void ImagingWorkbench::PostBuild()
 
 	ocio_body.SetCustomStyle(UiTheme::ResolveLabel(UiRole::Subtle));
 	ocio_enable_label.SetCustomStyle(UiTheme::ResolveLabel(UiRole::Subtle));
+	ocio_config_source_label.SetCustomStyle(UiTheme::ResolveLabel(UiRole::Subtle));
 	ocio_config_label.SetCustomStyle(UiTheme::ResolveLabel(UiRole::Subtle));
+	ocio_config_file_label.SetCustomStyle(UiTheme::ResolveLabel(UiRole::Subtle));
+	ocio_config_file_path_label.SetCustomStyle(UiTheme::ResolveLabel(UiRole::Subtle));
 	ocio_source_label.SetCustomStyle(UiTheme::ResolveLabel(UiRole::Subtle));
 	ocio_display_label.SetCustomStyle(UiTheme::ResolveLabel(UiRole::Subtle));
 	ocio_view_label.SetCustomStyle(UiTheme::ResolveLabel(UiRole::Subtle));
+	ocio_look_label.SetCustomStyle(UiTheme::ResolveLabel(UiRole::Subtle));
+	ocio_lut_label.SetCustomStyle(UiTheme::ResolveLabel(UiRole::Subtle));
+	ocio_lut_path_label.SetCustomStyle(UiTheme::ResolveLabel(UiRole::Subtle));
+	ocio_lut_direction_label.SetCustomStyle(UiTheme::ResolveLabel(UiRole::Subtle));
 	ocio_error.SetCustomStyle(UiTheme::ResolveLabel(UiRole::Subtle));
 	ocio_body.SetText("OCIO display preview").SetAlign(UiAlign::LEFT, UiAlign::CENTER);
 	ocio_enable_label.SetText("Enabled").NoWantFocus().IgnoreMouse();
+	ocio_config_source_label.SetText("Config source").NoWantFocus().IgnoreMouse();
 	ocio_config_label.SetText("Config").NoWantFocus().IgnoreMouse();
+	ocio_config_file_label.SetText("Config file").NoWantFocus().IgnoreMouse();
+	ocio_config_file_path_label.SetText("—").NoWantFocus().IgnoreMouse();
 	ocio_source_label.SetText("Source").NoWantFocus().IgnoreMouse();
 	ocio_display_label.SetText("Display").NoWantFocus().IgnoreMouse();
 	ocio_view_label.SetText("View").NoWantFocus().IgnoreMouse();
+	ocio_look_label.SetText("Look").NoWantFocus().IgnoreMouse();
+	ocio_lut_label.SetText("Custom LUT").NoWantFocus().IgnoreMouse();
+	ocio_lut_path_label.SetText("—").NoWantFocus().IgnoreMouse();
+	ocio_lut_direction_label.SetText("Direction").NoWantFocus().IgnoreMouse();
 	ocio_error.SetText("OCIO preview is off.").SetAlign(UiAlign::LEFT, UiAlign::CENTER);
 	ocio_enable_drop.Add("Off", 0);
 	ocio_enable_drop.Add("On", 1);
 	ocio_enable_drop.Select(0);
+	ocio_config_source_drop.Add("Built-in", (int)OcioConfigSource::Builtin);
+	ocio_config_source_drop.Add("Environment", (int)OcioConfigSource::Environment);
+	ocio_config_source_drop.Add("File", (int)OcioConfigSource::File);
+	ocio_config_source_drop.Select((int)OcioConfigSource::Builtin);
 	ocio_config_drop.Add("Off / none", String());
 	for(const String& name : OcioPreview::GetBuiltinConfigNames())
 		ocio_config_drop.Add(name, name);
 	ocio_config_drop.Select(0);
+	ocio_config_file_browse.SetText("Browse").SetContentInset(DPI(6)).SetContentGap(DPI(4));
 	ocio_source_drop.Add("none", String());
 	ocio_source_drop.Select(0);
 	ocio_display_drop.Add("none", String());
 	ocio_display_drop.Select(0);
 	ocio_view_drop.Add("none", String());
 	ocio_view_drop.Select(0);
+	ocio_look_drop.Add("None", String());
+	ocio_look_drop.Select(0);
+	ocio_lut_direction_drop.Add("Forward", (int)OCIO::TRANSFORM_DIR_FORWARD);
+	ocio_lut_direction_drop.Add("Inverse", (int)OCIO::TRANSFORM_DIR_INVERSE);
+	ocio_lut_direction_drop.Select(0);
+	ocio_lut_browse.SetText("Browse").SetContentInset(DPI(6)).SetContentGap(DPI(4));
+	ocio_lut_clear.SetText("Clear").SetContentInset(DPI(6)).SetContentGap(DPI(4));
 
 	layers_layout.SetDirection(UiDirection::V).SetGap(DPI(6), DPI(6)).SetInset(DPI(8)).SetWrap(UiBoxWrap::None);
 	layers_summary.SetCustomStyle(UiTheme::ResolveLabel(UiRole::Subtle));
@@ -298,14 +345,27 @@ void ImagingWorkbench::PostBuild()
 	ocio_layout.Add(ocio_body).Fit().MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
 	ocio_layout.Add(ocio_enable_label).Fit().MinCross(DPI(0));
 	ocio_layout.Add(ocio_enable_drop).Fit().MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
+	ocio_layout.Add(ocio_config_source_label).Fit().MinCross(DPI(0));
+	ocio_layout.Add(ocio_config_source_drop).Fit().MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
 	ocio_layout.Add(ocio_config_label).Fit().MinCross(DPI(0));
 	ocio_layout.Add(ocio_config_drop).Fit().MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
+	ocio_layout.Add(ocio_config_file_label).Fit().MinCross(DPI(0));
+	ocio_layout.Add(ocio_config_file_browse).Fit().MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
+	ocio_layout.Add(ocio_config_file_path_label).Fit().MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
 	ocio_layout.Add(ocio_source_label).Fit().MinCross(DPI(0));
 	ocio_layout.Add(ocio_source_drop).Fit().MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
 	ocio_layout.Add(ocio_display_label).Fit().MinCross(DPI(0));
 	ocio_layout.Add(ocio_display_drop).Fit().MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
 	ocio_layout.Add(ocio_view_label).Fit().MinCross(DPI(0));
 	ocio_layout.Add(ocio_view_drop).Fit().MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
+	ocio_layout.Add(ocio_look_label).Fit().MinCross(DPI(0));
+	ocio_layout.Add(ocio_look_drop).Fit().MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
+	ocio_layout.Add(ocio_lut_label).Fit().MinCross(DPI(0));
+	ocio_layout.Add(ocio_lut_browse).Fit().MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
+	ocio_layout.Add(ocio_lut_path_label).Fit().MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
+	ocio_layout.Add(ocio_lut_direction_label).Fit().MinCross(DPI(0));
+	ocio_layout.Add(ocio_lut_direction_drop).Fit().MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
+	ocio_layout.Add(ocio_lut_clear).Fit().MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
 	ocio_layout.Add(ocio_error).Fit().MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
 	pageB.Add(ocio_layout.SizePos());
 
@@ -320,10 +380,16 @@ void ImagingWorkbench::PostBuild()
 	canvas_scroll_panel.Content().Add(canvas.SizePos());
 
 	ocio_enable_drop.WhenSelectData = [=](const Value&) { UpdateOcioControls(OcioControlChange::Enable); };
+	ocio_config_source_drop.WhenSelectData = [=](const Value&) { UpdateOcioControls(OcioControlChange::ConfigSource); };
 	ocio_config_drop.WhenSelectData = [=](const Value&) { UpdateOcioControls(OcioControlChange::Config); };
+	ocio_config_file_browse.WhenAction = [=] { BrowseOcioConfigFile(); };
 	ocio_source_drop.WhenSelectData = [=](const Value&) { UpdateOcioControls(OcioControlChange::Source); };
 	ocio_display_drop.WhenSelectData = [=](const Value&) { UpdateOcioControls(OcioControlChange::Display); };
 	ocio_view_drop.WhenSelectData = [=](const Value&) { UpdateOcioControls(OcioControlChange::View); };
+	ocio_look_drop.WhenSelectData = [=](const Value&) { UpdateOcioControls(OcioControlChange::Look); };
+	ocio_lut_direction_drop.WhenSelectData = [=](const Value&) { UpdateOcioControls(OcioControlChange::LutDirection); };
+	ocio_lut_browse.WhenAction = [=] { BrowseOcioLutFile(); };
+	ocio_lut_clear.WhenAction = [=] { ocio_lut_name.Clear(); ocio_lut_path_label.SetText("—"); UpdateOcioControls(OcioControlChange::LutClear); };
 
 	load_button.Enable();
 	save_split_button.Disable();
@@ -338,6 +404,12 @@ void ImagingWorkbench::PostBuild()
 	gamma.Disable();
 	gamma_slider.Disable();
 	gamma_float_edit.Disable();
+	ocio_config_source_drop.Disable();
+	ocio_config_file_browse.Disable();
+	ocio_look_drop.Disable();
+	ocio_lut_browse.Disable();
+	ocio_lut_clear.Disable();
+	ocio_lut_direction_drop.Disable();
 	fit_view_button.Disable();
 
 	res_label.SetText("—");
@@ -418,13 +490,18 @@ String ImagingWorkbench::GetOcioSummary() const
 {
 	if(!ocio_enabled)
 		return "OCIO: off";
-	const String config_name = ocio_config_name;
-	if(config_name.IsEmpty())
-		return "OCIO: on / none";
+	if(!ocio_processor_valid) {
+		if(!ocio_error_text.IsEmpty())
+			return Format("OCIO: %s / error: %s", OcioConfigSourceName(ocio_config_source), ocio_error_text);
+		return Format("OCIO: %s / inactive", OcioConfigSourceName(ocio_config_source));
+	}
 	String source = ocio_source_name;
 	if(!source.IsEmpty())
-		source << (ocio_source_from_metadata ? " (metadata)" : " (default)");
-	return Format("OCIO: %s / Source: %s / %s / %s", config_name, source, ocio_display_name, ocio_view_name);
+		source << " (" << OcioSourceOriginName(ocio_source_selection_origin) << ")";
+	String look = ocio_look_name.IsEmpty() ? String("None") : ocio_look_name;
+	String lut = ocio_lut_name.IsEmpty() ? String("None") : ocio_lut_name;
+	return Format("OCIO: %s / %s / Source: %s / Display: %s / View: %s / Look: %s / LUT: %s",
+		OcioConfigSourceName(ocio_config_source), ocio_config_name, source, ocio_display_name, ocio_view_name, look, lut);
 }
 
 void ImagingWorkbench::UpdateOcioControls(OcioControlChange change)
@@ -434,21 +511,31 @@ void ImagingWorkbench::UpdateOcioControls(OcioControlChange change)
 	ocio_controls_updating = true;
 
 	bool enable = (int)ocio_enable_drop.GetSelectedData() != 0;
+	OcioConfigSource requested_config_source = (OcioConfigSource)(int)ocio_config_source_drop.GetSelectedData();
 	String selected_config = AsString(ocio_config_drop.GetSelectedData());
 	String selected_source = AsString(ocio_source_drop.GetSelectedData());
 	String selected_display = AsString(ocio_display_drop.GetSelectedData());
 	String selected_view = AsString(ocio_view_drop.GetSelectedData());
+	String selected_look = AsString(ocio_look_drop.GetSelectedData());
 	String metadata_source = GetImageColorSpace();
+	String requested_file_path = ocio_config_file_requested_path.IsEmpty() ? ocio_config_file_path : ocio_config_file_requested_path;
+	String requested_lut_path = ocio_lut_requested_path.IsEmpty() ? ocio_lut_path : ocio_lut_requested_path;
+	OCIO::TransformDirection lut_direction = (OCIO::TransformDirection)(int)ocio_lut_direction_drop.GetSelectedData();
 	using Clock = std::chrono::steady_clock;
 	auto processor_started = Clock::now();
 
 	ocio_enabled = enable;
 	ocio_config_drop.Enable(enable);
+	ocio_config_source_drop.Enable(enable);
 
 	if(!enable) {
 		ocio_source_drop.Enable(false);
 		ocio_display_drop.Enable(false);
 		ocio_view_drop.Enable(false);
+		ocio_look_drop.Enable(false);
+		ocio_lut_browse.Enable(false);
+		ocio_lut_clear.Enable(false);
+		ocio_lut_direction_drop.Enable(false);
 		ocio_processor_valid = false;
 		ocio_error_text.Clear();
 		ocio_error.SetText("OCIO preview is off.");
@@ -464,6 +551,10 @@ void ImagingWorkbench::UpdateOcioControls(OcioControlChange change)
 		ocio_source_drop.Enable(false);
 		ocio_display_drop.Enable(false);
 		ocio_view_drop.Enable(false);
+		ocio_look_drop.Enable(false);
+		ocio_lut_browse.Enable(false);
+		ocio_lut_clear.Enable(false);
+		ocio_lut_direction_drop.Enable(false);
 		ocio_processor_valid = false;
 		ocio_error_text = "Load an image before enabling OCIO preview.";
 		ocio_error.SetText(ocio_error_text);
@@ -476,111 +567,161 @@ void ImagingWorkbench::UpdateOcioControls(OcioControlChange change)
 	}
 
 	Vector<String> builtin_names = OcioPreview::GetBuiltinConfigNames();
-	if(selected_config.IsEmpty() && !builtin_names.IsEmpty()) {
+	bool load_config = !ocio_config || requested_config_source != ocio_config_source;
+	if(requested_config_source == OcioConfigSource::Builtin && selected_config.IsEmpty() && !builtin_names.IsEmpty()) {
 		selected_config = builtin_names[0];
 		SetDropdownValues(ocio_config_drop, builtin_names, selected_config);
 	}
 
-	if(selected_config.IsEmpty()) {
+	String load_error;
+	OCIO::ConstConfigRcPtr loaded;
+	String loaded_identity;
+	bool config_loaded = false;
+	if(requested_config_source == OcioConfigSource::Builtin) {
+		load_config = load_config || ocio_config_name != selected_config;
+		if(load_config && !selected_config.IsEmpty())
+			config_loaded = OcioPreview::LoadBuiltinConfig(selected_config, loaded, load_error);
+		loaded_identity = selected_config;
+	}
+	else if(requested_config_source == OcioConfigSource::Environment) {
+		load_config = load_config || ocio_config_source != requested_config_source;
+		config_loaded = OcioPreview::LoadEnvironmentConfig(loaded, load_error, loaded_identity);
+		loaded_identity = loaded_identity.IsEmpty() ? String("OCIO environment") : loaded_identity;
+	}
+	else {
+		load_config = load_config || ocio_config_source != requested_config_source || ocio_config_file_path != requested_file_path;
+		if(load_config)
+			config_loaded = OcioPreview::LoadConfigFile(requested_file_path, loaded, load_error, loaded_identity);
+	}
+
+	bool config_load_failed = load_config && !config_loaded;
+	if(config_loaded) {
+		ocio_config = loaded;
+		ocio_config_source = requested_config_source;
+		ocio_config_source_identity = loaded_identity;
+		ocio_config_name = requested_config_source == OcioConfigSource::Builtin ? selected_config : loaded_identity;
+		ocio_config_cache_id = ocio_config ? String(ocio_config->getCacheID()) : String();
+		if(requested_config_source == OcioConfigSource::File)
+			ocio_config_file_path = requested_file_path;
+	}
+	else if(load_config) {
+		ocio_error_text = load_error;
+		ocio_error.SetText(ocio_error_text);
+	}
+
+	if(config_load_failed) {
 		ocio_source_drop.Enable(false);
 		ocio_display_drop.Enable(false);
 		ocio_view_drop.Enable(false);
-		ocio_processor_valid = false;
-		ocio_error_text = "OCIO preview config is not selected.";
-		ocio_error.SetText(ocio_error_text);
-		preview_timing.processor_ms = std::chrono::duration<double, std::milli>(Clock::now() - processor_started).count();
-		ocio_body.SetText(GetOcioSummary());
-		ocio_controls_updating = false;
-		UpdateSelectionSummary();
-		SchedulePreviewRender(true);
-		return;
+		ocio_look_drop.Enable(false);
+		ocio_lut_browse.Enable(false);
+		ocio_lut_clear.Enable(!ocio_lut_path.IsEmpty());
+		ocio_lut_direction_drop.Enable(false);
+		ocio_config_file_browse.Enable(requested_config_source == OcioConfigSource::File);
+		ocio_config_drop.Enable(requested_config_source == OcioConfigSource::Builtin);
+		ocio_config_file_path_label.SetText(requested_config_source == OcioConfigSource::File && !requested_file_path.IsEmpty() ? requested_file_path : (requested_config_source == OcioConfigSource::Environment ? (load_error.IsEmpty() ? String("OCIO") : String("OCIO")) : String("—")));
+		ocio_lut_path_label.SetText(ocio_lut_path.IsEmpty() ? "—" : ocio_lut_path);
 	}
+	else if(ocio_config) {
+		Vector<String> source_names = OcioPreview::GetColorSpaceNames(ocio_config);
+		Vector<String> display_names = OcioPreview::GetDisplayNames(ocio_config);
+		Vector<String> look_names = OcioPreview::GetLookNames(ocio_config);
+		String default_source = OcioPreview::GetDefaultSourceColorSpace(ocio_config);
+		String default_display = OcioPreview::GetDefaultDisplay(ocio_config);
+		String source = selected_source;
+		if(source.IsEmpty() || !ContainsString(source_names, source)) {
+			if(!metadata_source.IsEmpty() && ContainsString(source_names, metadata_source)) {
+				source = metadata_source;
+				ocio_source_selection_origin = OcioSourceSelectionOrigin::Metadata;
+			}
+			else {
+				source = default_source;
+				ocio_source_selection_origin = OcioSourceSelectionOrigin::ConfigDefault;
+			}
+		}
+		if(source.IsEmpty() && !source_names.IsEmpty()) {
+			source = source_names[0];
+			ocio_source_selection_origin = OcioSourceSelectionOrigin::ConfigDefault;
+		}
+		SetDropdownValues(ocio_source_drop, source_names, source);
+		ocio_source_name = AsString(ocio_source_drop.GetSelectedData());
+		if(!metadata_source.IsEmpty() && ocio_source_name == metadata_source)
+			ocio_source_selection_origin = OcioSourceSelectionOrigin::Metadata;
+		else if(!default_source.IsEmpty() && ocio_source_name == default_source)
+			ocio_source_selection_origin = OcioSourceSelectionOrigin::ConfigDefault;
+		else
+			ocio_source_selection_origin = OcioSourceSelectionOrigin::User;
 
-	if(!ocio_config || ocio_config_name != selected_config || change == OcioControlChange::Config || !ocio_processor.IsValid()) {
-		String load_error;
-		OCIO::ConstConfigRcPtr loaded;
-		if(!OcioPreview::LoadBuiltinConfig(selected_config, loaded, load_error)) {
-			ocio_source_drop.Enable(false);
-			ocio_display_drop.Enable(false);
-			ocio_view_drop.Enable(false);
+		String display = selected_display;
+		if(display.IsEmpty() || !ContainsString(display_names, display))
+			display = default_display;
+		if(display.IsEmpty() && !display_names.IsEmpty())
+			display = display_names[0];
+		SetDropdownValues(ocio_display_drop, display_names, display);
+		ocio_display_name = AsString(ocio_display_drop.GetSelectedData());
+		if(ocio_display_name.IsEmpty() && !display_names.IsEmpty())
+			ocio_display_name = display_names[0];
+
+		Vector<String> view_names = OcioPreview::GetViewNames(ocio_config, ocio_display_name);
+		String default_view = OcioPreview::GetDefaultView(ocio_config, ocio_display_name);
+		String view = selected_view;
+		if(view.IsEmpty() || !ContainsString(view_names, view))
+			view = default_view;
+		if(view.IsEmpty() && !view_names.IsEmpty())
+			view = view_names[0];
+		SetDropdownValues(ocio_view_drop, view_names, view);
+		ocio_view_name = AsString(ocio_view_drop.GetSelectedData());
+		if(ocio_view_name.IsEmpty() && !view_names.IsEmpty())
+			ocio_view_name = view_names[0];
+
+		String look = selected_look;
+		if(look.IsEmpty() || !ContainsString(look_names, look))
+			look = String();
+		SetDropdownValues(ocio_look_drop, look_names, look);
+		ocio_look_name = AsString(ocio_look_drop.GetSelectedData());
+
+		ocio_source_drop.Enable(true);
+		ocio_display_drop.Enable(true);
+		ocio_view_drop.Enable(true);
+		ocio_look_drop.Enable(true);
+		ocio_lut_browse.Enable(true);
+		ocio_lut_clear.Enable(!ocio_lut_path.IsEmpty());
+		ocio_lut_direction_drop.Enable(true);
+		ocio_config_file_browse.Enable(requested_config_source == OcioConfigSource::File);
+		ocio_config_drop.Enable(requested_config_source == OcioConfigSource::Builtin);
+		ocio_config_file_path_label.SetText(ocio_config_file_path.IsEmpty() ? "—" : ocio_config_file_path);
+		ocio_lut_path_label.SetText(ocio_lut_path.IsEmpty() ? "—" : ocio_lut_path);
+		if(requested_config_source == OcioConfigSource::Environment)
+			ocio_config_file_path_label.SetText(loaded_identity.IsEmpty() ? "OCIO" : loaded_identity);
+
+		bool should_build = !ocio_source_name.IsEmpty() && !ocio_display_name.IsEmpty() && !ocio_view_name.IsEmpty();
+		if(should_build) {
+			ocio_processor_valid = ocio_processor.Update(ocio_config, ocio_config_name, ocio_source_name, ocio_display_name, ocio_view_name,
+				ocio_look_name, ocio_lut_path, lut_direction, ocio_error_text);
+			if(!ocio_processor_valid)
+				ocio_error.SetText(ocio_error_text);
+			else {
+				ocio_error_text.Clear();
+				ocio_error.SetText("OCIO preview ready.");
+			}
+		}
+		else {
 			ocio_processor_valid = false;
-			ocio_error_text = load_error;
+			ocio_error_text = "OCIO preview selection is incomplete.";
 			ocio_error.SetText(ocio_error_text);
-			preview_timing.processor_ms = std::chrono::duration<double, std::milli>(Clock::now() - processor_started).count();
-			ocio_body.SetText(GetOcioSummary());
-			ocio_controls_updating = false;
-			UpdateSelectionSummary();
-			SchedulePreviewRender(true);
-			return;
-		}
-		ocio_config = loaded;
-		ocio_config_name = selected_config;
-	}
-
-	Vector<String> source_names = OcioPreview::GetColorSpaceNames(ocio_config);
-	Vector<String> display_names = OcioPreview::GetDisplayNames(ocio_config);
-	String default_source = OcioPreview::GetDefaultSourceColorSpace(ocio_config);
-	String default_display = OcioPreview::GetDefaultDisplay(ocio_config);
-
-	String source = selected_source;
-	if(source.IsEmpty() || !ContainsString(source_names, source)) {
-		if(ContainsString(source_names, metadata_source)) {
-			source = metadata_source;
-			ocio_source_from_metadata = true;
-		}
-		else {
-			source = default_source;
-			ocio_source_from_metadata = false;
-		}
-	}
-	if(source.IsEmpty() && !source_names.IsEmpty()) {
-		source = source_names[0];
-		ocio_source_from_metadata = false;
-	}
-	SetDropdownValues(ocio_source_drop, source_names, source);
-	ocio_source_name = AsString(ocio_source_drop.GetSelectedData());
-	ocio_source_from_metadata = !metadata_source.IsEmpty() && ocio_source_name == metadata_source;
-
-	String display = selected_display;
-	if(display.IsEmpty() || !ContainsString(display_names, display))
-		display = default_display;
-	if(display.IsEmpty() && !display_names.IsEmpty())
-		display = display_names[0];
-	SetDropdownValues(ocio_display_drop, display_names, display);
-	ocio_display_name = AsString(ocio_display_drop.GetSelectedData());
-	if(ocio_display_name.IsEmpty() && !display_names.IsEmpty())
-		ocio_display_name = display_names[0];
-
-	Vector<String> view_names = OcioPreview::GetViewNames(ocio_config, ocio_display_name);
-	String default_view = OcioPreview::GetDefaultView(ocio_config, ocio_display_name);
-	String view = selected_view;
-	if(view.IsEmpty() || !ContainsString(view_names, view))
-		view = default_view;
-	if(view.IsEmpty() && !view_names.IsEmpty())
-		view = view_names[0];
-	SetDropdownValues(ocio_view_drop, view_names, view);
-	ocio_view_name = AsString(ocio_view_drop.GetSelectedData());
-	if(ocio_view_name.IsEmpty() && !view_names.IsEmpty())
-		ocio_view_name = view_names[0];
-
-	ocio_source_drop.Enable(true);
-	ocio_display_drop.Enable(true);
-	ocio_view_drop.Enable(true);
-
-	bool should_build = !ocio_source_name.IsEmpty() && !ocio_display_name.IsEmpty() && !ocio_view_name.IsEmpty();
-	if(should_build) {
-		ocio_processor_valid = ocio_processor.Update(ocio_config, ocio_config_name, ocio_source_name, ocio_display_name, ocio_view_name, String(), String(), ocio_error_text);
-		if(!ocio_processor_valid)
-			ocio_error.SetText(ocio_error_text);
-		else {
-			ocio_error_text.Clear();
-			ocio_error.SetText("OCIO preview ready.");
 		}
 	}
 	else {
-		ocio_processor_valid = false;
-		ocio_error_text = "OCIO preview selection is incomplete.";
-		ocio_error.SetText(ocio_error_text);
+		ocio_source_drop.Enable(false);
+		ocio_display_drop.Enable(false);
+		ocio_view_drop.Enable(false);
+		ocio_look_drop.Enable(false);
+		ocio_lut_browse.Enable(false);
+		ocio_lut_clear.Enable(!ocio_lut_path.IsEmpty());
+		ocio_lut_direction_drop.Enable(false);
+		ocio_config_file_browse.Enable(false);
+		ocio_config_file_path_label.SetText(ocio_config_file_path.IsEmpty() ? "—" : ocio_config_file_path);
+		ocio_lut_path_label.SetText(ocio_lut_path.IsEmpty() ? "—" : ocio_lut_path);
 	}
 	preview_timing.processor_ms = std::chrono::duration<double, std::milli>(Clock::now() - processor_started).count();
 
@@ -1406,6 +1547,69 @@ void ImagingWorkbench::DoSaveFormat(const Value& data)
 
 	last_saved_filename = path;
 	SetStatus("Saved and verified: " + path);
+}
+
+void ImagingWorkbench::BrowseOcioConfigFile()
+{
+	FileSel selector;
+	selector.Type("OCIO config", "*.ocio");
+	selector.DefaultExt("ocio");
+	if(!selector.ExecuteOpen("Select OCIO config"))
+		return;
+	String path = selector.Get();
+	if(path.IsEmpty())
+		return;
+
+	String error;
+	String identity;
+	OCIO::ConstConfigRcPtr config;
+	if(!OcioPreview::LoadConfigFile(path, config, error, identity)) {
+		ocio_config_file_requested_path = path;
+		ocio_config_file_path_label.SetText(path);
+		ocio_error_text = error;
+		ocio_error.SetText(ocio_error_text);
+		SetStatus("OCIO config file error: " + error);
+		return;
+	}
+
+	ocio_config = config;
+	ocio_config_source = OcioConfigSource::File;
+	ocio_config_name = identity;
+	ocio_config_source_identity = identity;
+	ocio_config_file_path = path;
+	ocio_config_file_requested_path.Clear();
+	ocio_config_source_drop.Select((int)OcioConfigSource::File);
+}
+
+void ImagingWorkbench::BrowseOcioLutFile()
+{
+	if(!ocio_config || !ocio_processor_valid)
+		return;
+	FileSel selector;
+	selector.Type("Cube LUT", "*.cube");
+	selector.DefaultExt("cube");
+	if(!selector.ExecuteOpen("Select LUT"))
+		return;
+	String path = selector.Get();
+	if(path.IsEmpty())
+		return;
+
+	OcioPreview::OcioPreviewProcessor probe;
+	String error;
+	if(!probe.Update(ocio_config, ocio_config_name, ocio_source_name, ocio_display_name, ocio_view_name,
+		ocio_look_name, path, (OCIO::TransformDirection)(int)ocio_lut_direction_drop.GetSelectedData(), error)) {
+		ocio_lut_requested_path = path;
+		ocio_lut_path_label.SetText(path);
+		ocio_error_text = error;
+		ocio_error.SetText(ocio_error_text);
+		SetStatus("LUT error: " + error);
+		return;
+	}
+
+	ocio_lut_path = path;
+	ocio_lut_requested_path.Clear();
+	ocio_lut_clear.Enable(true);
+	UpdateOcioControls(OcioControlChange::Lut);
 }
 
 bool ImagingWorkbench::SaveCurrentImage(String& path, const String& format, String& error)
