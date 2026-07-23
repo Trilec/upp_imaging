@@ -2,6 +2,8 @@
 
 #include <imaging_roundtrip_viewer_ocio/OcioPreview.h>
 
+#include <vector>
+
 using namespace Upp;
 
 namespace OCIO = OCIO_NAMESPACE;
@@ -33,6 +35,72 @@ static bool HasRgbDifference(const TestImageF& a, const TestImageF& b)
 			return true;
 	}
 	return false;
+}
+
+static bool TestProcessorCache(const OCIO::ConstConfigRcPtr& config, const String& builtin)
+{
+	Vector<String> sources = OcioPreview::GetColorSpaceNames(config);
+	Vector<String> displays = OcioPreview::GetDisplayNames(config);
+	if(sources.GetCount() < 2 || displays.IsEmpty())
+		return false;
+	String source0 = OcioPreview::GetDefaultSourceColorSpace(config);
+	if(source0.IsEmpty())
+		source0 = sources[0];
+	String source1 = sources[1];
+	String display0 = displays[0];
+	Vector<String> views0 = OcioPreview::GetViewNames(config, display0);
+	if(views0.GetCount() < 2)
+		return false;
+	String view0 = OcioPreview::GetDefaultView(config, display0);
+	if(view0.IsEmpty())
+		view0 = views0[0];
+	String view1 = views0[1];
+
+	OcioPreview::OcioPreviewProcessor processor;
+	String error;
+	if(!processor.Update(config, builtin, source0, display0, view0, String(), String(), error) || !processor.IsValid())
+		return false;
+	int build_count = processor.build_count;
+	if(!processor.Update(config, builtin, source0, display0, view0, String(), String(), error))
+		return false;
+	if(processor.build_count != build_count)
+		return false;
+	if(!processor.Update(config, builtin, source1, display0, view0, String(), String(), error))
+		return false;
+	if(processor.build_count != build_count + 1)
+		return false;
+	build_count = processor.build_count;
+	if(!processor.Update(config, builtin, source1, displays[0], view0, String(), String(), error))
+		return false;
+	if(processor.build_count != build_count)
+		return false;
+	if(displays.GetCount() > 1) {
+		if(!processor.Update(config, builtin, source1, displays[1], OcioPreview::GetDefaultView(config, displays[1]), String(), String(), error))
+			return false;
+		if(processor.build_count != build_count + 1)
+			return false;
+		build_count = processor.build_count;
+	}
+	if(!processor.Update(config, builtin, source1, display0, view1, String(), String(), error))
+		return false;
+	if(processor.build_count != build_count + 1)
+		return false;
+
+	std::vector<float> pixels = { 0.15f, 0.35f, 0.55f, 0.25f };
+	if(!OcioPreview::ApplyOcioProcessor(processor.cpu, pixels.data(), 1, 1, 4, error))
+		return false;
+	if(pixels[3] != 0.25f)
+		return false;
+	if(OcioPreview::ApplyOcioProcessor(OCIO::ConstCPUProcessorRcPtr(), pixels.data(), 1, 1, 4, error))
+		return false;
+	if(error.IsEmpty())
+		return false;
+	if(OcioPreview::ApplyOcioProcessor(processor.cpu, pixels.data(), 1, 1, 2, error))
+		return false;
+	if(error.IsEmpty())
+		return false;
+	printf("OCIO processor cache %s: OK\n", ~builtin);
+	return true;
 }
 
 static bool TestPreviewRecovery(const OCIO::ConstConfigRcPtr& config, const String& builtin)
@@ -105,6 +173,7 @@ int main()
 
 	bool preview_ok = false;
 	String selected_note;
+	bool cache_ok = false;
 	for(const String& builtin : builtins) {
 		OCIO::ConstConfigRcPtr config;
 		String error;
@@ -115,6 +184,11 @@ int main()
 		}
 		printf("OCIO builtin config %s: OK\n", ~builtin);
 		passed++;
+		if(!cache_ok) {
+			cache_ok = TestProcessorCache(config, builtin);
+			if(cache_ok)
+				passed++;
+		}
 
 		String source = OcioPreview::GetDefaultSourceColorSpace(config);
 		Vector<String> displays = OcioPreview::GetDisplayNames(config);
@@ -167,6 +241,11 @@ int main()
 		printf("OCIO preview transform: FAIL\n");
 		printf("OCIO preview alpha preserved: FAIL\n");
 		failed += 2;
+	}
+
+	if(!cache_ok) {
+		printf("OCIO processor cache: FAIL\n");
+		failed++;
 	}
 
 	if(SameImage(src, original)) {

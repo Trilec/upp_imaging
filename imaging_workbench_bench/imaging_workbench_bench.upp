@@ -5,6 +5,7 @@ uses
 	Ui,
 	imaging_preview_coalescing,
 	imaging_tone_conversion,
+	imaging_roundtrip_viewer_ocio,
 	imaging_view_transform,
 	oiio,
 	opencolorio;

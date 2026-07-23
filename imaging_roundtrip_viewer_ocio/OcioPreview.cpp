@@ -1,17 +1,176 @@
 #include "OcioPreview.h"
 
+#include <algorithm>
 #include <exception>
+#include <cmath>
+#include <vector>
 
 namespace Upp {
 namespace OcioPreview {
 
-static void CopyImage(const TestImageF& src, TestImageF& dst)
+static int ClampByte(float value)
 {
-	dst.width = src.width;
-	dst.height = src.height;
-	dst.pixels.SetCount(src.pixels.GetCount());
-	for(int i = 0; i < src.pixels.GetCount(); ++i)
-		dst.pixels[i] = src.pixels[i];
+	if(!std::isfinite(value))
+		value = 0.0f;
+	value = std::clamp(value, 0.0f, 1.0f);
+	return (int)(value * 255.0f + 0.5f);
+}
+
+static void BuildGammaLut(Vector<float>& lut, double display_gamma)
+{
+	static constexpr int LUT_SIZE = 65536;
+	lut.SetCount(LUT_SIZE);
+	float inverse_gamma = 1.0f / (float)((!std::isfinite(display_gamma) || display_gamma <= 0.0) ? 1.0 : display_gamma);
+	for(int i = 0; i < LUT_SIZE; ++i) {
+		float normalized = (float)i / (float)(LUT_SIZE - 1);
+		lut[i] = std::pow(normalized, inverse_gamma);
+	}
+}
+
+void OcioPreviewProcessor::Clear()
+{
+	config.reset();
+	cpu.reset();
+	config_name.Clear();
+	source.Clear();
+	display.Clear();
+	view.Clear();
+	look.Clear();
+	lut.Clear();
+}
+
+bool OcioPreviewProcessor::Update(const OCIO::ConstConfigRcPtr& new_config, const String& new_config_name,
+	const String& new_source, const String& new_display, const String& new_view,
+	const String& new_look, const String& new_lut, String& error)
+{
+	error.Clear();
+	if(config && config.get() == new_config.get() && config_name == new_config_name && source == new_source &&
+		display == new_display && view == new_view && look == new_look && lut == new_lut)
+		return true;
+
+	Clear();
+	if(!new_config) {
+		error = "OCIO config is not loaded";
+		return false;
+	}
+	if(new_source.IsEmpty() || new_display.IsEmpty() || new_view.IsEmpty()) {
+		error = "OCIO preview selection is incomplete";
+		return false;
+	}
+
+	try {
+		OCIO::ConstProcessorRcPtr processor = new_config->getProcessor(~new_source, ~new_display, ~new_view, OCIO::TRANSFORM_DIR_FORWARD);
+		if(!processor) {
+			error = "OCIO processor creation failed";
+			return false;
+		}
+		OCIO::ConstCPUProcessorRcPtr new_cpu = processor->getDefaultCPUProcessor();
+		if(!new_cpu) {
+			error = "OCIO CPU processor creation failed";
+			return false;
+		}
+		config = new_config;
+		cpu = new_cpu;
+		config_name = new_config_name;
+		source = new_source;
+		display = new_display;
+		view = new_view;
+		look = new_look;
+		lut = new_lut;
+		++build_count;
+		return true;
+	}
+	catch(const OCIO::Exception& e) {
+		error = e.what();
+	}
+	catch(const std::exception& e) {
+		error = e.what();
+	}
+	catch(...) {
+		error = "OCIO processor creation failed";
+	}
+	return false;
+}
+
+float ApplySceneExposure(float value, float exposure_scale)
+{
+	if(std::isnan(value) || value == 0.0f)
+		return 0.0f;
+	if(!std::isfinite(exposure_scale))
+		exposure_scale = 1.0f;
+	if(!std::isfinite(value))
+		return value;
+	return value * exposure_scale;
+}
+
+void UpdateDisplayGamma(DisplayGammaState& gamma, double display_gamma)
+{
+	if(!std::isfinite(display_gamma) || display_gamma <= 0.0)
+		display_gamma = 1.0;
+	if(!gamma.lut.IsEmpty() && gamma.gamma == display_gamma)
+		return;
+	gamma.gamma = display_gamma;
+	gamma.inverse_gamma = 1.0f / (float)display_gamma;
+	BuildGammaLut(gamma.lut, display_gamma);
+}
+
+byte ApplyDisplayGammaToByte(float value, const DisplayGammaState& gamma)
+{
+	if(gamma.lut.IsEmpty())
+		return 0;
+	if(std::isnan(value) || value <= 0.0f)
+		return 0;
+	if(value > 0.0f && !std::isfinite(value))
+		return 255;
+	double scaled = (double)value;
+	if(scaled <= 0.0)
+		return 0;
+	if(scaled >= 1.0)
+		return 255;
+	double pos = scaled * (double)(gamma.lut.GetCount() - 1);
+	int idx0 = std::clamp((int)std::floor(pos), 0, gamma.lut.GetCount() - 1);
+	int idx1 = std::min(idx0 + 1, gamma.lut.GetCount() - 1);
+	double frac = pos - idx0;
+	double blended = (1.0 - frac) * (double)gamma.lut[idx0] + frac * (double)gamma.lut[idx1];
+	return (byte)ClampByte((float)blended);
+}
+
+bool ApplyOcioProcessor(const OCIO::ConstCPUProcessorRcPtr& cpu, float* pixels, int width, int height, int channels, String& error)
+{
+	error.Clear();
+	if(!cpu) {
+		error = "OCIO CPU processor is not available";
+		return false;
+	}
+	if(!pixels || width <= 0 || height <= 0 || (channels != 3 && channels != 4)) {
+		error = "OCIO packed buffer is invalid";
+		return false;
+	}
+	try {
+		Vector<float> alpha;
+		if(channels == 4) {
+			alpha.SetCount((int64)width * height);
+			for(int i = 0; i < alpha.GetCount(); ++i)
+				alpha[i] = pixels[i * 4 + 3];
+		}
+		OCIO::PackedImageDesc desc(pixels, width, height, channels);
+		cpu->apply(desc);
+		if(channels == 4) {
+			for(int i = 0; i < alpha.GetCount(); ++i)
+				pixels[i * 4 + 3] = alpha[i];
+		}
+		return true;
+	}
+	catch(const OCIO::Exception& e) {
+		error = e.what();
+	}
+	catch(const std::exception& e) {
+		error = e.what();
+	}
+	catch(...) {
+		error = "OCIO packed buffer processing failed";
+	}
+	return false;
 }
 
 Vector<String> GetBuiltinConfigNames()
@@ -140,48 +299,35 @@ String GetDefaultView(const OCIO::ConstConfigRcPtr& config, const String& displa
 bool ApplyPreview(const OCIO::ConstConfigRcPtr& config, const String& source_color_space,
 	const String& display, const String& view, const TestImageF& src, TestImageF& dst, String& error)
 {
-	error.Clear();
-	CopyImage(src, dst);
-	if(!config) {
-		error = "OCIO config is not loaded";
-		return false;
-	}
 	if(!src.pixels.GetCount() || src.width <= 0 || src.height <= 0 || src.pixels.GetCount() != (int64)src.width * src.height) {
 		error = "OCIO preview source image is invalid";
 		return false;
 	}
-	if(source_color_space.IsEmpty() || display.IsEmpty() || view.IsEmpty()) {
-		error = "OCIO preview selection is incomplete";
+	dst.width = src.width;
+	dst.height = src.height;
+	dst.pixels.SetCount(src.pixels.GetCount());
+	for(int i = 0; i < src.pixels.GetCount(); ++i)
+		dst.pixels[i] = src.pixels[i];
+	OcioPreviewProcessor processor;
+	if(!processor.Update(config, String(), source_color_space, display, view, String(), String(), error))
 		return false;
+	std::vector<float> pixels((size_t)src.width * src.height * 4);
+	for(int i = 0; i < src.pixels.GetCount(); ++i) {
+		pixels[(size_t)i * 4 + 0] = src.pixels[i].r;
+		pixels[(size_t)i * 4 + 1] = src.pixels[i].g;
+		pixels[(size_t)i * 4 + 2] = src.pixels[i].b;
+		pixels[(size_t)i * 4 + 3] = src.pixels[i].a;
 	}
-	try {
-		OCIO::ConstProcessorRcPtr processor = config->getProcessor(~source_color_space, ~display, ~view, OCIO::TRANSFORM_DIR_FORWARD);
-		if(!processor) {
-			error = "OCIO processor creation failed";
-			return false;
-		}
-		OCIO::ConstCPUProcessorRcPtr cpu = processor->getDefaultCPUProcessor();
-		if(!cpu) {
-			error = "OCIO CPU processor creation failed";
-			return false;
-		}
-		OCIO::PackedImageDesc desc(&dst.pixels[0].r, dst.width, dst.height, 4);
-		cpu->apply(desc);
-		for(int i = 0; i < dst.pixels.GetCount(); ++i)
-			dst.pixels[i].a = src.pixels[i].a;
-		return true;
+	if(!ApplyOcioProcessor(processor.cpu, pixels.data(), src.width, src.height, 4, error))
+		return false;
+	dst.pixels.SetCount(src.pixels.GetCount());
+	for(int i = 0; i < src.pixels.GetCount(); ++i) {
+		dst.pixels[i].r = pixels[(size_t)i * 4 + 0];
+		dst.pixels[i].g = pixels[(size_t)i * 4 + 1];
+		dst.pixels[i].b = pixels[(size_t)i * 4 + 2];
+		dst.pixels[i].a = pixels[(size_t)i * 4 + 3];
 	}
-	catch(const OCIO::Exception& e) {
-		error = e.what();
-	}
-	catch(const std::exception& e) {
-		error = e.what();
-	}
-	catch(...) {
-		error = "OCIO preview transform failed";
-	}
-	CopyImage(src, dst);
-	return false;
+	return true;
 }
 
 String DescribeSelection(const String& config_name, const String& source_color_space,

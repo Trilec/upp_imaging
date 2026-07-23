@@ -4,6 +4,7 @@
 #include <chrono>
 #include <cstdio>
 #include <filesystem>
+#include <utility>
 #include <vector>
 
 #define private public
@@ -62,6 +63,9 @@ static double Median(std::vector<double> values)
 }
 
 struct RenderSample {
+	double processor = 0.0;
+	double buffer = 0.0;
+	double ocio = 0.0;
 	double tone = 0.0;
 	double convert = 0.0;
 	double publish = 0.0;
@@ -78,7 +82,10 @@ static std::vector<RenderSample> Measure(ImagingWorkbench& wb, int runs)
 		wb.RenderPreviewFromProxy();
 		RenderSample sample;
 		sample.total = std::chrono::duration<double, std::milli>(Clock::now() - start).count();
-		sample.tone = wb.preview_timing.tone_ms;
+		sample.processor = wb.preview_timing.processor_ms;
+		sample.buffer = wb.preview_timing.buffer_ms;
+		sample.ocio = wb.preview_timing.ocio_ms;
+		sample.tone = wb.preview_timing.buffer_ms;
 		sample.convert = wb.preview_timing.convert_ms;
 		sample.publish = wb.preview_timing.publish_ms;
 		samples.push_back(sample);
@@ -88,17 +95,23 @@ static std::vector<RenderSample> Measure(ImagingWorkbench& wb, int runs)
 
 static void PrintStats(const char* build, const char* source, const char* proxy, const char* mode, const std::vector<RenderSample>& samples)
 {
+	std::vector<double> processor;
+	std::vector<double> buffer;
+	std::vector<double> ocio;
 	std::vector<double> totals;
-	std::vector<double> tone;
 	std::vector<double> convert;
 	std::vector<double> publish;
+	processor.reserve(samples.size());
+	buffer.reserve(samples.size());
+	ocio.reserve(samples.size());
 	totals.reserve(samples.size());
-	tone.reserve(samples.size());
 	convert.reserve(samples.size());
 	publish.reserve(samples.size());
 	for(const RenderSample& sample : samples) {
+		processor.push_back(sample.processor);
+		buffer.push_back(sample.buffer);
+		ocio.push_back(sample.ocio);
 		totals.push_back(sample.total);
-		tone.push_back(sample.tone);
 		convert.push_back(sample.convert);
 		publish.push_back(sample.publish);
 	}
@@ -106,8 +119,8 @@ static void PrintStats(const char* build, const char* source, const char* proxy,
 	std::sort(sorted.begin(), sorted.end());
 	std::printf("TIMING build=%s source=%s proxy=%s mode=%s runs=%d min=%.2f median=%.2f max=%.2f\n",
 		build, source, proxy, mode, (int)sorted.size(), sorted.front(), Median(sorted), sorted.back());
-	std::printf("PHASE build=%s source=%s proxy=%s mode=%s tone=%.2f convert=%.2f publish=%.2f total=%.2f\n",
-		build, source, proxy, mode, Median(tone), Median(convert), Median(publish), Median(totals));
+	std::printf("PHASE build=%s source=%s proxy=%s mode=%s processor=%.2f buffer=%.2f ocio=%.2f convert=%.2f publish=%.2f total=%.2f\n",
+		build, source, proxy, mode, Median(processor), Median(buffer), Median(ocio), Median(convert), Median(publish), Median(totals));
 }
 
 static const char* BuildLabel()
@@ -117,6 +130,27 @@ static const char* BuildLabel()
 #else
 	return "Release";
 #endif
+}
+
+static void SetOcioEnabled(ImagingWorkbench& wb, bool enabled)
+{
+	wb.ocio_enable_drop.Select(enabled ? 1 : 0);
+	wb.UpdateOcioControls();
+}
+
+static void SelectOcioBuiltin(ImagingWorkbench& wb, int index)
+{
+	wb.ocio_config_drop.Select(index);
+	wb.UpdateOcioControls();
+}
+
+static void PrintSingleStats(const char* build, const char* source, const char* proxy, const char* mode, const ImagingWorkbench& wb)
+{
+	std::printf("TIMING build=%s source=%s proxy=%s mode=%s runs=1 min=%.2f median=%.2f max=%.2f\n",
+		build, source, proxy, mode, wb.preview_timing.total_ms, wb.preview_timing.total_ms, wb.preview_timing.total_ms);
+	std::printf("PHASE build=%s source=%s proxy=%s mode=%s processor=%.2f buffer=%.2f ocio=%.2f convert=%.2f publish=%.2f total=%.2f\n",
+		build, source, proxy, mode, wb.preview_timing.processor_ms, wb.preview_timing.buffer_ms,
+		wb.preview_timing.ocio_ms, wb.preview_timing.convert_ms, wb.preview_timing.publish_ms, wb.preview_timing.total_ms);
 }
 
 int main(int argc, char** argv)
@@ -135,52 +169,41 @@ int main(int argc, char** argv)
 	WriteFixture(large, 2000, 1000, 4, { "R", "G", "B", "A" }, 3, MakePixels(2000, 1000, 4, 0.2f));
 
 	String error;
-	String mid_path = mid.string().c_str();
-	ImagingWorkbench mid_wb;
-	mid_wb.LoadImageFile(mid_path, error, true);
-	int runs = quick ? 1 : 5;
-	if(quick) {
-		mid_wb.ApplyChannelView(ChannelView::RGB);
-		PrintStats(BuildLabel(), "800x600", "800x600", "RGB", Measure(mid_wb, runs));
-	}
-	else {
-		for(ChannelView view : { ChannelView::RGB, ChannelView::Red, ChannelView::Green, ChannelView::Blue, ChannelView::Alpha }) {
-			mid_wb.ApplyChannelView(view);
-			PrintStats(BuildLabel(), "800x600", "800x600", view == ChannelView::RGB ? "RGB" : view == ChannelView::Red ? "R" : view == ChannelView::Green ? "G" : view == ChannelView::Blue ? "B" : "A",
-				Measure(mid_wb, runs));
-		}
-		mid_wb.ApplyExposureStops(2.0, true);
-		PrintStats(BuildLabel(), "800x600", "800x600", "exposure", Measure(mid_wb, runs));
-		mid_wb.ApplyDisplayGamma(2.2, true);
-		PrintStats(BuildLabel(), "800x600", "800x600", "gamma", Measure(mid_wb, runs));
-	}
+	int runs = quick ? 1 : 3;
+	const std::pair<const char*, const std::filesystem::path> fixtures[] = {
+		{ "800x600", mid },
+		{ "1000x700", small },
+		{ "2000x1000", large },
+	};
+	for(const auto& fixture : fixtures) {
+		ImagingWorkbench wb;
+		String path = fixture.second.string().c_str();
+		wb.LoadImageFile(path, error, true);
+		wb.ApplyChannelView(ChannelView::RGB);
 
-	if(!quick) {
-		ImagingWorkbench small_wb;
-		String small_path = small.string().c_str();
-		small_wb.LoadImageFile(small_path, error, true);
-		for(ChannelView view : { ChannelView::RGB, ChannelView::Red, ChannelView::Green, ChannelView::Blue, ChannelView::Alpha }) {
-			small_wb.ApplyChannelView(view);
-			PrintStats(BuildLabel(), "1000x700", "1000x700", view == ChannelView::RGB ? "RGB" : view == ChannelView::Red ? "R" : view == ChannelView::Green ? "G" : view == ChannelView::Blue ? "B" : "A",
-				Measure(small_wb, runs));
-		}
-		small_wb.ApplyExposureStops(2.0, true);
-		PrintStats(BuildLabel(), "1000x700", "1000x700", "exposure", Measure(small_wb, runs));
-		small_wb.ApplyDisplayGamma(2.2, true);
-		PrintStats(BuildLabel(), "1000x700", "1000x700", "gamma", Measure(small_wb, runs));
+		SetOcioEnabled(wb, false);
+		wb.preview_timing.processor_ms = 0.0;
+		PrintStats(BuildLabel(), fixture.first, fixture.first, "OCIO off RGB", Measure(wb, runs));
 
-		ImagingWorkbench large_wb;
-		String large_path = large.string().c_str();
-		large_wb.LoadImageFile(large_path, error, true);
-		for(ChannelView view : { ChannelView::RGB, ChannelView::Red, ChannelView::Green, ChannelView::Blue, ChannelView::Alpha }) {
-			large_wb.ApplyChannelView(view);
-			PrintStats(BuildLabel(), "2000x1000", "2000x1000", view == ChannelView::RGB ? "RGB" : view == ChannelView::Red ? "R" : view == ChannelView::Green ? "G" : view == ChannelView::Blue ? "B" : "A",
-				Measure(large_wb, runs));
+		SetOcioEnabled(wb, true);
+		SelectOcioBuiltin(wb, 1);
+		wb.ApplyChannelView(ChannelView::RGB);
+		wb.preview_timing.processor_ms = 0.0;
+		PrintStats(BuildLabel(), fixture.first, fixture.first, "OCIO on RGB", Measure(wb, runs));
+
+		wb.ApplyExposureStops(2.0, true);
+		wb.preview_timing.processor_ms = 0.0;
+		PrintStats(BuildLabel(), fixture.first, fixture.first, "OCIO on exposure", Measure(wb, runs));
+
+		wb.ApplyDisplayGamma(2.2, true);
+		wb.preview_timing.processor_ms = 0.0;
+		PrintStats(BuildLabel(), fixture.first, fixture.first, "OCIO on gamma", Measure(wb, runs));
+
+		if(wb.ocio_source_drop.GetCount() > 1) {
+			wb.ocio_source_drop.Select(1);
+			wb.UpdateOcioControls();
+			PrintSingleStats(BuildLabel(), fixture.first, fixture.first, "OCIO selection change", wb);
 		}
-		large_wb.ApplyExposureStops(2.0, true);
-		PrintStats(BuildLabel(), "2000x1000", "2000x1000", "exposure", Measure(large_wb, runs));
-		large_wb.ApplyDisplayGamma(2.2, true);
-		PrintStats(BuildLabel(), "2000x1000", "2000x1000", "gamma", Measure(large_wb, runs));
 	}
 
 	ImagingCanvas canvas;
