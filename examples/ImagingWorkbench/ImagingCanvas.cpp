@@ -179,21 +179,6 @@ void ImagingCanvas::MouseMove(Point p, dword keyflags)
 	Ctrl::MouseMove(p, keyflags);
 }
 
-void ImagingCanvas::LeftDown(Point p, dword keyflags)
-{
-	Ctrl::LeftDown(p, keyflags);
-}
-
-void ImagingCanvas::LeftDrag(Point p, dword keyflags)
-{
-	Ctrl::LeftDrag(p, keyflags);
-}
-
-void ImagingCanvas::LeftUp(Point p, dword keyflags)
-{
-	Ctrl::LeftUp(p, keyflags);
-}
-
 void ImagingCanvas::MiddleDown(Point p, dword keyflags)
 {
 	if(!HasImage())
@@ -238,15 +223,6 @@ void ImagingCanvas::CancelMode()
 {
 	EndPan();
 	Ctrl::CancelMode();
-}
-
-void ImagingCanvas::UpdateViewState(bool notify)
-{
-	ClampViewState();
-	RecomputeGeometry();
-	Refresh();
-	if(notify && WhenViewChanged)
-		WhenViewChanged();
 }
 
 void ImagingCanvas::RecomputeGeometry()
@@ -315,9 +291,6 @@ void ImagingCanvas::BeginPan(Point p)
 	SetCapture();
 	pan_start_mouse = p;
 	pan_start_pan = view_state.pan;
-	Pointf source;
-	view_geometry.ViewToSource(Pointf(p.x, p.y), source);
-	pan_anchor_source = source;
 }
 
 void ImagingCanvas::UpdatePan(Point p)
