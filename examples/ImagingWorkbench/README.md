@@ -21,6 +21,15 @@ Current scope:
 - exact full-resolution source probing through the current view transform
 - bounded preview proxies for rendering
 
+Navigation behavior:
+- new PNG and EXR loads start in Fit mode
+- wheel zoom enters Manual mode and keeps the source point beneath the cursor stable until edge clamping is required
+- a middle-button drag enters Manual mode; when the image is smaller than the viewport, pan bounds keep it centred
+- releasing the middle button or receiving cancellation ends the pan gesture and releases capture safely
+- Fit restores the centred fitted view
+- OCIO, Look, LUT, exposure, gamma, and channel-display changes preserve the current navigation state
+- pass changes preserve a valid manual source-relative centre when dimensions allow
+
 Known limits:
 - no histogram or analysis tools
 - no JPEG or TIFF support
