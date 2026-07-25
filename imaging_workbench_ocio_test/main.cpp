@@ -495,6 +495,18 @@ int main()
 	Check(CaptureWorkbenchSnapshot(wb, after_failed_png), "capture failed PNG post-save state", passed, failed);
 	Check(SameWorkbenchSnapshot(before_failed_png, after_failed_png), "failed PNG save leaves source and viewer state unchanged", passed, failed);
 
+	Check(wb.LoadImageFile(baseline_png_path.Begin(), error, true), "PNG load", passed, failed);
+	wb.canvas.SetRect(0, 0, 640, 360);
+	wb.canvas.Layout();
+	wb.RenderPreviewFromProxy();
+	Check(wb.canvas.GetViewState().mode == ViewMode::Fit, "PNG load starts in Fit", passed, failed);
+
+	Check(wb.LoadImageFile(baseline_exr_path.Begin(), error, true), "EXR load", passed, failed);
+	wb.canvas.SetRect(0, 0, 640, 360);
+	wb.canvas.Layout();
+	wb.RenderPreviewFromProxy();
+	Check(wb.canvas.GetViewState().mode == ViewMode::Fit, "EXR load starts in Fit", passed, failed);
+
 	Check(wb.LoadImageFile(grouped.string().c_str(), error, true), "grouped load", passed, failed);
 	wb.canvas.SetRect(0, 0, 640, 360);
 	wb.canvas.Layout();
@@ -576,6 +588,11 @@ int main()
 	Check(same_view(before_group, wb.canvas.GetViewState()), "pass/group change behaviour", passed, failed);
 
 	ImageViewState view_before_ocio = wb.canvas.GetViewState();
+	wb.ocio_enable_drop.Select(0);
+	wb.UpdateOcioControls(ImagingWorkbench::OcioControlChange::Enable);
+	wb.ocio_enable_drop.Select(1);
+	wb.UpdateOcioControls(ImagingWorkbench::OcioControlChange::Enable);
+	Check(same_view(view_before_ocio, wb.canvas.GetViewState()), "OCIO change preserves view", passed, failed);
 	wb.ApplyExposureStops(1.0, true);
 	Check(same_view(view_before_ocio, wb.canvas.GetViewState()), "exposure drag preserves view", passed, failed);
 	wb.ApplyDisplayGamma(2.2, true);
