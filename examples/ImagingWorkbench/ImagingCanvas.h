@@ -33,9 +33,6 @@ protected:
 	virtual void Paint(Draw& w) override;
 	virtual void Layout() override;
 	virtual void MouseMove(Point p, dword keyflags) override;
-	virtual void LeftDown(Point p, dword keyflags) override;
-	virtual void LeftDrag(Point p, dword keyflags) override;
-	virtual void LeftUp(Point p, dword keyflags) override;
 	virtual void MiddleDown(Point p, dword keyflags) override;
 	virtual void MiddleDrag(Point p, dword keyflags) override;
 	virtual void MiddleUp(Point p, dword keyflags) override;
@@ -47,7 +44,6 @@ private:
 	static constexpr double MIN_ZOOM = 0.05;
 	static constexpr double MAX_ZOOM = 32.0;
 	static constexpr double WHEEL_STEP = 1.1;
-	void UpdateViewState(bool notify = false);
 	void RecomputeGeometry();
 	void ClampViewState();
 	void UpdateProbeFromPoint(Point p);
@@ -56,8 +52,6 @@ private:
 	void UpdatePan(Point p);
 	void EndPan();
 	void ZoomAt(Point p, double factor);
-	Pointf CurrentPanCenter() const;
-	Pointf CurrentSourcePointAtViewportCenter() const;
 
 	Image image;
 	Size proxy_size;
@@ -67,7 +61,6 @@ private:
 	bool panning = false;
 	Point pan_start_mouse;
 	Pointf pan_start_pan;
-	Pointf pan_anchor_source;
 	String placeholder = "Stage A: canvas host";
 };
 
