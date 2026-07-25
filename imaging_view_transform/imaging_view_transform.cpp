@@ -24,8 +24,11 @@ ImageViewGeometry BuildImageViewGeometry(Size viewport_size, Size display_size, 
 
 	Pointf center(viewport_size.cx / 2.0, viewport_size.cy / 2.0);
 	Pointf pan = state.mode == ViewMode::Fit ? Pointf(display_size.cx / 2.0, display_size.cy / 2.0) : state.pan;
-	geometry.image_rect = Rectf(center.x - pan.x * geometry.view_scale, center.y - pan.y * geometry.view_scale,
-		                        display_size.cx * geometry.view_scale, display_size.cy * geometry.view_scale);
+	double img_left = center.x - pan.x * geometry.view_scale;
+	double img_top = center.y - pan.y * geometry.view_scale;
+	double img_right = img_left + display_size.cx * geometry.view_scale;
+	double img_bottom = img_top + display_size.cy * geometry.view_scale;
+	geometry.image_rect = Rectf(img_left, img_top, img_right, img_bottom);
 	geometry.effective_zoom = geometry.view_scale * (source_size.cx > 1 && display_size.cx > 1 ? (double)(display_size.cx - 1) / (double)(source_size.cx - 1) : 1.0);
 	return geometry;
 }
