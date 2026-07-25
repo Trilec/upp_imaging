@@ -12,7 +12,7 @@ mainconfig
 	"" = "CONSOLE";
 
 file
+	main.cpp,
 	../examples/ImagingWorkbench/ImagingWorkbench.generated.cpp,
 	../examples/ImagingWorkbench/ImagingCanvas.cpp,
-	../examples/ImagingWorkbench/ImagingWorkbench.cpp,
-	main.cpp;
+	../examples/ImagingWorkbench/ImagingWorkbench.cpp;
