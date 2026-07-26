@@ -369,10 +369,8 @@ void ImagingWorkbench::PostBuild()
 	ocio_layout.Add(ocio_error).Fit().MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
 	pageB.Add(ocio_layout.SizePos());
 
-	analysis_body.SetCustomStyle(UiTheme::ResolveLabel(UiRole::Subtle));
-	analysis_body.SetText("Histogram and pixel analysis will be connected after viewer controls.")
-		.SetAlign(UiAlign::LEFT, UiAlign::CENTER);
-	pageC.Add(analysis_body.SizePos());
+	histogram_display.SetMinSize(Size(DPI(220), DPI(140)));
+	pageC.Add(histogram_display.SizePos());
 
 	canvas.SetPlaceholderText("Open an EXR or PNG to begin");
 	canvas.WhenViewChanged = [=] { UpdateCanvasZoomLabel(); };
@@ -1126,14 +1124,8 @@ void ImagingWorkbench::BuildSelectedGroupProxy()
 	RecordTiming("proxy build", elapsed, &proxy_cache[0]);
 }
 
-void ImagingWorkbench::RenderPreviewFromProxy()
+void ImagingWorkbench::ComputeHistogramFromProxy()
 {
-	if(selected_preview_group < 0 || selected_preview_group >= preview_groups.GetCount()) {
-		canvas.ClearImage();
-		return;
-	}
-
-	BuildSelectedGroupProxy();
 	const PreviewProxy* proxy = nullptr;
 	for(const PreviewProxy& cached : proxy_cache) {
 		if(cached.group_index == selected_preview_group) {
@@ -1142,6 +1134,35 @@ void ImagingWorkbench::RenderPreviewFromProxy()
 		}
 	}
 	if(!proxy || !proxy->IsValid()) {
+		histogram_data.Clear();
+		histogram_display.ClearData();
+		return;
+	}
+
+	ComputeHistogramFromBuffer(histogram_data, proxy->pixels,
+		proxy->proxy_size.cx, proxy->proxy_size.cy, proxy->channel_count,
+		proxy->red, proxy->green, proxy->blue, proxy->alpha, proxy->single_channel);
+	histogram_display.SetData(histogram_data);
+}
+
+void ImagingWorkbench::RenderPreviewFromProxy()
+{
+	if(selected_preview_group < 0 || selected_preview_group >= preview_groups.GetCount()) {
+		canvas.ClearImage();
+		return;
+	}
+
+	BuildSelectedGroupProxy();
+	ComputeHistogramFromProxy();
+	const PreviewProxy* proxy = nullptr;
+	for(const PreviewProxy& cached : proxy_cache) {
+		if(cached.group_index == selected_preview_group) {
+			proxy = &cached;
+			break;
+		}
+	}
+	if(!proxy || !proxy->IsValid()) {
+		histogram_display.ClearData();
 		canvas.ClearImage();
 		return;
 	}
@@ -1933,6 +1954,8 @@ bool ImagingWorkbench::LoadImageFile(const String& path, String& error, bool pop
 
 	source_image = loaded;
 	source_filename = path;
+	histogram_data.Clear();
+	histogram_display.ClearData();
 	reset_canvas_view = true;
 	probe_source_pixel.SetCount(source_image.spec().nchannels);
 	last_error.Clear();
@@ -1947,6 +1970,172 @@ bool ImagingWorkbench::LoadImageFile(const String& path, String& error, bool pop
 	fit_view_button.Enable();
 	RecordTiming("file load", load_ms);
 	return true;
+}
+
+// ── HistogramCtrl ───────────────────────────────────────────────────────
+
+HistogramCtrl::HistogramCtrl()
+{
+	channel_mask = 0;
+	hover_channel = -1;
+}
+
+void HistogramCtrl::SetData(HistogramData& data)
+{
+	Swap(hd, data);
+	has_data = hd.IsValid();
+	Refresh();
+}
+
+void HistogramCtrl::ClearData()
+{
+	hd.Clear();
+	has_data = false;
+	Refresh();
+}
+
+void HistogramCtrl::SetChannelMask(int mask)
+{
+	channel_mask = mask;
+	Refresh();
+}
+
+Color HistogramCtrl::ChannelColor(int ch_index, const HistogramData& data)
+{
+	if(ch_index < 0 || ch_index >= data.channel_names.GetCount())
+		return SColorText;
+	const String& name = data.channel_names[ch_index];
+	if(name == "R") return Color(255, 60, 60);
+	if(name == "G") return Color(60, 200, 60);
+	if(name == "B") return Color(60, 120, 255);
+	if(name == "A") return Color(200, 200, 60);
+	if(name == "Gray") return Color(200, 200, 200);
+	return Blend(SColorText, SColorPaper, 128);
+}
+
+void HistogramCtrl::Paint(Draw& w)
+{
+	Size sz = GetSize();
+	w.DrawRect(sz, SColorPaper);
+
+	if(!has_data) {
+		w.DrawText(sz.cx / 2 - 80, sz.cy / 2 - 8, "No histogram data", Arial(12), SColorDisabled);
+		return;
+	}
+
+	int margin = DPI(8);
+	int graph_area = sz.cy - DPI(140);
+	int graph_left = margin;
+	int graph_top = margin;
+	int gw = std::max(DPI(100), sz.cx - 2 * margin);
+	int gh = std::max(DPI(40), graph_area);
+
+	PaintGraph(w, graph_left, graph_top, gw, gh);
+
+	int stats_y = graph_top + gh + DPI(8);
+	int stats_w = sz.cx - 2 * margin;
+	PaintStats(w, margin, stats_y, stats_w);
+}
+
+void HistogramCtrl::PaintGraph(Draw& w, int graph_left, int graph_top, int graph_w, int graph_h)
+{
+	int num_channels = hd.channels.GetCount();
+	if(num_channels == 0) return;
+
+	w.DrawRect(graph_left, graph_top, graph_w, graph_h, Color(20, 20, 20));
+
+	int plot_left = graph_left + DPI(4);
+	int plot_top = graph_top + DPI(4);
+	int plot_w = graph_w - DPI(8);
+	int plot_h = graph_h - DPI(8);
+
+	if(plot_w < 4 || plot_h < 4) return;
+
+	static const int ALL_MASK = 0;
+	int mask = channel_mask;
+
+	int64 max_count = 0;
+	for(int c = 0; c < num_channels; ++c) {
+		if(mask != ALL_MASK && !(mask & (1 << c))) continue;
+		for(int b = 0; b < hd.bins; ++b)
+			if(hd.channels[c][b] > max_count)
+				max_count = hd.channels[c][b];
+	}
+	if(max_count == 0) max_count = 1;
+
+	for(int c = 0; c < num_channels; ++c) {
+		if(mask != ALL_MASK && !(mask & (1 << c))) continue;
+		Color clr = ChannelColor(c, hd);
+
+		Vector<Point> pts;
+		pts.Reserve(hd.bins + 2);
+		pts.Add(Point(plot_left, plot_top + plot_h));
+
+		for(int b = 0; b < hd.bins; ++b) {
+			int x = plot_left + (int)((double)b / hd.bins * plot_w);
+			int64 count = hd.channels[c][b];
+			int h = (int)((double)count / max_count * plot_h);
+			h = std::min(h, plot_h);
+			pts.Add(Point(x, plot_top + plot_h - h));
+		}
+		pts.Add(Point(plot_left + plot_w, plot_top + plot_h));
+
+		w.DrawPolygon(pts, clr);
+	}
+
+	for(int i = 0; i <= 4; ++i) {
+		int y = plot_top + plot_h * i / 4;
+		w.DrawLine(plot_left, y, plot_left + plot_w, y, DPI(0.5), Color(60, 60, 60));
+	}
+
+	w.DrawText(plot_left, plot_top + plot_h + DPI(2), "0", Arial(DPI(8)), SColorDisabled);
+	String max_text = FormatDouble((double)max_count / hd.total_samples * 100.0, 0) + "%";
+	w.DrawText(plot_left + plot_w - GetTextSize(max_text, Arial(DPI(8))).cx, plot_top + plot_h + DPI(2),
+	           max_text, Arial(DPI(8)), SColorDisabled);
+}
+
+void HistogramCtrl::PaintStats(Draw& w, int x, int y, int width_val)
+{
+	int num_channels = hd.channels.GetCount();
+	int line_h = DPI(16);
+	int cur_y = y;
+
+	for(int c = 0; c < num_channels; ++c) {
+		Color clr = ChannelColor(c, hd);
+		int64 total = 0;
+		for(int b = 0; b < hd.bins; ++b) total += hd.channels[c][b];
+
+		String info = Format("%s  samples=%lld  min=%.3f  max=%.3f",
+		                   ~hd.channel_names[c], (int64)total, hd.min_finite, hd.max_finite);
+		if(hd.min_finite < HistogramData::RANGE_MIN || hd.max_finite > HistogramData::RANGE_MAX)
+			info << Format("  [%.3f, %.3f]", hd.min_finite, hd.max_finite);
+
+		w.DrawRect(x, cur_y, DPI(10), DPI(10), clr);
+		w.DrawText(x + DPI(14), cur_y - DPI(1), info, Arial(DPI(10)), SColorText);
+		cur_y += line_h;
+	}
+
+	if(hd.non_finite > 0 || hd.below_range > 0 || hd.above_range > 0) {
+		String warn;
+		if(hd.non_finite > 0) warn << Format("NaN/Inf: %lld  ", (int64)hd.non_finite);
+		if(hd.below_range > 0) warn << Format("below 0: %lld  ", (int64)hd.below_range);
+		if(hd.above_range > 0) warn << Format("above 1: %lld", (int64)hd.above_range);
+		w.DrawText(x, cur_y, warn, Arial(DPI(10)), Color(255, 150, 50));
+		cur_y += line_h;
+	}
+
+	String dim = Format("%d x %d", hd.analyzed_width, hd.analyzed_height);
+	w.DrawText(x, cur_y, dim, Arial(DPI(9)), SColorDisabled);
+}
+
+void HistogramCtrl::MouseMove(Point p, dword)
+{
+	last_mouse = p;
+}
+
+void HistogramCtrl::LeftDown(Point p, dword)
+{
+	last_mouse = p;
 }
 
 } // namespace Upp

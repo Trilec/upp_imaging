@@ -1,0 +1,11 @@
+description "Source-referred histogram analysis data model";
+
+uses
+	Core;
+
+file
+	imaging_histogram.h,
+	imaging_histogram.cpp;
+
+mainconfig
+	"" = "CONSOLE";

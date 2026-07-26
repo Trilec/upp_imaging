@@ -3,6 +3,7 @@ description "Interactive imaging workbench MVP";
 uses
 	CtrlLib,
 	Ui,
+	imaging_histogram,
 	imaging_preview_coalescing,
 	imaging_tone_conversion,
 	imaging_roundtrip_test_support,
