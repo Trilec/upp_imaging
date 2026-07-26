@@ -4,6 +4,7 @@
 #include "ImagingWorkbench.generated.h"
 #include "ImagingCanvas.h"
 
+#include <imaging_histogram/imaging_histogram.h>
 #include <imaging_preview_coalescing/imaging_preview_coalescing.h>
 #include <imaging_tone_conversion/imaging_tone_conversion.h>
 #include <imaging_roundtrip_viewer_ocio/OcioPreview.h>
@@ -83,6 +84,32 @@ struct PreviewTimingBreakdown {
 	double total_ms = 0.0;
 };
 
+class HistogramCtrl : public Ctrl {
+public:
+	void SetData(HistogramData& data);
+	void ClearData();
+	void SetChannelMask(int mask);
+	int GetChannelMask() const { return channel_mask; }
+	bool HasData() const { return has_data; }
+
+	HistogramCtrl();
+
+private:
+	virtual void Paint(Draw& w) override;
+	virtual void MouseMove(Point, dword) override;
+	virtual void LeftDown(Point, dword) override;
+
+	void PaintGraph(Draw& w, int graph_left, int graph_top, int graph_w, int graph_h);
+	void PaintStats(Draw& w, int x, int y, int width_val);
+	static Color ChannelColor(int ch_index, const HistogramData& data);
+
+	HistogramData hd;
+	int channel_mask = 0;
+	bool has_data = false;
+	int hover_channel = -1;
+	Point last_mouse;
+};
+
 class ImagingWorkbench : public ImagingWorkbenchLayout {
 public:
 	typedef ImagingWorkbench CLASSNAME;
@@ -126,6 +153,7 @@ protected:
 	void ApplyDisplayGamma(double value, bool immediate = false);
 	void SchedulePreviewRender(bool immediate = false);
 	void BuildSelectedGroupProxy();
+	void ComputeHistogramFromProxy();
 	void RenderPreviewFromProxy();
 	String GetOcioSummary() const;
 	String GetImageColorSpace() const;
@@ -165,7 +193,8 @@ protected:
 	UiLabel ocio_lut_path_label;
 	UiLabel ocio_lut_direction_label;
 	UiLabel ocio_error;
-	UiLabel analysis_body;
+
+	HistogramCtrl histogram_display;
 	UiDropdown ocio_enable_drop;
 	UiDropdown ocio_config_source_drop;
 	UiDropdown ocio_config_drop;
@@ -221,6 +250,7 @@ protected:
 	bool ocio_preview_applied = false;
 	String ocio_error_text;
 	PreviewRenderCoalescer preview_render_coalescer;
+	HistogramData histogram_data;
 	PreviewTimingBreakdown preview_timing;
 	String timing_summary;
 	String resolution_text;

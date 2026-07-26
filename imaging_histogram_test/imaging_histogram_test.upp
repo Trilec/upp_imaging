@@ -1,0 +1,11 @@
+description "Tests for source-referred histogram analysis";
+
+uses
+	Core,
+	imaging_histogram;
+
+file
+	main.cpp;
+
+mainconfig
+	"" = "CONSOLE";
