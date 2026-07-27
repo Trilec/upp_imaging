@@ -108,6 +108,7 @@ private:
 	bool has_data = false;
 	int hover_channel = -1;
 	Point last_mouse;
+	Vector<Rect> swatch_rects;
 };
 
 class ImagingWorkbench : public ImagingWorkbenchLayout {
