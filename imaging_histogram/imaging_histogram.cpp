@@ -10,87 +10,38 @@ void HistogramData::Clear()
 {
 	bins = DEFAULT_BINS;
 	channels.Clear();
-	channel_names.Clear();
-	total_samples = 0;
-	below_range = 0;
-	above_range = 0;
-	non_finite = 0;
-	min_finite = DBL_MAX;
-	max_finite = -DBL_MAX;
-	mean = 0.0;
+	analyzed_pixels = 0;
 	analyzed_width = 0;
 	analyzed_height = 0;
 	analyzed_channels = 0;
-	has_red = false;
-	has_green = false;
-	has_blue = false;
-	has_alpha = false;
 }
 
-int64 HistogramData::TotalClassified() const
+bool HistogramProxyKey::operator==(const HistogramProxyKey& other) const
 {
-	return total_samples + below_range + above_range + non_finite;
+	return group_index == other.group_index
+		&& source_size == other.source_size
+		&& proxy_size == other.proxy_size
+		&& channel_count == other.channel_count
+		&& red == other.red
+		&& green == other.green
+		&& blue == other.blue
+		&& alpha == other.alpha
+		&& single_channel == other.single_channel;
 }
 
-static void AccumulateChannel(HistogramData& data, int ch_idx, const String& name,
-                               const float* pixels, int count, int channels)
+bool HistogramProxyKey::operator!=(const HistogramProxyKey& other) const
 {
-	Vector<int64>& bins = data.channels[ch_idx];
-	bins.SetCount(data.bins, 0);
-	int64 total = 0;
-	int64 below = 0;
-	int64 above = 0;
-	int64 non_finite = 0;
-	double sum = 0.0;
-	int64 finite_count = 0;
-	double local_min = DBL_MAX;
-	double local_max = -DBL_MAX;
-	int max_bin = data.bins - 1;
-	double range_min = HistogramData::RANGE_MIN;
-	double range_max = HistogramData::RANGE_MAX;
+	return !(*this == other);
+}
 
-	for(int i = 0; i < count; ++i) {
-		float v = pixels[i * channels + ch_idx];
-		if(!std::isfinite(v)) {
-			++non_finite;
-			continue;
-		}
-		if(v < range_min) {
-			++below;
-			if((double)v < local_min) local_min = v;
-			if((double)v > local_max) local_max = v;
-			sum += v;
-			++finite_count;
-			continue;
-		}
-		if(v >= range_max) {
-			++above;
-			if((double)v < local_min) local_min = v;
-			if((double)v > local_max) local_max = v;
-			sum += v;
-			++finite_count;
-			continue;
-		}
-		++total;
-		if((double)v < local_min) local_min = v;
-		if((double)v > local_max) local_max = v;
-		sum += v;
-		++finite_count;
-		int bin = (int)((v - range_min) / (range_max - range_min) * data.bins);
-		if(bin >= data.bins) bin = max_bin;
-		if(bin < 0) bin = 0;
-		++bins[bin];
-	}
-
-	data.channel_names[ch_idx] = name;
-	data.below_range += below;
-	data.above_range += above;
-	data.non_finite += non_finite;
-	if(finite_count > 0) {
-		if(local_min < data.min_finite) data.min_finite = local_min;
-		if(local_max > data.max_finite) data.max_finite = local_max;
-		data.mean += sum;
-	}
+String HistogramProxyKey::ToString() const
+{
+	return Format("G%d_%dx%d_P%dx%d_C%d_R%d_G%d_B%d_A%d_S%d",
+		group_index,
+		source_size.cx, source_size.cy,
+		proxy_size.cx, proxy_size.cy,
+		channel_count,
+		red, green, blue, alpha, single_channel);
 }
 
 void ComputeHistogram(HistogramData& data, const float* pixels, int width, int height, int channels,
@@ -98,14 +49,14 @@ void ComputeHistogram(HistogramData& data, const float* pixels, int width, int h
                       int bin_count)
 {
 	data.Clear();
-	if(!pixels || width <= 0 || height <= 0 || channels <= 0) {
+	if(!pixels || width <= 0 || height <= 0 || channels <= 0)
 		return;
-	}
 
 	data.bins = std::max(16, bin_count);
 	data.analyzed_width = width;
 	data.analyzed_height = height;
 	data.analyzed_channels = channels;
+	data.analyzed_pixels = (int64)width * height;
 
 	int num_hist_channels = 0;
 	int order[4] = { -1, -1, -1, -1 };
@@ -121,102 +72,81 @@ void ComputeHistogram(HistogramData& data, const float* pixels, int width, int h
 
 	if(single_ch >= 0 && single_ch < channels) {
 		add(single_ch, "Gray");
-		data.has_red = false;
-		data.has_green = false;
-		data.has_blue = false;
-		data.has_alpha = alpha_ch >= 0 && alpha_ch < channels;
 	}
 	else {
 		add(red_ch, "R");
 		add(green_ch, "G");
 		add(blue_ch, "B");
-		if(alpha_ch >= 0 && alpha_ch < channels) {
-			add(alpha_ch, "A");
-			data.has_alpha = true;
-		}
-		data.has_red = red_ch >= 0 && red_ch < channels;
-		data.has_green = green_ch >= 0 && green_ch < channels;
-		data.has_blue = blue_ch >= 0 && blue_ch < channels;
+		add(alpha_ch, "A");
 	}
 
 	if(num_hist_channels == 0)
 		return;
 
 	data.channels.SetCount(num_hist_channels);
-	data.channel_names.SetCount(num_hist_channels);
 
-	int pixel_count = width * height;
+	// Initialise channel metadata.
 	for(int c = 0; c < num_hist_channels; ++c) {
-		data.channels[c].SetCount(data.bins, 0);
+		HistogramChannelData& ch = data.channels[c];
+		ch.name = names[c];
+		ch.bins.SetCount(data.bins, 0);
+		ch.valid_samples = 0;
+		ch.below_range = 0;
+		ch.above_range = 0;
+		ch.non_finite = 0;
+		ch.min_finite = DBL_MAX;
+		ch.max_finite = -DBL_MAX;
+		ch.mean = 0.0;
+		ch.is_available = true;
 	}
-	data.total_samples = 0;
-	data.below_range = 0;
-	data.above_range = 0;
-	data.non_finite = 0;
-	data.mean = 0.0;
-	data.min_finite = DBL_MAX;
-	data.max_finite = -DBL_MAX;
 
-	int64 grand_total = 0;
-	int64 grand_below = 0;
-	int64 grand_above = 0;
-	int64 grand_non_finite = 0;
-	double grand_sum = 0.0;
-	int64 grand_finite = 0;
-	double grand_min = DBL_MAX;
-	double grand_max = -DBL_MAX;
-	int max_bin = data.bins - 1;
-	double range_min = HistogramData::RANGE_MIN;
-	double range_max = HistogramData::RANGE_MAX;
+	const int max_bin = data.bins - 1;
+	const double range_min = HistogramData::RANGE_MIN;
+	const double range_max = HistogramData::RANGE_MAX;
+	const int pixel_count = width * height;
+
+	double sums[4] = { 0.0, 0.0, 0.0, 0.0 };
 
 	for(int i = 0; i < pixel_count; ++i) {
+		const size_t base = (size_t)i * channels;
 		for(int c = 0; c < num_hist_channels; ++c) {
-			int src_ch = order[c];
-			float v = pixels[i * channels + src_ch];
+			HistogramChannelData& ch = data.channels[c];
+			const float v = pixels[base + order[c]];
 			if(!std::isfinite(v)) {
-				++grand_non_finite;
+				++ch.non_finite;
 				continue;
 			}
-			if(v < range_min) {
-				++grand_below;
-				if((double)v < grand_min) grand_min = v;
-				if((double)v > grand_max) grand_max = v;
-				grand_sum += v;
-				++grand_finite;
-				continue;
+			const double vd = (double)v;
+			if(vd < ch.min_finite) ch.min_finite = vd;
+			if(vd > ch.max_finite) ch.max_finite = vd;
+			sums[c] += vd;
+			if(vd < range_min) {
+				++ch.below_range;
 			}
-			if(v >= range_max) {
-				++grand_above;
-				if((double)v < grand_min) grand_min = v;
-				if((double)v > grand_max) grand_max = v;
-				grand_sum += v;
-				++grand_finite;
-				continue;
+			else if(vd > range_max) {
+				++ch.above_range;
 			}
-			++grand_total;
-			if((double)v < grand_min) grand_min = v;
-			if((double)v > grand_max) grand_max = v;
-			grand_sum += v;
-			++grand_finite;
-			int bin = (int)((v - range_min) / (range_max - range_min) * data.bins);
-			if(bin >= data.bins) bin = max_bin;
-			if(bin < 0) bin = 0;
-			++data.channels[c][bin];
+			else {
+				++ch.valid_samples;
+				int bin = (int)((vd - range_min) / (range_max - range_min) * data.bins);
+				if(bin < 0) bin = 0;
+				if(bin > max_bin) bin = max_bin;
+				++ch.bins[bin];
+			}
 		}
 	}
 
-	data.total_samples = grand_total;
-	data.below_range = grand_below;
-	data.above_range = grand_above;
-	data.non_finite = grand_non_finite;
-	if(grand_finite > 0) {
-		data.min_finite = grand_min;
-		data.max_finite = grand_max;
-		data.mean = grand_sum / grand_finite;
-	}
-
 	for(int c = 0; c < num_hist_channels; ++c) {
-		data.channel_names[c] = names[c];
+		HistogramChannelData& ch = data.channels[c];
+		const int64 finite_samples = ch.valid_samples + ch.below_range + ch.above_range;
+		if(finite_samples == 0) {
+			ch.min_finite = 0.0;
+			ch.max_finite = 0.0;
+			ch.mean = 0.0;
+		}
+		else {
+			ch.mean = sums[c] / finite_samples;
+		}
 	}
 }
 
@@ -227,21 +157,6 @@ void ComputeHistogramFromBuffer(HistogramData& data, const Vector<float>& pixels
 {
 	ComputeHistogram(data, pixels.Begin(), width, height, channels,
 	                 red_ch, green_ch, blue_ch, alpha_ch, single_ch, bin_count);
-}
-
-HistogramStats GetHistogramStats(const HistogramData& data, int channel_index)
-{
-	HistogramStats stats;
-	if(!data.IsValid() || channel_index < 0 || channel_index >= data.channels.GetCount())
-		return stats;
-	stats.total_pixels = data.total_samples / data.channels.GetCount();
-	stats.below_range = data.below_range / data.channels.GetCount();
-	stats.above_range = data.above_range / data.channels.GetCount();
-	stats.non_finite = data.non_finite / data.channels.GetCount();
-	stats.min_finite = data.min_finite;
-	stats.max_finite = data.max_finite;
-	stats.mean = data.mean;
-	return stats;
 }
 
 } // namespace Upp

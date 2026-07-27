@@ -1,6 +1,7 @@
 uses
 	CtrlLib,
 	Ui,
+	imaging_histogram,
 	imaging_preview_coalescing,
 	imaging_tone_conversion,
 	imaging_roundtrip_viewer_ocio,

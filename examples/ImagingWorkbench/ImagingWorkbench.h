@@ -86,7 +86,7 @@ struct PreviewTimingBreakdown {
 
 class HistogramCtrl : public Ctrl {
 public:
-	void SetData(HistogramData& data);
+	void SetData(HistogramData data);
 	void ClearData();
 	void SetChannelMask(int mask);
 	int GetChannelMask() const { return channel_mask; }
@@ -96,18 +96,16 @@ public:
 
 private:
 	virtual void Paint(Draw& w) override;
-	virtual void MouseMove(Point, dword) override;
 	virtual void LeftDown(Point, dword) override;
 
 	void PaintGraph(Draw& w, int graph_left, int graph_top, int graph_w, int graph_h);
 	void PaintStats(Draw& w, int x, int y, int width_val);
 	static Color ChannelColor(int ch_index, const HistogramData& data);
+	static String FormatStat(double value, bool has_finite);
 
 	HistogramData hd;
 	int channel_mask = 0;
 	bool has_data = false;
-	int hover_channel = -1;
-	Point last_mouse;
 	Vector<Rect> swatch_rects;
 };
 
@@ -116,6 +114,9 @@ public:
 	typedef ImagingWorkbench CLASSNAME;
 
 	ImagingWorkbench();
+
+	// Test hooks (deterministic, not timing-based).
+	int HistogramRecomputeCount() const { return histogram_recompute_count; }
 
 protected:
 	virtual void BindActions() override;
@@ -156,6 +157,7 @@ protected:
 	void BuildSelectedGroupProxy();
 	void ComputeHistogramFromProxy();
 	void RenderPreviewFromProxy();
+	void InvalidateHistogram();
 	String GetOcioSummary() const;
 	String GetImageColorSpace() const;
 	void UpdateProbe(Point image_point);
@@ -251,7 +253,8 @@ protected:
 	bool ocio_preview_applied = false;
 	String ocio_error_text;
 	PreviewRenderCoalescer preview_render_coalescer;
-	HistogramData histogram_data;
+	HistogramProxyKey histogram_key;
+	int histogram_recompute_count = 0;
 	PreviewTimingBreakdown preview_timing;
 	String timing_summary;
 	String resolution_text;
