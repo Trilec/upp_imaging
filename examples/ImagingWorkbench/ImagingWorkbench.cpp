@@ -2099,19 +2099,44 @@ void HistogramCtrl::PaintStats(Draw& w, int x, int y, int width_val)
 	int num_channels = hd.channels.GetCount();
 	int line_h = DPI(16);
 	int cur_y = y;
+	int sw = DPI(10);
+	int sw_pad = DPI(2);
+
+	swatch_rects.SetCount(num_channels + 1);
+
+	bool has_active = channel_mask != 0;
 
 	for(int c = 0; c < num_channels; ++c) {
+		bool active = !has_active || (channel_mask & (1 << c));
 		Color clr = ChannelColor(c, hd);
+		Color swatch_clr = active ? clr : Blend(clr, SColorPaper, 192);
 		int64 total = 0;
 		for(int b = 0; b < hd.bins; ++b) total += hd.channels[c][b];
 
-		String info = Format("%s  samples=%lld  min=%.3f  max=%.3f",
+		String info = Format("%s  %lld smpl  min=%.3f  max=%.3f",
 		                   ~hd.channel_names[c], (int64)total, hd.min_finite, hd.max_finite);
 		if(hd.min_finite < HistogramData::RANGE_MIN || hd.max_finite > HistogramData::RANGE_MAX)
-			info << Format("  [%.3f, %.3f]", hd.min_finite, hd.max_finite);
+			info << Format(" [%.3f, %.3f]", hd.min_finite, hd.max_finite);
 
-		w.DrawRect(x, cur_y, DPI(10), DPI(10), clr);
-		w.DrawText(x + DPI(14), cur_y - DPI(1), info, Arial(DPI(10)), SColorText);
+		swatch_rects[c] = RectC(x, cur_y, sw, sw);
+		w.DrawRect(x + sw_pad, cur_y + sw_pad, sw - 2 * sw_pad, sw - 2 * sw_pad, swatch_clr);
+		if(!active) {
+			w.DrawRect(x + sw_pad, cur_y + sw_pad, sw - 2 * sw_pad, 1, SColorDisabled);
+			w.DrawRect(x + sw_pad, cur_y + sw - 1 - sw_pad, sw - 2 * sw_pad, 1, SColorDisabled);
+		}
+		Font fnt = Arial(DPI(10));
+		w.DrawText(x + sw + DPI(6), cur_y - DPI(1), info, fnt, active ? SColorText : SColorDisabled);
+		cur_y += line_h;
+	}
+
+	// "All channels" toggle
+	{
+		bool all_active = !has_active;
+		Color all_clr = all_active ? SColorText : SColorDisabled;
+		swatch_rects[num_channels] = RectC(x, cur_y, sw, sw);
+		w.DrawRect(x + sw_pad, cur_y + sw_pad, sw - 2 * sw_pad, sw - 2 * sw_pad, all_active ? SColorText : SColorDisabled);
+		String all_label = all_active ? "[ All ]" : "[ All ]";
+		w.DrawText(x + sw + DPI(6), cur_y - DPI(1), all_label, Arial(DPI(10)), all_clr);
 		cur_y += line_h;
 	}
 
@@ -2136,6 +2161,25 @@ void HistogramCtrl::MouseMove(Point p, dword)
 void HistogramCtrl::LeftDown(Point p, dword)
 {
 	last_mouse = p;
+	for(int i = 0; i < swatch_rects.GetCount(); ++i) {
+		if(swatch_rects[i].Contains(p)) {
+			int num_channels = hd.channels.GetCount();
+			if(i < num_channels) {
+				int bit = 1 << i;
+				if(channel_mask & bit)
+					channel_mask &= ~bit;
+				else
+					channel_mask |= bit;
+				if(channel_mask == (1 << num_channels) - 1)
+					channel_mask = 0;
+			}
+			else {
+				channel_mask = 0;
+			}
+			Refresh();
+			break;
+		}
+	}
 }
 
 } // namespace Upp
