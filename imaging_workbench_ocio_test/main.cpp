@@ -243,10 +243,13 @@ int main()
 	Check(wb.GetOcioSummary().Find("(") >= 0, "metadata/default/user source labels", passed, failed);
 
 	int build0 = wb.ocio_processor.build_count;
+	int hist0 = wb.HistogramRecomputeCount();
 	wb.ApplyExposureStops(1.0, true);
 	Check(wb.ocio_processor.build_count == build0, "exposure does not rebuild", passed, failed);
+	Check(wb.HistogramRecomputeCount() == hist0, "exposure does not recompute histogram", passed, failed);
 	wb.ApplyDisplayGamma(2.2, true);
 	Check(wb.ocio_processor.build_count == build0, "gamma does not rebuild", passed, failed);
+	Check(wb.HistogramRecomputeCount() == hist0, "gamma does not recompute histogram", passed, failed);
 
 	String display_before = wb.ocio_display_name;
 	String view_before = wb.ocio_view_name;
@@ -495,11 +498,13 @@ int main()
 	Check(CaptureWorkbenchSnapshot(wb, after_failed_png), "capture failed PNG post-save state", passed, failed);
 	Check(SameWorkbenchSnapshot(before_failed_png, after_failed_png), "failed PNG save leaves source and viewer state unchanged", passed, failed);
 
+	int hist_before_png = wb.HistogramRecomputeCount();
 	Check(wb.LoadImageFile(baseline_png_path.Begin(), error, true), "PNG load", passed, failed);
 	wb.canvas.SetRect(0, 0, 640, 360);
 	wb.canvas.Layout();
 	wb.RenderPreviewFromProxy();
 	Check(wb.canvas.GetViewState().mode == ViewMode::Fit, "PNG load starts in Fit", passed, failed);
+	Check(wb.HistogramRecomputeCount() > hist_before_png, "new image load recomputes histogram", passed, failed);
 
 	Check(wb.LoadImageFile(baseline_exr_path.Begin(), error, true), "EXR load", passed, failed);
 	wb.canvas.SetRect(0, 0, 640, 360);
@@ -583,16 +588,20 @@ int main()
 	Check(std::abs(wb.canvas.GetViewState().zoom - manual_resize_before.zoom) < 1e-9, "manual zoom preserved on resize", passed, failed);
 
 	ImageViewState before_group = wb.canvas.GetViewState();
+	int hist_before_group = wb.HistogramRecomputeCount();
 	wb.selected_preview_group = 1;
 	wb.RenderPreviewFromProxy();
 	Check(same_view(before_group, wb.canvas.GetViewState()), "pass/group change behaviour", passed, failed);
+	Check(wb.HistogramRecomputeCount() > hist_before_group, "pass/group change recomputes histogram", passed, failed);
 
+	int hist_after_group = wb.HistogramRecomputeCount();
 	ImageViewState view_before_ocio = wb.canvas.GetViewState();
 	wb.ocio_enable_drop.Select(0);
 	wb.UpdateOcioControls(ImagingWorkbench::OcioControlChange::Enable);
 	wb.ocio_enable_drop.Select(1);
 	wb.UpdateOcioControls(ImagingWorkbench::OcioControlChange::Enable);
 	Check(same_view(view_before_ocio, wb.canvas.GetViewState()), "OCIO change preserves view", passed, failed);
+	Check(wb.HistogramRecomputeCount() == hist_after_group, "OCIO change does not recompute histogram", passed, failed);
 	wb.ApplyExposureStops(1.0, true);
 	Check(same_view(view_before_ocio, wb.canvas.GetViewState()), "exposure drag preserves view", passed, failed);
 	wb.ApplyDisplayGamma(2.2, true);

@@ -1134,15 +1134,42 @@ void ImagingWorkbench::ComputeHistogramFromProxy()
 		}
 	}
 	if(!proxy || !proxy->IsValid()) {
-		histogram_data.Clear();
-		histogram_display.ClearData();
+		InvalidateHistogram();
 		return;
 	}
 
-	ComputeHistogramFromBuffer(histogram_data, proxy->pixels,
+	HistogramProxyKey key;
+	key.group_index = selected_preview_group;
+	key.source_size = proxy->source_size;
+	key.proxy_size = proxy->proxy_size;
+	key.channel_count = proxy->channel_count;
+	key.red = proxy->red;
+	key.green = proxy->green;
+	key.blue = proxy->blue;
+	key.alpha = proxy->alpha;
+	key.single_channel = proxy->single_channel;
+
+	if(key == histogram_key)
+		return;
+
+	HistogramData data;
+	ComputeHistogramFromBuffer(data, proxy->pixels,
 		proxy->proxy_size.cx, proxy->proxy_size.cy, proxy->channel_count,
 		proxy->red, proxy->green, proxy->blue, proxy->alpha, proxy->single_channel);
-	histogram_display.SetData(histogram_data);
+	if(!data.IsValid()) {
+		InvalidateHistogram();
+		return;
+	}
+
+	++histogram_recompute_count;
+	histogram_key = key;
+	histogram_display.SetData(pick(data));
+}
+
+void ImagingWorkbench::InvalidateHistogram()
+{
+	histogram_key = HistogramProxyKey();
+	histogram_display.ClearData();
 }
 
 void ImagingWorkbench::RenderPreviewFromProxy()
@@ -1162,7 +1189,6 @@ void ImagingWorkbench::RenderPreviewFromProxy()
 		}
 	}
 	if(!proxy || !proxy->IsValid()) {
-		histogram_display.ClearData();
 		canvas.ClearImage();
 		return;
 	}
@@ -1954,8 +1980,7 @@ bool ImagingWorkbench::LoadImageFile(const String& path, String& error, bool pop
 
 	source_image = loaded;
 	source_filename = path;
-	histogram_data.Clear();
-	histogram_display.ClearData();
+	InvalidateHistogram();
 	reset_canvas_view = true;
 	probe_source_pixel.SetCount(source_image.spec().nchannels);
 	last_error.Clear();
@@ -1977,12 +2002,12 @@ bool ImagingWorkbench::LoadImageFile(const String& path, String& error, bool pop
 HistogramCtrl::HistogramCtrl()
 {
 	channel_mask = 0;
-	hover_channel = -1;
 }
 
-void HistogramCtrl::SetData(HistogramData& data)
+void HistogramCtrl::SetData(HistogramData data)
 {
-	Swap(hd, data);
+	hd = pick(data);
+	channel_mask &= (1 << hd.channels.GetCount()) - 1;
 	has_data = hd.IsValid();
 	Refresh();
 }
@@ -1990,6 +2015,8 @@ void HistogramCtrl::SetData(HistogramData& data)
 void HistogramCtrl::ClearData()
 {
 	hd.Clear();
+	swatch_rects.Clear();
+	channel_mask = 0;
 	has_data = false;
 	Refresh();
 }
@@ -2002,15 +2029,22 @@ void HistogramCtrl::SetChannelMask(int mask)
 
 Color HistogramCtrl::ChannelColor(int ch_index, const HistogramData& data)
 {
-	if(ch_index < 0 || ch_index >= data.channel_names.GetCount())
+	if(ch_index < 0 || ch_index >= data.channels.GetCount())
 		return SColorText;
-	const String& name = data.channel_names[ch_index];
+	const String& name = data.channels[ch_index].name;
 	if(name == "R") return Color(255, 60, 60);
 	if(name == "G") return Color(60, 200, 60);
 	if(name == "B") return Color(60, 120, 255);
 	if(name == "A") return Color(200, 200, 60);
 	if(name == "Gray") return Color(200, 200, 200);
 	return Blend(SColorText, SColorPaper, 128);
+}
+
+String HistogramCtrl::FormatStat(double value, bool has_finite)
+{
+	if(!has_finite)
+		return "—";
+	return Format("%.3f", value);
 }
 
 void HistogramCtrl::Paint(Draw& w)
@@ -2033,8 +2067,7 @@ void HistogramCtrl::Paint(Draw& w)
 	PaintGraph(w, graph_left, graph_top, gw, gh);
 
 	int stats_y = graph_top + gh + DPI(8);
-	int stats_w = sz.cx - 2 * margin;
-	PaintStats(w, margin, stats_y, stats_w);
+	PaintStats(w, margin, stats_y, sz.cx - 2 * margin);
 }
 
 void HistogramCtrl::PaintGraph(Draw& w, int graph_left, int graph_top, int graph_w, int graph_h)
@@ -2058,8 +2091,8 @@ void HistogramCtrl::PaintGraph(Draw& w, int graph_left, int graph_top, int graph
 	for(int c = 0; c < num_channels; ++c) {
 		if(mask != ALL_MASK && !(mask & (1 << c))) continue;
 		for(int b = 0; b < hd.bins; ++b)
-			if(hd.channels[c][b] > max_count)
-				max_count = hd.channels[c][b];
+			if(hd.channels[c].bins[b] > max_count)
+				max_count = hd.channels[c].bins[b];
 	}
 	if(max_count == 0) max_count = 1;
 
@@ -2073,7 +2106,7 @@ void HistogramCtrl::PaintGraph(Draw& w, int graph_left, int graph_top, int graph
 
 		for(int b = 0; b < hd.bins; ++b) {
 			int x = plot_left + (int)((double)b / hd.bins * plot_w);
-			int64 count = hd.channels[c][b];
+			int64 count = hd.channels[c].bins[b];
 			int h = (int)((double)count / max_count * plot_h);
 			h = std::min(h, plot_h);
 			pts.Add(Point(x, plot_top + plot_h - h));
@@ -2089,7 +2122,7 @@ void HistogramCtrl::PaintGraph(Draw& w, int graph_left, int graph_top, int graph
 	}
 
 	w.DrawText(plot_left, plot_top + plot_h + DPI(2), "0", Arial(DPI(8)), SColorDisabled);
-	String max_text = FormatDouble((double)max_count / hd.total_samples * 100.0, 0) + "%";
+	String max_text = FormatDouble((double)max_count / hd.analyzed_pixels * 100.0, 0) + "%";
 	w.DrawText(plot_left + plot_w - GetTextSize(max_text, Arial(DPI(8))).cx, plot_top + plot_h + DPI(2),
 	           max_text, Arial(DPI(8)), SColorDisabled);
 }
@@ -2107,16 +2140,22 @@ void HistogramCtrl::PaintStats(Draw& w, int x, int y, int width_val)
 	bool has_active = channel_mask != 0;
 
 	for(int c = 0; c < num_channels; ++c) {
+		const HistogramChannelData& ch = hd.channels[c];
 		bool active = !has_active || (channel_mask & (1 << c));
 		Color clr = ChannelColor(c, hd);
 		Color swatch_clr = active ? clr : Blend(clr, SColorPaper, 192);
-		int64 total = 0;
-		for(int b = 0; b < hd.bins; ++b) total += hd.channels[c][b];
 
-		String info = Format("%s  %lld smpl  min=%.3f  max=%.3f",
-		                   ~hd.channel_names[c], (int64)total, hd.min_finite, hd.max_finite);
-		if(hd.min_finite < HistogramData::RANGE_MIN || hd.max_finite > HistogramData::RANGE_MAX)
-			info << Format(" [%.3f, %.3f]", hd.min_finite, hd.max_finite);
+		String info = Format("%s  %lld  min=%s  max=%s  mean=%s",
+		                   ~ch.name, ch.TotalClassified(),
+		                   ~FormatStat(ch.min_finite, ch.HasFinite()),
+		                   ~FormatStat(ch.max_finite, ch.HasFinite()),
+		                   ~FormatStat(ch.mean, ch.HasFinite()));
+		if(ch.below_range > 0)
+			info << Format("  below=%lld", ch.below_range);
+		if(ch.above_range > 0)
+			info << Format("  above=%lld", ch.above_range);
+		if(ch.non_finite > 0)
+			info << Format("  nan=%lld", ch.non_finite);
 
 		swatch_rects[c] = RectC(x, cur_y, sw, sw);
 		w.DrawRect(x + sw_pad, cur_y + sw_pad, sw - 2 * sw_pad, sw - 2 * sw_pad, swatch_clr);
@@ -2124,43 +2163,28 @@ void HistogramCtrl::PaintStats(Draw& w, int x, int y, int width_val)
 			w.DrawRect(x + sw_pad, cur_y + sw_pad, sw - 2 * sw_pad, 1, SColorDisabled);
 			w.DrawRect(x + sw_pad, cur_y + sw - 1 - sw_pad, sw - 2 * sw_pad, 1, SColorDisabled);
 		}
-		Font fnt = Arial(DPI(10));
-		w.DrawText(x + sw + DPI(6), cur_y - DPI(1), info, fnt, active ? SColorText : SColorDisabled);
+		w.DrawText(x + sw + DPI(6), cur_y - DPI(1), info, Arial(DPI(10)), active ? SColorText : SColorDisabled);
 		cur_y += line_h;
 	}
 
-	// "All channels" toggle
 	{
 		bool all_active = !has_active;
 		Color all_clr = all_active ? SColorText : SColorDisabled;
 		swatch_rects[num_channels] = RectC(x, cur_y, sw, sw);
 		w.DrawRect(x + sw_pad, cur_y + sw_pad, sw - 2 * sw_pad, sw - 2 * sw_pad, all_active ? SColorText : SColorDisabled);
-		String all_label = all_active ? "[ All ]" : "[ All ]";
-		w.DrawText(x + sw + DPI(6), cur_y - DPI(1), all_label, Arial(DPI(10)), all_clr);
+		w.DrawText(x + sw + DPI(6), cur_y - DPI(1), "[ All ]", Arial(DPI(10)), all_clr);
 		cur_y += line_h;
 	}
 
-	if(hd.non_finite > 0 || hd.below_range > 0 || hd.above_range > 0) {
-		String warn;
-		if(hd.non_finite > 0) warn << Format("NaN/Inf: %lld  ", (int64)hd.non_finite);
-		if(hd.below_range > 0) warn << Format("below 0: %lld  ", (int64)hd.below_range);
-		if(hd.above_range > 0) warn << Format("above 1: %lld", (int64)hd.above_range);
-		w.DrawText(x, cur_y, warn, Arial(DPI(10)), Color(255, 150, 50));
-		cur_y += line_h;
-	}
-
-	String dim = Format("%d x %d", hd.analyzed_width, hd.analyzed_height);
+	String dim = Format("%d x %d  %lld samples  %d bins",
+	                    hd.analyzed_width, hd.analyzed_height, hd.analyzed_pixels, hd.bins);
 	w.DrawText(x, cur_y, dim, Arial(DPI(9)), SColorDisabled);
-}
-
-void HistogramCtrl::MouseMove(Point p, dword)
-{
-	last_mouse = p;
 }
 
 void HistogramCtrl::LeftDown(Point p, dword)
 {
-	last_mouse = p;
+	if(!has_data || swatch_rects.IsEmpty())
+		return;
 	for(int i = 0; i < swatch_rects.GetCount(); ++i) {
 		if(swatch_rects[i].Contains(p)) {
 			int num_channels = hd.channels.GetCount();
