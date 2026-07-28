@@ -159,4 +159,101 @@ void ComputeHistogramFromBuffer(HistogramData& data, const Vector<float>& pixels
 	                 red_ch, green_ch, blue_ch, alpha_ch, single_ch, bin_count);
 }
 
+void HistogramProbeData::Clear()
+{
+	channel_names.Clear();
+	source_values.Clear();
+	is_finite.Clear();
+	in_range.Clear();
+	below_range.Clear();
+	above_range.Clear();
+}
+
+void BuildProbeData(HistogramProbeData& data, const float* source_pixels, int source_channels,
+                    int red_ch, int green_ch, int blue_ch, int alpha_ch, int single_ch)
+{
+	data.Clear();
+	if(!source_pixels || source_channels <= 0)
+		return;
+
+	auto add = [&](int src_ch, const String& name) {
+		if(src_ch < 0 || src_ch >= source_channels) {
+			data.channel_names.Add(name);
+			data.source_values.Add(0.0);
+			data.is_finite.Add(false);
+			data.in_range.Add(false);
+			data.below_range.Add(false);
+			data.above_range.Add(false);
+			return;
+		}
+		const float v = source_pixels[src_ch];
+		const bool finite = std::isfinite(v);
+		const double vd = finite ? (double)v : 0.0;
+		const bool below = finite && vd < HistogramData::RANGE_MIN;
+		const bool above = finite && vd > HistogramData::RANGE_MAX;
+		const bool in_range = finite && !below && !above;
+		data.channel_names.Add(name);
+		data.source_values.Add(vd);
+		data.is_finite.Add(finite);
+		data.in_range.Add(in_range);
+		data.below_range.Add(below);
+		data.above_range.Add(above);
+	};
+
+	auto add_if_valid = [&](int src_ch, const String& name) {
+		if(src_ch >= 0 && src_ch < source_channels)
+			add(src_ch, name);
+	};
+
+	if(single_ch >= 0 && single_ch < source_channels) {
+		add(single_ch, "Gray");
+	}
+	else {
+		add_if_valid(red_ch, "R");
+		add_if_valid(green_ch, "G");
+		add_if_valid(blue_ch, "B");
+		add_if_valid(alpha_ch, "A");
+	}
+}
+
+void BuildProbeDataFromBuffer(HistogramProbeData& data, const Vector<float>& source_pixels,
+                              int source_channels,
+                              int red_ch, int green_ch, int blue_ch, int alpha_ch, int single_ch)
+{
+	BuildProbeData(data, source_pixels.Begin(), source_channels,
+	               red_ch, green_ch, blue_ch, alpha_ch, single_ch);
+}
+
+HistogramMarkerPosition ComputeMarkerPosition(double source_value, int plot_left, int plot_w)
+{
+	HistogramMarkerPosition pos;
+	if(plot_w <= 0) {
+		pos.drawable = false;
+		return pos;
+	}
+	if(!std::isfinite(source_value))
+		return pos;
+	if(source_value <= HistogramData::RANGE_MIN) {
+		pos.x = plot_left;
+		pos.in_range = (source_value >= HistogramData::RANGE_MIN);
+		pos.clamped_left = (source_value < HistogramData::RANGE_MIN);
+		pos.drawable = true;
+		return pos;
+	}
+	if(source_value >= HistogramData::RANGE_MAX) {
+		pos.x = plot_left + plot_w - 1;
+		pos.in_range = (source_value <= HistogramData::RANGE_MAX);
+		pos.clamped_right = (source_value > HistogramData::RANGE_MAX);
+		pos.drawable = true;
+		return pos;
+	}
+	double t = (source_value - HistogramData::RANGE_MIN) / (HistogramData::RANGE_MAX - HistogramData::RANGE_MIN);
+	pos.x = plot_left + (int)(t * plot_w);
+	if(pos.x >= plot_left + plot_w) pos.x = plot_left + plot_w - 1;
+	if(pos.x < plot_left) pos.x = plot_left;
+	pos.in_range = true;
+	pos.drawable = true;
+	return pos;
+}
+
 } // namespace Upp

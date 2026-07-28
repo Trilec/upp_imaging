@@ -298,6 +298,230 @@ int main()
 		Check(result, recomputes == 3, "invalidation: source size change recomputes");
 	}
 
+	// ---- Marker position: 0.0 maps to left edge
+	{
+		HistogramMarkerPosition p = ComputeMarkerPosition(0.0, 100, 200);
+		Check(result, p.drawable, "marker 0.0: drawable");
+		Check(result, p.in_range, "marker 0.0: in_range");
+		Check(result, p.x == 100, "marker 0.0: x = plot_left");
+	}
+
+	// ---- Marker position: 0.25
+	{
+		HistogramMarkerPosition p = ComputeMarkerPosition(0.25, 100, 200);
+		Check(result, p.drawable, "marker 0.25: drawable");
+		Check(result, p.in_range, "marker 0.25: in_range");
+		Check(result, p.x == 150, "marker 0.25: x = plot_left + plot_w/2 = 150");
+	}
+
+	// ---- Marker position: 0.5
+	{
+		HistogramMarkerPosition p = ComputeMarkerPosition(0.5, 100, 200);
+		Check(result, p.drawable, "marker 0.5: drawable");
+		Check(result, p.x == 200, "marker 0.5: x = 200");
+	}
+
+	// ---- Marker position: 0.75
+	{
+		HistogramMarkerPosition p = ComputeMarkerPosition(0.75, 100, 200);
+		Check(result, p.drawable, "marker 0.75: drawable");
+		Check(result, p.x == 250, "marker 0.75: x = 250");
+	}
+
+	// ---- Marker position: 1.0 maps to right edge
+	{
+		HistogramMarkerPosition p = ComputeMarkerPosition(1.0, 100, 200);
+		Check(result, p.drawable, "marker 1.0: drawable");
+		Check(result, p.in_range, "marker 1.0: in_range");
+		Check(result, p.x == 299, "marker 1.0: x = plot_left + plot_w - 1");
+	}
+
+	// ---- Marker position: below range clamps left
+	{
+		HistogramMarkerPosition p = ComputeMarkerPosition(-0.5, 100, 200);
+		Check(result, p.drawable, "marker below: drawable");
+		Check(result, p.clamped_left, "marker below: clamped_left");
+		Check(result, !p.in_range, "marker below: not in_range");
+		Check(result, p.x == 100, "marker below: x = plot_left");
+	}
+
+	// ---- Marker position: above range clamps right
+	{
+		HistogramMarkerPosition p = ComputeMarkerPosition(2.0, 100, 200);
+		Check(result, p.drawable, "marker above: drawable");
+		Check(result, p.clamped_right, "marker above: clamped_right");
+		Check(result, !p.in_range, "marker above: not in_range");
+		Check(result, p.x == 299, "marker above: x = plot_right - 1");
+	}
+
+	// ---- Marker position: NaN does not draw
+	{
+		HistogramMarkerPosition p = ComputeMarkerPosition(std::nan(""), 100, 200);
+		Check(result, !p.drawable, "marker NaN: not drawable");
+	}
+
+	// ---- Marker position: positive infinity does not draw (out of range, not finite)
+	{
+		HistogramMarkerPosition p = ComputeMarkerPosition(INFINITY, 100, 200);
+		Check(result, !p.drawable, "marker +inf: not drawable (or clamped?)");
+	}
+
+	// ---- Marker position: negative infinity
+	{
+		HistogramMarkerPosition p = ComputeMarkerPosition(-INFINITY, 100, 200);
+		Check(result, !p.drawable, "marker -inf: not drawable");
+	}
+
+	// ---- Marker position: zero width plot
+	{
+		HistogramMarkerPosition p = ComputeMarkerPosition(0.5, 100, 0);
+		Check(result, !p.drawable, "marker 0 width: not drawable");
+	}
+
+	// ---- Marker position: one pixel plot
+	{
+		HistogramMarkerPosition p = ComputeMarkerPosition(0.5, 100, 1);
+		Check(result, p.drawable, "marker 1px: drawable");
+		Check(result, p.x == 100, "marker 1px: x = plot_left");
+	}
+
+	// ---- Marker position: normal plot
+	{
+		HistogramMarkerPosition p = ComputeMarkerPosition(0.3, 10, 100);
+		Check(result, p.drawable, "marker normal: drawable");
+		Check(result, p.x == 40, "marker normal: x = plot_left + 0.3*plot_w = 40");
+	}
+
+	// ---- Probe data: RGB source with R/G/B different values
+	{
+		Vector<float> src = { 0.1f, 0.4f, 0.7f };
+		HistogramProbeData data;
+		BuildProbeData(data, src.Begin(), 3, 0, 1, 2, -1, -1);
+		Check(result, data.GetCount() == 3, "probe RGB: 3 channels");
+		Check(result, data.channel_names[0] == "R" && data.channel_names[1] == "G" && data.channel_names[2] == "B",
+		       "probe RGB: names R/G/B");
+		CheckNear(result, data.source_values[0], 0.1, 0.001, "probe RGB: R value");
+		CheckNear(result, data.source_values[1], 0.4, 0.001, "probe RGB: G value");
+		CheckNear(result, data.source_values[2], 0.7, 0.001, "probe RGB: B value");
+		Check(result, data.in_range[0] && data.in_range[1] && data.in_range[2], "probe RGB: all in range");
+	}
+
+	// ---- Probe data: RGBA with independent alpha
+	{
+		Vector<float> src = { 0.2f, 0.4f, 0.6f, 0.8f };
+		HistogramProbeData data;
+		BuildProbeData(data, src.Begin(), 4, 0, 1, 2, 3, -1);
+		Check(result, data.GetCount() == 4, "probe RGBA: 4 channels");
+		Check(result, data.channel_names[3] == "A", "probe RGBA: A name");
+		CheckNear(result, data.source_values[3], 0.8, 0.001, "probe RGBA: A value");
+	}
+
+	// ---- Probe data: RGB without alpha
+	{
+		Vector<float> src = { 0.1f, 0.4f, 0.7f };
+		HistogramProbeData data;
+		BuildProbeData(data, src.Begin(), 3, 0, 1, 2, -1, -1);
+		Check(result, data.GetCount() == 3, "probe no alpha: 3 channels");
+		Check(result, data.channel_names[2] == "B", "probe no alpha: last is B");
+	}
+
+	// ---- Probe data: single channel
+	{
+		Vector<float> src = { 0.0f, 0.5f, 0.0f };
+		HistogramProbeData data;
+		BuildProbeData(data, src.Begin(), 3, -1, -1, -1, -1, 1);
+		Check(result, data.GetCount() == 1, "probe single: 1 channel");
+		Check(result, data.channel_names[0] == "Gray", "probe single: named Gray");
+		CheckNear(result, data.source_values[0], 0.5, 0.001, "probe single: value 0.5");
+	}
+
+	// ---- Probe data: below, above, non-finite
+	{
+		Vector<float> src = { -0.5f, 2.0f, std::nanf("") };
+		HistogramProbeData data;
+		BuildProbeData(data, src.Begin(), 3, 0, 1, 2, -1, -1);
+		Check(result, data.below_range[0], "probe below: R below");
+		Check(result, data.above_range[1], "probe above: G above");
+		Check(result, !data.is_finite[2], "probe non-finite: B not finite");
+	}
+
+	// ---- Probe data: missing alpha index is still present with name "A"
+	{
+		Vector<float> src = { 0.1f, 0.4f, 0.7f };
+		HistogramProbeData data;
+		BuildProbeData(data, src.Begin(), 3, 0, 1, 2, -1, -1);
+		Check(result, data.channel_names.GetCount() == 3, "probe missing alpha: 3 channels (no A)");
+	}
+
+	// ---- Probe data: out-of-range channel index is not added
+	{
+		Vector<float> src = { 0.1f, 0.4f, 0.7f };
+		HistogramProbeData data;
+		BuildProbeData(data, src.Begin(), 3, 0, 1, 2, 99, -1); // alpha out of range
+		Check(result, data.GetCount() == 3, "probe out-of-range alpha: 3 channels (A not added)");
+	}
+
+	// ---- Probe data: auxiliary channels are not silently RGB
+	{
+		// Source has 6 channels: R, G, B, A, Z, mask
+		// If someone passes red=3, green=4, blue=5, alpha=2 (Z used as R) it should still work.
+		Vector<float> src = { 0.0f, 0.0f, 0.9f, 0.1f, 0.5f, 0.7f };
+		HistogramProbeData data;
+		BuildProbeData(data, src.Begin(), 6, 3, 4, 5, 2, -1);
+		Check(result, data.GetCount() == 4, "probe aux: 4 channels (R/G/B/A)");
+		CheckNear(result, data.source_values[0], 0.1, 0.001, "probe aux: R from index 3");
+		CheckNear(result, data.source_values[1], 0.5, 0.001, "probe aux: G from index 4");
+		CheckNear(result, data.source_values[2], 0.7, 0.001, "probe aux: B from index 5");
+		CheckNear(result, data.source_values[3], 0.9, 0.001, "probe aux: A from index 2");
+	}
+
+	// ---- Probe data: clear
+	{
+		Vector<float> src = { 0.1f, 0.4f, 0.7f };
+		HistogramProbeData data;
+		BuildProbeData(data, src.Begin(), 3, 0, 1, 2, -1, -1);
+		Check(result, data.GetCount() == 3, "probe clear: data has channels before clear");
+		data.Clear();
+		Check(result, data.GetCount() == 0, "probe clear: no channels after clear");
+	}
+
+	// ---- Probe update does not mutate histogram data
+	{
+		Vector<float> px(64, 0.5f);
+		HistogramData hd_before;
+		ComputeHistogramFromBuffer(hd_before, px, 8, 8, 1, 0, -1, -1, -1, 0);
+
+		// Snapshot the bin totals and stats before probe activity.
+		int64 sum_before = hd_before.analyzed_pixels;
+		int64 total_before = hd_before.channels[0].TotalClassified();
+		int64 valid_before = hd_before.channels[0].valid_samples;
+		int64 mean_before_bins = 0;
+		for(int b = 0; b < hd_before.channels[0].bins.GetCount(); ++b)
+			mean_before_bins += hd_before.channels[0].bins[b];
+		double min_before = hd_before.channels[0].min_finite;
+		double max_before = hd_before.channels[0].max_finite;
+		double mean_before = hd_before.channels[0].mean;
+
+		HistogramProbeData probe_data;
+		BuildProbeData(probe_data, px.Begin(), 1, 0, -1, -1, -1, 0);
+		(void)probe_data; // Suppress unused warning.
+
+		// Histogram data must be untouched.
+		int64 sum_after = hd_before.analyzed_pixels;
+		int64 total_after = hd_before.channels[0].TotalClassified();
+		int64 valid_after = hd_before.channels[0].valid_samples;
+		int64 mean_after_bins = 0;
+		for(int b = 0; b < hd_before.channels[0].bins.GetCount(); ++b)
+			mean_after_bins += hd_before.channels[0].bins[b];
+		Check(result, sum_before == sum_after, "probe update: analyzed_pixels unchanged");
+		Check(result, total_before == total_after, "probe update: total classified unchanged");
+		Check(result, valid_before == valid_after, "probe update: valid_samples unchanged");
+		Check(result, mean_before_bins == mean_after_bins, "probe update: bin counts unchanged");
+		Check(result, min_before == hd_before.channels[0].min_finite, "probe update: min unchanged");
+		Check(result, max_before == hd_before.channels[0].max_finite, "probe update: max unchanged");
+		Check(result, mean_before == hd_before.channels[0].mean, "probe update: mean unchanged");
+	}
+
 	// ---- Performance measurements
 	{
 		auto measure = [&](int W, int H, int C, const char* label) {
