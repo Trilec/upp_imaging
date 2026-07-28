@@ -27,17 +27,20 @@ Narrow U++ IO helpers:
 - strict and stable 4 x 3 RGBA HALF ZIP round-trips pass exactly
 - `openexr_io` remains the narrow HALF/FLOAT, NONE/ZIP scanline helper
 - OpenColorIO 2.5.2 is packaged and validated
-- OpenImageIO prerequisite coexistence testing passes under `CLANGx64`
+- OpenImageIO 3.1.15.0 source/application boundary exists with a stable `oiio` package
+- static OpenEXR and PNG plugins are integrated into the OpenImageIO build
+- `openimageio_io_test` validates the EXR/PNG integration path
+- `ImagingWorkbench` is a diagnostic and integration application; it is not the core correctness authority
 - PNG, JPEG, and TIFF application packages are present with their narrow helpers
 - `CLANGx64` is the currently validated toolchain
 
 ## Repository package categories
 
 - strict imported-source packages: `_src`
-- stable application-facing packages: `openexr`, `openexr_core`, `opencolorio`, `imath`, `zlib`, `libpng`, `libjpeg_turbo`, `libtiff`, `libdeflate`, `openjph`, `fmt`, `robinmap`
+- stable application-facing packages: `openexr`, `openexr_core`, `opencolorio`, `oiio`, `imath`, `zlib`, `libpng`, `libjpeg_turbo`, `libtiff`, `libdeflate`, `openjph`, `fmt`, `robinmap`
 - narrow format helpers: `openexr_io`, `png_io`, `jpeg_io`, `tiff_io`
 - tests and probes: package-specific validation targets
-- shared infrastructure: `imaging_roundtrip_test_support`, viewer diagnostics
+- shared infrastructure: `imaging_roundtrip_test_support`, `ImagingWorkbench` diagnostic viewer
 
 ## Current limitations
 
@@ -46,11 +49,12 @@ Narrow U++ IO helpers:
 - OpenColorIO actual GPU rendering is not implemented
 - OpenColorIO export-through-OCIO is not implemented
 - OpenColorIO system-monitor enumeration is headless
-- OpenImageIO is not implemented yet
+- OpenImageIO 3.1.15.0 covers the validated EXR/PNG integration path only; other formats and dynamic plugin loading are not validated
+- `ImagingWorkbench` is a diagnostic integration viewer; its tests are not the core correctness authority
 
 ## Next milestone
 
-OpenImageIO source/dependency audit.
+LumaPix adapter.
 
 ## Documentation links
 

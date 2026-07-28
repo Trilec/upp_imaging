@@ -93,11 +93,9 @@ public:
 	bool HasData() const { return has_data; }
 	bool HasProbe() const { return has_probe; }
 	const HistogramProbeData& GetProbeData() const { return probe; }
-	int GetHistogramRecomputeCount() const { return histogram_recompute_count; }
 
 	void SetProbeValues(HistogramProbeData data);
 	void ClearProbeValues();
-	void OnHistogramRecomputed() { ++histogram_recompute_count; }
 
 	HistogramCtrl();
 
@@ -115,7 +113,6 @@ private:
 	int channel_mask = 0;
 	bool has_data = false;
 	bool has_probe = false;
-	int histogram_recompute_count = 0;
 	Vector<Rect> swatch_rects;
 };
 

@@ -39,6 +39,15 @@ Primary navigation for `upp_imaging`.
 - Primary validation target: `opencolorio_test`, `opencolorio_gui_link_test`
 - Current status: packaged and validated under CLANGx64
 
+### `oiio`
+- Purpose: stable OpenImageIO user-facing package
+- Pinned upstream version: 3.1.15.0
+- Public include route: `#include <oiio/OIIO.h>`
+- Direct package dependency: `openimageio_src`
+- Implementation or delegate: delegates; static OpenEXR and PNG plugins are integrated
+- Primary validation target: `openimageio_io_test`
+- Current status: source/application boundary complete; EXR and PNG integration validated; other formats and dynamic plugin loading are not validated
+
 ### `openimageio_prereq_test`
 - Purpose: coexistence test for the planned OpenImageIO prerequisite stack
 - Depends on: `openexr`, `imath`, `zlib`, `libpng`, `libjpeg_turbo`, `libtiff`, `opencolorio`, `fmt`, `robinmap`
@@ -175,6 +184,7 @@ Ordinary applications must not depend directly on `_src` packages.
 | `libjpeg_turbo_src` | libjpeg-turbo 3.2.0 | pinned source proof for JPEG | none | `libjpeg_turbo_src_test` | no |
 | `libtiff_src` | libtiff 4.7.2 | pinned source proof for TIFF | `zlib`, `libdeflate` | `libtiff_src_test` | no |
 | `opencolorio_src` | OpenColorIO 2.5.2 | pinned source proof for OCIO | `expat`, `yaml_cpp`, `pystring`, `minizip_ng`, `imath`, `zlib` | `opencolorio_src_test` | no |
+| `openimageio_src` | OpenImageIO 3.1.15.0 | pinned source proof for OpenImageIO | `openexr`, `opencolorio`, `imath`, `zlib`, `libpng`, `libjpeg_turbo`, `libtiff`, `fmt`, `robinmap` | `openimageio_src_test`, `openimageio_io_test` | no |
 | `fmt_src` | fmt 12.2.0 | pinned header-only source proof | none | `fmt_src_test` | no |
 | `robinmap_src` | robin-map 1.4.1 | pinned header-only source proof | none | `robinmap_src_test` | no |
 
@@ -200,8 +210,9 @@ Ordinary applications must not depend directly on `_src` packages.
 - `opencolorio_src_test`, `opencolorio_test`, `opencolorio_gui_link_test`
 - Integration checks: `ocio_dependencies_test`, `ocio_dependencies_gui_link_test`
 
-### OpenImageIO prerequisites
-- `openimageio_prereq_test`
+### OpenImageIO
+- `openimageio_prereq_test`, `openimageio_io_test`
+- EXR and PNG integration validated; JPEG/TIFF not yet routed through OIIO; dynamic plugin loading not validated
 
 ### Dependency foundations
 - `zlib_src_test`, `zlib_test`
@@ -289,31 +300,31 @@ opencolorio_src
 
 `opencolorio_src` is the strict imported-source boundary. `opencolorio` is the stable application-facing wrapper.
 
-### Future OpenImageIO stack
+### OpenImageIO stack
 
 ```text
 application
     ↓
-future openimageio
+oiio
     ↓
-future openimageio_src
+openimageio_src
     ↓
 stable codec/dependency packages
 ```
 
-Currently proven likely prerequisites:
+Currently integrated dependencies:
 
 - `openexr`
+- `opencolorio`
 - `imath`
 - `zlib`
 - `libpng`
 - `libjpeg_turbo`
 - `libtiff`
-- `opencolorio`
 - `fmt`
 - `robinmap`
 
-Planned only. `openimageio` and `openimageio_src` do not exist yet.
+Static OpenEXR and PNG plugins are integrated into the OpenImageIO build. JPEG and TIFF are not yet routed through the OIIO boundary. Dynamic plugin loading is not validated.
 
 ## Repository strategy
 
