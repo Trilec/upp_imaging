@@ -14,8 +14,8 @@
 | JPEG | 3.2.0 | `libjpeg_turbo_src` | `libjpeg_turbo` | `jpeg_io` | Green | Green | RGB8 lossy subset complete |
 | TIFF | 4.7.2 | `libtiff_src` | `libtiff` | `tiff_io` | Green | Green | Typed RGBA subset complete |
 | OpenColorIO | 2.5.2 | `opencolorio_src` | `opencolorio` | — | Green | Green | Packaged and validated |
-| OpenImageIO | planned | — | — | — | — | — | Format abstraction |
-| LumaPix adapter | planned | — | — | — | — | — | Final integration |
+| OpenImageIO | 3.1.15.0 | `openimageio_src` | `oiio` | — | Green | Green | Source/application boundary complete; static EXR+PNG integration validated |
+| LumaPix adapter | planned | — | — | — | — | — | Final integration (next core milestone) |
 
 ## Current completed format subsets
 
@@ -43,17 +43,23 @@
 - OpenColorIO actual GPU rendering not implemented
 - OpenColorIO export-through-OCIO not implemented
 - OpenColorIO system-monitor enumeration currently headless
+- OpenImageIO 3.1.15.0 source/application boundary complete
+- static OpenEXR and PNG OpenImageIO plugins integrated
+- `openimageio_io_test` validates the EXR/PNG integration path
+- `ImagingWorkbench` diagnostic integration viewer is a non-authority diagnostic
 
 ## Next implementation order
 
 1. OpenImageIO prerequisite coexistence test - complete
-2. OpenImageIO source/dependency audit
-3. strict OpenImageIO package foundation
-4. stable OpenImageIO package boundary
-5. baseline EXR/PNG/JPEG/TIFF OpenImageIO validation
-6. LumaPix adapter
+2. OpenImageIO source/dependency audit - complete
+3. strict OpenImageIO package foundation - complete
+4. stable OpenImageIO package boundary - complete
+5. baseline EXR/PNG OpenImageIO validation - complete (EXR + PNG; JPEG/TIFF not yet routed through OIIO)
+6. LumaPix adapter - next core milestone
 
 OpenColorIO 2.5.2 is packaged and validated.
+
+OpenImageIO 3.1.15.0 source/application boundary is complete with a stable `oiio` package.
 
 The OpenImageIO prerequisite coexistence test now passes under CLANGx64.
 
@@ -67,3 +73,5 @@ The direct format work establishes:
 - comparison policies
 - diagnostic tooling
 - fallback helpers
+
+`ImagingWorkbench` exercises the stable `oiio` boundary; the diagnostic viewer is not the core correctness authority.

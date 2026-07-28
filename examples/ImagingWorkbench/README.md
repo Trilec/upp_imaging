@@ -63,12 +63,11 @@ Histogram probe marker:
 
 Known limits:
 - histogram graph uses linear scaling and filled polygon traces
-- no probe marker on the histogram
+- no logarithmic graph scale
 - no waveform or vectorscope
-- no JPEG or TIFF support
+- no JPEG or TIFF support in ImagingWorkbench
 - multipart EXR remains metadata-only for later subimages
 - Fit resets on new image load; manual navigation is preserved across preview changes when dimensions allow
 
 Next milestones:
-- histogram probe marker
 - histogram graph polish
