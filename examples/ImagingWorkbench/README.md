@@ -47,6 +47,20 @@ Histogram behavior:
 - the histogram is recomputed only when the source, subimage, pass, group or proxy pixels change
 - the histogram is not recomputed for exposure, gamma, OCIO, Look, LUT, zoom, pan, Fit, canvas resize, probe movement or channel-toggle clicks
 
+Histogram probe marker:
+- a thin vertical marker is drawn for each visible and available channel at the cursor's source value
+- the marker uses full-resolution source probe values (not the bounded proxy)
+- the marker maps the source value into the 0.0–1.0 histogram range
+- 0.0 draws at the left edge, 1.0 draws at the right edge, intermediate values interpolate linearly
+- values below 0.0 clamp to the left edge with a small left-pointing tick
+- values above 1.0 clamp to the right edge with a small right-pointing tick
+- in-range values are marked with a small downward triangle at the top of the graph
+- NaN and positive or negative infinity do not draw a normal marker; the stats area shows a compact "NaN/Inf" probe note
+- hidden histogram channels hide their markers
+- the marker follows the same selected pass and channel mapping as the histogram
+- exposure, gamma and OCIO do not move the source-referred markers
+- markers clear when the cursor leaves the image, when a new image is loaded, when the pass or group changes, or when the image is cleared
+
 Known limits:
 - histogram graph uses linear scaling and filled polygon traces
 - no probe marker on the histogram

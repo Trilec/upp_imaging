@@ -91,6 +91,13 @@ public:
 	void SetChannelMask(int mask);
 	int GetChannelMask() const { return channel_mask; }
 	bool HasData() const { return has_data; }
+	bool HasProbe() const { return has_probe; }
+	const HistogramProbeData& GetProbeData() const { return probe; }
+	int GetHistogramRecomputeCount() const { return histogram_recompute_count; }
+
+	void SetProbeValues(HistogramProbeData data);
+	void ClearProbeValues();
+	void OnHistogramRecomputed() { ++histogram_recompute_count; }
 
 	HistogramCtrl();
 
@@ -104,8 +111,11 @@ private:
 	static String FormatStat(double value, bool has_finite);
 
 	HistogramData hd;
+	HistogramProbeData probe;
 	int channel_mask = 0;
 	bool has_data = false;
+	bool has_probe = false;
+	int histogram_recompute_count = 0;
 	Vector<Rect> swatch_rects;
 };
 

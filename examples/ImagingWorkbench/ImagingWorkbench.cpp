@@ -846,6 +846,7 @@ void ImagingWorkbench::ClearProbe()
 {
 	xy_info.SetText("—");
 	color_info.SetText("—");
+	histogram_display.ClearProbeValues();
 }
 
 void ImagingWorkbench::UpdateProbe(Point image_point)
@@ -876,6 +877,11 @@ void ImagingWorkbench::UpdateProbe(Point image_point)
 	float src_g = group.HasRGB() ? channel_at(group.green) : channel_at(group.single_channel);
 	float src_b = group.HasRGB() ? channel_at(group.blue) : channel_at(group.single_channel);
 	float src_a = group.HasAlpha() ? channel_at(group.alpha) : 1.0f;
+
+	HistogramProbeData probe_data;
+	BuildProbeDataFromBuffer(probe_data, probe_source_pixel, spec.nchannels,
+		group.red, group.green, group.blue, group.alpha, group.single_channel);
+	histogram_display.SetProbeValues(pick(probe_data));
 
 	float tone_r = ApplyToneExposureGamma(src_r, exposure_stops, display_gamma);
 	float tone_g = ApplyToneExposureGamma(src_g, exposure_stops, display_gamma);
@@ -985,6 +991,7 @@ void ImagingWorkbench::UpdatePreviewSelection()
 
 	if(selected_preview_group != index) {
 		selected_preview_group = index;
+		histogram_display.ClearProbeValues();
 		UpdateViewerControls();
 		SchedulePreviewRender(true);
 	}
@@ -1170,6 +1177,7 @@ void ImagingWorkbench::InvalidateHistogram()
 {
 	histogram_key = HistogramProxyKey();
 	histogram_display.ClearData();
+	histogram_display.ClearProbeValues();
 }
 
 void ImagingWorkbench::RenderPreviewFromProxy()
@@ -2018,6 +2026,22 @@ void HistogramCtrl::ClearData()
 	swatch_rects.Clear();
 	channel_mask = 0;
 	has_data = false;
+	probe.Clear();
+	has_probe = false;
+	Refresh();
+}
+
+void HistogramCtrl::SetProbeValues(HistogramProbeData data)
+{
+	probe = pick(data);
+	has_probe = true;
+	Refresh();
+}
+
+void HistogramCtrl::ClearProbeValues()
+{
+	probe.Clear();
+	has_probe = false;
 	Refresh();
 }
 
@@ -2116,6 +2140,48 @@ void HistogramCtrl::PaintGraph(Draw& w, int graph_left, int graph_top, int graph
 		w.DrawPolygon(pts, clr);
 	}
 
+	// Draw probe markers on top of the filled traces.
+	if(has_probe && probe.GetCount() == num_channels) {
+		for(int c = 0; c < num_channels; ++c) {
+			if(mask != ALL_MASK && !(mask & (1 << c))) continue;
+			if(!probe.is_finite[c]) continue;
+			if(!probe.in_range[c] && !probe.below_range[c] && !probe.above_range[c]) continue;
+			HistogramMarkerPosition pos = ComputeMarkerPosition(probe.source_values[c], plot_left, plot_w);
+			if(!pos.drawable) continue;
+			Color clr = ChannelColor(c, hd);
+			int x = pos.x;
+			// Vertical line through the graph.
+			w.DrawLine(x, plot_top, x, plot_top + plot_h - 1, DPI(1), clr);
+			// Top tick triangle pointing into the plot.
+			if(probe.below_range[c]) {
+				// Left-pointing triangle to indicate clamped left.
+				Vector<Point> tick;
+				tick.Add(Point(plot_left, plot_top - 1));
+				tick.Add(Point(plot_left + DPI(5), plot_top + DPI(4)));
+				tick.Add(Point(plot_left, plot_top + DPI(8)));
+				w.DrawPolygon(tick, clr);
+			}
+			else if(probe.above_range[c]) {
+				// Right-pointing triangle to indicate clamped right.
+				Vector<Point> tick;
+				tick.Add(Point(plot_left + plot_w - 1, plot_top - 1));
+				tick.Add(Point(plot_left + plot_w - 1 - DPI(5), plot_top + DPI(4)));
+				tick.Add(Point(plot_left + plot_w - 1, plot_top + DPI(8)));
+				w.DrawPolygon(tick, clr);
+			}
+			else {
+				// Downward triangle above the graph for in-range values.
+				int cx = x;
+				int ty = plot_top - DPI(1);
+				Vector<Point> tick;
+				tick.Add(Point(cx, ty));
+				tick.Add(Point(cx - DPI(3), ty - DPI(4)));
+				tick.Add(Point(cx + DPI(3), ty - DPI(4)));
+				w.DrawPolygon(tick, clr);
+			}
+		}
+	}
+
 	for(int i = 0; i <= 4; ++i) {
 		int y = plot_top + plot_h * i / 4;
 		w.DrawLine(plot_left, y, plot_left + plot_w, y, DPI(0.5), Color(60, 60, 60));
@@ -2174,6 +2240,17 @@ void HistogramCtrl::PaintStats(Draw& w, int x, int y, int width_val)
 		w.DrawRect(x + sw_pad, cur_y + sw_pad, sw - 2 * sw_pad, sw - 2 * sw_pad, all_active ? SColorText : SColorDisabled);
 		w.DrawText(x + sw + DPI(6), cur_y - DPI(1), "[ All ]", Arial(DPI(10)), all_clr);
 		cur_y += line_h;
+	}
+
+	if(has_probe) {
+		int non_finite_count = 0;
+		for(int i = 0; i < probe.is_finite.GetCount(); ++i)
+			if(!probe.is_finite[i]) ++non_finite_count;
+		if(non_finite_count > 0) {
+			w.DrawText(x, cur_y, Format("probe: NaN/Inf in %d channel(s)", non_finite_count),
+			           Arial(DPI(10)), Color(255, 150, 50));
+			cur_y += line_h;
+		}
 	}
 
 	String dim = Format("%d x %d  %lld samples  %d bins",

@@ -64,6 +64,39 @@ struct HistogramProxyKey {
 	String ToString() const;
 };
 
+// Per-channel source probe values for the histogram marker.
+// Values are stored in the same order and naming as HistogramData::channels.
+struct HistogramProbeData : Moveable<HistogramProbeData> {
+	Vector<String> channel_names;
+	Vector<double> source_values;
+	Vector<bool> is_finite;
+	Vector<bool> in_range;
+	Vector<bool> below_range;
+	Vector<bool> above_range;
+
+	int GetCount() const { return channel_names.GetCount(); }
+	void Clear();
+};
+
+void BuildProbeData(HistogramProbeData& data, const float* source_pixels, int source_channels,
+                    int red_ch, int green_ch, int blue_ch, int alpha_ch, int single_ch);
+
+void BuildProbeDataFromBuffer(HistogramProbeData& data, const Vector<float>& source_pixels,
+                              int source_channels,
+                              int red_ch, int green_ch, int blue_ch, int alpha_ch, int single_ch);
+
+// Pure helper: convert a source value into a graph plot position.
+// Returns a position with a drawable flag, clamped left/right, and in-range indicator.
+struct HistogramMarkerPosition {
+	int x = 0;
+	bool drawable = false;
+	bool clamped_left = false;
+	bool clamped_right = false;
+	bool in_range = false;
+};
+
+HistogramMarkerPosition ComputeMarkerPosition(double source_value, int plot_left, int plot_w);
+
 } // namespace Upp
 
 #endif
