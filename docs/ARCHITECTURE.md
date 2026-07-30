@@ -75,16 +75,16 @@ All framework public types belong under `Upp::Imaging`. No `OIIO::*` or `OCIO::*
 ### `ImagingIO`
 
 - Purpose: full-fidelity U++ image loading and saving using `ImagingCore` types.
-- Planned with OpenImageIO as its initial backend.
-- Depends on `ImagingCore` and `OpenImageIO`.
+- Planned with OpenImageIO as its initial backend (current package name: `oiio`, target public name: `OpenImageIO`).
+- Planned dependency set: `ImagingCore`, current `oiio` (later `OpenImageIO`).
 - Public headers expose only `Upp::Imaging` types; no `OIIO::ImageBuf` or `OIIO::ImageSpec`.
 - Use case: typed image pixels, HDR and floating-point values, arbitrary source channels, metadata, source data-window origins, stable U++ errors, backend-independent application code.
 
 ### `ImagingColor`
 
 - Purpose: backend-neutral colour-processing operations.
-- Planned with OpenColorIO as its initial backend.
-- Depends on `ImagingCore` and `OpenColorIO`.
+- Planned with OpenColorIO as its initial backend (current package name: `opencolorio`, target public name: `OpenColorIO`).
+- Planned dependency set: `ImagingCore`, current `opencolorio` (later `OpenColorIO`).
 - Public headers must not expose OCIO processor, config or transform types.
 - Responsible for colour transforms and display transforms; not responsible for file loading.
 
@@ -106,8 +106,8 @@ All framework public types belong under `Upp::Imaging`. No `OIIO::*` or `OCIO::*
 ### `Imaging` (umbrella)
 
 - Convenience umbrella for applications wanting the standard complete U++ Imaging framework.
-- Intended dependency set: `ImagingCore`, `ImagingIO`, `ImagingColor`, `ImagingAnalysis`, `ImagingDiagnostics`.
-- Because `ImagingIO` and `ImagingColor` initially use OpenImageIO and OpenColorIO, including `Imaging` brings those standard backends.
+- Planned dependency set: `ImagingCore`, `ImagingIO`, `ImagingColor`, `ImagingAnalysis`, `ImagingDiagnostics`.
+- Because `ImagingIO` and `ImagingColor` planned initial backends are OpenImageIO and OpenColorIO, including `Imaging` brings those standard backends.
 - Applications needing a lighter dependency set may include only `ImagingCore`, `ImagingIO`, `ImagingColor` or `ImagingAnalysis` individually.
 - Must not automatically include `plugin/exr`.
 
