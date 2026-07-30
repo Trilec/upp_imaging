@@ -4,11 +4,14 @@ Primary navigation for `upp_imaging`.
 
 ## How to read this
 
-- public packages are the ones ordinary application code should use directly
-- strict `_src` packages compile pinned upstream sources and are not for app code
+- direct packages are for programmers who want the established native APIs directly
+- `_src` packages compile pinned upstream sources and are not for app code
 - narrow helpers expose only the supported file subset for a format
+- framework packages provide the backend-neutral U++ Imaging API under `Upp::Imaging`
+- raster plugins under `plugin/*` integrate supported formats into ordinary U++ `Upp::Image` workflows
 - probes check package/header/object boundaries quickly
-- tests validate behavior and numbers; viewers are supplementary
+- tests validate behavior and numbers
+- the diagnostic application `ImagingWorkbench` exercises the full stack visually
 
 ## Public application-facing packages
 
@@ -31,7 +34,7 @@ Primary navigation for `upp_imaging`.
 - Current status: scanline RGBA subset complete
 
 ### `opencolorio`
-- Purpose: stable OpenColorIO user-facing package
+- Purpose: stable OpenColorIO user-facing package (target public name: `OpenColorIO`)
 - Pinned upstream version: 2.5.2
 - Public include route: `#include <opencolorio/OpenColorIO.h>`
 - Direct package dependency: `opencolorio_src`
@@ -40,18 +43,19 @@ Primary navigation for `upp_imaging`.
 - Current status: packaged and validated under CLANGx64
 
 ### `oiio`
-- Purpose: stable OpenImageIO user-facing package
+- Purpose: stable OpenImageIO user-facing package (target public name: `OpenImageIO`)
 - Pinned upstream version: 3.1.15.0
 - Public include route: `#include <oiio/OIIO.h>`
 - Direct package dependency: `openimageio_src`
 - Implementation or delegate: delegates; static OpenEXR and PNG plugins are integrated
 - Primary validation target: `openimageio_io_test`
-- Current status: source/application boundary complete; EXR and PNG integration validated; other formats and dynamic plugin loading are not validated
+- Current status: source/application boundary complete; OpenEXR and PNG integration validated; JPEG, TIFF and other formats not validated; dynamic plugin loading not validated
+- Validated OIIO formats: **OpenEXR** and **PNG** only. Other formats must not be described as available through OIIO until their plugins are compiled, registered and tested.
 
-### `openimageio_prereq_test`
-- Purpose: coexistence test for the planned OpenImageIO prerequisite stack
-- Depends on: `openexr`, `imath`, `zlib`, `libpng`, `libjpeg_turbo`, `libtiff`, `opencolorio`, `fmt`, `robinmap`
-- Primary validation target: `openimageio_prereq_test`
+### `openimageio_io_test`
+- Purpose: validates the EXR/PNG integration path of the `oiio` package
+- Depends on: `oiio`
+- Primary validation target: `openimageio_io_test`
 - Current status: passes under CLANGx64
 
 ### `imath`
@@ -134,6 +138,71 @@ Primary navigation for `upp_imaging`.
 - Implementation or delegate: delegates
 - Primary validation target: `robinmap_test`
 - Current status: header-only stable package
+
+## Upp::Imaging framework (planned)
+
+All framework public types live under the `Upp::Imaging` namespace. Public headers must not expose `OIIO::*` or `OCIO::*` types.
+
+### `ImagingCore` (planned)
+- Purpose: backend-neutral image data model and result contracts
+- Public include route: `#include <Upp/Imaging/ImagingCore.h>`
+- Depends on: U++ Core only
+- Must not depend on: OpenImageIO, OpenColorIO, CtrlLib, ImagingWorkbench, `plugin/exr`
+- Public concepts: `ImageSpec`, `ImageBuffer`, `ImageData`, `Metadata`, `DataWindow`, `SampleType`, `ChannelLayout`, `Result`, `Diagnostics`
+- Current status: not implemented; design target documented
+
+### `ImagingIO` (planned)
+- Purpose: full-fidelity U++ image loading and saving
+- Initial implementation: OpenImageIO-backed
+- Public include route: `#include <Upp/Imaging/ImagingIO.h>`
+- Depends on: `ImagingCore`, `oiio`
+- Public headers expose only `Upp::Imaging` types
+- Current status: not implemented; design target documented
+
+### `ImagingColor` (planned)
+- Purpose: backend-neutral colour-processing operations
+- Initial implementation: OpenColorIO-backed
+- Public include route: `#include <Upp/Imaging/ImagingColor.h>`
+- Depends on: `ImagingCore`, `opencolorio`
+- Public headers must not expose OCIO processor, config or transform types
+- Current status: not implemented; design target documented
+
+### `ImagingAnalysis` (planned)
+- Purpose: reusable image-analysis algorithms
+- Public include route: `#include <Upp/Imaging/ImagingAnalysis.h>`
+- Depends on: `ImagingCore`
+- Initial scope: histograms, channel statistics, source probes, finite and non-finite value handling, waveform and vectorscope analysis
+- Current status: not implemented; design target documented
+
+### `ImagingDiagnostics` (planned)
+- Purpose: shared structured validation and reporting
+- Public include route: `#include <Upp/Imaging/ImagingDiagnostics.h>`
+- Depends on: U++ Core
+- Supports: deterministic package tests, readable console reports, numerical comparisons, image specification reports, metadata reports, channel and sample-type reports, timing and operation diagnostics
+- Current status: not implemented; design target documented
+
+### `Imaging` (planned)
+- Purpose: convenience umbrella for applications wanting the standard complete U++ Imaging framework
+- Public include route: `#include <Upp/Imaging/Imaging.h>`
+- Intended dependency set: `ImagingCore`, `ImagingIO`, `ImagingColor`, `ImagingAnalysis`, `ImagingDiagnostics`
+- Because `ImagingIO` and `ImagingColor` initially use OpenImageIO and OpenColorIO, including `Imaging` brings those standard backends
+- Applications needing a lighter dependency set may include only `ImagingCore`, `ImagingIO`, `ImagingColor` or `ImagingAnalysis` individually
+- Must not automatically include `plugin/exr`
+- Current status: not implemented; design target documented
+
+## U++ raster integration plugins (planned)
+
+These plugins are opt-in and display-oriented. They are not the full-fidelity APIs.
+
+### `plugin/exr` (planned)
+- Purpose: integrate EXR files into ordinary U++ `StreamRaster` and `Upp::Image` workflows
+- Eventually allows display-oriented use such as loading an EXR preview into `Upp::Image`
+- Not the full-fidelity EXR API
+- May convert floating-point pixels to display pixels, selected RGB or RGBA channels to `Upp::Image`, HDR values through a defined display policy
+- Must not claim to preserve arbitrary EXR channels, full source metadata, unmodified half or float pixels, source data-window semantics, or deep or multipart EXR data
+- Must remain opt-in so it does not silently change normal U++ raster-loading behaviour
+- Current status: not implemented
+- Reserved future pattern: `plugin/exr`, `plugin/jxl`, `plugin/hdr`
 
 ## Narrow format IO helpers
 
@@ -305,7 +374,7 @@ opencolorio_src
 ```text
 application
     ↓
-oiio
+oiio (target public name: OpenImageIO)
     ↓
 openimageio_src
     ↓
@@ -325,6 +394,35 @@ Currently integrated dependencies:
 - `robinmap`
 
 Static OpenEXR and PNG plugins are integrated into the OpenImageIO build. JPEG and TIFF are not yet routed through the OIIO boundary. Dynamic plugin loading is not validated.
+
+Currently validated OIIO formats: **OpenEXR** and **PNG**. JPEG, TIFF and other formats are not described as available through OIIO until their OIIO plugins are compiled, registered and tested.
+
+### Planned Upp::Imaging stack
+
+```text
+application
+    ↓
+Imaging (umbrella)
+    ↓
+ImagingCore, ImagingIO, ImagingColor, ImagingAnalysis, ImagingDiagnostics
+    ├── ImagingIO    → oiio (OpenImageIO) for full-fidelity load/save
+    ├── ImagingColor → opencolorio (OpenColorIO) for colour processing
+    └── ImagingCore  → Core only, no OIIO or OCIO dependency
+```
+
+`ImagingCore` does not depend on `oiio` or `opencolorio`. Applications needing only the backend-neutral data model can include `ImagingCore` alone.
+
+### Planned plugin/* stack
+
+```text
+plugin/exr
+    ↓
+openexr (or OpenImageIO directly for the display conversion)
+    ↓
+openexr_src (or oiio → openimageio_src)
+```
+
+`plugin/exr` is an opt-in display-oriented integration with `Upp::Image`. It is not the full-fidelity EXR API.
 
 ## Repository strategy
 

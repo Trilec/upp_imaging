@@ -14,8 +14,15 @@
 | JPEG | 3.2.0 | `libjpeg_turbo_src` | `libjpeg_turbo` | `jpeg_io` | Green | Green | RGB8 lossy subset complete |
 | TIFF | 4.7.2 | `libtiff_src` | `libtiff` | `tiff_io` | Green | Green | Typed RGBA subset complete |
 | OpenColorIO | 2.5.2 | `opencolorio_src` | `opencolorio` | — | Green | Green | Packaged and validated |
-| OpenImageIO | 3.1.15.0 | `openimageio_src` | `oiio` | — | Green | Green | Source/application boundary complete; static EXR+PNG integration validated |
-| LumaPix adapter | planned | — | — | — | — | — | Final integration (next core milestone) |
+| OpenImageIO | 3.1.15.0 | `openimageio_src` | `oiio` | — | Green (EXR+PNG) | Green | Source/application boundary complete; EXR and PNG integration validated; JPEG/TIFF/dynamic loading not validated |
+| `ImagingCore` | — | — | planned | — | — | — | Backend-neutral image data model; design target documented |
+| `ImagingIO` | — | — | planned | — | — | — | OpenImageIO-backed full-fidelity I/O; design target documented |
+| `ImagingColor` | — | — | planned | — | — | — | OpenColorIO-backed colour processing; design target documented |
+| `ImagingAnalysis` | — | — | planned | — | — | — | Histograms, statistics, probes; design target documented |
+| `ImagingDiagnostics` | — | — | planned | — | — | — | Shared structured reporting; design target documented |
+| `Imaging` (umbrella) | — | — | planned | — | — | — | Convenience umbrella for standard stack; design target documented |
+| `plugin/exr` | — | — | planned | — | — | — | Opt-in `Upp::Image` integration; design target documented |
+| LumaPix | — | — | paused | — | — | — | Reader proof completed; paused; reference material for `ImagingCore` and `ImagingIO` |
 
 ## Current completed format subsets
 
@@ -46,32 +53,55 @@
 - OpenImageIO 3.1.15.0 source/application boundary complete
 - static OpenEXR and PNG OpenImageIO plugins integrated
 - `openimageio_io_test` validates the EXR/PNG integration path
-- `ImagingWorkbench` diagnostic integration viewer is a non-authority diagnostic
+- `ImagingWorkbench` is the diagnostic integration application for the complete stack
+
+## Currently validated OpenImageIO formats
+
+- **OpenEXR**
+- **PNG**
+
+JPEG, TIFF and other formats are not validated through the OIIO boundary.
 
 ## Next implementation order
 
-1. OpenImageIO prerequisite coexistence test - complete
-2. OpenImageIO source/dependency audit - complete
-3. strict OpenImageIO package foundation - complete
-4. stable OpenImageIO package boundary - complete
-5. baseline EXR/PNG OpenImageIO validation - complete (EXR + PNG; JPEG/TIFF not yet routed through OIIO)
-6. LumaPix adapter - next core milestone
+1. Complete the framework documentation and public naming — **in progress**
+2. Perform controlled `oiio` to `OpenImageIO` and `opencolorio` to `OpenColorIO` package renaming
+3. Establish `ImagingCore` and `ImagingIO` using the proven LumaPix contracts
+4. Establish `ImagingColor`, `ImagingAnalysis` and `ImagingDiagnostics` boundaries
+5. Add `plugin/exr`
+6. Add JPEG XL support
+7. Add HDR/RGBE support
+8. Add DPX support
+9. Add RAW image support
+10. Add WebP support
+11. Add HEIF and AVIF support
+12. Expand TIFF coverage where useful
+13. Treat FFmpeg and moving-image support as a separate larger milestone
 
-OpenColorIO 2.5.2 is packaged and validated.
+## Format priority
 
-OpenImageIO 3.1.15.0 source/application boundary is complete with a stable `oiio` package.
+Prioritise formats not already adequately supported by standard U++ plugins:
 
-The OpenImageIO prerequisite coexistence test now passes under CLANGx64.
+- JPEG XL, HDR, DPX, RAW, WebP, HEIF and AVIF come before duplicating existing ordinary PNG, JPEG or TIFF U++ raster support.
 
-We are not manually implementing every format supported by OpenImageIO before packaging OpenImageIO.
+For each new format the sequence is:
 
-The direct format work establishes:
+1. package and validate required upstream dependencies
+2. compile and register the OpenImageIO format plugin where applicable
+3. validate direct OpenImageIO loading and saving
+4. validate the ImagingIO path
+5. add a format-specific `plugin/*` package only where useful for `Upp::Image` workflows
 
-- proven dependencies
-- known-working codec packages
-- test images
-- comparison policies
-- diagnostic tooling
-- fallback helpers
+## LumaPix disposition
 
-`ImagingWorkbench` exercises the stable `oiio` boundary; the diagnostic viewer is not the core correctness authority.
+`upp_lumapix` is paused after completing its OpenImageIO reader proof. That work demonstrated:
+
+- backend-neutral image specifications
+- typed image buffers
+- metadata translation
+- channel-order handling
+- data-window preservation
+- OIIO isolation behind a private implementation
+- deterministic generated-fixture testing
+
+It is reference material for the future `ImagingCore` and `ImagingIO` migration. `upp_imaging` does not depend on `upp_lumapix`. The LumaPix name is reserved for a possible future image-processing application built on `upp_imaging`.
