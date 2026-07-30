@@ -19,11 +19,11 @@ Narrow format helpers
         ↓
 Upp::Imaging framework (backend-neutral)
         ├── ImagingCore
-        ├── ImagingIO           (depends on Core + OpenImageIO)
-        ├── ImagingColor        (depends on Core + OpenColorIO)
-        ├── ImagingAnalysis     (depends on Core)
-        ├── ImagingDiagnostics  (depends on Core)
-        └── Imaging (umbrella)
+        ├── ImagingIO           (planned; depends on ImagingCore + current oiio, later OpenImageIO)
+        ├── ImagingColor        (planned; depends on ImagingCore + current opencolorio, later OpenColorIO)
+        ├── ImagingAnalysis     (planned; depends on ImagingCore)
+        ├── ImagingDiagnostics  (planned; depends on ImagingCore)
+        └── Imaging (umbrella; depends on all five framework packages)
         ↓
 plugin/* (opt-in raster integration)
         └── plugin/exr
@@ -75,7 +75,7 @@ All framework public types belong under `Upp::Imaging`. No `OIIO::*` or `OCIO::*
 ### `ImagingIO`
 
 - Purpose: full-fidelity U++ image loading and saving using `ImagingCore` types.
-- Initial implementation: OpenImageIO-backed.
+- Planned with OpenImageIO as its initial backend.
 - Depends on `ImagingCore` and `OpenImageIO`.
 - Public headers expose only `Upp::Imaging` types; no `OIIO::ImageBuf` or `OIIO::ImageSpec`.
 - Use case: typed image pixels, HDR and floating-point values, arbitrary source channels, metadata, source data-window origins, stable U++ errors, backend-independent application code.
@@ -83,7 +83,7 @@ All framework public types belong under `Upp::Imaging`. No `OIIO::*` or `OCIO::*
 ### `ImagingColor`
 
 - Purpose: backend-neutral colour-processing operations.
-- Initial implementation: OpenColorIO-backed.
+- Planned with OpenColorIO as its initial backend.
 - Depends on `ImagingCore` and `OpenColorIO`.
 - Public headers must not expose OCIO processor, config or transform types.
 - Responsible for colour transforms and display transforms; not responsible for file loading.
@@ -91,12 +91,15 @@ All framework public types belong under `Upp::Imaging`. No `OIIO::*` or `OCIO::*
 ### `ImagingAnalysis`
 
 - Purpose: reusable image-analysis algorithms.
-- Initial scope: histograms, channel statistics, source probes, finite and non-finite value handling, waveform and vectorscope analysis.
+- Initial scope: histograms, channel statistics, source probes, finite and non-finite value handling.
+- Later scope: waveform analysis, vectorscope analysis, other reusable scopes.
 - Prefer numerical and non-GUI code so the same algorithms are used by tests and `ImagingWorkbench`.
 
 ### `ImagingDiagnostics`
 
 - Purpose: shared structured validation and reporting.
+- GUI-independent.
+- Depends on `ImagingCore`.
 - Supports: deterministic package tests, readable console reports, numerical comparisons, image specification reports, metadata reports, channel and sample-type reports, timing and operation diagnostics, `ImagingWorkbench` presentation.
 - Package tests remain the automated correctness gates.
 

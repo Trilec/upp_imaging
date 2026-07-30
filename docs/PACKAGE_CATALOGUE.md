@@ -145,7 +145,7 @@ All framework public types live under the `Upp::Imaging` namespace. Public heade
 
 ### `ImagingCore` (planned)
 - Purpose: backend-neutral image data model and result contracts
-- Public include route: `#include <Upp/Imaging/ImagingCore.h>`
+- Public include route: `#include <ImagingCore/ImagingCore.h>`
 - Depends on: U++ Core only
 - Must not depend on: OpenImageIO, OpenColorIO, CtrlLib, ImagingWorkbench, `plugin/exr`
 - Public concepts: `ImageSpec`, `ImageBuffer`, `ImageData`, `Metadata`, `DataWindow`, `SampleType`, `ChannelLayout`, `Result`, `Diagnostics`
@@ -153,39 +153,42 @@ All framework public types live under the `Upp::Imaging` namespace. Public heade
 
 ### `ImagingIO` (planned)
 - Purpose: full-fidelity U++ image loading and saving
-- Initial implementation: OpenImageIO-backed
-- Public include route: `#include <Upp/Imaging/ImagingIO.h>`
-- Depends on: `ImagingCore`, `oiio`
+- Planned with OpenImageIO as its initial backend (current package name: `oiio`, target public name: `OpenImageIO`)
+- Public include route: `#include <ImagingIO/ImagingIO.h>`
+- Planned dependency set: `ImagingCore`, current `oiio` (later `OpenImageIO`)
 - Public headers expose only `Upp::Imaging` types
 - Current status: not implemented; design target documented
 
 ### `ImagingColor` (planned)
 - Purpose: backend-neutral colour-processing operations
-- Initial implementation: OpenColorIO-backed
-- Public include route: `#include <Upp/Imaging/ImagingColor.h>`
-- Depends on: `ImagingCore`, `opencolorio`
+- Planned with OpenColorIO as its initial backend (current package name: `opencolorio`, target public name: `OpenColorIO`)
+- Public include route: `#include <ImagingColor/ImagingColor.h>`
+- Planned dependency set: `ImagingCore`, current `opencolorio` (later `OpenColorIO`)
 - Public headers must not expose OCIO processor, config or transform types
 - Current status: not implemented; design target documented
 
 ### `ImagingAnalysis` (planned)
 - Purpose: reusable image-analysis algorithms
-- Public include route: `#include <Upp/Imaging/ImagingAnalysis.h>`
+- Public include route: `#include <ImagingAnalysis/ImagingAnalysis.h>`
 - Depends on: `ImagingCore`
-- Initial scope: histograms, channel statistics, source probes, finite and non-finite value handling, waveform and vectorscope analysis
+- Initial scope: histograms, channel statistics, source probes, finite and non-finite value handling
+- Later scope: waveform analysis, vectorscope analysis, other reusable scopes
 - Current status: not implemented; design target documented
 
 ### `ImagingDiagnostics` (planned)
 - Purpose: shared structured validation and reporting
-- Public include route: `#include <Upp/Imaging/ImagingDiagnostics.h>`
-- Depends on: U++ Core
+- Public include route: `#include <ImagingDiagnostics/ImagingDiagnostics.h>`
+- Depends on: `ImagingCore`
+- GUI-independent
+- Must not depend on: CtrlLib, ImagingWorkbench
 - Supports: deterministic package tests, readable console reports, numerical comparisons, image specification reports, metadata reports, channel and sample-type reports, timing and operation diagnostics
 - Current status: not implemented; design target documented
 
 ### `Imaging` (planned)
 - Purpose: convenience umbrella for applications wanting the standard complete U++ Imaging framework
-- Public include route: `#include <Upp/Imaging/Imaging.h>`
-- Intended dependency set: `ImagingCore`, `ImagingIO`, `ImagingColor`, `ImagingAnalysis`, `ImagingDiagnostics`
-- Because `ImagingIO` and `ImagingColor` initially use OpenImageIO and OpenColorIO, including `Imaging` brings those standard backends
+- Public include route: `#include <Imaging/Imaging.h>`
+- Planned dependency set: `ImagingCore`, `ImagingIO`, `ImagingColor`, `ImagingAnalysis`, `ImagingDiagnostics`
+- Because `ImagingIO` and `ImagingColor` planned initial backends are OpenImageIO and OpenColorIO, including `Imaging` brings those standard backends
 - Applications needing a lighter dependency set may include only `ImagingCore`, `ImagingIO`, `ImagingColor` or `ImagingAnalysis` individually
 - Must not automatically include `plugin/exr`
 - Current status: not implemented; design target documented

@@ -127,6 +127,16 @@ Current prerequisite coexistence check:
 - `openimageio_prereq_test` passes against the stable prerequisite stack under CLANGx64
 - `openimageio_io_test` validates the EXR/PNG integration path under CLANGx64
 
+Planned framework dependency direction:
+
+- `ImagingCore` depends on `Core`
+- `ImagingIO` depends on `ImagingCore` and the current `oiio`, later `OpenImageIO`
+- `ImagingColor` depends on `ImagingCore` and the current `opencolorio`, later `OpenColorIO`
+- `ImagingAnalysis` depends on `ImagingCore`
+- `ImagingDiagnostics` depends on `ImagingCore`
+- `Imaging` umbrella depends on all five framework packages
+- `plugin/exr` remains opt-in and is not included automatically by `Imaging`
+
 Conflict rule:
 
 - do not link strict and stable implementations of the same library into one normal application executable
