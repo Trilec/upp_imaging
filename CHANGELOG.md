@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+* Defined the U++ Imaging framework pivot and the agreed implementation roadmap.
+* Documented the three use cases: direct upstream-style packages, backend-neutral `Upp::Imaging` framework, and opt-in `plugin/*` raster integration.
+* `README.md`, `docs/ARCHITECTURE.md`, `docs/PACKAGE_CATALOGUE.md`, `docs/STATUS_AND_ROADMAP.md` and `docs/package_layout.md` updated.
+* Recorded the agreed package rename mapping: `oiio` → `OpenImageIO`, `opencolorio` → `OpenColorIO`. Rename is deferred to a later implementation task.
+* Recorded the planned framework packages under `Upp::Imaging`: `ImagingCore`, `ImagingIO`, `ImagingColor`, `ImagingAnalysis`, `ImagingDiagnostics` and the `Imaging` umbrella.
+* Recorded the planned `plugin/exr` display-oriented raster integration.
+* Recorded the LumaPix disposition: `upp_lumapix` is paused after completing its OpenImageIO reader proof; `upp_imaging` does not depend on `upp_lumapix`; the LumaPix name is reserved for a possible future application built on `upp_imaging`.
+* Recorded the format priority: JPEG XL, HDR, DPX, RAW, WebP, HEIF and AVIF come before duplicating existing ordinary PNG, JPEG or TIFF U++ raster support.
 * Added initial zlib package experiment.
 * Split zlib into strict `zlib_src` and compatibility `zlib` package layers.
 * Added `zlib_src_test` to prove imported upstream zlib 1.3.2 linkage.

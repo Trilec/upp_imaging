@@ -36,10 +36,11 @@ Expected dependency direction:
 - `fmt` is the user-facing fmt layer and currently depends on `fmt_src`
 - `robinmap_src` is the strict upstream robin-map header-only package
 - `robinmap` is the user-facing robin-map layer and currently depends on `robinmap_src`
+- `openimageio_src` compiles pinned upstream OpenImageIO 3.1.15.0 sources directly; static OpenEXR and PNG plugins are integrated
+- `oiio` is the stable user-facing wrapper for OpenImageIO (target public name: `OpenImageIO`)
 - `opencolorio_src` builds imported OpenColorIO 2.5.2 directly and depends on `expat`, `yaml_cpp`, `pystring`, `minizip_ng`, `imath`, and `zlib`
 - `opencolorio_src/OCIO.h` is the strict source-boundary wrapper used by source probes
-- `opencolorio` is the stable user-facing wrapper package and keeps the public include boundary separate
-- `OpenImageIO` may remain external or become an adapter later, depending on complexity
+- `opencolorio` is the stable user-facing wrapper package (target public name: `OpenColorIO`) and keeps the public include boundary separate
 
 Current zlib package policy:
 
@@ -94,16 +95,20 @@ Current OpenEXR package policy:
 Current OpenColorIO package policy:
 
 - `opencolorio_src` builds imported OpenColorIO 2.5.2 directly
-- `opencolorio` is the stable application-facing wrapper
+- `opencolorio` is the stable application-facing wrapper (target public name: `OpenColorIO`)
 - `opencolorio_src` depends on `expat`, `yaml_cpp`, `pystring`, `minizip_ng`, `imath`, and `zlib`
 - strict proof of vendored upstream linkage belongs to `opencolorio_src_test`
 - stable proof of the public boundary belongs to `opencolorio_test`
 - `opencolorio_gui_link_test` covers the GUI linking surface
 
-Planned OpenImageIO package names:
+Current OpenImageIO package policy:
 
-- `openimageio_src` - not implemented
-- `openimageio` - not implemented
+- `openimageio_src` builds imported OpenImageIO 3.1.15.0 directly
+- `oiio` is the stable user-facing wrapper (target public name: `OpenImageIO`)
+- static OpenEXR and PNG OpenImageIO plugins are integrated into the build
+- `openimageio_io_test` validates the EXR/PNG integration path
+- JPEG and TIFF are not yet routed through the OIIO boundary
+- dynamic plugin loading is not validated
 
 Current planned prerequisite direction:
 
@@ -120,6 +125,7 @@ Current planned prerequisite direction:
 Current prerequisite coexistence check:
 
 - `openimageio_prereq_test` passes against the stable prerequisite stack under CLANGx64
+- `openimageio_io_test` validates the EXR/PNG integration path under CLANGx64
 
 Conflict rule:
 
