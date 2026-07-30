@@ -15,13 +15,14 @@
 | TIFF | 4.7.2 | `libtiff_src` | `libtiff` | `tiff_io` | Green | Green | Typed RGBA subset complete |
 | OpenColorIO | 2.5.2 | `opencolorio_src` | `opencolorio` | — | Green | Green | Packaged and validated |
 | OpenImageIO | 3.1.15.0 | `openimageio_src` | `oiio` | — | Green (EXR+PNG) | Green | Source/application boundary complete; EXR and PNG integration validated; JPEG/TIFF/dynamic loading not validated |
-| `ImagingCore` | — | — | planned | — | — | — | Backend-neutral image data model; design target documented |
-| `ImagingIO` | — | — | planned | — | — | — | OpenImageIO-backed full-fidelity I/O; design target documented |
-| `ImagingColor` | — | — | planned | — | — | — | OpenColorIO-backed colour processing; design target documented |
-| `ImagingAnalysis` | — | — | planned | — | — | — | Histograms, statistics, probes; design target documented |
-| `ImagingDiagnostics` | — | — | planned | — | — | — | Shared structured reporting; design target documented |
-| `Imaging` (umbrella) | — | — | planned | — | — | — | Convenience umbrella for standard stack; design target documented |
-| `plugin/exr` | — | — | planned | — | — | — | Opt-in `Upp::Image` integration; design target documented |
+| Architecture and package naming | — | — | — | — | — | — | **Documentation pivot complete**; package renames still planned (commit c3e6085, follow-up TASK 011B1-R1) |
+| `ImagingCore` | — | — | planned | — | — | — | Backend-neutral image data model; design target documented; not implemented |
+| `ImagingIO` | — | — | planned | — | — | — | Planned initial backend: OpenImageIO; design target documented; not implemented |
+| `ImagingColor` | — | — | planned | — | — | — | Planned initial backend: OpenColorIO; design target documented; not implemented |
+| `ImagingAnalysis` | — | — | planned | — | — | — | Initial scope: histograms, channel statistics, source probes, finite and non-finite value handling; later scope includes waveform and vectorscope; design target documented; not implemented |
+| `ImagingDiagnostics` | — | — | planned | — | — | — | Will depend on `ImagingCore`; GUI-independent; design target documented; not implemented |
+| `Imaging` (umbrella) | — | — | planned | — | — | — | Convenience umbrella for standard stack; design target documented; not implemented |
+| `plugin/exr` | — | — | planned | — | — | — | Opt-in `Upp::Image` integration; design target documented; not implemented |
 | LumaPix | — | — | paused | — | — | — | Reader proof completed; paused; reference material for `ImagingCore` and `ImagingIO` |
 
 ## Current completed format subsets
@@ -62,27 +63,27 @@
 
 JPEG, TIFF and other formats are not validated through the OIIO boundary.
 
+## Milestone status
+
+- **Architecture and documentation pivot: complete.** The three-layer model, `Upp::Imaging` framework design, `plugin/exr` scope, LumaPix disposition, and format roadmap are defined and documented. Package renames remain planned.
+- **Package renames (planned):** `oiio` → `OpenImageIO` and `opencolorio` → `OpenColorIO` are documented but not yet performed.
+- **Framework migration (planned):** `ImagingCore`, `ImagingIO`, `ImagingColor`, `ImagingAnalysis`, `ImagingDiagnostics` and the `Imaging` umbrella are design targets and are not yet implemented.
+
 ## Next implementation order
 
-1. Complete the framework documentation and public naming — **in progress**
-2. Perform controlled `oiio` to `OpenImageIO` and `opencolorio` to `OpenColorIO` package renaming
-3. Establish `ImagingCore` and `ImagingIO` using the proven LumaPix contracts
-4. Establish `ImagingColor`, `ImagingAnalysis` and `ImagingDiagnostics` boundaries
-5. Add `plugin/exr`
-6. Add JPEG XL support
-7. Add HDR/RGBE support
-8. Add DPX support
-9. Add RAW image support
-10. Add WebP support
-11. Add HEIF and AVIF support
-12. Expand TIFF coverage where useful
-13. Treat FFmpeg and moving-image support as a separate larger milestone
+1. **Complete the architecture and documentation pivot** — **done** (commit c3e6085, follow-up TASK 011B1-R1)
+2. **Framework migration** — establish `ImagingCore`, `ImagingIO`, `ImagingColor`, `ImagingAnalysis`, `ImagingDiagnostics` and the `Imaging` umbrella using the proven LumaPix contracts
+3. `plugin/exr` — opt-in raster integration into ordinary U++ `Upp::Image` workflows
+4. JPEG XL support
+5. HDR/RGBE support
+6. DPX/Cineon support
+7. RAW image support
+8. WebP support
+9. HEIF/AVIF support
+10. Additional TIFF/OIIO coverage — expand TIFF handling where useful and route additional formats through the OIIO boundary
+11. FFmpeg as a separate major milestone
 
-## Format priority
-
-Prioritise formats not already adequately supported by standard U++ plugins:
-
-- JPEG XL, HDR, DPX, RAW, WebP, HEIF and AVIF come before duplicating existing ordinary PNG, JPEG or TIFF U++ raster support.
+JPEG XL, HDR, DPX/Cineon, RAW, WebP, HEIF and AVIF come before duplicating existing ordinary PNG, JPEG or TIFF U++ raster support.
 
 For each new format the sequence is:
 
@@ -91,6 +92,48 @@ For each new format the sequence is:
 3. validate direct OpenImageIO loading and saving
 4. validate the ImagingIO path
 5. add a format-specific `plugin/*` package only where useful for `Upp::Image` workflows
+
+## ImagingAnalysis scope
+
+**Initial scope:**
+
+- histograms
+- channel statistics
+- source probes
+- finite and non-finite value handling
+
+**Later scope:**
+
+- waveform analysis
+- vectorscope analysis
+- other reusable scopes
+
+The initial framework-establishment task does not require waveform or vectorscope extraction.
+
+## Planned framework dependency direction
+
+When the framework packages are implemented:
+
+- `ImagingCore` depends on U++ Core
+- `ImagingIO` depends on `ImagingCore` and the current `oiio` package, later `OpenImageIO`
+- `ImagingColor` depends on `ImagingCore` and the current `opencolorio` package, later `OpenColorIO`
+- `ImagingAnalysis` depends on `ImagingCore`
+- `ImagingDiagnostics` depends on `ImagingCore`
+- `Imaging` umbrella depends on all five framework packages
+- `plugin/exr` remains opt-in and is not included automatically by `Imaging`
+
+## Planned public include convention
+
+When the framework packages are implemented, public headers will live at the package root:
+
+- `<ImagingCore/ImagingCore.h>`
+- `<ImagingIO/ImagingIO.h>`
+- `<ImagingColor/ImagingColor.h>`
+- `<ImagingAnalysis/ImagingAnalysis.h>`
+- `<ImagingDiagnostics/ImagingDiagnostics.h>`
+- `<Imaging/Imaging.h>`
+
+All public types remain in the namespace `Upp::Imaging`.
 
 ## LumaPix disposition
 

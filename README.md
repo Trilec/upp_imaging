@@ -20,14 +20,16 @@ Use these when you want the established native types and APIs directly in your a
 
 ### 2. Backend-neutral U++ Imaging framework
 
-Programmers who want a U++-native, backend-neutral image API use the `Upp::Imaging` framework:
+Programmers who want a U++-native, backend-neutral image API use the `Upp::Imaging` framework (planned):
 
-- `ImagingCore` — the backend-neutral image data model and result contracts. Depends only on U++ Core.
-- `ImagingIO` — typed image loading and saving. Currently OIIO-backed. Depends on `ImagingCore` and `OpenImageIO`.
-- `ImagingColor` — backend-neutral colour-processing operations. Currently OCIO-backed. Depends on `ImagingCore` and `OpenColorIO`.
-- `ImagingAnalysis` — reusable image-analysis algorithms. Depends only on `ImagingCore`.
-- `ImagingDiagnostics` — shared structured validation and reporting. Depends only on U++ Core.
-- `Imaging` — convenience umbrella that pulls in Core, IO, Color, Analysis and Diagnostics.
+- `ImagingCore` (planned) — the backend-neutral image data model and result contracts. Will depend only on U++ Core.
+- `ImagingIO` (planned) — typed image loading and saving. Planned with OpenImageIO as its initial backend. Will depend on `ImagingCore` and `OpenImageIO`.
+- `ImagingColor` (planned) — backend-neutral colour-processing operations. Planned with OpenColorIO as its initial backend. Will depend on `ImagingCore` and `OpenColorIO`.
+- `ImagingAnalysis` (planned) — reusable image-analysis algorithms. Will depend on `ImagingCore`.
+- `ImagingDiagnostics` (planned) — shared structured validation and reporting; GUI-independent. Will depend on `ImagingCore`.
+- `Imaging` (planned) — convenience umbrella that pulls in Core, IO, Color, Analysis and Diagnostics.
+
+None of these framework packages are implemented yet.
 
 Public headers in the framework expose only `Upp::Imaging` types. No `OIIO::*` or `OCIO::*` types appear in `ImagingCore`, `ImagingIO`, `ImagingColor`, `ImagingAnalysis`, `ImagingDiagnostics` or `Imaging` public headers.
 
@@ -78,21 +80,19 @@ That work is reference material for the future `ImagingCore` and `ImagingIO` mig
 
 ## Next implementation order
 
-1. Complete the framework documentation and public naming.
-2. Perform controlled `oiio` to `OpenImageIO` and `opencolorio` to `OpenColorIO` package renaming.
-3. Establish `ImagingCore` and `ImagingIO` using the proven LumaPix contracts.
-4. Establish `ImagingColor`, `ImagingAnalysis` and `ImagingDiagnostics` boundaries.
-5. Add `plugin/exr`.
-6. Add JPEG XL support.
-7. Add HDR/RGBE support.
-8. Add DPX support.
-9. Add RAW image support.
-10. Add WebP support.
-11. Add HEIF and AVIF support.
-12. Expand TIFF coverage where useful.
-13. Treat FFmpeg and moving-image support as a separate larger milestone.
+1. Architecture and documentation pivot — **complete**
+2. Framework migration — establish `ImagingCore`, `ImagingIO`, `ImagingColor`, `ImagingAnalysis`, `ImagingDiagnostics` and the `Imaging` umbrella using the proven LumaPix contracts
+3. `plugin/exr` — opt-in raster integration into ordinary U++ `Upp::Image` workflows
+4. JPEG XL support
+5. HDR/RGBE support
+6. DPX/Cineon support
+7. RAW image support
+8. WebP support
+9. HEIF/AVIF support
+10. Additional TIFF/OIIO coverage — expand TIFF handling where useful and route additional formats through the OIIO boundary
+11. FFmpeg as a separate major milestone
 
-JPEG XL, HDR, DPX, RAW, WebP, HEIF and AVIF come before duplicating existing ordinary PNG, JPEG or TIFF U++ raster support.
+JPEG XL, HDR, DPX/Cineon, RAW, WebP, HEIF and AVIF come before duplicating existing ordinary PNG, JPEG or TIFF U++ raster support.
 
 For each new format the sequence is:
 
@@ -106,14 +106,27 @@ For each new format the sequence is:
 
 | Need | Use |
 | --- | --- |
-| Direct native EXR, PNG, JPEG, TIFF, OCIO, OIIO access | `openexr`, `opencolorio`, `oiio`, `libpng`, `libjpeg_turbo`, `libtiff`, `imath`, `fmt`, `robinmap`, `libdeflate`, `openjph` |
+| Direct native EXR, OpenEXRCore, PNG, JPEG, TIFF, OCIO, OIIO access | `openexr`, `openexr_core`, `opencolorio`, `oiio`, `libpng`, `libjpeg_turbo`, `libtiff`, `imath`, `fmt`, `robinmap`, `libdeflate`, `openjph` |
 | Narrow RGBA-only scanline load/save helpers | `openexr_io`, `png_io`, `jpeg_io`, `tiff_io` |
-| Backend-neutral U++ image API | `ImagingCore` + `ImagingIO` (+ `ImagingColor` for colour) |
-| Standard full U++ imaging stack | `Imaging` |
-| Image analysis (histograms, statistics, probes) | `ImagingAnalysis` |
-| Structured diagnostics and reporting | `ImagingDiagnostics` |
-| Load an EXR into `Upp::Image` | `plugin/exr` |
+| Backend-neutral U++ image API (planned) | `ImagingCore` + `ImagingIO` (+ `ImagingColor` for colour) |
+| Standard full U++ imaging stack (planned) | `Imaging` |
+| Image analysis — histograms, statistics, probes (planned) | `ImagingAnalysis` |
+| Structured diagnostics and reporting (planned) | `ImagingDiagnostics` |
+| Load an EXR into `Upp::Image` (planned) | `plugin/exr` |
 | Full-stack visual and diagnostic application | `ImagingWorkbench` (application only, not a reusable core package) |
+
+## Planned public include convention
+
+When the framework packages are implemented, public headers will live at the package root, for example:
+
+- `<ImagingCore/ImagingCore.h>`
+- `<ImagingIO/ImagingIO.h>`
+- `<ImagingColor/ImagingColor.h>`
+- `<ImagingAnalysis/ImagingAnalysis.h>`
+- `<ImagingDiagnostics/ImagingDiagnostics.h>`
+- `<Imaging/Imaging.h>`
+
+All public types remain in the namespace `Upp::Imaging`.
 
 ## Documentation links
 
