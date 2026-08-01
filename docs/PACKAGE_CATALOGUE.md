@@ -47,7 +47,7 @@ Primary navigation for `upp_imaging`.
 - Pinned upstream version: 3.1.15.0
 - Public include route: `#include <OpenImageIO/imageio.h>` and related headers under `OpenImageIO/`
 - Direct package dependency: `fmt`, `imath`, `libtiff`
-- Implementation or delegate: owns the strict header tree only; compiles no OIIO source; does not register plugins
+- Implementation or delegate: owns the strict header tree only; exports the native include route; compiles no OIIO source; does not register plugins
 - Primary validation target: indirectly used by `openimageio_src`, `openimageio_util_src`
 - Current status: internal routing package separated so the public `OpenImageIO` wrapper can be created later
 

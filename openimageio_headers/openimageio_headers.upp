@@ -1,5 +1,7 @@
 description "Strict internal OpenImageIO 3.1.15.0 public-header package";
 
+include .;
+
 uses
     fmt,
     imath,

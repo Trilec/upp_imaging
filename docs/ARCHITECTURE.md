@@ -30,6 +30,7 @@ These packages expose the established native APIs directly.
 
 - Purpose: own the strict upstream `OpenImageIO/` public-header tree.
 - Internal-only routing package; not the ordinary application-facing package.
+- Exports the native include route for `<OpenImageIO/...>` consumers.
 - Compiles no OIIO implementation source.
 - Preserves native `<OpenImageIO/...>` include spelling.
 - Does not register static plugins.
