@@ -8,7 +8,7 @@ uses
 	imaging_roundtrip_viewer_ocio,
 	imaging_view_transform,
 	OpenImageIO,
-	opencolorio;
+	OpenColorIO;
 
 mainconfig
 	"" = "CONSOLE";

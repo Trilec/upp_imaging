@@ -23,8 +23,8 @@
 - iex_src: pass (`iex_src_test` throws and catches IEX_NAMESPACE::ArgExc through BaseExc)
 - ilmthread_src: pass (`ilmthread_src_test` reports supportsThreads() and verifies semaphore post/wait)
 - opencolorio_src: pass (`opencolorio_src_test` reports source boundary, CPU/GPU coverage, builtin registry checks, and headless monitor policy)
-- opencolorio: pass (`opencolorio_test` reports stable boundary and the same CPU/GPU coverage)
-- opencolorio_gui_link_test: pass with `upp_Ui` and `upp_AnimationEasing`
+- OpenColorIO: pass (`opencolorio_test` reports the stable public boundary and the same CPU/GPU coverage)
+- opencolorio_gui_link_test: pass with `upp_Ui` and `upp_animation`
 
 Notes:
 
@@ -40,7 +40,7 @@ Notes:
 - `openjph_src` is the standalone HTJ2K/OpenJPH package intended to satisfy future OpenEXRCore HTJ2K dependency needs.
 - `openexr_core_src` now exists as a first modest package attempt; full EXR read/write remains deferred.
 - `opencolorio_src` uses a source-only wrapper, generated builtin blobs, and a headless Windows monitor path.
-- `opencolorio` stays a separate stable wrapper so the two boundaries do not blur and start sharing the same shoes.
+- `OpenColorIO` stays a separate stable wrapper from `opencolorio_src` so the two boundaries do not blur.
 
 ## Future targets
 

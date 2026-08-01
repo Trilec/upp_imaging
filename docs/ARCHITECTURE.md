@@ -42,7 +42,7 @@ These packages expose the established native APIs directly.
 - `openimageio_plugin_openexr` and `openimageio_plugin_png` provide the static format-registration path.
 - `oiio` is the current public application-facing package and carries the validated EXR/PNG integration path.
 
-### OpenColorIO (target public name: `OpenColorIO`, current: `opencolorio`)
+### OpenColorIO
 
 - Purpose: expose the native OpenColorIO API for U++ projects.
 - Users work directly with OCIO configurations, processors, transforms and GPU shader extraction.
@@ -80,8 +80,8 @@ All framework public types belong under `Upp::Imaging`. No `OIIO::*` or `OCIO::*
 ### `ImagingColor`
 
 - Purpose: backend-neutral colour-processing operations.
-- Planned with OpenColorIO as its initial backend (current package name: `opencolorio`, target public name: `OpenColorIO`).
-- Planned dependency set: `ImagingCore`, current `opencolorio` (later `OpenColorIO`).
+- Planned with OpenColorIO as its initial backend.
+- Planned dependency set: `ImagingCore`, `OpenColorIO`.
 - Public headers must not expose OCIO processor, config or transform types.
 - Responsible for colour transforms and display transforms; not responsible for file loading.
 
@@ -156,7 +156,7 @@ These stay internal. Ordinary applications must not depend directly on them:
 
 ## Package name policy
 
-- `oiio` and `opencolorio` are the current names. Target public names are `OpenImageIO` and `OpenColorIO`.
+- `OpenImageIO` and `OpenColorIO` are the canonical public package names. The OpenColorIO rename is deliberately breaking because Windows cannot host case-only package directories; `opencolorio_src` remains the strict internal source package.
 - Rename happens in a later implementation task, not in this documentation pivot.
 - Other direct packages keep their current names. Renaming `openexr`, `imath`, `libpng`, `libjpeg_turbo`, `libtiff`, `libdeflate`, `openjph`, `fmt`, `robinmap` is not in scope.
 

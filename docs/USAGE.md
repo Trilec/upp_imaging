@@ -161,7 +161,7 @@ E:\upp-18468\umk.exe "E:/apps/github/upp_imaging,E:/upp-18468/uppsrc" png_io_tes
 Viewer:
 
 ```text
-E:\upp-18468\umk.exe "E:/apps/github/upp_imaging,E:/apps/github/upp_Ui,E:/apps/github/upp_AnimationEasing,E:/upp-18468/uppsrc" imaging_roundtrip_viewer CLANGx64 -abr "E:/apps/github/upp_imaging/out/imaging_roundtrip_viewer.exe"
+E:\upp-18468\umk.exe "E:/apps/github/upp_imaging,E:/apps/github/upp_Ui,E:/apps/github/upp_animation,E:/upp-18468/uppsrc" imaging_roundtrip_viewer CLANGx64 -abr "E:/apps/github/upp_imaging/out/imaging_roundtrip_viewer.exe"
 ```
 
 `GitHubOut.var` is local-only. `GitHubOut.var.example` documents the symbolic nest requirement.

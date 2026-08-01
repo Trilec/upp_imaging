@@ -1,7 +1,7 @@
 # ImagingWorkbench
 
 Small interactive EXR and PNG workbench built on the stable `oiio` and
-`opencolorio` application packages.
+`OpenColorIO` application packages.
 
 Build with:
 

@@ -42,7 +42,8 @@ Expected dependency direction:
 - `oiio` is the temporary compatibility-forwarding package
 - `opencolorio_src` builds imported OpenColorIO 2.5.2 directly and depends on `expat`, `yaml_cpp`, `pystring`, `minizip_ng`, `imath`, and `zlib`
 - `opencolorio_src/OCIO.h` is the strict source-boundary wrapper used by source probes
-- `opencolorio` is the stable user-facing wrapper package (target public name: `OpenColorIO`) and keeps the public include boundary separate
+- `OpenColorIO` is the canonical user-facing wrapper package
+- `OpenColorIO` is the sole public OpenColorIO package; the old `opencolorio` public name is not provided because Windows cannot host case-only package directories
 
 Current zlib package policy:
 
@@ -97,7 +98,7 @@ Current OpenEXR package policy:
 Current OpenColorIO package policy:
 
 - `opencolorio_src` builds imported OpenColorIO 2.5.2 directly
-- `opencolorio` is the stable application-facing wrapper (target public name: `OpenColorIO`)
+- `OpenColorIO` is the canonical application-facing wrapper
 - `opencolorio_src` depends on `expat`, `yaml_cpp`, `pystring`, `minizip_ng`, `imath`, and `zlib`
 - strict proof of vendored upstream linkage belongs to `opencolorio_src_test`
 - stable proof of the public boundary belongs to `opencolorio_test`
@@ -109,7 +110,7 @@ Current OpenImageIO package policy:
 - `openimageio_src` builds imported OpenImageIO 3.1.15.0 directly
 - `openimageio_plugin_openexr` and `openimageio_plugin_png` provide static format registration
 - `OpenImageIO` is the current user-facing wrapper and is the package with validated EXR/PNG integration
-- `openimageio_io_test` validates the EXR/PNG integration path through `oiio`
+- `openimageio_io_test` validates the EXR/PNG integration path through `OpenImageIO`
 - JPEG and TIFF are not yet routed through the OIIO boundary
 - dynamic plugin loading is not validated
 
@@ -121,7 +122,7 @@ Current planned prerequisite direction:
 - `libpng`
 - `libjpeg_turbo`
 - `libtiff`
-- `opencolorio`
+- `OpenColorIO`
 - `fmt`
 - `robinmap`
 
@@ -134,7 +135,7 @@ Planned framework dependency direction:
 
 - `ImagingCore` depends on `Core`
 - `ImagingIO` depends on `ImagingCore` and `OpenImageIO`
-- `ImagingColor` depends on `ImagingCore` and the current `opencolorio`, later `OpenColorIO`
+- `ImagingColor` depends on `ImagingCore` and `OpenColorIO`
 - `ImagingAnalysis` depends on `ImagingCore`
 - `ImagingDiagnostics` depends on `ImagingCore`
 - `Imaging` umbrella depends on all five framework packages

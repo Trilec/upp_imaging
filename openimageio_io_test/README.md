@@ -2,7 +2,7 @@
 
 Native deterministic EXR -> OCIO LUT -> PNG -> EXR integration test.
 
-The application boundary uses `OpenImageIO` and `opencolorio`.
+The application boundary uses `OpenImageIO` and `OpenColorIO`.
 
 Build with `E:/upp-18468/umk.exe GitHubOut openimageio_io_test CLANGx64 -abr
 out/openimageio_io_test.exe`.
