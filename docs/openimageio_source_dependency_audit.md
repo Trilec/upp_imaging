@@ -152,7 +152,7 @@ Mandatory for `OpenImageIO`:
 - `Imath` -> mandatory, stable package available as `imath`
 - `OpenEXR` -> mandatory, stable package available as `openexr`
 - `zlib` -> mandatory, stable package available as `zlib`
-- `OpenColorIO` -> mandatory, stable package available as `opencolorio`
+- `OpenColorIO` -> mandatory, stable public package
 - `TIFF` -> mandatory in upstream build system, stable package available as `libtiff`
 - `fmt` -> mandatory, stable package available as `fmt`
 - `Robinmap` -> mandatory, stable package available as `robinmap`
@@ -229,7 +229,7 @@ The core library does not need to load or write an image file for the first stri
 Recommended policy for the first strict OpenImageIO packages:
 
 - `openimageio_util_src` should depend on stable application-facing packages where they exist, especially `imath`, `fmt`, and the platform threading provider
-- `openimageio_src` should depend on stable application-facing packages where they exist: `openexr`, `imath`, `zlib`, `libtiff`, `libjpeg_turbo`, `opencolorio`, `fmt`, `robinmap`
+- `openimageio_src` should depend on stable application-facing packages where they exist: `openexr`, `imath`, `zlib`, `libtiff`, `libjpeg_turbo`, `OpenColorIO`, `fmt`, `robinmap`
 - plugin packages should depend on the corresponding stable codec packages and only on the minimal extra stable dependencies they need
 
 Why this is the right split:
@@ -365,7 +365,7 @@ Recommended future U++ dependencies:
 
 - objective: compile and link `OpenImageIO` without loading or writing an image file
 - packages affected: `openimageio_src`
-- dependencies: `openimageio_util_src`, `openexr`, `imath`, `zlib`, `libtiff`, `libjpeg_turbo`, `opencolorio`, `fmt`, `robinmap`
+- dependencies: `openimageio_util_src`, `openexr`, `imath`, `zlib`, `libtiff`, `libjpeg_turbo`, `OpenColorIO`, `fmt`, `robinmap`
 - validation target: probe for version, `TypeDesc`, `ImageSpec`, one string/utility API, and the strict marker
 - explicitly deferred work: plugins, file I/O, tools, Python, viewers
 
