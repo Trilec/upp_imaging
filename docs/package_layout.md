@@ -104,7 +104,7 @@ Current OpenColorIO package policy:
 
 Current OpenImageIO package policy:
 
-- `openimageio_headers` owns the strict upstream `OpenImageIO/` include tree and does not compile OIIO implementation source
+- `openimageio_headers` owns the strict upstream `OpenImageIO/` include tree, exports the native include route, and does not compile OIIO implementation source
 - `openimageio_src` builds imported OpenImageIO 3.1.15.0 directly
 - `openimageio_plugin_openexr` and `openimageio_plugin_png` provide static format registration
 - `oiio` is the current user-facing wrapper (target public name: `OpenImageIO`) and is the package with validated EXR/PNG integration
