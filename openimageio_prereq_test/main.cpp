@@ -12,7 +12,7 @@
 #include <libpng/png.h>
 #include <libjpeg_turbo/jpeglib.h>
 #include <libtiff/tiffio.h>
-#include <opencolorio/OpenColorIO.h>
+#include <OpenColorIO/OpenColorIO.h>
 #include <fmt/format.h>
 #include <robinmap/robin_map.h>
 

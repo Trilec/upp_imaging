@@ -3,7 +3,7 @@
 
 #include <Core/Core.h>
 #include <imaging_roundtrip_test_support/ImagingRoundtripTest.h>
-#include <opencolorio/OpenColorIO.h>
+#include <OpenColorIO/OpenColorIO.h>
 
 #ifndef UPP_IMAGING_LOCAL_OPENCOLORIO_INCLUDE
 #error local OpenColorIO package not selected

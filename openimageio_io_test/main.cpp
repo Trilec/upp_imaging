@@ -1,5 +1,6 @@
 #include <OpenImageIO/OIIO.h>
-#include <opencolorio/OpenColorIO.h>
+#include <OpenImageIO/imageio.h>
+#include <OpenColorIO/OpenColorIO.h>
 
 #include <cmath>
 #include <cstdio>

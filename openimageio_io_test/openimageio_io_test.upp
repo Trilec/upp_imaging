@@ -2,7 +2,7 @@ description "Deterministic OpenImageIO IO test";
 
 uses
 	OpenImageIO,
-	opencolorio;
+	OpenColorIO;
 
 file
 	main.cpp,

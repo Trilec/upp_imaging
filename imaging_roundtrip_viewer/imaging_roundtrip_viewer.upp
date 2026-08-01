@@ -1,7 +1,7 @@
 uses
 	CtrlLib,
 	Ui,
-	opencolorio,
+	OpenColorIO,
 	jpeg_io,
 	png_io,
 	openexr_io,

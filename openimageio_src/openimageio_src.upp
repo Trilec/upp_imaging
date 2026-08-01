@@ -26,7 +26,7 @@ uses
 	zlib,
 	libtiff,
 	libjpeg_turbo,
-	opencolorio,
+	OpenColorIO,
 	fmt,
 	robinmap;
 

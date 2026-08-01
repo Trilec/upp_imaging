@@ -14,8 +14,11 @@ Static format registration
         ├── openimageio_plugin_openexr
         └── openimageio_plugin_png
                 ↓
-Current public application package
-        └── oiio (OpenImageIO)
+Canonical public application package
+        └── OpenImageIO
+
+Compatibility forwarding package
+        └── oiio
 ```
 
 `ImagingWorkbench` sits on top of the framework as the full-stack diagnostic application. It is not a reusable core package and applications should not depend on it.
@@ -40,9 +43,10 @@ These packages expose the established native APIs directly.
 
 - `openimageio_src` compiles pinned upstream OpenImageIO 3.1.15.0 sources directly.
 - `openimageio_plugin_openexr` and `openimageio_plugin_png` provide the static format-registration path.
-- `oiio` is the current public application-facing package and carries the validated EXR/PNG integration path.
+- `OpenImageIO` is the canonical public application-facing package and carries the validated EXR/PNG integration path.
+- `oiio` is the temporary forwarding compatibility package.
 
-### OpenColorIO (target public name: `OpenColorIO`, current: `opencolorio`)
+### OpenColorIO
 
 - Purpose: expose the native OpenColorIO API for U++ projects.
 - Users work directly with OCIO configurations, processors, transforms and GPU shader extraction.
@@ -67,7 +71,7 @@ All framework public types belong under `Upp::Imaging`. No `OIIO::*` or `OCIO::*
 - `Result`: stable operation outcome and error category independent of OIIO or OCIO.
 - `Diagnostics`: structured information suitable for automated tests, human-readable console reporting and `ImagingWorkbench` display.
 - Depends only on U++ Core.
-- Must not depend on `oiio`, OpenColorIO, CtrlLib, ImagingWorkbench or `plugin/exr`.
+- Must not depend on OpenImageIO, OpenColorIO, CtrlLib, ImagingWorkbench or `plugin/exr`.
 
 ### `ImagingIO`
 
@@ -80,8 +84,8 @@ All framework public types belong under `Upp::Imaging`. No `OIIO::*` or `OCIO::*
 ### `ImagingColor`
 
 - Purpose: backend-neutral colour-processing operations.
-- Planned with OpenColorIO as its initial backend (current package name: `opencolorio`, target public name: `OpenColorIO`).
-- Planned dependency set: `ImagingCore`, current `opencolorio` (later `OpenColorIO`).
+- Planned with OpenColorIO as its initial backend.
+- Planned dependency set: `ImagingCore`, `OpenColorIO`.
 - Public headers must not expose OCIO processor, config or transform types.
 - Responsible for colour transforms and display transforms; not responsible for file loading.
 
@@ -156,8 +160,8 @@ These stay internal. Ordinary applications must not depend directly on them:
 
 ## Package name policy
 
-- `oiio` and `opencolorio` are the current names. Target public names are `OpenImageIO` and `OpenColorIO`.
-- Rename happens in a later implementation task, not in this documentation pivot.
+- `OpenImageIO` and `OpenColorIO` are the canonical public package names. The OpenColorIO rename is deliberately breaking because Windows cannot host case-only package directories; `opencolorio_src` remains the strict internal source package.
+- The architecture and documentation pivot is complete. The `OpenImageIO` and `OpenColorIO` public renames are complete; `oiio` remains only as a temporary OIIO forwarding package. No case-only OCIO compatibility package is possible on Windows.
 - Other direct packages keep their current names. Renaming `openexr`, `imath`, `libpng`, `libjpeg_turbo`, `libtiff`, `libdeflate`, `openjph`, `fmt`, `robinmap` is not in scope.
 
 ## LumaPix disposition

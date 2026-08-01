@@ -14,7 +14,7 @@ Programmers who want the established native APIs directly use the direct public 
 - `openexr_core` — OpenEXRCore 3.4.13 C API
 - `OpenImageIO` — OpenImageIO 3.1.15.0 API
 - `oiio` — temporary compatibility forwarder for `OpenImageIO`
-- `opencolorio` — OpenColorIO 2.5.2 API (target public name: `OpenColorIO`)
+- `OpenColorIO` — canonical OpenColorIO 2.5.2 API
 - `imath`, `libpng`, `libjpeg_turbo`, `libtiff`, `libdeflate`, `openjph`, `fmt`, `robinmap`
 
 Use these when you want the established native types and APIs directly in your application code.
@@ -107,7 +107,7 @@ For each new format the sequence is:
 
 | Need | Use |
 | --- | --- |
-| Direct native EXR, OpenEXRCore, PNG, JPEG, TIFF, OCIO, OIIO access | `openexr`, `openexr_core`, `opencolorio`, `oiio`, `libpng`, `libjpeg_turbo`, `libtiff`, `imath`, `fmt`, `robinmap`, `libdeflate`, `openjph` |
+| Direct native EXR, OpenEXRCore, PNG, JPEG, TIFF, OCIO, OIIO access | `openexr`, `openexr_core`, `OpenColorIO`, `OpenImageIO`, `libpng`, `libjpeg_turbo`, `libtiff`, `imath`, `fmt`, `robinmap`, `libdeflate`, `openjph` |
 | Narrow RGBA-only scanline load/save helpers | `openexr_io`, `png_io`, `jpeg_io`, `tiff_io` |
 | Backend-neutral U++ image API (planned) | `ImagingCore` + `ImagingIO` (+ `ImagingColor` for colour) |
 | Standard full U++ imaging stack (planned) | `Imaging` |

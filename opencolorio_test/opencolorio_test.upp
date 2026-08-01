@@ -2,7 +2,7 @@ description "Stable OpenColorIO user-facing probe";
 
 uses
 	Core,
-	opencolorio;
+	OpenColorIO;
 
 file
 	main.cpp;

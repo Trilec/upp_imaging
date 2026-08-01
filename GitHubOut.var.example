@@ -1,2 +1,2 @@
-UPP = "upp_imaging;upp_Ui;upp_AnimationEasing;U++ uppsrc";
+UPP = "upp_imaging;upp_Ui;upp_animation;U++ uppsrc";
 OUTPUT = "out";
