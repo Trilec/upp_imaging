@@ -47,15 +47,16 @@ Primary navigation for `upp_imaging`.
 - Pinned upstream version: 3.1.15.0
 - Public include route: `#include <OpenImageIO/imageio.h>` and related headers under `OpenImageIO/`
 - Direct package dependency: `fmt`, `imath`, `libtiff`
-- Implementation or delegate: owns the strict header tree only
+- Implementation or delegate: owns the strict header tree only; compiles no OIIO source; does not register plugins
 - Primary validation target: indirectly used by `openimageio_src`, `openimageio_util_src`
-- Current status: header ownership separated so the public `OpenImageIO` wrapper can be created later
+- Current status: internal routing package separated so the public `OpenImageIO` wrapper can be created later
 
 ### `oiio`
-- Purpose: stable OpenImageIO user-facing package (target public name: `OpenImageIO`)
+- Purpose: current public OpenImageIO application-facing package (target public name: `OpenImageIO`)
 - Pinned upstream version: 3.1.15.0
 - Public include route: `#include <oiio/OIIO.h>`
- - Direct package dependency: `openimageio_src`
+- Direct package dependency: `openimageio_src`
+- Depends on the source implementation and the static EXR/PNG registration packages
 - Implementation or delegate: delegates; static OpenEXR and PNG plugins are integrated
 - Primary validation target: `openimageio_io_test`
 - Current status: source/application boundary complete; OpenEXR and PNG integration validated; JPEG, TIFF and other formats not validated; dynamic plugin loading not validated

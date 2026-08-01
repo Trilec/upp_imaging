@@ -5,29 +5,17 @@
 ## Three layers
 
 ```text
-Pinned strict source packages (_src)
-        ↓
-Direct upstream-style public packages
-        ├── openexr, openexr_core
-        ├── opencolorio
+Strict upstream infrastructure
         ├── openimageio_headers
-        ├── oiio (OpenImageIO)
-        ├── imath, libpng, libjpeg_turbo, libtiff, libdeflate, openjph
-        └── fmt, robinmap
-        ↓
-Narrow format helpers
-        └── openexr_io, png_io, jpeg_io, tiff_io
-        ↓
-Upp::Imaging framework (backend-neutral)
-        ├── ImagingCore
-        ├── ImagingIO           (planned; depends on ImagingCore + current oiio, later OpenImageIO)
-        ├── ImagingColor        (planned; depends on ImagingCore + current opencolorio, later OpenColorIO)
-        ├── ImagingAnalysis     (planned; depends on ImagingCore)
-        ├── ImagingDiagnostics  (planned; depends on ImagingCore)
-        └── Imaging (umbrella; depends on all five framework packages)
-        ↓
-plugin/* (opt-in raster integration)
-        └── plugin/exr
+        ├── openimageio_util_src
+        └── openimageio_src
+                ↓
+Static format registration
+        ├── openimageio_plugin_openexr
+        └── openimageio_plugin_png
+                ↓
+Current public application package
+        └── oiio (OpenImageIO)
 ```
 
 `ImagingWorkbench` sits on top of the framework as the full-stack diagnostic application. It is not a reusable core package and applications should not depend on it.
@@ -41,10 +29,17 @@ These packages expose the established native APIs directly.
 ### OpenImageIO headers (internal package: `openimageio_headers`)
 
 - Purpose: own the strict upstream `OpenImageIO/` public-header tree.
-- Users work directly with `OIIO::ImageBuf`, `OIIO::ImageSpec`, `OIIO::ImageCache`, `ImageBufAlgo` and native OIIO metadata and format APIs.
-- Responsible for linking the selected statically compiled OIIO format plugins.
-- Currently validated formats: **OpenEXR** and **PNG**.
-- JPEG, TIFF and other formats must not be described as available through OIIO until their OIIO plugins are compiled, registered and tested.
+- Internal-only routing package; not the ordinary application-facing package.
+- Compiles no OIIO implementation source.
+- Preserves native `<OpenImageIO/...>` include spelling.
+- Does not register static plugins.
+- Does not own format-validation claims.
+
+### OpenImageIO source and registration
+
+- `openimageio_src` compiles pinned upstream OpenImageIO 3.1.15.0 sources directly.
+- `openimageio_plugin_openexr` and `openimageio_plugin_png` provide the static format-registration path.
+- `oiio` is the current public application-facing package and carries the validated EXR/PNG integration path.
 
 ### OpenColorIO (target public name: `OpenColorIO`, current: `opencolorio`)
 

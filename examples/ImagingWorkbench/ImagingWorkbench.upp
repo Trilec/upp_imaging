@@ -9,8 +9,13 @@ uses
 	imaging_roundtrip_test_support,
 	imaging_roundtrip_viewer_ocio,
 	imaging_view_transform,
+	openimageio_util_src,
 	oiio,
 	opencolorio;
+
+options
+	-I../openimageio_util_src,
+	-I../openimageio_headers;
 
 file
 	ImagingWorkbench.generated.cpp,

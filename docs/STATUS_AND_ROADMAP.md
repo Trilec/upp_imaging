@@ -14,8 +14,8 @@
 | JPEG | 3.2.0 | `libjpeg_turbo_src` | `libjpeg_turbo` | `jpeg_io` | Green | Green | RGB8 lossy subset complete |
 | TIFF | 4.7.2 | `libtiff_src` | `libtiff` | `tiff_io` | Green | Green | Typed RGBA subset complete |
 | OpenColorIO | 2.5.2 | `opencolorio_src` | `opencolorio` | — | Green | Green | Packaged and validated |
-| OpenImageIO headers | 3.1.15.0 | `openimageio_headers` | `openimageio_src`, `openimageio_util_src` | — | Green | Green | Strict upstream header package moved out of the collision path |
-| OpenImageIO | 3.1.15.0 | `openimageio_src` | `oiio` | — | Green (EXR+PNG) | Green | Source/application boundary complete; EXR and PNG integration validated; JPEG/TIFF/dynamic loading not validated |
+| OpenImageIO headers | 3.1.15.0 | `openimageio_headers` | `openimageio_src`, `openimageio_util_src` | — | Green | Green | Internal strict header-routing package owning the upstream `OpenImageIO/` tree |
+| OpenImageIO | 3.1.15.0 | `openimageio_src` | `oiio` | — | Green (EXR+PNG) | Green | Current public application package; source/application boundary complete; EXR and PNG integration validated; JPEG/TIFF/dynamic loading not validated |
 | Architecture and package naming | — | — | — | — | — | — | **Documentation pivot complete**; package renames still planned (commit c3e6085, follow-up TASK 011B1-R1) |
 | `ImagingCore` | — | — | planned | — | — | — | Backend-neutral image data model; design target documented; not implemented |
 | `ImagingIO` | — | — | planned | — | — | — | Planned initial backend: OpenImageIO; design target documented; not implemented |
