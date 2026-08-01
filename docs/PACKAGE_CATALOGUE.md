@@ -33,14 +33,14 @@ Primary navigation for `upp_imaging`.
 - Primary validation target: `openexr_core_write_probe`, `openexr_core_roundtrip_test`
 - Current status: scanline RGBA subset complete
 
-### `opencolorio`
-- Purpose: stable OpenColorIO user-facing package (target public name: `OpenColorIO`)
+### `OpenColorIO`
+- Purpose: canonical OpenColorIO user-facing package
 - Pinned upstream version: 2.5.2
-- Public include route: `#include <opencolorio/OpenColorIO.h>`
+- Public include route: `#include <OpenColorIO/OpenColorIO.h>`
 - Direct package dependency: `opencolorio_src`
 - Implementation or delegate: delegates
 - Primary validation target: `opencolorio_test`, `opencolorio_gui_link_test`
-- Current status: packaged and validated under CLANGx64
+- Current status: canonical public boundary complete; the old `opencolorio` public package name is intentionally not provided on Windows
 
 ### `openimageio_headers`
 - Purpose: internal strict OpenImageIO public-header package
@@ -178,9 +178,9 @@ All framework public types live under the `Upp::Imaging` namespace. Public heade
 
 ### `ImagingColor` (planned)
 - Purpose: backend-neutral colour-processing operations
-- Planned with OpenColorIO as its initial backend (current package name: `opencolorio`, target public name: `OpenColorIO`)
+- Planned with OpenColorIO as its initial backend
 - Public include route: `#include <ImagingColor/ImagingColor.h>`
-- Planned dependency set: `ImagingCore`, current `opencolorio` (later `OpenColorIO`)
+- Planned dependency set: `ImagingCore`, `OpenColorIO`
 - Public headers must not expose OCIO processor, config or transform types
 - Current status: not implemented; design target documented
 
@@ -273,7 +273,7 @@ Ordinary applications must not depend directly on `_src` packages.
 | `libjpeg_turbo_src` | libjpeg-turbo 3.2.0 | pinned source proof for JPEG | none | `libjpeg_turbo_src_test` | no |
 | `libtiff_src` | libtiff 4.7.2 | pinned source proof for TIFF | `zlib`, `libdeflate` | `libtiff_src_test` | no |
 | `opencolorio_src` | OpenColorIO 2.5.2 | pinned source proof for OCIO | `expat`, `yaml_cpp`, `pystring`, `minizip_ng`, `imath`, `zlib` | `opencolorio_src_test` | no |
-| `openimageio_src` | OpenImageIO 3.1.15.0 | pinned source proof for OpenImageIO | `openexr`, `opencolorio`, `imath`, `zlib`, `libpng`, `libjpeg_turbo`, `libtiff`, `fmt`, `robinmap` | `openimageio_src_test`, `openimageio_io_test` | no |
+| `openimageio_src` | OpenImageIO 3.1.15.0 | pinned source proof for OpenImageIO | `openexr`, `OpenColorIO`, `imath`, `zlib`, `libpng`, `libjpeg_turbo`, `libtiff`, `fmt`, `robinmap` | `openimageio_src_test`, `openimageio_io_test` | no |
 | `fmt_src` | fmt 12.2.0 | pinned header-only source proof | none | `fmt_src_test` | no |
 | `robinmap_src` | robin-map 1.4.1 | pinned header-only source proof | none | `robinmap_src_test` | no |
 
@@ -387,7 +387,7 @@ opencolorio_src
     └── zlib
 ```
 
-`opencolorio_src` is the strict imported-source boundary. `opencolorio` is the stable application-facing wrapper.
+`opencolorio_src` is the strict imported-source boundary. `OpenColorIO` is the stable application-facing wrapper. The public rename is deliberately breaking because Windows cannot host case-only package directories.
 
 ### OpenImageIO stack
 
@@ -404,7 +404,7 @@ stable codec/dependency packages
 Currently integrated dependencies:
 
 - `openexr`
-- `opencolorio`
+- `OpenColorIO`
 - `imath`
 - `zlib`
 - `libpng`
@@ -426,11 +426,11 @@ Imaging (umbrella)
     ↓
 ImagingCore, ImagingIO, ImagingColor, ImagingAnalysis, ImagingDiagnostics
     ├── ImagingIO    → oiio (OpenImageIO) for full-fidelity load/save
-    ├── ImagingColor → opencolorio (OpenColorIO) for colour processing
+    ├── ImagingColor → OpenColorIO for colour processing
     └── ImagingCore  → Core only, no OIIO or OCIO dependency
 ```
 
-`ImagingCore` does not depend on `oiio` or `opencolorio`. Applications needing only the backend-neutral data model can include `ImagingCore` alone.
+`ImagingCore` does not depend on `oiio` or `OpenColorIO`. Applications needing only the backend-neutral data model can include `ImagingCore` alone.
 
 ### Planned plugin/* stack
 

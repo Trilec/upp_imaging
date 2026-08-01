@@ -13,7 +13,7 @@
 | OpenEXR high-level | 3.4.13 | `openexr_src` | `openexr` | — | Strict and stable exact RGBA HALF ZIP round-trip | — | Stable package boundary complete |
 | JPEG | 3.2.0 | `libjpeg_turbo_src` | `libjpeg_turbo` | `jpeg_io` | Green | Green | RGB8 lossy subset complete |
 | TIFF | 4.7.2 | `libtiff_src` | `libtiff` | `tiff_io` | Green | Green | Typed RGBA subset complete |
-| OpenColorIO | 2.5.2 | `opencolorio_src` | `opencolorio` | — | Green | Green | Packaged and validated |
+| OpenColorIO | 2.5.2 | `opencolorio_src` | `OpenColorIO` | — | Green | Green | Packaged and validated |
 | OpenImageIO headers | 3.1.15.0 | `openimageio_headers` | `openimageio_src`, `openimageio_util_src` | — | Green | Green | Internal strict header-routing package owning the upstream `OpenImageIO/` tree |
 | OpenImageIO | 3.1.15.0 | `openimageio_src` | `oiio` | — | Green (EXR+PNG) | Green | Current public application package; source/application boundary complete; EXR and PNG integration validated; JPEG/TIFF/dynamic loading not validated |
 | Architecture and package naming | — | — | — | — | — | — | **Documentation pivot complete**; package renames still planned (commit c3e6085, follow-up TASK 011B1-R1) |
@@ -67,7 +67,7 @@ JPEG, TIFF and other formats are not validated through the OIIO boundary.
 ## Milestone status
 
 - **Architecture and documentation pivot: complete.** The three-layer model, `Upp::Imaging` framework design, `plugin/exr` scope, LumaPix disposition, and format roadmap are defined and documented. Package renames remain planned.
-- **Package renames (planned):** `oiio` → `OpenImageIO` and `opencolorio` → `OpenColorIO` are documented but not yet performed. The strict header package is now `openimageio_headers`.
+- **Package renames:** the public `oiio` → `OpenImageIO` and `opencolorio` → `OpenColorIO` renames are complete. The old OpenColorIO public name is not provided because Windows cannot host the two case-only package directories. The strict packages remain `openimageio_headers` and `opencolorio_src`.
 - **Framework migration (planned):** `ImagingCore`, `ImagingIO`, `ImagingColor`, `ImagingAnalysis`, `ImagingDiagnostics` and the `Imaging` umbrella are design targets and are not yet implemented.
 
 ## Next implementation order
@@ -117,7 +117,7 @@ When the framework packages are implemented:
 
 - `ImagingCore` depends on U++ Core
 - `ImagingIO` depends on `ImagingCore` and `OpenImageIO`
-- `ImagingColor` depends on `ImagingCore` and the current `opencolorio` package, later `OpenColorIO`
+- `ImagingColor` depends on `ImagingCore` and `OpenColorIO`
 - `ImagingAnalysis` depends on `ImagingCore`
 - `ImagingDiagnostics` depends on `ImagingCore`
 - `Imaging` umbrella depends on all five framework packages

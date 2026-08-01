@@ -3,7 +3,7 @@ description "OpenColorIO GUI coexistence probe";
 uses
 	CtrlLib,
 	Ui,
-	opencolorio;
+	OpenColorIO;
 
 file
 	main.cpp;
