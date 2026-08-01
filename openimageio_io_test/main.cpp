@@ -1,4 +1,4 @@
-#include <oiio/OIIO.h>
+#include <OpenImageIO/OIIO.h>
 #include <opencolorio/OpenColorIO.h>
 
 #include <cmath>

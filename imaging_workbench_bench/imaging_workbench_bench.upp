@@ -7,7 +7,7 @@ uses
 	imaging_tone_conversion,
 	imaging_roundtrip_viewer_ocio,
 	imaging_view_transform,
-	oiio,
+	OpenImageIO,
 	opencolorio;
 
 mainconfig

@@ -1,0 +1,8 @@
+description "OpenImageIO compatibility forwarding test";
+
+uses
+	oiio;
+
+file
+	main.cpp,
+	README.md;

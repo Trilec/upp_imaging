@@ -38,7 +38,8 @@ Expected dependency direction:
 - `robinmap` is the user-facing robin-map layer and currently depends on `robinmap_src`
 - `openimageio_headers` owns the strict upstream `OpenImageIO/` public-header tree
 - `openimageio_src` compiles pinned upstream OpenImageIO 3.1.15.0 sources directly; static OpenEXR and PNG plugins are integrated
-- `oiio` is the stable user-facing wrapper for OpenImageIO (target public name: `OpenImageIO`)
+- `OpenImageIO` is the stable user-facing wrapper for OpenImageIO
+- `oiio` is the temporary compatibility-forwarding package
 - `opencolorio_src` builds imported OpenColorIO 2.5.2 directly and depends on `expat`, `yaml_cpp`, `pystring`, `minizip_ng`, `imath`, and `zlib`
 - `opencolorio_src/OCIO.h` is the strict source-boundary wrapper used by source probes
 - `opencolorio` is the stable user-facing wrapper package (target public name: `OpenColorIO`) and keeps the public include boundary separate
@@ -107,7 +108,7 @@ Current OpenImageIO package policy:
 - `openimageio_headers` owns the strict upstream `OpenImageIO/` include tree, exports the native include route, and does not compile OIIO implementation source
 - `openimageio_src` builds imported OpenImageIO 3.1.15.0 directly
 - `openimageio_plugin_openexr` and `openimageio_plugin_png` provide static format registration
-- `oiio` is the current user-facing wrapper (target public name: `OpenImageIO`) and is the package with validated EXR/PNG integration
+- `OpenImageIO` is the current user-facing wrapper and is the package with validated EXR/PNG integration
 - `openimageio_io_test` validates the EXR/PNG integration path through `oiio`
 - JPEG and TIFF are not yet routed through the OIIO boundary
 - dynamic plugin loading is not validated
@@ -132,7 +133,7 @@ Current prerequisite coexistence check:
 Planned framework dependency direction:
 
 - `ImagingCore` depends on `Core`
-- `ImagingIO` depends on `ImagingCore` and the current `oiio`, later `OpenImageIO`
+- `ImagingIO` depends on `ImagingCore` and `OpenImageIO`
 - `ImagingColor` depends on `ImagingCore` and the current `opencolorio`, later `OpenColorIO`
 - `ImagingAnalysis` depends on `ImagingCore`
 - `ImagingDiagnostics` depends on `ImagingCore`

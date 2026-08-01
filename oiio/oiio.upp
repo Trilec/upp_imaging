@@ -1,12 +1,8 @@
-description "Stable application-facing OpenImageIO package";
+description "Temporary compatibility forwarding package for OpenImageIO";
 
 uses
-	openimageio_headers,
-	openimageio_src,
-	openimageio_plugin_openexr,
-	openimageio_plugin_png;
+	OpenImageIO;
 
 file
 	OIIO.h,
-	OIIO.cpp,
 	README.md;
