@@ -1,7 +1,7 @@
 description "Deterministic OpenImageIO IO test";
 
 uses
-	oiio,
+	OpenImageIO,
 	opencolorio;
 
 file

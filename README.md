@@ -12,7 +12,8 @@ Programmers who want the established native APIs directly use the direct public 
 
 - `openexr` — OpenEXR 3.4.13 high-level API
 - `openexr_core` — OpenEXRCore 3.4.13 C API
-- `oiio` — OpenImageIO 3.1.15.0 API (target public name: `OpenImageIO`)
+- `OpenImageIO` — OpenImageIO 3.1.15.0 API
+- `oiio` — temporary compatibility forwarder for `OpenImageIO`
 - `opencolorio` — OpenColorIO 2.5.2 API (target public name: `OpenColorIO`)
 - `imath`, `libpng`, `libjpeg_turbo`, `libtiff`, `libdeflate`, `openjph`, `fmt`, `robinmap`
 
@@ -50,9 +51,9 @@ These plugins are display-oriented only. They do not preserve full source data, 
 ## Current major capabilities
 
 - strict and stable third-party source packages for all listed direct APIs
-- `openimageio_headers` internal header-routing package; `openimageio_src` and `openimageio_util_src` compile the strict OpenImageIO sources; static EXR and PNG registration is provided separately; `oiio` is the current public application package
+- `openimageio_headers` internal header-routing package; `openimageio_src` and `openimageio_util_src` compile the strict OpenImageIO sources; static EXR and PNG registration is provided separately; `OpenImageIO` is the current public application package and `oiio` is the temporary forwarder
 - static OpenEXR and PNG plugins integrated into the OpenImageIO build path
-- `openimageio_io_test` validates the EXR/PNG integration path through `oiio`
+- `openimageio_io_test` validates the EXR/PNG integration path through `OpenImageIO`
 - narrow format helpers: `openexr_io`, `png_io`, `jpeg_io`, `tiff_io`
 - deterministic package tests as the formal pass/fail authority
 - `ImagingWorkbench` as a full-stack diagnostic and integration application

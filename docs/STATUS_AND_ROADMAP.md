@@ -116,7 +116,7 @@ The initial framework-establishment task does not require waveform or vectorscop
 When the framework packages are implemented:
 
 - `ImagingCore` depends on U++ Core
-- `ImagingIO` depends on `ImagingCore` and the current `oiio` package, later `OpenImageIO`
+- `ImagingIO` depends on `ImagingCore` and `OpenImageIO`
 - `ImagingColor` depends on `ImagingCore` and the current `opencolorio` package, later `OpenColorIO`
 - `ImagingAnalysis` depends on `ImagingCore`
 - `ImagingDiagnostics` depends on `ImagingCore`

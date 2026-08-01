@@ -72,8 +72,8 @@ All framework public types belong under `Upp::Imaging`. No `OIIO::*` or `OCIO::*
 ### `ImagingIO`
 
 - Purpose: full-fidelity U++ image loading and saving using `ImagingCore` types.
-- Planned with OpenImageIO as its initial backend (current package name: `oiio`, target public name: `OpenImageIO`).
-- Planned dependency set: `ImagingCore`, current `oiio` (later `OpenImageIO`).
+- Planned with OpenImageIO as its initial backend.
+- Planned dependency set: `ImagingCore`, `OpenImageIO`.
 - Public headers expose only `Upp::Imaging` types; no `OIIO::ImageBuf` or `OIIO::ImageSpec`.
 - Use case: typed image pixels, HDR and floating-point values, arbitrary source channels, metadata, source data-window origins, stable U++ errors, backend-independent application code.
 

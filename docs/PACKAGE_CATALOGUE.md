@@ -51,15 +51,22 @@ Primary navigation for `upp_imaging`.
 - Primary validation target: indirectly used by `openimageio_src`, `openimageio_util_src`
 - Current status: internal routing package separated so the public `OpenImageIO` wrapper can be created later
 
-### `oiio`
-- Purpose: current public OpenImageIO application-facing package (target public name: `OpenImageIO`)
+### `OpenImageIO`
+- Purpose: canonical public OpenImageIO application-facing package
 - Pinned upstream version: 3.1.15.0
-- Public include route: `#include <oiio/OIIO.h>`
-- Direct package dependency: `openimageio_src`
+- Public include route: `#include <OpenImageIO/OIIO.h>`
+- Direct package dependency: `openimageio_headers`, `openimageio_src`, `openimageio_plugin_openexr`, `openimageio_plugin_png`
 - Depends on the source implementation and the static EXR/PNG registration packages
 - Implementation or delegate: delegates; static OpenEXR and PNG plugins are integrated
 - Primary validation target: `openimageio_io_test`
 - Current status: source/application boundary complete; OpenEXR and PNG integration validated; JPEG, TIFF and other formats not validated; dynamic plugin loading not validated
+- Validated OIIO formats: **OpenEXR** and **PNG** only.
+
+### `oiio`
+- Purpose: temporary compatibility-forwarding package for `OpenImageIO`
+- Public include route: `#include <oiio/OIIO.h>`
+- Direct package dependency: `OpenImageIO`
+- Implementation or delegate: forwards only; no implementation source
 - Validated OIIO formats: **OpenEXR** and **PNG** only. Other formats must not be described as available through OIIO until their plugins are compiled, registered and tested.
 
 ### `openimageio_io_test`
@@ -163,9 +170,9 @@ All framework public types live under the `Upp::Imaging` namespace. Public heade
 
 ### `ImagingIO` (planned)
 - Purpose: full-fidelity U++ image loading and saving
-- Planned with OpenImageIO as its initial backend (current package name: `oiio`, target public name: `OpenImageIO`)
+- Planned with OpenImageIO as its initial backend
 - Public include route: `#include <ImagingIO/ImagingIO.h>`
-- Planned dependency set: `ImagingCore`, current `oiio` (later `OpenImageIO`)
+- Planned dependency set: `ImagingCore`, `OpenImageIO`
 - Public headers expose only `Upp::Imaging` types
 - Current status: not implemented; design target documented
 
@@ -387,7 +394,7 @@ opencolorio_src
 ```text
 application
     ↓
-oiio (target public name: OpenImageIO)
+OpenImageIO
     ↓
 openimageio_src
     ↓

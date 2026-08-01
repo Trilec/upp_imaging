@@ -9,7 +9,7 @@ uses
 	imaging_roundtrip_test_support,
 	imaging_roundtrip_viewer_ocio,
 	imaging_view_transform,
-	oiio,
+	OpenImageIO,
 	opencolorio;
 
 file

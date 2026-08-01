@@ -1,5 +1,5 @@
 # oiio
 
-Stable application package for OpenImageIO. Include `<oiio/OIIO.h>` and use
-`UppImaging::LoadImage` or `UppImaging::SaveImage` for statically registered
-EXR and PNG support.
+Temporary compatibility package for source migration. New code should use the
+`OpenImageIO` package and include `<OpenImageIO/OIIO.h>`. This package simply
+forwards to `OpenImageIO` and contains no separate implementation.
