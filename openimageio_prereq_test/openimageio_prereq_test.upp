@@ -1,6 +1,7 @@
 description "OpenImageIO prerequisite stable-package coexistence test";
 
 uses
+	openimageio_headers,
 	openexr,
 	imath,
 	zlib,

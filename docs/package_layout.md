@@ -36,6 +36,7 @@ Expected dependency direction:
 - `fmt` is the user-facing fmt layer and currently depends on `fmt_src`
 - `robinmap_src` is the strict upstream robin-map header-only package
 - `robinmap` is the user-facing robin-map layer and currently depends on `robinmap_src`
+- `openimageio_headers` owns the strict upstream `OpenImageIO/` public-header tree
 - `openimageio_src` compiles pinned upstream OpenImageIO 3.1.15.0 sources directly; static OpenEXR and PNG plugins are integrated
 - `oiio` is the stable user-facing wrapper for OpenImageIO (target public name: `OpenImageIO`)
 - `opencolorio_src` builds imported OpenColorIO 2.5.2 directly and depends on `expat`, `yaml_cpp`, `pystring`, `minizip_ng`, `imath`, and `zlib`
@@ -103,6 +104,7 @@ Current OpenColorIO package policy:
 
 Current OpenImageIO package policy:
 
+- `openimageio_headers` owns the strict public-header include tree
 - `openimageio_src` builds imported OpenImageIO 3.1.15.0 directly
 - `oiio` is the stable user-facing wrapper (target public name: `OpenImageIO`)
 - static OpenEXR and PNG OpenImageIO plugins are integrated into the build

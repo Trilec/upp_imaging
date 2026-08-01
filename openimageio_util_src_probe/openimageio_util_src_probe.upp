@@ -1,7 +1,11 @@
 description "Strict OpenImageIO utility source probe";
 
 uses
+	openimageio_headers,
 	openimageio_util_src;
+
+options
+	-I../openimageio_headers;
 
 file
 	main.cpp;

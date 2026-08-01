@@ -50,7 +50,7 @@ These plugins are display-oriented only. They do not preserve full source data, 
 ## Current major capabilities
 
 - strict and stable third-party source packages for all listed direct APIs
-- `openexr`, `openexr_core`, `opencolorio`, `oiio`, `imath`, `libpng`, `libjpeg_turbo`, `libtiff`, `libdeflate`, `openjph`, `fmt`, `robinmap` stable user-facing packages
+- `openimageio_headers` internal header package, plus `openexr`, `openexr_core`, `opencolorio`, `oiio`, `imath`, `libpng`, `libjpeg_turbo`, `libtiff`, `libdeflate`, `openjph`, `fmt`, `robinmap` stable user-facing packages
 - static OpenEXR and PNG plugins integrated into the OpenImageIO build
 - `openimageio_io_test` validates the EXR/PNG integration path
 - narrow format helpers: `openexr_io`, `png_io`, `jpeg_io`, `tiff_io`

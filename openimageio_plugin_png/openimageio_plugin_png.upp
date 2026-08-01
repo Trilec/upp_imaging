@@ -1,12 +1,13 @@
 description "OpenImageIO PNG plugin registration package";
 
 uses
+	openimageio_headers,
 	openimageio_src,
 	libpng,
 	zlib;
 
 options
-	-I../OpenImageIO,
+	-I../openimageio_headers,
 	-I../openimageio_src,
 	-I../openimageio_src/upstream/libOpenImageIO,
 	-I../libpng,
