@@ -14,6 +14,7 @@
 | JPEG | 3.2.0 | `libjpeg_turbo_src` | `libjpeg_turbo` | `jpeg_io` | Green | Green | RGB8 lossy subset complete |
 | TIFF | 4.7.2 | `libtiff_src` | `libtiff` | `tiff_io` | Green | Green | Typed RGBA subset complete |
 | OpenColorIO | 2.5.2 | `opencolorio_src` | `opencolorio` | — | Green | Green | Packaged and validated |
+| OpenImageIO headers | 3.1.15.0 | `openimageio_headers` | `openimageio_src`, `openimageio_util_src` | — | Green | Green | Strict upstream header package moved out of the collision path |
 | OpenImageIO | 3.1.15.0 | `openimageio_src` | `oiio` | — | Green (EXR+PNG) | Green | Source/application boundary complete; EXR and PNG integration validated; JPEG/TIFF/dynamic loading not validated |
 | Architecture and package naming | — | — | — | — | — | — | **Documentation pivot complete**; package renames still planned (commit c3e6085, follow-up TASK 011B1-R1) |
 | `ImagingCore` | — | — | planned | — | — | — | Backend-neutral image data model; design target documented; not implemented |
@@ -66,7 +67,7 @@ JPEG, TIFF and other formats are not validated through the OIIO boundary.
 ## Milestone status
 
 - **Architecture and documentation pivot: complete.** The three-layer model, `Upp::Imaging` framework design, `plugin/exr` scope, LumaPix disposition, and format roadmap are defined and documented. Package renames remain planned.
-- **Package renames (planned):** `oiio` → `OpenImageIO` and `opencolorio` → `OpenColorIO` are documented but not yet performed.
+- **Package renames (planned):** `oiio` → `OpenImageIO` and `opencolorio` → `OpenColorIO` are documented but not yet performed. The strict header package is now `openimageio_headers`.
 - **Framework migration (planned):** `ImagingCore`, `ImagingIO`, `ImagingColor`, `ImagingAnalysis`, `ImagingDiagnostics` and the `Imaging` umbrella are design targets and are not yet implemented.
 
 ## Next implementation order

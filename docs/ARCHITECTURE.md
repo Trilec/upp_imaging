@@ -10,6 +10,7 @@ Pinned strict source packages (_src)
 Direct upstream-style public packages
         ├── openexr, openexr_core
         ├── opencolorio
+        ├── openimageio_headers
         ├── oiio (OpenImageIO)
         ├── imath, libpng, libjpeg_turbo, libtiff, libdeflate, openjph
         └── fmt, robinmap
@@ -37,9 +38,9 @@ Automated tests validate each layer. `ImagingWorkbench` is the visual diagnostic
 
 These packages expose the established native APIs directly.
 
-### OpenImageIO (target public name: `OpenImageIO`, current: `oiio`)
+### OpenImageIO headers (internal package: `openimageio_headers`)
 
-- Purpose: expose the native OpenImageIO API for U++ projects.
+- Purpose: own the strict upstream `OpenImageIO/` public-header tree.
 - Users work directly with `OIIO::ImageBuf`, `OIIO::ImageSpec`, `OIIO::ImageCache`, `ImageBufAlgo` and native OIIO metadata and format APIs.
 - Responsible for linking the selected statically compiled OIIO format plugins.
 - Currently validated formats: **OpenEXR** and **PNG**.
@@ -70,7 +71,7 @@ All framework public types belong under `Upp::Imaging`. No `OIIO::*` or `OCIO::*
 - `Result`: stable operation outcome and error category independent of OIIO or OCIO.
 - `Diagnostics`: structured information suitable for automated tests, human-readable console reporting and `ImagingWorkbench` display.
 - Depends only on U++ Core.
-- Must not depend on OpenImageIO, OpenColorIO, CtrlLib, ImagingWorkbench or `plugin/exr`.
+- Must not depend on `oiio`, OpenColorIO, CtrlLib, ImagingWorkbench or `plugin/exr`.
 
 ### `ImagingIO`
 
