@@ -1,0 +1,8 @@
+description "Backend-neutral U++ Imaging core contracts";
+
+uses
+	Core;
+
+file
+	ImagingCore.h,
+	README.md;

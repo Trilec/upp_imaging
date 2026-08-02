@@ -16,8 +16,8 @@
 | OpenColorIO | 2.5.2 | `opencolorio_src` | `OpenColorIO` | — | Green | Green | Packaged and validated |
 | OpenImageIO headers | 3.1.15.0 | `openimageio_headers` | `openimageio_src`, `openimageio_util_src` | — | Green | Green | Internal strict header-routing package owning the upstream `OpenImageIO/` tree |
 | OpenImageIO | 3.1.15.0 | `openimageio_src` | `OpenImageIO` | `oiio` compatibility forwarder | Green (EXR+PNG) | Green | Canonical public application package; source/application boundary complete; EXR and PNG integration validated; JPEG/TIFF/dynamic loading not validated |
-| Architecture and package naming | — | — | — | — | — | — | **Architecture/documentation pivot complete**; `OpenImageIO` and `OpenColorIO` public renames complete; `oiio` remains an OIIO compatibility forwarder; Windows cannot host a case-only OCIO compatibility package; framework implementation is next |
-| `ImagingCore` | — | — | planned | — | — | — | Backend-neutral image data model; design target documented; not implemented |
+| Architecture and package naming | — | — | — | — | — | — | **Architecture/documentation pivot complete**; `OpenImageIO` and `OpenColorIO` public renames complete; `oiio` remains an OIIO compatibility forwarder; Windows cannot host a case-only OCIO compatibility package; framework migration is in progress |
+| `ImagingCore` | — | — | `ImagingCore` | — | Green | — | Backend-neutral image data model and result contracts implemented; Core-only boundary validated |
 | `ImagingIO` | — | — | planned | — | — | — | Planned initial backend: OpenImageIO; design target documented; not implemented |
 | `ImagingColor` | — | — | planned | — | — | — | Planned initial backend: OpenColorIO; design target documented; not implemented |
 | `ImagingAnalysis` | — | — | planned | — | — | — | Initial scope: histograms, channel statistics, source probes, finite and non-finite value handling; later scope includes waveform and vectorscope; design target documented; not implemented |
@@ -66,14 +66,14 @@ JPEG, TIFF and other formats are not validated through the OIIO boundary.
 
 ## Milestone status
 
-- **Architecture and documentation pivot: complete.** The three-layer model, `Upp::Imaging` framework design, `plugin/exr` scope, LumaPix disposition, and format roadmap are defined and documented. Package renames remain planned.
-- **Package renames (planned):** the public `oiio` → `OpenImageIO` and `opencolorio` → `OpenColorIO` renames are planned; when performed the old OpenColorIO public name will not be provided because Windows cannot host two case-only package directories. The strict packages remain `openimageio_headers` and `opencolorio_src`.
-- **Framework migration (planned):** `ImagingCore`, `ImagingIO`, `ImagingColor`, `ImagingAnalysis`, `ImagingDiagnostics` and the `Imaging` umbrella are design targets and are not yet implemented.
+- **Architecture and documentation pivot: complete.** The three-layer model, `Upp::Imaging` framework design, `plugin/exr` scope, LumaPix disposition, and format roadmap are defined and documented. The public renames are complete.
+- **Package renames:** the public `oiio` → `OpenImageIO` and `opencolorio` → `OpenColorIO` renames are complete. `oiio` remains a compatibility forwarder; no case-only OCIO compatibility package is possible on Windows. The strict packages remain `openimageio_headers` and `opencolorio_src`.
+- **Framework migration:** `ImagingCore` is implemented and validated. `ImagingIO`, `ImagingColor`, `ImagingAnalysis`, `ImagingDiagnostics` and the `Imaging` umbrella remain planned.
 
 ## Next implementation order
 
 1. **Complete the architecture and documentation pivot** — **done** (including the `OpenImageIO` and `OpenColorIO` public renames)
-2. **Framework migration** — establish `ImagingCore`, `ImagingIO`, `ImagingColor`, `ImagingAnalysis`, `ImagingDiagnostics` and the `Imaging` umbrella using the proven LumaPix contracts
+2. **Framework migration** — **in progress**; `ImagingCore` is implemented, followed by `ImagingIO`, `ImagingColor`, `ImagingAnalysis`, `ImagingDiagnostics` and the `Imaging` umbrella using the proven LumaPix contracts
 3. `plugin/exr` — opt-in raster integration into ordinary U++ `Upp::Image` workflows
 4. JPEG XL support
 5. HDR/RGBE support
