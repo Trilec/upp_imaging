@@ -1,38 +1,115 @@
 #include <Core/Core.h>
 #include <ImagingCore/ImagingCore.h>
-#include <cstdio>
+
 using namespace Upp;
 using namespace Upp::Imaging;
-struct T { int passed = 0, failed = 0; };
-static void Check(T& t, bool ok, const char* name) { std::printf("%s: %s\n", name, ok ? "PASS" : "FAIL"); (ok ? t.passed : t.failed)++; }
 
-int main()
+struct TestState { int passed = 0; int failed = 0; };
+
+static void Check(TestState& state, bool condition, const char* name)
 {
-	T t; int64 count;
-	DataWindow empty, w{-4, 7, 5, 18};
-	Check(t, empty.IsEmpty() && !empty.IsValid(), "default window is empty");
-	Check(t, w.IsValid() && w.Width() == 10 && w.Height() == 12 && w.GetPixelCount(count) && count == 120, "window geometry and count");
-	Check(t, w == DataWindow{-4, 7, 5, 18} && w != empty, "window equality");
-	DataWindow bad{0, 0, -2, 3}; Check(t, bad.IsEmpty() && !bad.GetPixelCount(count), "invalid window rejected");
-	DataWindow huge{INT_MIN, 0, INT_MAX, 1}; Check(t, !huge.GetPixelCount(count), "window overflow rejected");
-	Check(t, BytesPerSample(SampleType::UInt8) == 1 && BytesPerSample(SampleType::UInt16) == 2 && BytesPerSample(SampleType::Float16) == 2 && BytesPerSample(SampleType::Float32) == 4, "sample sizes");
-	Check(t, !IsValid(SampleType::Invalid) && IsFloating(SampleType::Float32), "sample classification");
-	Check(t, CanonicalChannels(ChannelLayout::Gray) == 1 && CanonicalChannels(ChannelLayout::GrayAlpha) == 2 && CanonicalChannels(ChannelLayout::RGB) == 3 && CanonicalChannels(ChannelLayout::RGBA) == 4, "canonical layouts");
-	ImageSpec spec; spec.data_window = w; spec.channels = 4; spec.channel_layout = ChannelLayout::RGBA; spec.sample_type = SampleType::Float32; spec.alpha_channel = 3;
-	Check(t, spec.IsValid() && spec.GetPixelCount(count) && count == 120 && spec.GetSampleCount(count) && count == 480 && spec.GetByteCount(count) && count == 1920, "valid RGBA specification");
-	ImageSpec mismatch; mismatch.data_window = w; mismatch.channels = 3; mismatch.channel_layout = ChannelLayout::RGBA; mismatch.sample_type = SampleType::Float32; Check(t, !mismatch.IsValid(), "canonical mismatch rejected");
-	ImageSpec multi; multi.data_window = w; multi.channel_layout = ChannelLayout::MultiChannel; multi.channels = 2; multi.sample_type = SampleType::Float32; multi.channel_names.Add("X"); multi.channel_names.Add("Y"); Check(t, multi.IsValid(), "named multichannel specification");
-	ImageSpec unnamed; unnamed.data_window = w; unnamed.channel_layout = ChannelLayout::MultiChannel; unnamed.channels = 2; unnamed.sample_type = SampleType::Float32; Check(t, !unnamed.IsValid(), "unnamed multichannel rejected");
-	ImageSpec invalid; invalid.data_window = w; invalid.channels = 4; invalid.channel_layout = ChannelLayout::RGBA; invalid.sample_type = SampleType::Invalid; Check(t, !invalid.IsValid(), "invalid sample rejected");
-	ImageBuffer buffer; Check(t, buffer.IsEmpty() && buffer.Allocate(spec) && buffer.IsValid() && buffer.GetByteCount() == 1920, "owned buffer allocation");
-	buffer.Begin()[0] = 42; Check(t, buffer.Begin()[0] == 42, "buffer read write");
-	ImageBuffer copy = buffer; Check(t, copy.GetByteCount() == buffer.GetByteCount() && copy.Begin()[0] == 42, "buffer copy");
-	ImageBuffer moved = pick(copy); Check(t, moved.IsValid() && copy.IsEmpty(), "buffer move");
-	ImageSpec badspec = spec; badspec.data_window = DataWindow(); ImageBuffer refused; Check(t, !refused.Allocate(badspec) && refused.IsEmpty(), "invalid allocation leaves empty");
-	ImageData image; image.spec = spec; image.buffer = buffer; image.metadata.Set("source", "synthetic"); Check(t, image.IsValid() && image.metadata.Get("source") == "synthetic", "coherent image data");
-	Metadata metadata; String value; metadata.Set("a", "1"); metadata.Set("b", "2"); metadata.Set("a", "3"); Check(t, metadata.GetCount() == 2 && metadata.Get("a") == "3" && metadata.Get("missing", "fallback") == "fallback", "metadata insert replace lookup");
-	Check(t, !metadata.TryGet("missing", value) && metadata.Remove("a") && metadata.GetCount() == 1, "metadata remove without insertion"); metadata.Clear(); Check(t, metadata.GetCount() == 0, "metadata clear");
-	Result ok = Result::Success(), failure = Result::Failure(ResultCode::Overflow, "too large", "ImageSpec.byte_count"); Check(t, ok && ok.code == ResultCode::Ok && !failure && failure.code == ResultCode::Overflow && failure.context == "ImageSpec.byte_count", "result semantics");
-	Diagnostics diagnostics; diagnostics.Info("read", "source"); diagnostics.Warning("missing alpha"); diagnostics.Error("invalid size", "bytes"); Check(t, diagnostics.GetCount() == 3 && diagnostics.HasWarnings() && diagnostics.HasErrors() && diagnostics.entries[0].context == "source", "structured diagnostics"); diagnostics.Clear(); Check(t, diagnostics.IsEmpty(), "diagnostics clear");
-	std::printf("SUMMARY passed=%d failed=%d\n", t.passed, t.failed); return t.failed ? 1 : 0;
+	Cout() << (condition ? "PASS " : "FAIL ") << name << '\n';
+	(condition ? state.passed : state.failed)++;
+}
+
+static ImageSpec MakeSpec(DataWindow window, int channels, ChannelLayout layout, SampleType type)
+{
+	ImageSpec spec;
+	spec.data_window = window;
+	spec.channels = channels;
+	spec.channel_layout = layout;
+	spec.sample_type = type;
+	if(layout == ChannelLayout::GrayAlpha) spec.alpha_channel = 1;
+	if(layout == ChannelLayout::RGBA) spec.alpha_channel = 3;
+	return spec;
+}
+
+CONSOLE_APP_MAIN
+{
+	TestState state;
+	int64 value = 99;
+	DataWindow empty;
+	DataWindow window{-4, 7, 5, 18};
+	Check(state, empty.IsEmpty() && !empty.IsValid(), "default empty data window");
+	Check(state, window.GetWidth(value) && value == 10 && window.GetHeight(value) && value == 12, "checked dimensions and origins");
+	Check(state, window.GetPixelCount(value) && value == 120, "checked pixel count");
+	Check(state, window == DataWindow{-4, 7, 5, 18} && window != empty, "data window equality");
+	DataWindow malformed{0, 0, -2, 3};
+	Check(state, !malformed.GetWidth(value) && value == 0 && !malformed.GetPixelCount(value) && value == 0, "malformed bounds refusal");
+	DataWindow extreme{INT_MIN, 0, INT_MAX, 1};
+	Check(state, extreme.GetWidth(value) && value == (int64)INT_MAX - INT_MIN + 1, "extreme coordinate arithmetic");
+	Check(state, !CheckedMultiply(INT64_MAX, 2, value) && value == 0, "multiplication overflow resets output");
+	Check(state, !CheckedMultiply(-1, 2, value) && value == 0, "negative multiplication refusal");
+
+	Check(state, BytesPerSample(SampleType::UInt8) == 1 && BytesPerSample(SampleType::UInt16) == 2 && BytesPerSample(SampleType::Float16) == 2 && BytesPerSample(SampleType::Float32) == 4, "sample byte sizes");
+	Check(state, !IsValid(SampleType::Invalid) && IsFloating(SampleType::Float16) && !IsFloating(SampleType::UInt16), "sample classifications");
+	Check(state, CanonicalChannels(ChannelLayout::Gray) == 1 && CanonicalChannels(ChannelLayout::GrayAlpha) == 2 && CanonicalChannels(ChannelLayout::RGB) == 3 && CanonicalChannels(ChannelLayout::RGBA) == 4, "canonical layout counts");
+	Check(state, CanonicalChannels((ChannelLayout)99) == 0, "invalid layout enum");
+
+	ImageSpec gray = MakeSpec(window, 1, ChannelLayout::Gray, SampleType::UInt8);
+	ImageSpec gray_alpha = MakeSpec(window, 2, ChannelLayout::GrayAlpha, SampleType::UInt16);
+	ImageSpec rgb = MakeSpec(window, 3, ChannelLayout::RGB, SampleType::Float16);
+	ImageSpec rgba = MakeSpec(window, 4, ChannelLayout::RGBA, SampleType::Float32);
+	Check(state, gray.IsValid() && gray_alpha.IsValid() && rgb.IsValid() && rgba.IsValid(), "canonical image specifications");
+	Check(state, rgba.GetPixelCount(value) && value == 120 && rgba.GetSampleCount(value) && value == 480 && rgba.GetByteCount(value) && value == 1920, "checked specification sizes");
+	ImageSpec bad_alpha = rgba; bad_alpha.alpha_channel = 2;
+	ImageSpec bad_layout = rgba; bad_layout.channel_layout = (ChannelLayout)99;
+	ImageSpec bad_count = rgba; bad_count.channels = 3;
+	Check(state, !bad_alpha.IsValid() && !bad_layout.IsValid() && !bad_count.IsValid(), "layout and alpha validation");
+	ImageSpec multi; multi.data_window = window; multi.channels = 2; multi.channel_layout = ChannelLayout::MultiChannel; multi.sample_type = SampleType::Float32; multi.channel_names.Add("temperature"); multi.channel_names.Add("confidence");
+	Check(state, multi.IsValid(), "named multichannel specification");
+	ImageSpec unnamed = multi; unnamed.channel_names.Clear();
+	ImageSpec empty_name = multi; empty_name.channel_names[0].Clear();
+	Check(state, !unnamed.IsValid() && !empty_name.IsValid(), "multichannel name validation");
+	Check(state, rgba.IsValid() == rgba.IsValid(), "repeatable specification validation");
+
+	ImageSpec copied(rgba); Check(state, copied.IsValid() && copied.alpha_channel == 3, "specification copy construction");
+	ImageSpec assigned; assigned = multi; Check(state, assigned.IsValid() && assigned.channel_names.GetCount() == 2, "specification copy assignment");
+	ImageSpec moved(pick(copied)); Check(state, moved.IsValid() && copied.IsValid() == false, "specification move construction");
+	ImageSpec moved_assigned; moved_assigned = pick(assigned); Check(state, moved_assigned.IsValid() && assigned.IsValid() == false, "specification move assignment");
+	moved_assigned = moved_assigned; Check(state, moved_assigned.IsValid(), "specification self assignment");
+
+	ImageBuffer buffer;
+	Check(state, buffer.IsEmpty() && buffer.Allocate(rgba) && buffer.IsValid() && buffer.GetSampleType() == SampleType::Float32 && buffer.GetByteCount() == 1920, "buffer allocation invariant");
+	buffer.Begin()[0] = 42;
+	ImageBuffer buffer_copy(buffer); buffer_copy.Begin()[0] = 7;
+	Check(state, buffer.Begin()[0] == 42 && buffer_copy.Begin()[0] == 7, "buffer copy independence");
+	ImageBuffer buffer_assigned; buffer_assigned = buffer; buffer_assigned = buffer_assigned;
+	Check(state, buffer_assigned.Begin()[0] == 42 && buffer_assigned.IsValid(), "buffer assignment and self assignment");
+	ImageBuffer buffer_moved(pick(buffer_copy));
+	Check(state, buffer_moved.IsValid() && buffer_copy.IsEmpty(), "buffer move construction");
+	ImageBuffer invalid_buffer; Check(state, !invalid_buffer.Allocate(ImageSpec()) && invalid_buffer.IsEmpty(), "invalid allocation clears buffer");
+	buffer.Clear(); Check(state, buffer.IsEmpty(), "buffer clear");
+
+	Metadata metadata;
+	ValueArray numbers; numbers << 1 << 2 << 3;
+	metadata.Set("name", Value("fixture")); metadata.Set("enabled", Value(true)); metadata.Set("count", Value(7)); metadata.Set("large", Value((int64)9000000000LL)); metadata.Set("ratio", Value(0.5)); metadata.Set("values", Value(numbers));
+	Value looked_up;
+	Check(state, metadata.GetCount() == 6 && metadata.TryGet("large", looked_up) && looked_up == Value((int64)9000000000LL), "typed metadata values");
+	metadata.Set("name", Value("replacement"));
+	Check(state, metadata.GetCount() == 6 && metadata.Items().GetKey(0) == "name" && metadata.Get("name") == Value("replacement"), "metadata replacement preserves order");
+	int before_missing = metadata.GetCount(); metadata.Get("missing");
+	Check(state, metadata.GetCount() == before_missing && metadata.Remove("enabled") && metadata.GetCount() == 5, "metadata missing lookup and removal");
+	Metadata metadata_copy = metadata; Check(state, metadata_copy == metadata, "metadata copy equality"); metadata.Clear(); Check(state, metadata.IsEmpty(), "metadata clear");
+
+	ImageData image; image.spec = rgba; image.buffer = buffer_moved; image.metadata = metadata_copy;
+	Check(state, image.IsValid() && image.metadata.Get("name") == Value("replacement"), "coherent image data");
+	ImageData image_copy = image; Check(state, image_copy.IsValid(), "image data copy"); image.Clear(); Check(state, !image.IsValid() && image.metadata.IsEmpty(), "image data clear");
+
+	Result success = Result::Success();
+	Result failure = Result::Failure(ResultCode::Overflow, "too large", "ImageSpec.byte_count");
+	Result normalized = Result::Failure(ResultCode::Ok, "invalid failure");
+	Check(state, success.IsOk() && success.message.IsEmpty() && success.context.IsEmpty(), "result success invariant");
+	Check(state, !failure.IsOk() && failure.code == ResultCode::Overflow && failure.message == "too large" && failure.context == "ImageSpec.byte_count", "result failure context");
+	Check(state, normalized.code == ResultCode::InternalFailure && !normalized.IsOk(), "result rejects contradictory success failure");
+	Check(state, Result::Failure(ResultCode::InvalidArgument, "x").code == ResultCode::InvalidArgument && Result::Failure(ResultCode::InvalidSpecification, "x").code == ResultCode::InvalidSpecification && Result::Failure(ResultCode::Unsupported, "x").code == ResultCode::Unsupported && Result::Failure(ResultCode::AllocationFailure, "x").code == ResultCode::AllocationFailure && Result::Failure(ResultCode::IOError, "x").code == ResultCode::IOError && Result::Failure(ResultCode::InternalFailure, "x").code == ResultCode::InternalFailure, "result categories");
+
+	Diagnostics diagnostics;
+	diagnostics.Add(DiagnosticSeverity::Information, "read", "IMG001", "source");
+	diagnostics.Add(DiagnosticSeverity::Warning, "missing alpha", "IMG002"); diagnostics.Error("invalid size", "IMG003", "bytes");
+	Check(state, diagnostics.GetCount() == 3 && diagnostics.Count(DiagnosticSeverity::Warning) == 1 && diagnostics.Count(DiagnosticSeverity::Error) == 1 && diagnostics.Entries()[0].code == "IMG001", "structured diagnostics");
+	Diagnostics diagnostics_copy = diagnostics; Check(state, diagnostics_copy.Entries()[2].context == "bytes", "diagnostics copy and ordering"); diagnostics.Clear(); Check(state, diagnostics.IsEmpty() && diagnostics_copy.HasErrors(), "diagnostics clear and independent copy");
+
+	Cout() << "SUMMARY passed=" << state.passed << " failed=" << state.failed << '\n';
+	SetExitCode(state.failed ? 1 : 0);
 }
