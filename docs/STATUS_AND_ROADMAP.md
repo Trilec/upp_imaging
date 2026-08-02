@@ -66,8 +66,8 @@ JPEG, TIFF and other formats are not validated through the OIIO boundary.
 
 ## Milestone status
 
-- **Architecture and documentation pivot: complete.** The three-layer model, `Upp::Imaging` framework design, `plugin/exr` scope, LumaPix disposition, and format roadmap are defined and documented. The `OpenImageIO` and `OpenColorIO` public renames are complete; `oiio` remains an OIIO compatibility forwarder, and no case-only OCIO compatibility package is possible on Windows.
-- **Framework is next:** implementation of `ImagingCore`, followed by the planned `ImagingIO`, `ImagingColor`, `ImagingAnalysis`, `ImagingDiagnostics` and `Imaging` packages.
+- **Architecture and documentation pivot: complete.** The three-layer model, `Upp::Imaging` framework design, `plugin/exr` scope, LumaPix disposition, and format roadmap are defined and documented. Package renames remain planned.
+- **Package renames (planned):** the public `oiio` → `OpenImageIO` and `opencolorio` → `OpenColorIO` renames are planned; when performed the old OpenColorIO public name will not be provided because Windows cannot host two case-only package directories. The strict packages remain `openimageio_headers` and `opencolorio_src`.
 - **Framework migration (planned):** `ImagingCore`, `ImagingIO`, `ImagingColor`, `ImagingAnalysis`, `ImagingDiagnostics` and the `Imaging` umbrella are design targets and are not yet implemented.
 
 ## Next implementation order

@@ -161,7 +161,7 @@ These stay internal. Ordinary applications must not depend directly on them:
 ## Package name policy
 
 - `OpenImageIO` and `OpenColorIO` are the canonical public package names. The OpenColorIO rename is deliberately breaking because Windows cannot host case-only package directories; `opencolorio_src` remains the strict internal source package.
-- The architecture and documentation pivot is complete. The `OpenImageIO` and `OpenColorIO` public renames are complete; `oiio` remains only as a temporary OIIO forwarding package. No case-only OCIO compatibility package is possible on Windows.
+- The architecture and documentation pivot is complete. Rename is an implementation task to be performed later; `OpenImageIO` and `OpenColorIO` are the intended public names, `oiio` remains a temporary OIIO forwarding package, and no case-only OCIO compatibility package is possible on Windows.
 - Other direct packages keep their current names. Renaming `openexr`, `imath`, `libpng`, `libjpeg_turbo`, `libtiff`, `libdeflate`, `openjph`, `fmt`, `robinmap` is not in scope.
 
 ## LumaPix disposition
