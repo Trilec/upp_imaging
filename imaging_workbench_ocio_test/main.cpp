@@ -589,11 +589,23 @@ int main()
 
 	ImageViewState before_group = wb.canvas.GetViewState();
 	int hist_before_group = wb.HistogramRecomputeCount();
-	wb.selected_preview_group = 1;
+	int different_group = wb.selected_preview_group == 0 ? 1 : 0;
+	Check(different_group >= 0 && different_group < wb.preview_groups.GetCount(), "distinct preview group available", passed, failed);
+	wb.selected_preview_group = different_group;
 	wb.RenderPreviewFromProxy();
 	Check(same_view(before_group, wb.canvas.GetViewState()), "pass/group change behaviour", passed, failed);
-	Check(wb.HistogramRecomputeCount() > hist_before_group, "pass/group change recomputes histogram", passed, failed);
+	Check(wb.HistogramRecomputeCount() == hist_before_group + 1, "pass/group change recomputes histogram", passed, failed);
 
+	wb.RenderPreviewFromProxy();
+	int hist_after_unchanged = wb.HistogramRecomputeCount();
+	Check(hist_after_unchanged == hist_before_group + 1, "unchanged group render uses histogram cache", passed, failed);
+	int previous_group = wb.selected_preview_group;
+	wb.selected_preview_group = previous_group == 0 ? 1 : 0;
+	wb.RenderPreviewFromProxy();
+	Check(wb.HistogramRecomputeCount() == hist_after_unchanged + 1, "second group change recomputes histogram", passed, failed);
+	wb.selected_preview_group = previous_group;
+	wb.RenderPreviewFromProxy();
+	Check(wb.HistogramRecomputeCount() == hist_after_unchanged + 2, "returning to group recomputes histogram", passed, failed);
 	int hist_after_group = wb.HistogramRecomputeCount();
 	ImageViewState view_before_ocio = wb.canvas.GetViewState();
 	wb.ocio_enable_drop.Select(0);

@@ -1091,6 +1091,25 @@ void ImagingWorkbench::BuildSelectedGroupProxy()
 	if(channel_order.empty())
 		return;
 
+	// Proxy pixels use compact local channel indices after selection.
+	if(group.HasRGB()) {
+		proxy.red = 0;
+		proxy.green = 1;
+		proxy.blue = 2;
+		proxy.alpha = group.HasAlpha() ? 3 : -1;
+		proxy.single_channel = -1;
+	}
+	else if(group.HasSingle()) {
+		proxy.red = proxy.green = proxy.blue = -1;
+		proxy.single_channel = 0;
+		proxy.alpha = group.HasAlpha() ? 1 : -1;
+	}
+	else {
+		proxy.red = proxy.green = proxy.blue = -1;
+		proxy.single_channel = -1;
+		proxy.alpha = group.HasAlpha() ? 0 : -1;
+	}
+
 	using Clock = std::chrono::steady_clock;
 	auto started = Clock::now();
 
