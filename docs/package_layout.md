@@ -44,6 +44,7 @@ Expected dependency direction:
 - `opencolorio_src/OCIO.h` is the strict source-boundary wrapper used by source probes
 - `OpenColorIO` is the canonical user-facing wrapper package
 - `OpenColorIO` is the sole public OpenColorIO package; the old `opencolorio` public name is not provided because Windows cannot host case-only package directories
+- `ImagingCore` is the Core-only backend-neutral framework package; its contract boundary is validated by `imaging_core_test`
 
 Current zlib package policy:
 

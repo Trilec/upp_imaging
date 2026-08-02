@@ -156,17 +156,17 @@ Primary navigation for `upp_imaging`.
 - Primary validation target: `robinmap_test`
 - Current status: header-only stable package
 
-## Upp::Imaging framework (planned)
+## Upp::Imaging framework
 
 All framework public types live under the `Upp::Imaging` namespace. Public headers must not expose `OIIO::*` or `OCIO::*` types.
 
-### `ImagingCore` (planned)
+### `ImagingCore`
 - Purpose: backend-neutral image data model and result contracts
 - Public include route: `#include <ImagingCore/ImagingCore.h>`
 - Depends on: U++ Core only
 - Must not depend on: OpenImageIO, OpenColorIO, CtrlLib, ImagingWorkbench, `plugin/exr`
 - Public concepts: `ImageSpec`, `ImageBuffer`, `ImageData`, `Metadata`, `DataWindow`, `SampleType`, `ChannelLayout`, `Result`, `Diagnostics`
-- Current status: not implemented; design target documented
+- Current status: implemented; Core-only contracts validated by `imaging_core_test`
 
 ### `ImagingIO` (planned)
 - Purpose: full-fidelity U++ image loading and saving

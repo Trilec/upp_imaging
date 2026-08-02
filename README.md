@@ -21,16 +21,16 @@ Use these when you want the established native types and APIs directly in your a
 
 ### 2. Backend-neutral U++ Imaging framework
 
-Programmers who want a U++-native, backend-neutral image API use the `Upp::Imaging` framework (planned):
+Programmers who want a U++-native, backend-neutral image API use the `Upp::Imaging` framework:
 
-- `ImagingCore` (planned) — the backend-neutral image data model and result contracts. Will depend only on U++ Core.
+- `ImagingCore` — the backend-neutral image data model and result contracts. Depends only on U++ Core.
 - `ImagingIO` (planned) — typed image loading and saving. Planned with OpenImageIO as its initial backend. Will depend on `ImagingCore` and `OpenImageIO`.
 - `ImagingColor` (planned) — backend-neutral colour-processing operations. Planned with OpenColorIO as its initial backend. Will depend on `ImagingCore` and `OpenColorIO`.
 - `ImagingAnalysis` (planned) — reusable image-analysis algorithms. Will depend on `ImagingCore`.
 - `ImagingDiagnostics` (planned) — shared structured validation and reporting; GUI-independent. Will depend on `ImagingCore`.
 - `Imaging` (planned) — convenience umbrella that pulls in Core, IO, Color, Analysis and Diagnostics.
 
-None of these framework packages are implemented yet.
+`ImagingCore` is implemented; the remaining framework packages are planned.
 
 Public headers in the framework expose only `Upp::Imaging` types. No `OIIO::*` or `OCIO::*` types appear in `ImagingCore`, `ImagingIO`, `ImagingColor`, `ImagingAnalysis`, `ImagingDiagnostics` or `Imaging` public headers.
 
@@ -62,7 +62,7 @@ These plugins are display-oriented only. They do not preserve full source data, 
 ## Current limitations
 
 - OpenImageIO 3.1.15.0 covers the validated EXR/PNG integration path only; JPEG, TIFF and dynamic plugin loading are not validated.
-- `ImagingCore`, `ImagingIO`, `ImagingColor`, `ImagingAnalysis`, `ImagingDiagnostics` and `Imaging` are not yet implemented; the contract definitions in `docs/ARCHITECTURE.md` are the design target.
+- `ImagingIO`, `ImagingColor`, `ImagingAnalysis`, `ImagingDiagnostics` and `Imaging` are not yet implemented; `ImagingCore` is the first implemented framework package.
 - `plugin/exr` is not yet implemented.
 
 ## LumaPix disposition

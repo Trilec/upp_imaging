@@ -1,0 +1,11 @@
+description "ImagingCore contract test";
+
+uses
+	Core,
+	ImagingCore;
+
+file
+	main.cpp;
+
+mainconfig
+	"" = "CONSOLE";
