@@ -1,5 +1,7 @@
 description "OpenColorIO 2.5.2 core source package";
 
+include .;
+
 noblitz
 NOWARNINGS
 
