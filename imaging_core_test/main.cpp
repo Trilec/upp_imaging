@@ -43,8 +43,10 @@ CONSOLE_APP_MAIN
 
 	Check(state, BytesPerSample(SampleType::UInt8) == 1 && BytesPerSample(SampleType::UInt16) == 2 && BytesPerSample(SampleType::Float16) == 2 && BytesPerSample(SampleType::Float32) == 4, "sample byte sizes");
 	Check(state, !IsValid(SampleType::Invalid) && IsFloating(SampleType::Float16) && !IsFloating(SampleType::UInt16), "sample classifications");
+	Check(state, !IsValid((SampleType)99) && BytesPerSample((SampleType)99) == 0, "unknown sample type rejected");
 	Check(state, CanonicalChannels(ChannelLayout::Gray) == 1 && CanonicalChannels(ChannelLayout::GrayAlpha) == 2 && CanonicalChannels(ChannelLayout::RGB) == 3 && CanonicalChannels(ChannelLayout::RGBA) == 4, "canonical layout counts");
 	Check(state, CanonicalChannels((ChannelLayout)99) == 0, "invalid layout enum");
+	Check(state, !IsValid((ChannelLayout)99), "unknown channel layout rejected");
 
 	ImageSpec gray = MakeSpec(window, 1, ChannelLayout::Gray, SampleType::UInt8);
 	ImageSpec gray_alpha = MakeSpec(window, 2, ChannelLayout::GrayAlpha, SampleType::UInt16);
@@ -78,6 +80,7 @@ CONSOLE_APP_MAIN
 	Check(state, buffer_assigned.Begin()[0] == 42 && buffer_assigned.IsValid(), "buffer assignment and self assignment");
 	ImageBuffer buffer_moved(pick(buffer_copy));
 	Check(state, buffer_moved.IsValid() && buffer_copy.IsEmpty(), "buffer move construction");
+	Check(state, buffer_moved.IsValid() && buffer_moved.GetByteCount() == buffer_moved.GetSampleCount() * BytesPerSample(buffer_moved.GetSampleType()), "checked buffer byte invariant");
 	ImageBuffer invalid_buffer; Check(state, !invalid_buffer.Allocate(ImageSpec()) && invalid_buffer.IsEmpty(), "invalid allocation clears buffer");
 	buffer.Clear(); Check(state, buffer.IsEmpty(), "buffer clear");
 
@@ -100,6 +103,7 @@ CONSOLE_APP_MAIN
 	Result failure = Result::Failure(ResultCode::Overflow, "too large", "ImageSpec.byte_count");
 	Result normalized = Result::Failure(ResultCode::Ok, "invalid failure");
 	Check(state, success.IsOk() && success.message.IsEmpty() && success.context.IsEmpty(), "result success invariant");
+	Check(state, static_cast<bool>(success) && !static_cast<bool>(failure), "explicit result boolean semantics");
 	Check(state, !failure.IsOk() && failure.code == ResultCode::Overflow && failure.message == "too large" && failure.context == "ImageSpec.byte_count", "result failure context");
 	Check(state, normalized.code == ResultCode::InternalFailure && !normalized.IsOk(), "result rejects contradictory success failure");
 	Check(state, Result::Failure(ResultCode::InvalidArgument, "x").code == ResultCode::InvalidArgument && Result::Failure(ResultCode::InvalidSpecification, "x").code == ResultCode::InvalidSpecification && Result::Failure(ResultCode::Unsupported, "x").code == ResultCode::Unsupported && Result::Failure(ResultCode::AllocationFailure, "x").code == ResultCode::AllocationFailure && Result::Failure(ResultCode::IOError, "x").code == ResultCode::IOError && Result::Failure(ResultCode::InternalFailure, "x").code == ResultCode::InternalFailure, "result categories");

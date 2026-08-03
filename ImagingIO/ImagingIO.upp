@@ -1,0 +1,10 @@
+description "Backend-neutral EXR and PNG image I/O";
+
+uses
+	ImagingCore,
+	OpenImageIO;
+
+file
+	ImagingIO.h,
+	ImagingIO.cpp,
+	README.md;

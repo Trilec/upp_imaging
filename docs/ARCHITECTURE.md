@@ -76,10 +76,11 @@ All framework public types belong under `Upp::Imaging`. No `OIIO::*` or `OCIO::*
 ### `ImagingIO`
 
 - Purpose: full-fidelity U++ image loading and saving using `ImagingCore` types.
-- Planned with OpenImageIO as its initial backend.
-- Planned dependency set: `ImagingCore`, `OpenImageIO`.
+- Implemented initial EXR and PNG slice with OpenImageIO as a private backend.
+- Dependency set: `ImagingCore`, `OpenImageIO`.
 - Public headers expose only `Upp::Imaging` types; no `OIIO::ImageBuf` or `OIIO::ImageSpec`.
 - Use case: typed image pixels, HDR and floating-point values, arbitrary source channels, metadata, source data-window origins, stable U++ errors, backend-independent application code.
+- Current support is ordinary single-image non-deep EXR Float16/Float32 and canonical zero-origin PNG UInt8/UInt16; unsupported structures return stable failures.
 
 ### `ImagingColor`
 

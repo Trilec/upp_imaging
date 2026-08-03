@@ -8,7 +8,13 @@ namespace Imaging {
 
 enum class SampleType { Invalid, UInt8, UInt16, Float16, Float32 };
 
-inline bool IsValid(SampleType type) { return type != SampleType::Invalid; }
+inline bool IsValid(SampleType type)
+{
+	switch(type) {
+	case SampleType::UInt8: case SampleType::UInt16: case SampleType::Float16: case SampleType::Float32: return true;
+	default: return false;
+	}
+}
 inline bool IsFloating(SampleType type) { return type == SampleType::Float16 || type == SampleType::Float32; }
 inline int BytesPerSample(SampleType type)
 {
@@ -21,6 +27,14 @@ inline int BytesPerSample(SampleType type)
 }
 
 enum class ChannelLayout { Invalid, Gray, GrayAlpha, RGB, RGBA, MultiChannel };
+
+inline bool IsValid(ChannelLayout layout)
+{
+	switch(layout) {
+	case ChannelLayout::Gray: case ChannelLayout::GrayAlpha: case ChannelLayout::RGB: case ChannelLayout::RGBA: case ChannelLayout::MultiChannel: return true;
+	default: return false;
+	}
+}
 
 inline bool CheckedMultiply(int64 a, int64 b, int64& out);
 
@@ -83,7 +97,7 @@ struct ImageSpec {
 		int64 ignored;
 		if(!data_window.IsValid() || depth <= 0 || channels <= 0 || Imaging::IsValid(sample_type) == false) return false;
 	int canonical = CanonicalChannels(channel_layout);
-		if(channel_layout == ChannelLayout::Invalid) return false;
+		if(!Imaging::IsValid(channel_layout)) return false;
 		if(canonical ? channels != canonical : channel_names.GetCount() != channels) return false;
 		if(alpha_channel < -1 || alpha_channel >= channels) return false;
 		if(!channel_names.IsEmpty() && channel_names.GetCount() != channels) return false;
@@ -120,7 +134,7 @@ struct ImageBuffer {
 	}
 	void Clear() { bytes.Clear(); samples = 0; sample_type = SampleType::Invalid; }
 	bool IsEmpty() const { return bytes.IsEmpty() && samples == 0 && sample_type == SampleType::Invalid; }
-	bool IsValid() const { return Imaging::IsValid(sample_type) && samples >= 0 && bytes.GetCount() == samples * BytesPerSample(sample_type); }
+	bool IsValid() const { int64 expected; return Imaging::IsValid(sample_type) && samples >= 0 && CheckedMultiply(samples, BytesPerSample(sample_type), expected) && expected == bytes.GetCount(); }
 	SampleType GetSampleType() const { return sample_type; }
 	int64 GetSampleCount() const { return samples; }
 	int GetByteCount() const { return bytes.GetCount(); }
@@ -161,13 +175,13 @@ struct Result {
 	String message;
 	String context;
 	bool IsOk() const { return code == ResultCode::Ok; }
-	operator bool() const { return IsOk(); }
+	explicit operator bool() const { return IsOk(); }
 	static Result Success() { return {}; }
 	static Result Failure(ResultCode code, String message, String context = Null) { Result r; r.code = code == ResultCode::Ok ? ResultCode::InternalFailure : code; r.message = message; r.context = context; return r; }
 };
 
 enum class DiagnosticSeverity { Information, Warning, Error };
-struct DiagnosticEntry : Moveable<DiagnosticEntry> { DiagnosticSeverity severity; String code; String message; String context; };
+struct DiagnosticEntry : Moveable<DiagnosticEntry> { DiagnosticSeverity severity = DiagnosticSeverity::Information; String code; String message; String context; };
 struct Diagnostics {
 	private:
 	Vector<DiagnosticEntry> entries;
