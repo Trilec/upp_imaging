@@ -168,13 +168,13 @@ All framework public types live under the `Upp::Imaging` namespace. Public heade
 - Public concepts: `ImageSpec`, `ImageBuffer`, `ImageData`, `Metadata`, `DataWindow`, `SampleType`, `ChannelLayout`, `Result`, `Diagnostics`
 - Current status: implemented; Core-only contracts validated by `imaging_core_test`
 
-### `ImagingIO` (planned)
-- Purpose: full-fidelity U++ image loading and saving
-- Planned with OpenImageIO as its initial backend
+### `ImagingIO`
+- Purpose: backend-neutral EXR and PNG image loading and saving
+- Implemented with OpenImageIO as its private backend
 - Public include route: `#include <ImagingIO/ImagingIO.h>`
-- Planned dependency set: `ImagingCore`, `OpenImageIO`
+- Dependency set: `ImagingCore`, `OpenImageIO`
 - Public headers expose only `Upp::Imaging` types
-- Current status: not implemented; design target documented
+- Current status: implemented initial Float16/Float32 EXR and UInt8/UInt16 canonical PNG slice; deep, multipart, mixed-format, volume, and arbitrary PNG multichannel cases remain unsupported
 
 ### `ImagingColor` (planned)
 - Purpose: backend-neutral colour-processing operations

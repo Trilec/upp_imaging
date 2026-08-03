@@ -18,7 +18,7 @@
 | OpenImageIO | 3.1.15.0 | `openimageio_src` | `OpenImageIO` | `oiio` compatibility forwarder | Green (EXR+PNG) | Green | Canonical public application package; source/application boundary complete; EXR and PNG integration validated; JPEG/TIFF/dynamic loading not validated |
 | Architecture and package naming | — | — | — | — | — | — | **Architecture/documentation pivot complete**; `OpenImageIO` and `OpenColorIO` public renames complete; `oiio` remains an OIIO compatibility forwarder; Windows cannot host a case-only OCIO compatibility package; framework migration is in progress |
 | `ImagingCore` | — | — | `ImagingCore` | — | Green | — | Backend-neutral image data model and result contracts implemented; Core-only boundary validated |
-| `ImagingIO` | — | — | planned | — | — | — | Planned initial backend: OpenImageIO; design target documented; not implemented |
+| `ImagingIO` | — | — | `ImagingIO` | — | Green | — | Initial backend-neutral EXR/PNG slice implemented and validated; deep, multipart, mixed-format, volume, and arbitrary PNG multichannel cases remain unsupported |
 | `ImagingColor` | — | — | planned | — | — | — | Planned initial backend: OpenColorIO; design target documented; not implemented |
 | `ImagingAnalysis` | — | — | planned | — | — | — | Initial scope: histograms, channel statistics, source probes, finite and non-finite value handling; later scope includes waveform and vectorscope; design target documented; not implemented |
 | `ImagingDiagnostics` | — | — | planned | — | — | — | Will depend on `ImagingCore`; GUI-independent; design target documented; not implemented |

@@ -24,13 +24,13 @@ Use these when you want the established native types and APIs directly in your a
 Programmers who want a U++-native, backend-neutral image API use the `Upp::Imaging` framework:
 
 - `ImagingCore` — the backend-neutral image data model and result contracts. Depends only on U++ Core.
-- `ImagingIO` (planned) — typed image loading and saving. Planned with OpenImageIO as its initial backend. Will depend on `ImagingCore` and `OpenImageIO`.
+- `ImagingIO` — implemented initial EXR/PNG slice for typed image loading and saving. Depends on `ImagingCore` and privately uses OpenImageIO.
 - `ImagingColor` (planned) — backend-neutral colour-processing operations. Planned with OpenColorIO as its initial backend. Will depend on `ImagingCore` and `OpenColorIO`.
 - `ImagingAnalysis` (planned) — reusable image-analysis algorithms. Will depend on `ImagingCore`.
 - `ImagingDiagnostics` (planned) — shared structured validation and reporting; GUI-independent. Will depend on `ImagingCore`.
 - `Imaging` (planned) — convenience umbrella that pulls in Core, IO, Color, Analysis and Diagnostics.
 
-`ImagingCore` is implemented; the remaining framework packages are planned.
+`ImagingCore` and the initial `ImagingIO` slice are implemented; the remaining framework packages are planned.
 
 Public headers in the framework expose only `Upp::Imaging` types. No `OIIO::*` or `OCIO::*` types appear in `ImagingCore`, `ImagingIO`, `ImagingColor`, `ImagingAnalysis`, `ImagingDiagnostics` or `Imaging` public headers.
 

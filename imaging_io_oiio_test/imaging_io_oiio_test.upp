@@ -1,0 +1,12 @@
+description "Independent OpenImageIO cross-check for ImagingIO";
+
+uses
+	ImagingIO,
+	OpenImageIO;
+
+file
+	main.cpp,
+	README.md;
+
+mainconfig
+	"" = "CONSOLE";
