@@ -149,8 +149,8 @@ Result LoadImageFile(const String& path, ImageData& output, Diagnostics* diagnos
 	if(!input->read_image(0, 0, 0, source.nchannels, source.format, candidate.buffer.Begin(), AutoStride, AutoStride, AutoStride)) return Fail(ResultCode::IOError, diagnostics, input->geterror().c_str(), path, "IMGIO_PIXELS");
 	AddMetadata(source, candidate.metadata, diagnostics);
 	if(!candidate.IsValid()) return Fail(ResultCode::InternalFailure, diagnostics, "loaded image failed Core validation", path, "IMGIO_SPEC");
-	if(!input->close()) { String close_error = input->geterror().c_str(); input.release(); return Fail(ResultCode::IOError, diagnostics, close_error, path, "IMGIO_CLEANUP"); }
-	input.release();
+	if(!input->close()) return Fail(ResultCode::IOError, diagnostics, input->geterror().c_str(), path, "IMGIO_CLEANUP");
+	input.reset();
 	output = pick(candidate);
 	return Result::Success();
 }
