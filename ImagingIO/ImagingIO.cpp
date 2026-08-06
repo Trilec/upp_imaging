@@ -233,32 +233,32 @@ static bool AddAttribute(const ParamValue& attribute, Metadata& metadata,
 		return true;
 	}
 
-	if(type.arraylen > 0 && type.basetype == TypeDesc::INT) {
+	if(type.basevalues() > 1 && type.basetype == TypeDesc::INT) {
 		ValueArray values;
-		for(int i = 0; i < type.arraylen; ++i)
-			values.Add(attribute.get<int>(i));
+		for(size_t i = 0; i < type.basevalues(); ++i)
+			values.Add(attribute.get<int>((int)i));
 		metadata.Set(key, Value(values));
 		return true;
 	}
-	if(type.arraylen > 0 && type.basetype == TypeDesc::INT64) {
+	if(type.basevalues() > 1 && type.basetype == TypeDesc::INT64) {
 		ValueArray values;
-		for(int i = 0; i < type.arraylen; ++i)
-			values.Add((int64)attribute.get<int64_t>(i));
+		for(size_t i = 0; i < type.basevalues(); ++i)
+			values.Add((int64)attribute.get<int64_t>((int)i));
 		metadata.Set(key, Value(values));
 		return true;
 	}
-	if(type.arraylen > 0 &&
+	if(type.basevalues() > 1 &&
 	   (type.basetype == TypeDesc::FLOAT || type.basetype == TypeDesc::DOUBLE)) {
 		ValueArray values;
-		for(int i = 0; i < type.arraylen; ++i)
-			values.Add(attribute.get<double>(i));
+		for(size_t i = 0; i < type.basevalues(); ++i)
+			values.Add(attribute.get<double>((int)i));
 		metadata.Set(key, Value(values));
 		return true;
 	}
 	if(type.arraylen > 0 && type.basetype == TypeDesc::STRING) {
 		ValueArray values;
 		for(int i = 0; i < type.arraylen; ++i)
-			values.Add(String(attribute.get_string(i)));
+			values.Add(String(attribute.get_string_indexed(i)));
 		metadata.Set(key, Value(values));
 		return true;
 	}
@@ -334,7 +334,7 @@ static bool ToBackendAttribute(const String& key, const Value& value,
 		return false;
 	}
 	if(value.Is<ValueArray>()) {
-		ValueArray array = value.To<ValueArray>();
+		ValueArray array = value;
 		if(array.IsEmpty()) {
 			Warn(diagnostics, "empty metadata array was omitted", key,
 			     "IMGIO_METADATA");
@@ -516,7 +516,10 @@ Result LoadImageFile(const String& path, ImageData& output,
 		            "only EXR and PNG are supported", path, "IMGIO_FORMAT");
 
 	UppImaging::InitializeOpenImageIO();
-	ImageInput::unique_ptr input = ImageInput::open(path.Begin());
+	OIIO::ImageSpec read_config;
+	if(extension == ".png")
+		read_config.attribute("oiio:UnassociatedAlpha", 1);
+	ImageInput::unique_ptr input = ImageInput::open(path.Begin(), &read_config);
 	if(!input)
 		return Fail(ResultCode::IOError, diagnostics,
 		            OIIO::geterror().c_str(), path, "IMGIO_OPEN");
@@ -668,6 +671,8 @@ Result SaveImageFile(const String& path, const ImageData& image,
 	target.z = 0;
 	target.depth = 1;
 	target.alpha_channel = image.spec.alpha_channel;
+	if(extension == ".png" && target.alpha_channel != -1)
+		target.attribute("oiio:UnassociatedAlpha", 1);
 	SetCanonicalChannelNames(image.spec, target, diagnostics);
 	for(int i = 0; i < image.metadata.Items().GetCount(); ++i)
 		ToBackendAttribute(image.metadata.Items().GetKey(i),
