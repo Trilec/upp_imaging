@@ -5,9 +5,9 @@
 - Architecture and documentation pivot: complete.
 - Public OpenImageIO and OpenColorIO package renames: complete.
 - ImagingCore: implemented and validated.
-- ImagingIO: implemented and hardened for the supported EXR/PNG slice; final Windows acceptance pending.
-- ImagingColor: next framework package.
-- ImagingAnalysis: planned after ImagingColor.
+- ImagingIO: implemented and hardened for the supported EXR/PNG slice; final Windows closure matrix remains pending.
+- ImagingColor: implemented code-side with OpenColorIO as the private backend; Windows acceptance pending.
+- ImagingAnalysis: next framework implementation package after ImagingColor acceptance.
 - ImagingDiagnostics: planned after ImagingAnalysis.
 - Imaging umbrella: planned after the five framework packages are complete.
 - plugin/exr: planned as an opt-in display-oriented bridge after the framework is established.
@@ -28,22 +28,37 @@
 
 Unsupported structures and formats fail closed with stable diagnostics: multipart, mipmapped, deep, volume, mixed-channel-format, integer EXR, floating PNG and arbitrary PNG multichannel files.
 
+## ImagingColor supported subset
+
+- built-in OpenColorIO configurations and explicit OCIO config files
+- backend-neutral config inspection for colour spaces, displays, looks and defaults
+- named source-to-destination colour-space transforms
+- source/display/view display transforms
+- RGB and RGBA layouts
+- named MultiChannel images with one unambiguous `R`, `G`, `B` triplet
+- UInt8, UInt16, Float16 and Float32 storage
+- all depth slices processed independently
+- exact preservation of alpha and non-RGB channels
+- preservation of image specification, data window, channel names, sample type and metadata
+- transactional failures: output is not changed unless processing completes successfully
+
+Gray and GrayAlpha transforms are deliberately unsupported in the initial slice because converting an RGB colour result back to one luminance channel would require an application policy. Ambiguous MultiChannel RGB mappings are rejected with stable diagnostics.
+
 ## Next implementation order
 
-1. Final Windows acceptance of ImagingIO.
-2. ImagingColor through OpenColorIO.
-3. ImagingAnalysis.
-4. ImagingDiagnostics.
-5. Imaging umbrella.
-6. plugin/exr.
-7. JPEG XL.
-8. HDR/RGBE.
-9. DPX/Cineon.
-10. RAW image support.
-11. WebP.
-12. HEIF/AVIF.
-13. Additional TIFF/OpenImageIO coverage.
-14. FFmpeg as a separate major milestone.
+1. Final Windows acceptance of ImagingIO and ImagingColor.
+2. ImagingAnalysis.
+3. ImagingDiagnostics.
+4. Imaging umbrella.
+5. plugin/exr.
+6. JPEG XL.
+7. HDR/RGBE.
+8. DPX/Cineon.
+9. RAW image support.
+10. WebP.
+11. HEIF/AVIF.
+12. Additional TIFF/OpenImageIO coverage.
+13. FFmpeg as a separate major milestone.
 
 For every additional format:
 
@@ -57,7 +72,7 @@ For every additional format:
 
 - ImagingCore depends on U++ Core only.
 - ImagingIO depends on ImagingCore and OpenImageIO; OIIO types remain private.
-- ImagingColor will depend on ImagingCore and OpenColorIO; OCIO types remain private.
+- ImagingColor depends on ImagingCore and OpenColorIO; OCIO types remain private.
 - ImagingAnalysis depends on ImagingCore.
 - ImagingDiagnostics depends on ImagingCore and remains GUI-independent.
 - Imaging depends on all five framework packages.

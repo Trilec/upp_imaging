@@ -1,0 +1,11 @@
+description "ImagingColor public contract test";
+
+uses
+	ImagingColor;
+
+file
+	main.cpp,
+	README.md;
+
+mainconfig
+	"" = "CONSOLE";

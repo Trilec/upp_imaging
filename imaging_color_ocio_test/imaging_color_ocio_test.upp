@@ -1,0 +1,12 @@
+description "Independent OpenColorIO acceptance test for ImagingColor";
+
+uses
+	ImagingColor,
+	OpenColorIO;
+
+file
+	main.cpp,
+	README.md;
+
+mainconfig
+	"" = "CONSOLE";
