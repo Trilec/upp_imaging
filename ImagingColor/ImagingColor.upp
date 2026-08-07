@@ -1,0 +1,10 @@
+description "Backend-neutral colour processing through OpenColorIO";
+
+uses
+	ImagingCore,
+	OpenColorIO;
+
+file
+	ImagingColor.h,
+	ImagingColor.cpp,
+	README.md;
