@@ -226,7 +226,7 @@ CONSOLE_APP_MAIN
 	      reopened->spec().alpha_channel == 3,
 	      "OIIO inspects adapter EXR specification");
 	float reopened_pixels[16] = {0};
-	Check(state, reopened && reopened->read_image(TypeDesc::FLOAT, reopened_pixels) &&
+	Check(state, reopened && reopened->read_image(0, 0, 0, -1, TypeDesc::FLOAT, reopened_pixels) &&
 	      memcmp(reopened_pixels, rgba, sizeof(rgba)) == 0,
 	      "OIIO reads adapter EXR pixels");
 	if(reopened) {
