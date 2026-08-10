@@ -1,0 +1,11 @@
+description "ImagingAnalysis public contract test";
+
+uses
+	ImagingAnalysis;
+
+file
+	main.cpp,
+	README.md;
+
+mainconfig
+	"" = "CONSOLE";
