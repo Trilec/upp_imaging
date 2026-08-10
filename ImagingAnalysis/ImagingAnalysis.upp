@@ -1,0 +1,9 @@
+description "Backend-neutral image analysis";
+
+uses
+	ImagingCore;
+
+file
+	ImagingAnalysis.h,
+	ImagingAnalysis.cpp,
+	README.md;
