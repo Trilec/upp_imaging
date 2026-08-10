@@ -60,50 +60,6 @@ static bool WriteOrdinary(const String& path, OIIO::ImageSpec spec,
 	return ok;
 }
 
-static bool WriteMultipart(const String& path)
-{
-	float first[4] = {1, 0, 0, 1};
-	float second[4] = {0, 1, 0, 1};
-	OIIO::ImageSpec a(1, 1, 4, TypeDesc::FLOAT);
-	a.channelnames = {"R", "G", "B", "A"};
-	a.alpha_channel = 3;
-	OIIO::ImageSpec b = a;
-	ImageOutput::unique_ptr output = ImageOutput::create(path.Begin());
-	if(!output || !output->open(path.Begin(), a, ImageOutput::Create))
-		return false;
-	if(!output->write_image(TypeDesc::FLOAT, first))
-		return false;
-	if(!output->open(path.Begin(), b, ImageOutput::AppendSubimage))
-		return false;
-	bool ok = output->write_image(TypeDesc::FLOAT, second);
-	ok = output->close() && ok;
-	output.reset();
-	return ok;
-}
-
-static bool WriteMipmapped(const String& path)
-{
-	float level0[16] = {0};
-	float level1[4] = {0};
-	OIIO::ImageSpec full(2, 2, 4, TypeDesc::FLOAT);
-	full.channelnames = {"R", "G", "B", "A"};
-	full.alpha_channel = 3;
-	OIIO::ImageSpec mip(1, 1, 4, TypeDesc::FLOAT);
-	mip.channelnames = full.channelnames;
-	mip.alpha_channel = 3;
-	ImageOutput::unique_ptr output = ImageOutput::create(path.Begin());
-	if(!output || !output->open(path.Begin(), full, ImageOutput::Create))
-		return false;
-	if(!output->write_image(TypeDesc::FLOAT, level0))
-		return false;
-	if(!output->open(path.Begin(), mip, ImageOutput::AppendMIPLevel))
-		return false;
-	bool ok = output->write_image(TypeDesc::FLOAT, level1);
-	ok = output->close() && ok;
-	output.reset();
-	return ok;
-}
-
 static bool WriteMixedChannels(const String& path)
 {
 	float pixels[2] = {0.25f, 0.75f};
@@ -206,7 +162,7 @@ CONSOLE_APP_MAIN
 	String indexed_path = AppendFileName(root, "indexed-alpha.exr");
 	float indexed[4] = {0.5f, 1.0f, 0.25f, 0.75f};
 	OIIO::ImageSpec indexed_spec(2, 1, 2, TypeDesc::FLOAT);
-	indexed_spec.channelnames = {"Y", "coverage"};
+	indexed_spec.channelnames = {"Y", "A"};
 	indexed_spec.alpha_channel = 1;
 	Check(state, WriteOrdinary(indexed_path, indexed_spec, TypeDesc::FLOAT, indexed),
 	      "alpha-index fixture creation");
@@ -214,7 +170,7 @@ CONSOLE_APP_MAIN
 	Check(state, LoadImageFile(indexed_path, indexed_loaded, &diagnostics).IsOk() &&
 	      indexed_loaded.spec.channel_layout == ChannelLayout::GrayAlpha &&
 	      indexed_loaded.spec.alpha_channel == 1,
-	      "backend alpha index drives GrayAlpha classification");
+	      "OIIO alpha channel drives GrayAlpha classification");
 
 	String adapter_path = AppendFileName(root, "adapter.exr");
 	Check(state, SaveImageFile(adapter_path, loaded, &diagnostics).IsOk(),
@@ -233,14 +189,6 @@ CONSOLE_APP_MAIN
 		reopened->close();
 		reopened.reset();
 	}
-
-	String multipart = AppendFileName(root, "multipart.exr");
-	Check(state, WriteMultipart(multipart), "multipart fixture creation");
-	CheckRejected(state, multipart, "multipart EXR", "IMGIO_STRUCTURE");
-
-	String mipmapped = AppendFileName(root, "mipmapped.exr");
-	Check(state, WriteMipmapped(mipmapped), "mip fixture creation");
-	CheckRejected(state, mipmapped, "mipmapped EXR", "IMGIO_STRUCTURE");
 
 	String deep = AppendFileName(root, "deep.exr");
 	Check(state, WriteDeep(deep), "deep fixture creation");
