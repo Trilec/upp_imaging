@@ -6,6 +6,7 @@
 #include <openimageio_plugin_png/RegisterPNG.h>
 #include <openimageio_plugin_jpegxl/RegisterJPEGXL.h>
 #include <openimageio_plugin_hdr/RegisterHDR.h>
+#include <openimageio_plugin_dpxcineon/RegisterDPXCineon.h>
 
 namespace UppImaging {
 
@@ -17,6 +18,7 @@ void InitializeOpenImageIO()
         UppImaging::RegisterOpenImageIOPNGPlugin();
         UppImaging::RegisterOpenImageIOJPEGXLPlugin();
         UppImaging::RegisterOpenImageIOHDRPlugin();
+        UppImaging::RegisterOpenImageIODPXCineonPlugins();
     });
 }
 

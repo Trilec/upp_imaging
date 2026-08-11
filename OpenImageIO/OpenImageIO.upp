@@ -6,7 +6,8 @@ uses
 	openimageio_plugin_openexr,
 	openimageio_plugin_png,
 	openimageio_plugin_jpegxl,
-	openimageio_plugin_hdr;
+	openimageio_plugin_hdr,
+	openimageio_plugin_dpxcineon;
 
 file
 	OIIO.h,

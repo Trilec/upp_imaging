@@ -1,0 +1,21 @@
+description "Pinned OpenImageIO 3.1.15 DPX and Cineon plugins";
+
+uses
+	openimageio_headers,
+	openimageio_src,
+	openexr;
+
+options
+	-I../openimageio_src,
+	-I../openimageio_src/upstream/libOpenImageIO,
+	-Iupstream/src/dpx.imageio,
+	-Iupstream/src/dpx.imageio/libdpx,
+	-Iupstream/src/cineon.imageio,
+	-Iupstream/src/cineon.imageio/libcineon,
+	-DOIIO_STATIC_DEFINE=1;
+
+file
+	import.ext,
+	RegisterDPXCineon.h,
+	RegisterDPXCineon.cpp,
+	README.md;
