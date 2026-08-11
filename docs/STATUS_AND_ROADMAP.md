@@ -9,8 +9,9 @@
 - ImagingColor: implemented and Windows-accepted with OpenColorIO as the private backend.
 - ImagingAnalysis: implemented and Windows-accepted as a Core-only statistics, histogram and source-probe layer.
 - ImagingDiagnostics: implemented and Windows-accepted as a Core-only deterministic comparison and structured reporting layer.
-- Imaging umbrella: implemented code-side over the five framework packages; focused Windows acceptance pending.
+- Imaging umbrella: implemented and Windows-accepted as the standard forwarding package over all five framework packages.
 - plugin/exr: implemented code-side as an opt-in display-oriented `StreamRaster` bridge; focused Windows acceptance pending.
+- JPEG XL backend: libjxl 0.12.0 dependency/source package implemented code-side; focused Windows acceptance pending before OpenImageIO registration.
 - LumaPix: paused; retained as reference material only.
 
 ## ImagingIO supported subset
@@ -82,10 +83,22 @@ Waveforms and vectorscopes remain later ImagingAnalysis scope. Workbench GUI con
 
 Full-fidelity EXR work remains the responsibility of ImagingIO or the direct OpenImageIO/OpenEXR APIs.
 
+## JPEG XL backend source slice
+
+- pins upstream libjxl 0.12.0 at commit `a7a9c787341cf703dede03c2009fa460cae5e5df`
+- uses libjxl's recursively pinned Brotli 1.2.0, Highway 1.2.0 and skcms source dependencies
+- builds the codec directly as a U++ source package through `import.ext`; no system libjxl or CMake build step
+- enables JPEG XL container boxes for later OpenImageIO metadata support
+- disables lossless JPEG reconstruction/transcoding, so libjpeg-turbo is not part of this dependency slice
+- uses repository-owned static export/version headers in place of CMake-generated headers
+- focused prerequisite test exercises encoder, decoder, resizable runner, lossless RGB8 roundtrip and malformed-input rejection
+
+This stage establishes the dependency/backend only. OpenImageIO JPEG XL registration and ImagingIO format acceptance remain the next JPEG XL task.
+
 ## Next implementation order
 
-1. Focused Windows acceptance of the Imaging umbrella and plugin/exr (independent checks; neither blocks code-side work on the next format).
-2. JPEG XL.
+1. Focused Windows acceptance of plugin/exr and the JPEG XL backend (independent checks; neither blocks code-side preparation of the next slice).
+2. Complete JPEG XL OpenImageIO registration and ImagingIO acceptance.
 3. HDR/RGBE.
 4. DPX/Cineon.
 5. RAW image support.

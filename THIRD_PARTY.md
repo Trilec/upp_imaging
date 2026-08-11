@@ -115,3 +115,28 @@ Notes:
 - `libdeflate_src` packages the official standalone libdeflate release, not the OpenEXR-vendored subtree.
 - The selected version matches the libdeflate version vendored by OpenEXR 3.4.13.
 - `libdeflate` is the user-facing wrapper package and currently delegates to `libdeflate_src`.
+
+## JPEG XL / libjxl
+
+- Upstream name: libjxl
+- Upstream version: 0.12.0
+- Upstream commit: `a7a9c787341cf703dede03c2009fa460cae5e5df`
+- Source origin: `https://github.com/libjxl/libjxl.git`
+- License: BSD-3-Clause with upstream PATENTS grant
+- Date pinned: 2026-08-12
+- Files modified after import: upstream files are not modified; repository-owned U++ manifests and generated static headers live outside the pinned tree
+
+Pinned build dependencies used by `jpegxl_src`:
+
+- Brotli: `028fb5a23661f123017c060daa546b55cf4bde29` (MIT)
+- Highway: `457c891775a7397bdb0376bb1031e6e027af1c48` (Apache-2.0/BSD-3-Clause)
+- skcms: `96d9171c94b937a1b5f0293de7309ac16311b722` (BSD-3-Clause)
+
+Notes:
+
+- `jpegxl_src/upstream` is a pinned Git submodule and its required nested dependencies are initialized recursively from libjxl's own submodule declarations.
+- `jpegxl_src` compiles the libjxl codec, thread runners, Brotli, core Highway runtime dispatch, and baseline skcms directly through U++ `import.ext`.
+- JPEG XL container boxes are enabled.
+- Lossless JPEG reconstruction/transcoding is disabled, so libjpeg-turbo is not part of this backend slice.
+- lcms, googletest, sjpeg, libpng, zlib, testdata and command-line tools are not compiled by this package.
+- Repository-owned generated `version.h` and static export headers replace CMake-generated headers for this U++ source build.
