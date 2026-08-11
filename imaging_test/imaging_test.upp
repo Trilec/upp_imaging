@@ -1,0 +1,11 @@
+description "Imaging umbrella contract test";
+
+uses
+	Imaging;
+
+file
+	main.cpp,
+	README.md;
+
+mainconfig
+	"" = "CONSOLE";

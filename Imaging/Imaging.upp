@@ -1,0 +1,12 @@
+description "Standard complete U++ Imaging framework umbrella";
+
+uses
+	ImagingCore,
+	ImagingIO,
+	ImagingColor,
+	ImagingAnalysis,
+	ImagingDiagnostics;
+
+file
+	Imaging.h,
+	README.md;
