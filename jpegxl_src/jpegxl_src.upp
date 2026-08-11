@@ -1,0 +1,33 @@
+description "Pinned libjxl 0.12.0 source backend for U++";
+
+noblitz;
+
+uses
+	Core;
+
+include
+	generated/include,
+	upstream/lib/include,
+	upstream,
+	upstream/third_party/highway,
+	upstream/third_party/brotli/c/include,
+	upstream/third_party/skcms;
+
+options
+	-DJXL_STATIC_DEFINE,
+	-DJXL_CMS_STATIC_DEFINE,
+	-DJXL_THREADS_STATIC_DEFINE,
+	-DJXL_INTERNAL_LIBRARY_BUILD,
+	-DJXL_THREADS_INTERNAL_LIBRARY_BUILD,
+	-DJPEGXL_ENABLE_TRANSCODE_JPEG=0,
+	-DJPEGXL_ENABLE_BOXES=1,
+	-DSKCMS_DISABLE_HSW,
+	-DSKCMS_DISABLE_SKX;
+
+file
+	import.ext,
+	generated/include/jxl/version.h,
+	generated/include/jxl/jxl_export.h,
+	generated/include/jxl/jxl_cms_export.h,
+	generated/include/jxl/jxl_threads_export.h,
+	README.md;

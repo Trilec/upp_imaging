@@ -1,0 +1,11 @@
+/* Repository-owned static-build export header for libjxl 0.12.0. */
+#ifndef JXL_THREADS_EXPORT_H_
+#define JXL_THREADS_EXPORT_H_
+
+#define JXL_THREADS_EXPORT
+#define JXL_THREADS_NO_EXPORT
+#define JXL_THREADS_DEPRECATED
+#define JXL_THREADS_DEPRECATED_EXPORT JXL_THREADS_EXPORT
+#define JXL_THREADS_DEPRECATED_NO_EXPORT JXL_THREADS_NO_EXPORT
+
+#endif
