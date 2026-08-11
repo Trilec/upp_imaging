@@ -1,0 +1,23 @@
+description "OpenImageIO JPEG XL plugin registration package";
+
+uses
+	openimageio_headers,
+	openimageio_src,
+	jpegxl_src;
+
+options
+	-I../openimageio_src,
+	-I../openimageio_src/upstream/libOpenImageIO,
+	-I../jpegxl_src/generated/include,
+	-I../jpegxl_src/upstream/lib/include,
+	-I../jpegxl_src/upstream,
+	-Iupstream/jpegxl.imageio,
+	-DOIIO_STATIC_DEFINE=1,
+	-DUSE_JXL;
+
+file
+	upstream/jpegxl.imageio/jxlinput.cpp,
+	upstream/jpegxl.imageio/jxloutput.cpp,
+	RegisterJPEGXL.h,
+	RegisterJPEGXL.cpp,
+	README.md;
