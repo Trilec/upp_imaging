@@ -7,9 +7,9 @@
 - ImagingCore: implemented and validated.
 - ImagingIO: implemented and hardened for the supported EXR/PNG slice; public Windows contract is green. The independent OIIO cross-check was aligned with the capabilities of the bundled writer and no longer blocks framework progress.
 - ImagingColor: implemented and Windows-accepted with OpenColorIO as the private backend.
-- ImagingAnalysis: implemented code-side as a Core-only statistics, histogram and source-probe layer; focused Windows acceptance pending.
-- ImagingDiagnostics: next framework implementation package.
-- Imaging umbrella: planned after the five framework packages are complete.
+- ImagingAnalysis: implemented and Windows-accepted as a Core-only statistics, histogram and source-probe layer.
+- ImagingDiagnostics: implemented code-side as a Core-only deterministic comparison and structured reporting layer; focused Windows acceptance pending.
+- Imaging umbrella: next framework implementation package after ImagingDiagnostics acceptance.
 - plugin/exr: planned as an opt-in display-oriented bridge after the framework is established.
 - LumaPix: paused; retained as reference material only.
 
@@ -57,20 +57,32 @@ Gray and GrayAlpha transforms are deliberately unsupported in the initial slice 
 
 Waveforms and vectorscopes remain later ImagingAnalysis scope. Workbench GUI controls remain application-level and are not dependencies of the framework package.
 
+## ImagingDiagnostics supported subset
+
+- Core-only dependency boundary with no OpenImageIO, OpenColorIO or GUI types
+- absolute/relative scalar numerical comparisons with deterministic NaN/infinity handling
+- numerical-array comparison summaries with mismatch count, first mismatch and maximum errors
+- stable names for ImagingCore sample types, channel layouts, result codes and diagnostic severities
+- deterministic structured reports for image specifications, metadata, results and diagnostics
+- operation reports combining operation name, elapsed milliseconds, result and ordered diagnostics
+- sorted metadata keys and deterministic text rendering for tests, logs and future ImagingWorkbench presentation
+- transactional failures with stable `IMGDIAG_*` diagnostics
+
+`ImagingCore::Diagnostics` remains the authoritative diagnostics container. ImagingDiagnostics formats and compares existing Core contracts rather than duplicating backend or GUI state.
+
 ## Next implementation order
 
-1. Focused Windows acceptance of ImagingAnalysis.
-2. ImagingDiagnostics.
-3. Imaging umbrella.
-4. plugin/exr.
-5. JPEG XL.
-6. HDR/RGBE.
-7. DPX/Cineon.
-8. RAW image support.
-9. WebP.
-10. HEIF/AVIF.
-11. Additional TIFF/OpenImageIO coverage.
-12. FFmpeg as a separate major milestone.
+1. Focused Windows acceptance of ImagingDiagnostics.
+2. Imaging umbrella.
+3. plugin/exr.
+4. JPEG XL.
+5. HDR/RGBE.
+6. DPX/Cineon.
+7. RAW image support.
+8. WebP.
+9. HEIF/AVIF.
+10. Additional TIFF/OpenImageIO coverage.
+11. FFmpeg as a separate major milestone.
 
 For every additional format:
 
@@ -86,6 +98,6 @@ For every additional format:
 - ImagingIO depends on ImagingCore and OpenImageIO; OIIO types remain private.
 - ImagingColor depends on ImagingCore and OpenColorIO; OCIO types remain private.
 - ImagingAnalysis depends on ImagingCore only.
-- ImagingDiagnostics depends on ImagingCore and remains GUI-independent.
+- ImagingDiagnostics depends on ImagingCore only and remains GUI-independent.
 - Imaging depends on all five framework packages.
 - plugin/exr remains opt-in and is not included automatically by Imaging.
