@@ -1,0 +1,12 @@
+description "Focused ImagingIO HDR, DPX and Cineon contract test";
+
+uses
+	Core,
+	ImagingIO;
+
+file
+	main.cpp,
+	README.md;
+
+mainconfig
+	"" = "CONSOLE";

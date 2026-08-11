@@ -23,56 +23,71 @@ the primary error.
 
 ## Supported files
 
-- single-image, single-mip, non-deep EXR
-- EXR `Float16` and `Float32`
-- EXR Gray, GrayAlpha, RGB, RGBA, alpha-only and named MultiChannel layouts
-- non-zero and negative EXR data-window origins
-- ordinary zero-origin PNG
-- PNG `UInt8` and `UInt16`
-- PNG Gray, GrayAlpha, RGB and RGBA layouts
-- static zero-origin JPEG XL (`.jxl`)
-- JPEG XL `UInt8`, `UInt16`, `Float16` and `Float32`
-- JPEG XL Gray, RGB and RGBA layouts
-- JPEG XL output is explicitly lossless (`jpegxl:100`)
+### EXR
+- single-image, single-mip, non-deep
+- Float16 and Float32
+- Gray, GrayAlpha, RGB, RGBA, alpha-only and named MultiChannel
+- non-zero and negative data-window origins
 
-JPEG XL GrayAlpha and arbitrary extra-channel/MultiChannel images remain
-fail-closed in this slice because OpenImageIO 3.1.15's JPEG XL adapter does not
-represent those channel semantics reliably enough for the framework contract.
+### PNG
+- ordinary zero-origin images
+- UInt8 and UInt16
+- Gray, GrayAlpha, RGB and RGBA
 
-The adapter rejects multipart, mipmapped, deep, volume, mixed-channel-format,
-integer EXR, floating PNG, arbitrary PNG multichannel, non-zero-origin PNG/JXL,
-and unsupported JPEG XL channel layouts with stable structured diagnostic codes.
+### JPEG XL
+- static zero-origin `.jxl`
+- UInt8, UInt16, Float16 and Float32
+- Gray, RGB and RGBA
+- output explicitly lossless (`jpegxl:100`)
+- GrayAlpha and arbitrary extra-channel/MultiChannel remain fail-closed
+
+### Radiance HDR/RGBE
+- `.hdr` and `.rgbe`
+- zero-origin Float32 RGB only
+- no implicit tone mapping, alpha synthesis or integer facade
+- RGBE is a quantized HDR representation; arbitrary Float32 bit identity is not promised
+
+### DPX
+- initial framework slice is single-image UInt8/UInt16 RGB
+- non-negative data-window origins are preserved
+- 10/12-bit DPX may load through OIIO as UInt16; `oiio:BitsPerSample` is treated as backend-managed evidence and is not silently re-emitted on save
+- negative origins, additional layouts and floating DPX remain fail-closed in this slice
+
+### Cineon
+- input only, matching OpenImageIO 3.1.15.0
+- initial slice accepts UInt8/UInt16 Gray and RGB images
+- save attempts fail explicitly with `IMGIO_FORMAT`
+
+Unsupported structures fail closed with stable diagnostics: multipart, mipmapped,
+deep, volume, mixed-channel-format, integer EXR, floating PNG, arbitrary PNG/JPEG XL
+multichannel files, unsupported JPEG XL channel layouts, unsupported HDR layouts,
+and DPX/Cineon structures outside the initial policy.
 
 ## Channel policy
 
 Backend alpha indices are authoritative where present. Alpha-only one-channel
-images remain named `MultiChannel` data rather than being reclassified as
-Gray. Canonical output names are `Y`, `Y/A`, `R/G/B`, and `R/G/B/A`.
-Compatible explicit canonical names are retained; contradictory names are
-replaced with an `IMGIO_CHANNELS` warning. Named EXR MultiChannel order and
-alpha index are preserved exactly.
+images remain named `MultiChannel` data rather than being reclassified as Gray.
+Canonical output names are `Y`, `Y/A`, `R/G/B`, and `R/G/B/A`. Compatible
+explicit canonical names are retained; contradictory names are replaced with an
+`IMGIO_CHANNELS` warning. Cineon intensity channel name `I` is accepted as Gray.
 
 ## Metadata policy
 
-String, signed integer, floating scalar, and homogeneous integer/floating
-arrays are translated into Core metadata without converting integer evidence
-to floating point. Unsigned values are accepted only when representable by
-Core `int64`. Portable save output emits strings, 32-bit-range integers,
-doubles, and homogeneous numeric arrays where the selected backend supports
-them.
+String, signed integer, floating scalar, and homogeneous integer/floating arrays
+are translated into Core metadata without converting integer evidence to floating
+point. Unsigned values are accepted only when representable by Core `int64`.
+Portable save output emits strings, 32-bit-range integers, doubles, and homogeneous
+numeric arrays where the selected backend supports them.
 
-Structural and plugin-managed attributes are readable as backend information
-where useful but are not blindly re-emitted. Dimensions, channel structure,
-alpha ownership, bit depth, compression, line order, tile/chunk and internal
-OIIO state are derived from the authoritative `ImageSpec`. Omitted, unsupported,
-out-of-range, heterogeneous, boolean, and read-only values always produce an
-`IMGIO_METADATA` warning rather than disappearing silently.
+Structural and plugin-managed attributes are readable as backend information where
+useful but are not blindly re-emitted. Dimensions, channel structure, alpha
+ownership, bit depth, compression, line order, tile/chunk and internal OIIO state
+are derived from the authoritative `ImageSpec`. Omitted, unsupported, out-of-range,
+heterogeneous, boolean, and read-only values produce `IMGIO_METADATA` warnings.
 
 ## Validation
 
-`imaging_io_test` owns the established EXR/PNG public contract matrix, exact
-Float16 bit evidence, source immutability, diagnostics and transactional
-replacement tests. `imaging_io_oiio_test` owns independent OpenImageIO structure
-fixtures. `jpegxl_imagingio_test` adds the focused JPEG XL framework contract,
-including all supported sample types, RGB/RGBA alpha evidence, fail-closed
-channel/origin cases, and candidate verification before replacement.
+`imaging_io_test` owns the established EXR/PNG public contract matrix.
+`jpegxl_imagingio_test` owns the JPEG XL framework contract.
+`hdr_dpx_imagingio_test` owns the focused HDR/RGBE and DPX/Cineon policy,
+transaction and refusal contract.
