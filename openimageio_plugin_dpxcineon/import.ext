@@ -1,0 +1,21 @@
+files
+	upstream/src/dpx.imageio/dpxinput.cpp
+	upstream/src/dpx.imageio/dpxoutput.cpp
+	upstream/src/dpx.imageio/libdpx/DPX.cpp
+	upstream/src/dpx.imageio/libdpx/OutStream.cpp
+	upstream/src/dpx.imageio/libdpx/RunLengthEncoding.cpp
+	upstream/src/dpx.imageio/libdpx/Codec.cpp
+	upstream/src/dpx.imageio/libdpx/Reader.cpp
+	upstream/src/dpx.imageio/libdpx/Writer.cpp
+	upstream/src/dpx.imageio/libdpx/DPXHeader.cpp
+	upstream/src/dpx.imageio/libdpx/ElementReadStream.cpp
+	upstream/src/dpx.imageio/libdpx/InStream.cpp
+	upstream/src/dpx.imageio/libdpx/DPXColorConverter.cpp
+	upstream/src/cineon.imageio/cineoninput.cpp
+	upstream/src/cineon.imageio/libcineon/Cineon.cpp
+	upstream/src/cineon.imageio/libcineon/OutStream.cpp
+	upstream/src/cineon.imageio/libcineon/Codec.cpp
+	upstream/src/cineon.imageio/libcineon/Reader.cpp
+	upstream/src/cineon.imageio/libcineon/CineonHeader.cpp
+	upstream/src/cineon.imageio/libcineon/ElementReadStream.cpp
+	upstream/src/cineon.imageio/libcineon/InStream.cpp;
