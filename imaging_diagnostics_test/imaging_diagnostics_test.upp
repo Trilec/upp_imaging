@@ -1,0 +1,11 @@
+description "ImagingDiagnostics public contract test";
+
+uses
+	ImagingDiagnostics;
+
+file
+	main.cpp,
+	README.md;
+
+mainconfig
+	"" = "CONSOLE";
