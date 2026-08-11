@@ -8,9 +8,9 @@
 - ImagingIO: implemented and hardened for the supported EXR/PNG slice; public Windows contract is green. The independent OIIO cross-check was aligned with the capabilities of the bundled writer and no longer blocks framework progress.
 - ImagingColor: implemented and Windows-accepted with OpenColorIO as the private backend.
 - ImagingAnalysis: implemented and Windows-accepted as a Core-only statistics, histogram and source-probe layer.
-- ImagingDiagnostics: implemented code-side as a Core-only deterministic comparison and structured reporting layer; focused Windows acceptance pending.
-- Imaging umbrella: next framework implementation package after ImagingDiagnostics acceptance.
-- plugin/exr: planned as an opt-in display-oriented bridge after the framework is established.
+- ImagingDiagnostics: implemented and Windows-accepted as a Core-only deterministic comparison and structured reporting layer.
+- Imaging umbrella: implemented code-side as the standard forwarding package over all five framework packages; focused Windows acceptance pending.
+- plugin/exr: next implementation package after umbrella acceptance.
 - LumaPix: paused; retained as reference material only.
 
 ## ImagingIO supported subset
@@ -70,19 +70,27 @@ Waveforms and vectorscopes remain later ImagingAnalysis scope. Workbench GUI con
 
 `ImagingCore::Diagnostics` remains the authoritative diagnostics container. ImagingDiagnostics formats and compares existing Core contracts rather than duplicating backend or GUI state.
 
+## Imaging umbrella
+
+- public include route: `<Imaging/Imaging.h>`
+- forwards `ImagingCore`, `ImagingIO`, `ImagingColor`, `ImagingAnalysis` and `ImagingDiagnostics`
+- owns no additional implementation state or policy
+- brings the validated OpenImageIO and OpenColorIO backends transitively through IO and Color
+- does not include optional raster plugins such as `plugin/exr`
+- applications may still include individual framework packages to keep dependencies smaller
+
 ## Next implementation order
 
-1. Focused Windows acceptance of ImagingDiagnostics.
-2. Imaging umbrella.
-3. plugin/exr.
-4. JPEG XL.
-5. HDR/RGBE.
-6. DPX/Cineon.
-7. RAW image support.
-8. WebP.
-9. HEIF/AVIF.
-10. Additional TIFF/OpenImageIO coverage.
-11. FFmpeg as a separate major milestone.
+1. Focused Windows acceptance of the Imaging umbrella.
+2. plugin/exr.
+3. JPEG XL.
+4. HDR/RGBE.
+5. DPX/Cineon.
+6. RAW image support.
+7. WebP.
+8. HEIF/AVIF.
+9. Additional TIFF/OpenImageIO coverage.
+10. FFmpeg as a separate major milestone.
 
 For every additional format:
 
