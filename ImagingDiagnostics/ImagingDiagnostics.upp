@@ -1,0 +1,9 @@
+description "Core-only structured imaging diagnostics and reporting";
+
+uses
+	ImagingCore;
+
+file
+	ImagingDiagnostics.h,
+	ImagingDiagnostics.cpp,
+	README.md;
