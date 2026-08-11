@@ -1,0 +1,11 @@
+description "Opt-in OpenEXR StreamRaster preview bridge";
+
+uses
+	Draw,
+	OpenImageIO;
+
+file
+	exr.h,
+	exr.cpp,
+	exrreg.icpp,
+	README.md;
