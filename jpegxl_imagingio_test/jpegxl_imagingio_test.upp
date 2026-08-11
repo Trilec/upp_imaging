@@ -1,0 +1,12 @@
+description "Focused ImagingIO JPEG XL contract test";
+
+uses
+	Core,
+	ImagingIO;
+
+file
+	main.cpp,
+	README.md;
+
+mainconfig
+	"" = "CONSOLE";

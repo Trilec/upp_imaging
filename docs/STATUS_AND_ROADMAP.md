@@ -5,13 +5,13 @@
 - Architecture and documentation pivot: complete.
 - Public OpenImageIO and OpenColorIO package renames: complete.
 - ImagingCore: implemented and validated.
-- ImagingIO: implemented and hardened for the supported EXR/PNG slice; public Windows contract is green. The independent OIIO cross-check was aligned with the capabilities of the bundled writer and no longer blocks framework progress.
+- ImagingIO: EXR/PNG contract is Windows-accepted; JPEG XL support is implemented code-side and awaiting focused Windows acceptance.
 - ImagingColor: implemented and Windows-accepted with OpenColorIO as the private backend.
 - ImagingAnalysis: implemented and Windows-accepted as a Core-only statistics, histogram and source-probe layer.
 - ImagingDiagnostics: implemented and Windows-accepted as a Core-only deterministic comparison and structured reporting layer.
 - Imaging umbrella: implemented and Windows-accepted as the standard forwarding package over all five framework packages.
-- plugin/exr: implemented code-side as an opt-in display-oriented `StreamRaster` bridge; focused Windows acceptance pending.
-- JPEG XL backend: libjxl 0.12.0 dependency/source package implemented code-side; focused Windows acceptance pending before OpenImageIO registration.
+- plugin/exr: implemented code-side as an opt-in display-oriented `StreamRaster` bridge; focused Windows acceptance is tracked independently.
+- JPEG XL: pinned libjxl 0.12.0 backend, static OpenImageIO registration and strict ImagingIO slice are implemented code-side; Windows acceptance is pending.
 - LumaPix: paused; retained as reference material only.
 
 ## ImagingIO supported subset
@@ -23,11 +23,15 @@
 - EXR non-zero and negative data-window origins
 - PNG UInt8 and UInt16
 - PNG Gray, GrayAlpha, RGB and RGBA at zero origin
+- JPEG XL UInt8, UInt16, Float16 and Float32
+- JPEG XL Gray, RGB and RGBA at zero origin
+- JPEG XL output is explicitly lossless
 - transactional loads and same-directory transactional saves
+- completed save candidates are reopened, specification-checked and fully decoded before destination replacement
 - typed scalar and homogeneous numeric-array metadata
 - explicit backend-managed metadata omission policy
 
-Unsupported structures and formats fail closed with stable diagnostics: multipart, mipmapped, deep, volume, mixed-channel-format, integer EXR, floating PNG and arbitrary PNG multichannel files.
+Unsupported structures and formats fail closed with stable diagnostics: multipart, mipmapped, deep, volume, mixed-channel-format, integer EXR, floating PNG, arbitrary PNG/JPEG XL multichannel files, JPEG XL GrayAlpha, and non-zero-origin PNG/JPEG XL.
 
 ## ImagingColor supported subset
 
@@ -83,29 +87,29 @@ Waveforms and vectorscopes remain later ImagingAnalysis scope. Workbench GUI con
 
 Full-fidelity EXR work remains the responsibility of ImagingIO or the direct OpenImageIO/OpenEXR APIs.
 
-## JPEG XL backend source slice
+## JPEG XL implementation
 
 - pins upstream libjxl 0.12.0 at commit `a7a9c787341cf703dede03c2009fa460cae5e5df`
 - uses libjxl's recursively pinned Brotli 1.2.0, Highway 1.2.0 and skcms source dependencies
 - builds the codec directly as a U++ source package through `import.ext`; no system libjxl or CMake build step
-- enables JPEG XL container boxes for later OpenImageIO metadata support
-- disables lossless JPEG reconstruction/transcoding, so libjpeg-turbo is not part of this dependency slice
+- enables JPEG XL container boxes and disables lossless JPEG reconstruction/transcoding
 - uses repository-owned static export/version headers in place of CMake-generated headers
-- focused prerequisite test exercises encoder, decoder, resizable runner, lossless RGB8 roundtrip and malformed-input rejection
+- registers OpenImageIO 3.1.15.0's JPEG XL reader/writer statically through the stable `OpenImageIO` package
+- focused direct tests cover backend versioning, thread runner, lossless encode/decode, OIIO registration, RGB/RGBA alpha preservation and malformed-input refusal
+- focused ImagingIO tests cover the accepted sample/layout matrix, exact lossless pixels, stable refusal diagnostics and transactional replacement
 
-This stage establishes the dependency/backend only. OpenImageIO JPEG XL registration and ImagingIO format acceptance remain the next JPEG XL task.
+JPEG XL GrayAlpha and arbitrary extra-channel data remain deferred until the backend adapter can expose their semantics without ambiguity.
 
 ## Next implementation order
 
-1. Focused Windows acceptance of plugin/exr and the JPEG XL backend (independent checks; neither blocks code-side preparation of the next slice).
-2. Complete JPEG XL OpenImageIO registration and ImagingIO acceptance.
-3. HDR/RGBE.
-4. DPX/Cineon.
-5. RAW image support.
-6. WebP.
-7. HEIF/AVIF.
-8. Additional TIFF/OpenImageIO coverage.
-9. FFmpeg as a separate major milestone.
+1. Windows acceptance of the completed JPEG XL slice may proceed in parallel with further code-side work.
+2. HDR/RGBE.
+3. DPX/Cineon.
+4. RAW image support.
+5. WebP.
+6. HEIF/AVIF.
+7. Additional TIFF/OpenImageIO coverage.
+8. FFmpeg as a separate major milestone.
 
 For every additional format:
 
@@ -123,4 +127,5 @@ For every additional format:
 - ImagingAnalysis depends on ImagingCore only.
 - ImagingDiagnostics depends on ImagingCore only and remains GUI-independent.
 - Imaging depends on all five framework packages.
+- format backend source packages do not depend on the framework layer.
 - plugin/exr remains opt-in and is not included automatically by Imaging.

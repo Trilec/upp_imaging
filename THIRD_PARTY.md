@@ -140,3 +140,18 @@ Notes:
 - Lossless JPEG reconstruction/transcoding is disabled, so libjpeg-turbo is not part of this backend slice.
 - lcms, googletest, sjpeg, libpng, zlib, testdata and command-line tools are not compiled by this package.
 - Repository-owned generated `version.h` and static export headers replace CMake-generated headers for this U++ source build.
+
+## OpenImageIO JPEG XL plugin
+
+- Upstream project: OpenImageIO
+- Upstream version: 3.1.15.0
+- Source origin: `src/jpegxl.imageio/jxlinput.cpp` and `src/jpegxl.imageio/jxloutput.cpp`
+- Upstream source license: Apache-2.0
+- Date integrated: 2026-08-12
+- Backend: repository-pinned libjxl 0.12.0
+
+Notes:
+
+- `openimageio_plugin_jpegxl` statically registers the OpenImageIO JPEG XL reader/writer through the stable `OpenImageIO` package.
+- The reader is retained from the 3.1.15.0 source slice; the repository copy of the writer is packaged locally for the U++ static plugin model.
+- ImagingIO applies a stricter framework policy than the raw plugin and currently rejects JPEG XL GrayAlpha and arbitrary extra-channel/MultiChannel layouts.

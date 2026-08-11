@@ -1,8 +1,8 @@
 # ImagingIO
 
 `ImagingIO` is the backend-neutral file I/O package for `Upp::Imaging`.
-Its public API exposes only `ImagingCore` types; OpenImageIO is private to
-`ImagingIO.cpp`.
+Its public API exposes only `ImagingCore` types; OpenImageIO and format backends
+remain private to `ImagingIO.cpp`.
 
 ## Public API
 
@@ -15,7 +15,8 @@ Result SaveImageFile(const String& path, const ImageData& image,
 
 Loads are transactional: `output` is changed only after structure, sample,
 channel, pixel, metadata, close, and Core validation succeed. Saves write a
-same-directory temporary file, close it completely, then promote it. Existing
+same-directory temporary file, close it completely, reopen it, verify its
+specification, and decode the full pixel payload before promotion. Existing
 regular files are staged through a unique backup and restored if promotion
 fails. Temporary and backup cleanup failures are reported without replacing
 the primary error.
@@ -29,10 +30,18 @@ the primary error.
 - ordinary zero-origin PNG
 - PNG `UInt8` and `UInt16`
 - PNG Gray, GrayAlpha, RGB and RGBA layouts
+- static zero-origin JPEG XL (`.jxl`)
+- JPEG XL `UInt8`, `UInt16`, `Float16` and `Float32`
+- JPEG XL Gray, RGB and RGBA layouts
+- JPEG XL output is explicitly lossless (`jpegxl:100`)
+
+JPEG XL GrayAlpha and arbitrary extra-channel/MultiChannel images remain
+fail-closed in this slice because OpenImageIO 3.1.15's JPEG XL adapter does not
+represent those channel semantics reliably enough for the framework contract.
 
 The adapter rejects multipart, mipmapped, deep, volume, mixed-channel-format,
-integer EXR, floating PNG, and arbitrary PNG multichannel files with stable
-structured diagnostic codes.
+integer EXR, floating PNG, arbitrary PNG multichannel, non-zero-origin PNG/JXL,
+and unsupported JPEG XL channel layouts with stable structured diagnostic codes.
 
 ## Channel policy
 
@@ -48,8 +57,9 @@ alpha index are preserved exactly.
 String, signed integer, floating scalar, and homogeneous integer/floating
 arrays are translated into Core metadata without converting integer evidence
 to floating point. Unsigned values are accepted only when representable by
-Core `int64`. Portable EXR/PNG save output emits strings, 32-bit-range integers,
-doubles, and homogeneous numeric arrays.
+Core `int64`. Portable save output emits strings, 32-bit-range integers,
+doubles, and homogeneous numeric arrays where the selected backend supports
+them.
 
 Structural and plugin-managed attributes are readable as backend information
 where useful but are not blindly re-emitted. Dimensions, channel structure,
@@ -60,8 +70,9 @@ out-of-range, heterogeneous, boolean, and read-only values always produce an
 
 ## Validation
 
-`imaging_io_test` owns the public contract matrix, exact Float16 bit evidence,
-source immutability, diagnostics and transactional replacement tests.
-`imaging_io_oiio_test` creates independent OpenImageIO fixtures, cross-checks
-adapter output, and proves rejection of multipart, mipmapped, deep and mixed
-channel-format EXR files.
+`imaging_io_test` owns the established EXR/PNG public contract matrix, exact
+Float16 bit evidence, source immutability, diagnostics and transactional
+replacement tests. `imaging_io_oiio_test` owns independent OpenImageIO structure
+fixtures. `jpegxl_imagingio_test` adds the focused JPEG XL framework contract,
+including all supported sample types, RGB/RGBA alpha evidence, fail-closed
+channel/origin cases, and candidate verification before replacement.
