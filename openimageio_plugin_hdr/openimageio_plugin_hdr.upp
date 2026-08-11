@@ -1,0 +1,18 @@
+description "OpenImageIO Radiance HDR/RGBE plugin registration package";
+
+uses
+	openimageio_headers,
+	openimageio_src;
+
+options
+	-I../openimageio_src,
+	-I../openimageio_src/upstream/libOpenImageIO,
+	-Iupstream/hdr.imageio,
+	-DOIIO_STATIC_DEFINE=1;
+
+file
+	upstream/hdr.imageio/hdrinput.cpp,
+	upstream/hdr.imageio/hdroutput.cpp,
+	RegisterHDR.h,
+	RegisterHDR.cpp,
+	README.md;
