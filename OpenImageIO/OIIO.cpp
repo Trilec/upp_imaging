@@ -4,6 +4,7 @@
 
 #include <openimageio_plugin_openexr/RegisterOpenEXR.h>
 #include <openimageio_plugin_png/RegisterPNG.h>
+#include <openimageio_plugin_jpegxl/RegisterJPEGXL.h>
 
 namespace UppImaging {
 
@@ -13,6 +14,7 @@ void InitializeOpenImageIO()
     std::call_once(once, [] {
         UppImaging::RegisterOpenImageIOOpenEXRPlugin();
         UppImaging::RegisterOpenImageIOPNGPlugin();
+        UppImaging::RegisterOpenImageIOJPEGXLPlugin();
     });
 }
 

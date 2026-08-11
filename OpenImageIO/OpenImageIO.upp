@@ -4,7 +4,8 @@ uses
 	openimageio_headers,
 	openimageio_src,
 	openimageio_plugin_openexr,
-	openimageio_plugin_png;
+	openimageio_plugin_png,
+	openimageio_plugin_jpegxl;
 
 file
 	OIIO.h,
