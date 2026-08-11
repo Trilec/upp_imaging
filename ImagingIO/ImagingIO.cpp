@@ -41,14 +41,21 @@ static String Extension(const String& path)
 	return dot > slash ? ToLower(path.Mid(dot)) : String();
 }
 
+static bool IsHDR(const String& extension)
+{
+	return extension == ".hdr" || extension == ".rgbe";
+}
+
 static bool IsSupportedExtension(const String& extension)
 {
-	return extension == ".exr" || extension == ".png" || extension == ".jxl";
+	return extension == ".exr" || extension == ".png" ||
+	       extension == ".jxl" || IsHDR(extension) ||
+	       extension == ".dpx" || extension == ".cin";
 }
 
 static bool RequiresZeroOrigin(const String& extension)
 {
-	return extension == ".png" || extension == ".jxl";
+	return extension == ".png" || extension == ".jxl" || IsHDR(extension);
 }
 
 static const char* FormatName(const String& extension)
@@ -56,6 +63,9 @@ static const char* FormatName(const String& extension)
 	if(extension == ".exr") return "EXR";
 	if(extension == ".png") return "PNG";
 	if(extension == ".jxl") return "JPEG XL";
+	if(IsHDR(extension)) return "Radiance HDR/RGBE";
+	if(extension == ".dpx") return "DPX";
+	if(extension == ".cin") return "Cineon";
 	return "image";
 }
 
@@ -93,7 +103,8 @@ static bool IsAlphaName(const String& name)
 static bool IsGrayName(const String& name)
 {
 	String value = ToLower(name);
-	return value == "y" || value == "l" || value == "gray" || value == "grey";
+	return value == "y" || value == "l" || value == "i" ||
+	       value == "gray" || value == "grey";
 }
 
 static bool Classify(ImageSpec& spec)
@@ -300,7 +311,7 @@ static bool IsBackendManagedMetadata(const String& key)
 		"width", "height", "depth", "full_x", "full_y", "full_z",
 		"full_width", "full_height", "full_depth", "nchannels",
 		"channelnames", "alpha_channel", "z_channel", "deep",
-		"oiio:bitsperample", "oiio:bitsperchannel", "oiio:subimages",
+		"oiio:bitspersample", "oiio:bitsperchannel", "oiio:subimages",
 		"oiio:miplevel", "oiio:unassociatedalpha", "compression",
 		"lineorder", "chunkcount", "tiles", "tile_width", "tile_height",
 		"tile_depth"
@@ -470,6 +481,136 @@ static void SetCanonicalChannelNames(const ImageSpec& source,
 		target.channelnames.emplace_back(name.Begin());
 }
 
+static Result ValidateLoadedPolicy(const String& extension,
+                                   const ImageSpec& spec,
+                                   Diagnostics* diagnostics,
+                                   const String& path)
+{
+	if((extension == ".png" || extension == ".jxl") &&
+	   spec.channel_layout == ChannelLayout::MultiChannel)
+		return Fail(ResultCode::Unsupported, diagnostics,
+		            String(FormatName(extension)) +
+		            " arbitrary multichannel images are unsupported",
+		            path, "IMGIO_CHANNELS");
+
+	if(extension == ".jxl" && spec.channel_layout == ChannelLayout::GrayAlpha)
+		return Fail(ResultCode::Unsupported, diagnostics,
+		            "JPEG XL GrayAlpha is deferred until the backend exposes its alpha semantics reliably",
+		            path, "IMGIO_CHANNELS");
+
+	if(IsHDR(extension)) {
+		if(spec.sample_type != SampleType::Float32)
+			return Fail(ResultCode::Unsupported, diagnostics,
+			            "Radiance HDR/RGBE input must decode as Float32",
+			            path, "IMGIO_SAMPLE");
+		if(spec.channel_layout != ChannelLayout::RGB)
+			return Fail(ResultCode::Unsupported, diagnostics,
+			            "Radiance HDR/RGBE supports RGB images only",
+			            path, "IMGIO_CHANNELS");
+	}
+
+	if(extension == ".dpx") {
+		if(spec.sample_type != SampleType::UInt8 &&
+		   spec.sample_type != SampleType::UInt16)
+			return Fail(ResultCode::Unsupported, diagnostics,
+			            "the initial DPX slice supports UInt8 and UInt16 only",
+			            path, "IMGIO_SAMPLE");
+		if(spec.channel_layout != ChannelLayout::RGB)
+			return Fail(ResultCode::Unsupported, diagnostics,
+			            "the initial DPX slice supports RGB images only",
+			            path, "IMGIO_CHANNELS");
+	}
+
+	if(extension == ".cin") {
+		if(spec.sample_type != SampleType::UInt8 &&
+		   spec.sample_type != SampleType::UInt16)
+			return Fail(ResultCode::Unsupported, diagnostics,
+			            "the initial Cineon slice supports UInt8 and UInt16 input only",
+			            path, "IMGIO_SAMPLE");
+		if(spec.channel_layout != ChannelLayout::Gray &&
+		   spec.channel_layout != ChannelLayout::RGB)
+			return Fail(ResultCode::Unsupported, diagnostics,
+			            "the initial Cineon slice supports Gray and RGB input only",
+			            path, "IMGIO_CHANNELS");
+	}
+
+	return Result::Success();
+}
+
+static Result ValidateSavePolicy(const String& extension,
+                                 const ImageData& image,
+                                 Diagnostics* diagnostics,
+                                 const String& path)
+{
+	if(extension == ".cin")
+		return Fail(ResultCode::Unsupported, diagnostics,
+		            "Cineon output is not supported by the bundled OpenImageIO backend",
+		            path, "IMGIO_FORMAT");
+
+	if(extension == ".exr" &&
+	   image.spec.sample_type != SampleType::Float16 &&
+	   image.spec.sample_type != SampleType::Float32)
+		return Fail(ResultCode::Unsupported, diagnostics,
+		            "EXR output supports Float16 and Float32 only", path,
+		            "IMGIO_SAMPLE");
+
+	if(extension == ".png" &&
+	   image.spec.sample_type != SampleType::UInt8 &&
+	   image.spec.sample_type != SampleType::UInt16)
+		return Fail(ResultCode::Unsupported, diagnostics,
+		            "PNG output supports UInt8 and UInt16 only", path,
+		            "IMGIO_SAMPLE");
+
+	if(RequiresZeroOrigin(extension) &&
+	   (image.spec.data_window.left != 0 || image.spec.data_window.top != 0))
+		return Fail(ResultCode::Unsupported, diagnostics,
+		            String(FormatName(extension)) +
+		            " output requires a zero data-window origin",
+		            path, "IMGIO_SPEC");
+
+	if((extension == ".png" || extension == ".jxl") &&
+	   image.spec.channel_layout == ChannelLayout::MultiChannel)
+		return Fail(ResultCode::Unsupported, diagnostics,
+		            String(FormatName(extension)) +
+		            " arbitrary multichannel output is unsupported",
+		            path, "IMGIO_CHANNELS");
+
+	if(extension == ".jxl" &&
+	   image.spec.channel_layout == ChannelLayout::GrayAlpha)
+		return Fail(ResultCode::Unsupported, diagnostics,
+		            "JPEG XL GrayAlpha output is deferred until the backend exposes its alpha semantics reliably",
+		            path, "IMGIO_CHANNELS");
+
+	if(IsHDR(extension)) {
+		if(image.spec.sample_type != SampleType::Float32)
+			return Fail(ResultCode::Unsupported, diagnostics,
+			            "Radiance HDR/RGBE output requires Float32 samples",
+			            path, "IMGIO_SAMPLE");
+		if(image.spec.channel_layout != ChannelLayout::RGB)
+			return Fail(ResultCode::Unsupported, diagnostics,
+			            "Radiance HDR/RGBE output supports RGB only",
+			            path, "IMGIO_CHANNELS");
+	}
+
+	if(extension == ".dpx") {
+		if(image.spec.sample_type != SampleType::UInt8 &&
+		   image.spec.sample_type != SampleType::UInt16)
+			return Fail(ResultCode::Unsupported, diagnostics,
+			            "the initial DPX output slice supports UInt8 and UInt16 only",
+			            path, "IMGIO_SAMPLE");
+		if(image.spec.channel_layout != ChannelLayout::RGB)
+			return Fail(ResultCode::Unsupported, diagnostics,
+			            "the initial DPX output slice supports RGB only",
+			            path, "IMGIO_CHANNELS");
+		if(image.spec.data_window.left < 0 || image.spec.data_window.top < 0)
+			return Fail(ResultCode::Unsupported, diagnostics,
+			            "DPX output requires a non-negative data-window origin",
+			            path, "IMGIO_SPEC");
+	}
+
+	return Result::Success();
+}
+
 static String TemporaryPath(const String& path, const String& extension,
                             unsigned serial)
 {
@@ -576,8 +717,7 @@ Result LoadImageFile(const String& path, ImageData& output,
 	String extension = Extension(path);
 	if(!IsSupportedExtension(extension))
 		return Fail(ResultCode::Unsupported, diagnostics,
-		            "only EXR, PNG and JPEG XL are supported", path,
-		            "IMGIO_FORMAT");
+		            "unsupported image format", path, "IMGIO_FORMAT");
 
 	UppImaging::InitializeOpenImageIO();
 	OIIO::ImageSpec read_config;
@@ -635,17 +775,12 @@ Result LoadImageFile(const String& path, ImageData& output,
 		return Fail(ResultCode::Unsupported, diagnostics,
 		            "channel names or alpha index are not representable", path,
 		            "IMGIO_CHANNELS");
-	if((extension == ".png" || extension == ".jxl") &&
-	   candidate.spec.channel_layout == ChannelLayout::MultiChannel)
-		return Fail(ResultCode::Unsupported, diagnostics,
-		            String(FormatName(extension)) +
-		            " arbitrary multichannel images are unsupported",
-		            path, "IMGIO_CHANNELS");
-	if(extension == ".jxl" &&
-	   candidate.spec.channel_layout == ChannelLayout::GrayAlpha)
-		return Fail(ResultCode::Unsupported, diagnostics,
-		            "JPEG XL GrayAlpha is deferred until the backend exposes its alpha semantics reliably",
-		            path, "IMGIO_CHANNELS");
+
+	Result policy = ValidateLoadedPolicy(extension, candidate.spec,
+	                                   diagnostics, path);
+	if(!policy)
+		return policy;
+
 	if(!candidate.spec.IsValid())
 		return Fail(ResultCode::InvalidSpecification, diagnostics,
 		            "backend image specification is not representable", path,
@@ -694,42 +829,14 @@ Result SaveImageFile(const String& path, const ImageData& image,
 	String extension = Extension(path);
 	if(!IsSupportedExtension(extension))
 		return Fail(ResultCode::Unsupported, diagnostics,
-		            "only EXR, PNG and JPEG XL are supported", path,
-		            "IMGIO_FORMAT");
+		            "unsupported image format", path, "IMGIO_FORMAT");
 	if(!image.IsValid())
 		return Fail(ResultCode::InvalidSpecification, diagnostics,
 		            "image data is invalid", path, "IMGIO_SPEC");
 
-	if(extension == ".exr" &&
-	   image.spec.sample_type != SampleType::Float16 &&
-	   image.spec.sample_type != SampleType::Float32)
-		return Fail(ResultCode::Unsupported, diagnostics,
-		            "EXR output supports Float16 and Float32 only", path,
-		            "IMGIO_SAMPLE");
-	if(extension == ".png" &&
-	   image.spec.sample_type != SampleType::UInt8 &&
-	   image.spec.sample_type != SampleType::UInt16)
-		return Fail(ResultCode::Unsupported, diagnostics,
-		            "PNG output supports UInt8 and UInt16 only", path,
-		            "IMGIO_SAMPLE");
-	if(RequiresZeroOrigin(extension) &&
-	   (image.spec.data_window.left != 0 ||
-	    image.spec.data_window.top != 0))
-		return Fail(ResultCode::Unsupported, diagnostics,
-		            String(FormatName(extension)) +
-		            " output requires a zero data-window origin",
-		            path, "IMGIO_SPEC");
-	if((extension == ".png" || extension == ".jxl") &&
-	   image.spec.channel_layout == ChannelLayout::MultiChannel)
-		return Fail(ResultCode::Unsupported, diagnostics,
-		            String(FormatName(extension)) +
-		            " arbitrary multichannel output is unsupported",
-		            path, "IMGIO_CHANNELS");
-	if(extension == ".jxl" &&
-	   image.spec.channel_layout == ChannelLayout::GrayAlpha)
-		return Fail(ResultCode::Unsupported, diagnostics,
-		            "JPEG XL GrayAlpha output is deferred until the backend exposes its alpha semantics reliably",
-		            path, "IMGIO_CHANNELS");
+	Result policy = ValidateSavePolicy(extension, image, diagnostics, path);
+	if(!policy)
+		return policy;
 
 	int64 width;
 	int64 height;
