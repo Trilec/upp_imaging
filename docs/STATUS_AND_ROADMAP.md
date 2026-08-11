@@ -9,8 +9,8 @@
 - ImagingColor: implemented and Windows-accepted with OpenColorIO as the private backend.
 - ImagingAnalysis: implemented and Windows-accepted as a Core-only statistics, histogram and source-probe layer.
 - ImagingDiagnostics: implemented and Windows-accepted as a Core-only deterministic comparison and structured reporting layer.
-- Imaging umbrella: implemented code-side as the standard forwarding package over all five framework packages; focused Windows acceptance pending.
-- plugin/exr: next implementation package after umbrella acceptance.
+- Imaging umbrella: implemented code-side over the five framework packages; focused Windows acceptance pending.
+- plugin/exr: implemented code-side as an opt-in display-oriented `StreamRaster` bridge; focused Windows acceptance pending.
 - LumaPix: paused; retained as reference material only.
 
 ## ImagingIO supported subset
@@ -70,27 +70,29 @@ Waveforms and vectorscopes remain later ImagingAnalysis scope. Workbench GUI con
 
 `ImagingCore::Diagnostics` remains the authoritative diagnostics container. ImagingDiagnostics formats and compares existing Core contracts rather than duplicating backend or GUI state.
 
-## Imaging umbrella
+## plugin/exr preview subset
 
-- public include route: `<Imaging/Imaging.h>`
-- forwards `ImagingCore`, `ImagingIO`, `ImagingColor`, `ImagingAnalysis` and `ImagingDiagnostics`
-- owns no additional implementation state or policy
-- brings the validated OpenImageIO and OpenColorIO backends transitively through IO and Color
-- does not include optional raster plugins such as `plugin/exr`
-- applications may still include individual framework packages to keep dependencies smaller
+- opt-in `StreamRaster` integration; it is not pulled in by the `Imaging` umbrella
+- reads encoded EXR data from the supplied U++ `Stream` through OpenImageIO `IOProxy`, with no temporary files
+- ordinary single-image, single-mip, non-deep 2D EXR only
+- named RGB/RGBA, Gray/GrayAlpha, one-channel masks, and named MultiChannel images with an unambiguous RGB triplet
+- straight RGBA8 preview output with finite source values clamped to `[0,1]` and rounded to 8-bit
+- no implicit colour transform, exposure adjustment or tone mapping
+- no claim to preserve floating-point samples, arbitrary channels, metadata, source data-window coordinates, multipart/deep/mip structure or HDR values outside the display clamp
+
+Full-fidelity EXR work remains the responsibility of ImagingIO or the direct OpenImageIO/OpenEXR APIs.
 
 ## Next implementation order
 
-1. Focused Windows acceptance of the Imaging umbrella.
-2. plugin/exr.
-3. JPEG XL.
-4. HDR/RGBE.
-5. DPX/Cineon.
-6. RAW image support.
-7. WebP.
-8. HEIF/AVIF.
-9. Additional TIFF/OpenImageIO coverage.
-10. FFmpeg as a separate major milestone.
+1. Focused Windows acceptance of the Imaging umbrella and plugin/exr (independent checks; neither blocks code-side work on the next format).
+2. JPEG XL.
+3. HDR/RGBE.
+4. DPX/Cineon.
+5. RAW image support.
+6. WebP.
+7. HEIF/AVIF.
+8. Additional TIFF/OpenImageIO coverage.
+9. FFmpeg as a separate major milestone.
 
 For every additional format:
 

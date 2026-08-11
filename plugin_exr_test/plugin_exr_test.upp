@@ -1,0 +1,12 @@
+description "plugin/exr StreamRaster preview contract";
+
+uses
+	plugin/exr,
+	ImagingIO;
+
+file
+	main.cpp,
+	README.md;
+
+mainconfig
+	"" = "CONSOLE";
