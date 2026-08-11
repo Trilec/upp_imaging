@@ -1,4 +1,4 @@
-description "Backend-neutral EXR and PNG image I/O";
+description "Backend-neutral EXR, PNG and JPEG XL image I/O";
 
 uses
 	ImagingCore,
