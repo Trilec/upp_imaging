@@ -1,0 +1,12 @@
+description "Focused pinned LibRaw backend contract test";
+
+uses
+	Core,
+	libraw_src;
+
+file
+	main.cpp,
+	README.md;
+
+mainconfig
+	"" = "CONSOLE";

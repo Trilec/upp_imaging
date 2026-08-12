@@ -1,0 +1,14 @@
+description "Pinned LibRaw 0.22.2 source backend for U++";
+
+noblitz;
+
+include
+	upstream;
+
+options
+	-DLIBRAW_NODLL=1,
+	-DLIBRAW_BUILDLIB=1;
+
+file
+	import.ext,
+	README.md;

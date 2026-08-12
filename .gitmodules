@@ -4,3 +4,6 @@
 [submodule "openimageio_plugin_dpxcineon/upstream"]
 	path = openimageio_plugin_dpxcineon/upstream
 	url = https://github.com/AcademySoftwareFoundation/OpenImageIO.git
+[submodule "libraw_src/upstream"]
+	path = libraw_src/upstream
+	url = https://github.com/LibRaw/LibRaw.git
