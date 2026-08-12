@@ -10,6 +10,7 @@
 #include <openimageio_plugin_raw/RegisterRaw.h>
 #include <openimageio_plugin_webp/RegisterWebP.h>
 #include <openimageio_plugin_heif/RegisterHEIF.h>
+#include <openimageio_plugin_tiff/RegisterTIFF.h>
 
 namespace UppImaging {
 
@@ -25,6 +26,7 @@ void InitializeOpenImageIO()
         UppImaging::RegisterOpenImageIORawPlugin();
         UppImaging::RegisterOpenImageIOWebPPlugin();
         UppImaging::RegisterOpenImageIOHEIFPlugin();
+        UppImaging::RegisterOpenImageIOTIFFPlugin();
     });
 }
 
