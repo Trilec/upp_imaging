@@ -3,6 +3,7 @@ description "OpenImageIO RAW input plugin backed by pinned LibRaw 0.22.2";
 uses
 	openimageio_headers,
 	openimageio_src,
+	openimageio_plugins_src,
 	libraw_src;
 
 options

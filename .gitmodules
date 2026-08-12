@@ -1,8 +1,8 @@
 [submodule "jpegxl_src/upstream"]
 	path = jpegxl_src/upstream
 	url = https://github.com/libjxl/libjxl.git
-[submodule "openimageio_plugin_dpxcineon/upstream"]
-	path = openimageio_plugin_dpxcineon/upstream
+[submodule "openimageio_plugins_src/upstream"]
+	path = openimageio_plugins_src/upstream
 	url = https://github.com/AcademySoftwareFoundation/OpenImageIO.git
 [submodule "libraw_src/upstream"]
 	path = libraw_src/upstream

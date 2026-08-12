@@ -46,16 +46,33 @@ static bool IsHDR(const String& extension)
 	return extension == ".hdr" || extension == ".rgbe";
 }
 
+static bool IsRaw(const String& extension)
+{
+	static const char* extensions[] = {
+		".bay", ".bmq", ".cr2", ".cr3", ".crw", ".cs1", ".dc2", ".dcr",
+		".dng", ".erf", ".fff", ".k25", ".kdc", ".mdc", ".mos", ".mrw",
+		".nef", ".orf", ".pef", ".pxn", ".raf", ".raw", ".rdc", ".sr2",
+		".srf", ".x3f", ".arw", ".3fr", ".cine", ".ia", ".kc2", ".mef",
+		".nrw", ".qtk", ".rw2", ".sti", ".rwl", ".srw", ".drf", ".dsc",
+		".ptx", ".cap", ".iiq", ".rwz"
+	};
+	for(const char* item : extensions)
+		if(extension == item)
+			return true;
+	return false;
+}
+
 static bool IsSupportedExtension(const String& extension)
 {
 	return extension == ".exr" || extension == ".png" ||
 	       extension == ".jxl" || IsHDR(extension) ||
-	       extension == ".dpx" || extension == ".cin";
+	       extension == ".dpx" || extension == ".cin" || IsRaw(extension);
 }
 
 static bool RequiresZeroOrigin(const String& extension)
 {
-	return extension == ".png" || extension == ".jxl" || IsHDR(extension);
+	return extension == ".png" || extension == ".jxl" ||
+	       IsHDR(extension) || IsRaw(extension);
 }
 
 static const char* FormatName(const String& extension)
@@ -66,6 +83,7 @@ static const char* FormatName(const String& extension)
 	if(IsHDR(extension)) return "Radiance HDR/RGBE";
 	if(extension == ".dpx") return "DPX";
 	if(extension == ".cin") return "Cineon";
+	if(IsRaw(extension)) return "camera RAW";
 	return "image";
 }
 
@@ -534,6 +552,17 @@ static Result ValidateLoadedPolicy(const String& extension,
 			            path, "IMGIO_CHANNELS");
 	}
 
+	if(IsRaw(extension)) {
+		if(spec.sample_type != SampleType::UInt16)
+			return Fail(ResultCode::Unsupported, diagnostics,
+			            "camera RAW input must decode as UInt16",
+			            path, "IMGIO_SAMPLE");
+		if(spec.channel_layout != ChannelLayout::RGB)
+			return Fail(ResultCode::Unsupported, diagnostics,
+			            "the initial camera RAW slice supports processed RGB input only",
+			            path, "IMGIO_CHANNELS");
+	}
+
 	return Result::Success();
 }
 
@@ -545,6 +574,11 @@ static Result ValidateSavePolicy(const String& extension,
 	if(extension == ".cin")
 		return Fail(ResultCode::Unsupported, diagnostics,
 		            "Cineon output is not supported by the bundled OpenImageIO backend",
+		            path, "IMGIO_FORMAT");
+
+	if(IsRaw(extension))
+		return Fail(ResultCode::Unsupported, diagnostics,
+		            "camera RAW formats are input-only",
 		            path, "IMGIO_FORMAT");
 
 	if(extension == ".exr" &&
@@ -723,6 +757,12 @@ Result LoadImageFile(const String& path, ImageData& output,
 	OIIO::ImageSpec read_config;
 	if(extension == ".png")
 		read_config.attribute("oiio:UnassociatedAlpha", 1);
+	else if(IsRaw(extension)) {
+		read_config.attribute("raw:use_camera_wb", 1);
+		read_config.attribute("raw:auto_bright", 0);
+		read_config.attribute("raw:use_camera_matrix", 1);
+		read_config.attribute("raw:ColorSpace", "srgb_rec709_scene");
+	}
 	ImageInput::unique_ptr input = ImageInput::open(path.Begin(), &read_config);
 	if(!input)
 		return Fail(ResultCode::IOError, diagnostics,
