@@ -143,4 +143,5 @@ files
 	upstream/third_party/highway/hwy/print.cc
 	upstream/third_party/highway/hwy/targets.cc
 	upstream/third_party/highway/hwy/timer.cc
+	upstream/third_party/skcms/src/skcms_TransformBaseline.cc
 	upstream/third_party/skcms/skcms.cc;
