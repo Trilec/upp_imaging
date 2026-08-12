@@ -1,0 +1,12 @@
+description "Focused pinned dav1d 1.5.4 decoder contract test";
+
+uses
+	Core,
+	dav1d_src;
+
+file
+	main.cpp,
+	README.md;
+
+mainconfig
+	"" = "CONSOLE";

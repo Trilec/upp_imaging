@@ -20,6 +20,13 @@ static bool IsHDR(const String& extension)
     return extension == ".hdr" || extension == ".rgbe";
 }
 
+static bool IsHEIF(const String& extension)
+{
+    return extension == ".avif" || extension == ".heic" ||
+           extension == ".heif" || extension == ".heics" ||
+           extension == ".hif";
+}
+
 static bool IsRaw(const String& extension)
 {
     static const char* extensions[] = {
@@ -50,13 +57,14 @@ bool IsSupportedExtension(const String& extension)
     return extension == ".exr" || extension == ".png" ||
            extension == ".jxl" || IsHDR(extension) ||
            extension == ".dpx" || extension == ".cin" ||
-           IsRaw(extension) || extension == ".webp";
+           IsRaw(extension) || extension == ".webp" || IsHEIF(extension);
 }
 
 bool RequiresZeroOrigin(const String& extension)
 {
     return extension == ".png" || extension == ".jxl" ||
-           IsHDR(extension) || IsRaw(extension) || extension == ".webp";
+           IsHDR(extension) || IsRaw(extension) ||
+           extension == ".webp" || IsHEIF(extension);
 }
 
 const char* FormatName(const String& extension)
@@ -69,12 +77,13 @@ const char* FormatName(const String& extension)
     if(extension == ".cin") return "Cineon";
     if(IsRaw(extension)) return "camera RAW";
     if(extension == ".webp") return "WebP";
+    if(IsHEIF(extension)) return "HEIF/AVIF";
     return "image";
 }
 
 void ConfigureRead(const String& extension, OIIO::ImageSpec& config)
 {
-    if(extension == ".png" || extension == ".webp")
+    if(extension == ".png" || extension == ".webp" || IsHEIF(extension))
         config.attribute("oiio:UnassociatedAlpha", 1);
     else if(IsRaw(extension)) {
         config.attribute("raw:use_camera_wb", 1);
@@ -172,6 +181,21 @@ Result ValidateLoaded(const String& extension, const ImageSpec& spec,
                               path, "IMGIO_CHANNELS");
     }
 
+    if(IsHEIF(extension)) {
+        if(spec.sample_type != SampleType::UInt8 &&
+           spec.sample_type != SampleType::UInt16)
+            return FailPolicy(ResultCode::Unsupported, diagnostics,
+                              "HEIF/AVIF input supports UInt8 and UInt16 only",
+                              path, "IMGIO_SAMPLE");
+        if(spec.channel_layout != ChannelLayout::Gray &&
+           spec.channel_layout != ChannelLayout::GrayAlpha &&
+           spec.channel_layout != ChannelLayout::RGB &&
+           spec.channel_layout != ChannelLayout::RGBA)
+            return FailPolicy(ResultCode::Unsupported, diagnostics,
+                              "HEIF/AVIF input supports Gray, GrayAlpha, RGB and RGBA only",
+                              path, "IMGIO_CHANNELS");
+    }
+
     return Result::Success();
 }
 
@@ -186,6 +210,11 @@ Result ValidateSave(const String& extension, const ImageData& image,
     if(IsRaw(extension))
         return FailPolicy(ResultCode::Unsupported, diagnostics,
                           "camera RAW formats are input-only",
+                          path, "IMGIO_FORMAT");
+
+    if(IsHEIF(extension))
+        return FailPolicy(ResultCode::Unsupported, diagnostics,
+                          "HEIF/AVIF formats are input-only in the current decode-only backend",
                           path, "IMGIO_FORMAT");
 
     if(extension == ".exr" &&

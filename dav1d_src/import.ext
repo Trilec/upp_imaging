@@ -1,0 +1,29 @@
+files
+	upstream/src/cdf.c
+	upstream/src/cpu.c
+	upstream/src/ctx.c
+	upstream/src/data.c
+	upstream/src/decode.c
+	upstream/src/dequant_tables.c
+	upstream/src/getbits.c
+	upstream/src/intra_edge.c
+	upstream/src/itx_1d.c
+	upstream/src/lf_mask.c
+	upstream/src/lib.c
+	upstream/src/log.c
+	upstream/src/mem.c
+	upstream/src/msac.c
+	upstream/src/obu.c
+	upstream/src/pal.c
+	upstream/src/picture.c
+	upstream/src/qm.c
+	upstream/src/ref.c
+	upstream/src/refmvs.c
+	upstream/src/scan.c
+	upstream/src/tables.c
+	upstream/src/thread_task.c
+	upstream/src/warpmv.c
+	upstream/src/wedge.c;
+
+files(WIN32)
+	upstream/src/win32/thread.c;

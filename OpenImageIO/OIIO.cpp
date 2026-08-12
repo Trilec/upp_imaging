@@ -9,6 +9,7 @@
 #include <openimageio_plugin_dpxcineon/RegisterDPXCineon.h>
 #include <openimageio_plugin_raw/RegisterRaw.h>
 #include <openimageio_plugin_webp/RegisterWebP.h>
+#include <openimageio_plugin_heif/RegisterHEIF.h>
 
 namespace UppImaging {
 
@@ -23,6 +24,7 @@ void InitializeOpenImageIO()
         UppImaging::RegisterOpenImageIODPXCineonPlugins();
         UppImaging::RegisterOpenImageIORawPlugin();
         UppImaging::RegisterOpenImageIOWebPPlugin();
+        UppImaging::RegisterOpenImageIOHEIFPlugin();
     });
 }
 

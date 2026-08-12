@@ -1,0 +1,8 @@
+#ifndef LIBHEIF_HEIF_VERSION_H
+#define LIBHEIF_HEIF_VERSION_H
+
+#define LIBHEIF_NUMERIC_VERSION ((1<<24) | (23<<16) | (1<<8) | 0)
+#define LIBHEIF_VERSION "1.23.1"
+#define LIBHEIF_PLUGIN_DIRECTORY ""
+
+#endif

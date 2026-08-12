@@ -1,0 +1,15 @@
+files upstream/libheif/*.cc;
+
+exclude
+	upstream/libheif/plugins/*.cc
+	upstream/libheif/plugins_unix.cc
+	upstream/libheif/plugins_windows.cc
+	upstream/libheif/api/libheif/heif_experimental.cc
+	upstream/libheif/codecs/uncompressed/*.cc
+	upstream/libheif/image-items/unc_image.cc;
+
+files
+	upstream/libheif/plugins/decoder_dav1d.cc
+	upstream/libheif/plugins/decoder_libde265.cc
+	upstream/libheif/plugins/encoder_mask.cc
+	upstream/libheif/plugins/nalu_utils.cc;

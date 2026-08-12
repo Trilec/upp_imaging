@@ -10,3 +10,12 @@
 [submodule "webp_src/upstream"]
 	path = webp_src/upstream
 	url = https://github.com/webmproject/libwebp.git
+[submodule "dav1d_src/upstream"]
+	path = dav1d_src/upstream
+	url = https://github.com/libsdl-org/dav1d.git
+[submodule "libde265_src/upstream"]
+	path = libde265_src/upstream
+	url = https://github.com/strukturag/libde265.git
+[submodule "libheif_src/upstream"]
+	path = libheif_src/upstream
+	url = https://github.com/strukturag/libheif.git

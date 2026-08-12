@@ -9,7 +9,8 @@ uses
 	openimageio_plugin_hdr,
 	openimageio_plugin_dpxcineon,
 	openimageio_plugin_raw,
-	openimageio_plugin_webp;
+	openimageio_plugin_webp,
+	openimageio_plugin_heif;
 
 file
 	OIIO.h,
