@@ -58,10 +58,19 @@ the primary error.
 - initial slice accepts UInt8/UInt16 Gray and RGB images
 - save attempts fail explicitly with `IMGIO_FORMAT`
 
+### Camera RAW
+- input only through OpenImageIO 3.1.15.0 + repository-pinned LibRaw 0.22.2
+- representative extensions include DNG, CR2/CR3, NEF, ARW, RAF, ORF, RW2 and the remaining LibRaw/OIIO RAW extension set
+- `.hdr` is deliberately excluded from RAW routing so Radiance HDR/RGBE remains authoritative
+- initial framework contract accepts processed, demosaiced zero-origin UInt16 RGB only
+- camera white balance and camera matrix are enabled, auto-bright is disabled, and output is requested as `srgb_rec709_scene`
+- sensor-mosaic/no-demosaic access and RAW writing are deliberately outside this initial API; save attempts fail explicitly with `IMGIO_FORMAT`
+
 Unsupported structures fail closed with stable diagnostics: multipart, mipmapped,
 deep, volume, mixed-channel-format, integer EXR, floating PNG, arbitrary PNG/JPEG XL
 multichannel files, unsupported JPEG XL channel layouts, unsupported HDR layouts,
-and DPX/Cineon structures outside the initial policy.
+DPX/Cineon structures outside the initial policy, and RAW decode results outside the
+processed UInt16 RGB contract.
 
 ## Channel policy
 
@@ -91,3 +100,5 @@ heterogeneous, boolean, and read-only values produce `IMGIO_METADATA` warnings.
 `jpegxl_imagingio_test` owns the JPEG XL framework contract.
 `hdr_dpx_imagingio_test` owns the focused HDR/RGBE and DPX/Cineon policy,
 transaction and refusal contract.
+`raw_imagingio_test` owns deterministic RAW routing/refusal/transaction evidence;
+positive camera decode acceptance uses a pinned real RAW/DNG fixture on Windows.

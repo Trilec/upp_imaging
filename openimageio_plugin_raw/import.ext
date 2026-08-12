@@ -1,2 +1,2 @@
 files
-	../openimageio_plugin_dpxcineon/upstream/src/raw.imageio/rawinput.cpp;
+	../openimageio_plugins_src/upstream/src/raw.imageio/rawinput.cpp;
