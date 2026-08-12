@@ -1,0 +1,19 @@
+description "OpenImageIO RAW input plugin backed by pinned LibRaw 0.22.2";
+
+uses
+	openimageio_headers,
+	openimageio_src,
+	libraw_src;
+
+options
+	-I../openimageio_src,
+	-I../openimageio_src/upstream/libOpenImageIO,
+	-I../libraw_src/upstream,
+	-DOIIO_STATIC_DEFINE=1,
+	-DLIBRAW_NODLL=1;
+
+file
+	import.ext,
+	RegisterRaw.h,
+	RegisterRaw.cpp,
+	README.md;
