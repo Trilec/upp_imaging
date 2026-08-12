@@ -27,6 +27,11 @@ static bool IsHEIF(const String& extension)
            extension == ".hif";
 }
 
+static bool IsTIFF(const String& extension)
+{
+    return extension == ".tif" || extension == ".tiff";
+}
+
 static bool IsRaw(const String& extension)
 {
     static const char* extensions[] = {
@@ -43,6 +48,12 @@ static bool IsRaw(const String& extension)
     return false;
 }
 
+static bool IsCanonicalTIFFLayout(ChannelLayout layout)
+{
+    return layout == ChannelLayout::Gray || layout == ChannelLayout::GrayAlpha ||
+           layout == ChannelLayout::RGB || layout == ChannelLayout::RGBA;
+}
+
 } // namespace
 
 String Extension(const String& path)
@@ -57,14 +68,15 @@ bool IsSupportedExtension(const String& extension)
     return extension == ".exr" || extension == ".png" ||
            extension == ".jxl" || IsHDR(extension) ||
            extension == ".dpx" || extension == ".cin" ||
-           IsRaw(extension) || extension == ".webp" || IsHEIF(extension);
+           IsRaw(extension) || extension == ".webp" ||
+           IsHEIF(extension) || IsTIFF(extension);
 }
 
 bool RequiresZeroOrigin(const String& extension)
 {
     return extension == ".png" || extension == ".jxl" ||
            IsHDR(extension) || IsRaw(extension) ||
-           extension == ".webp" || IsHEIF(extension);
+           extension == ".webp" || IsHEIF(extension) || IsTIFF(extension);
 }
 
 const char* FormatName(const String& extension)
@@ -78,12 +90,14 @@ const char* FormatName(const String& extension)
     if(IsRaw(extension)) return "camera RAW";
     if(extension == ".webp") return "WebP";
     if(IsHEIF(extension)) return "HEIF/AVIF";
+    if(IsTIFF(extension)) return "TIFF";
     return "image";
 }
 
 void ConfigureRead(const String& extension, OIIO::ImageSpec& config)
 {
-    if(extension == ".png" || extension == ".webp" || IsHEIF(extension))
+    if(extension == ".png" || extension == ".webp" ||
+       IsHEIF(extension) || IsTIFF(extension))
         config.attribute("oiio:UnassociatedAlpha", 1);
     else if(IsRaw(extension)) {
         config.attribute("raw:use_camera_wb", 1);
@@ -96,7 +110,7 @@ void ConfigureRead(const String& extension, OIIO::ImageSpec& config)
 void ConfigureWriteTarget(const String& extension, const ImageData& image,
                           OIIO::ImageSpec& target)
 {
-    if((extension == ".png" || extension == ".webp") &&
+    if((extension == ".png" || extension == ".webp" || IsTIFF(extension)) &&
        image.spec.alpha_channel != -1)
         target.attribute("oiio:UnassociatedAlpha", 1);
     if(extension == ".jxl")
@@ -105,6 +119,8 @@ void ConfigureWriteTarget(const String& extension, const ImageData& image,
         target.attribute("compression", "lossless:70");
         target.attribute("webp:method", 6);
     }
+    if(IsTIFF(extension))
+        target.attribute("compression", "zip");
 }
 
 Result ValidateLoaded(const String& extension, const ImageSpec& spec,
@@ -193,6 +209,19 @@ Result ValidateLoaded(const String& extension, const ImageSpec& spec,
            spec.channel_layout != ChannelLayout::RGBA)
             return FailPolicy(ResultCode::Unsupported, diagnostics,
                               "HEIF/AVIF input supports Gray, GrayAlpha, RGB and RGBA only",
+                              path, "IMGIO_CHANNELS");
+    }
+
+    if(IsTIFF(extension)) {
+        if(spec.sample_type != SampleType::UInt8 &&
+           spec.sample_type != SampleType::UInt16 &&
+           spec.sample_type != SampleType::Float32)
+            return FailPolicy(ResultCode::Unsupported, diagnostics,
+                              "the initial TIFF slice supports UInt8, UInt16 and Float32 only",
+                              path, "IMGIO_SAMPLE");
+        if(!IsCanonicalTIFFLayout(spec.channel_layout))
+            return FailPolicy(ResultCode::Unsupported, diagnostics,
+                              "the initial TIFF slice supports Gray, GrayAlpha, RGB and RGBA only",
                               path, "IMGIO_CHANNELS");
     }
 
@@ -288,6 +317,19 @@ Result ValidateSave(const String& extension, const ImageData& image,
            image.spec.channel_layout != ChannelLayout::RGBA)
             return FailPolicy(ResultCode::Unsupported, diagnostics,
                               "WebP output supports RGB and RGBA only",
+                              path, "IMGIO_CHANNELS");
+    }
+
+    if(IsTIFF(extension)) {
+        if(image.spec.sample_type != SampleType::UInt8 &&
+           image.spec.sample_type != SampleType::UInt16 &&
+           image.spec.sample_type != SampleType::Float32)
+            return FailPolicy(ResultCode::Unsupported, diagnostics,
+                              "TIFF output supports UInt8, UInt16 and Float32 only in the initial slice",
+                              path, "IMGIO_SAMPLE");
+        if(!IsCanonicalTIFFLayout(image.spec.channel_layout))
+            return FailPolicy(ResultCode::Unsupported, diagnostics,
+                              "TIFF output supports Gray, GrayAlpha, RGB and RGBA only in the initial slice",
                               path, "IMGIO_CHANNELS");
     }
 

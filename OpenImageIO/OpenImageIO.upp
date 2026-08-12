@@ -10,7 +10,8 @@ uses
 	openimageio_plugin_dpxcineon,
 	openimageio_plugin_raw,
 	openimageio_plugin_webp,
-	openimageio_plugin_heif;
+	openimageio_plugin_heif,
+	openimageio_plugin_tiff;
 
 file
 	OIIO.h,
