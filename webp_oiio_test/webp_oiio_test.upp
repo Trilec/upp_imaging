@@ -1,0 +1,12 @@
+description "Focused OpenImageIO WebP registration and fidelity test";
+
+uses
+	Core,
+	OpenImageIO;
+
+file
+	main.cpp,
+	README.md;
+
+mainconfig
+	"" = "CONSOLE";

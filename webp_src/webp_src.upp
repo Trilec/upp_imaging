@@ -1,0 +1,16 @@
+description "Pinned libwebp 1.6.0 static source backend for U++";
+
+noblitz;
+
+include
+	config,
+	upstream,
+	upstream/src;
+
+options
+	-DHAVE_CONFIG_H=1;
+
+file
+	import.ext,
+	config/src/webp/config.h,
+	README.md;
