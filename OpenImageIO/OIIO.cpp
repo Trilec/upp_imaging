@@ -8,6 +8,7 @@
 #include <openimageio_plugin_hdr/RegisterHDR.h>
 #include <openimageio_plugin_dpxcineon/RegisterDPXCineon.h>
 #include <openimageio_plugin_raw/RegisterRaw.h>
+#include <openimageio_plugin_webp/RegisterWebP.h>
 
 namespace UppImaging {
 
@@ -21,6 +22,7 @@ void InitializeOpenImageIO()
         UppImaging::RegisterOpenImageIOHDRPlugin();
         UppImaging::RegisterOpenImageIODPXCineonPlugins();
         UppImaging::RegisterOpenImageIORawPlugin();
+        UppImaging::RegisterOpenImageIOWebPPlugin();
     });
 }
 

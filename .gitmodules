@@ -7,3 +7,6 @@
 [submodule "libraw_src/upstream"]
 	path = libraw_src/upstream
 	url = https://github.com/LibRaw/LibRaw.git
+[submodule "webp_src/upstream"]
+	path = webp_src/upstream
+	url = https://github.com/webmproject/libwebp.git
