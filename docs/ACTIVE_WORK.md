@@ -6,78 +6,83 @@ This file is the recovery authority for work currently in flight. After fetching
 
 **BASE**
 
-- Current implementation line contains accepted Core/IO/Color/Analysis/Diagnostics/Imaging umbrella work plus later format slices for JPEG XL, HDR/RGBE, DPX/Cineon, camera RAW, WebP and decode-only HEIF/AVIF.
-- The historical validator failure at `deeb687c775e128ca4caf74b7438f8892662833e` predates RAW, WebP, HEIF/AVIF and both JPEG XL package repairs.
-- The first JPEG XL source-boundary repair is `a2e03f5f2490a50aecab95451544a0d2e77e31fa`.
+- Accepted framework foundation: ImagingCore, ImagingIO EXR/PNG baseline, ImagingColor, ImagingAnalysis, ImagingDiagnostics and the `Imaging` umbrella.
+- Format implementation line now includes JPEG XL, HDR/RGBE, DPX/Cineon, camera RAW, WebP, decode-only HEIF/AVIF and TIFF.
+- The historical JPEG XL failures at `deeb687c...` and `f91de7d...` are diagnostic history; current JPEG XL repair starts at `a66e1192025032823e93a890e16cc3874034a8a4`.
 
 **TASK**
 
-- `011C8-A/B1-R2` — close the remaining JPEG XL backend linker defect while continuing later format implementation in parallel.
-- Next code-side format milestone: TIFF/OpenImageIO expansion.
+- Validator lane: `011C8-A/B1-R2` — focused JPEG XL backend/OIIO acceptance after the skcms baseline-link repair.
+- Implementation lane: continue the remaining format roadmap without waiting on that validator lane.
 
 **TOUCHED**
 
-Latest JPEG XL linker repair:
+Latest coherent implementation slice:
 
-- `jpegxl_src/import.ext`
+- `openimageio_plugin_tiff/*`
+- `OpenImageIO/OpenImageIO.upp`
+- `OpenImageIO/OIIO.cpp`
+- `ImagingIO/FormatPolicy.cpp`
+- `tiff_oiio_test/*`
+- `tiff_imagingio_test/*`
 
-Published later-format work already on `main` includes:
+Explicitly unchanged by the TIFF slice:
 
-- camera RAW / LibRaw input support
-- WebP exact-lossless static RGB/RGBA support
-- decode-only HEIF/AVIF using pinned dav1d + libde265 + libheif
+- `libtiff_src/*` — existing strict vendored libtiff 4.7.2 backend reused as-is
+- `.gitmodules`
+- `ImagingIO/ImagingIO.cpp`
+- public ImagingIO headers/API
 
 **STATUS**
 
-- JPEG XL compile-layer repair: verified by Windows evidence; previous `lcms2.h` and `gtest/gtest.h` errors no longer reproduce.
-- JPEG XL remaining linker root cause: pinned skcms production package omitted `src/skcms_TransformBaseline.cc`.
-- skcms upstream build definition confirms `skcms.cc` depends on the baseline transform target; HSW/SKX targets are already disabled in `jpegxl_src.upp`.
-- Baseline transform TU has now been added to the explicit production manifest.
-- Windows post-linker-repair acceptance: pending.
-- Development continues in coherent format slices while Gary/another Windows agent validates focused checkpoints.
+- JPEG XL R2 linker repair: implementation complete; Windows focused validation pending.
+- Camera RAW: code-side complete; broader Windows acceptance pending.
+- WebP: code-side complete; broader Windows acceptance pending.
+- HEIF/AVIF: decode-only code-side slice complete; broader Windows acceptance pending. AVIF output remains a separate encoder/backend milestone rather than an implied capability.
+- TIFF: code-side complete for the first strict ImagingIO slice; Windows validation pending.
+- TIFF direct OIIO registration uses the existing bundled libtiff 4.7.2 Windows CLANGx64 package rather than adding or replacing a third-party dependency.
+- TIFF ImagingIO policy: `.tif/.tiff`, single-image/non-deep 2D through the shared structural inspector, zero-origin, UInt8/UInt16/Float32, Gray/GrayAlpha/RGB/RGBA, straight alpha, ZIP/Deflate output, verified transactional saves.
+- TIFF does not claim JPEG/OJPEG, JBIG, LERC, LZMA, Zstd or WebP-in-TIFF support in this slice.
 
 **PUBLISHED**
 
-- `a66e1192025032823e93a890e16cc3874034a8a4` — `Add skcms baseline transform to JPEG XL backend`.
-- This `ACTIVE_WORK.md` update is the recovery-log follow-up on top of that implementation checkpoint; fetch `main` for its exact docs commit SHA.
+- JPEG XL linker repair: `a66e1192025032823e93a890e16cc3874034a8a4` — `Add skcms baseline transform to JPEG XL backend`.
+- TIFF integration: `c37521e050cdb1c04583c0a5bdb06763742b1669` — `Add TIFF to OpenImageIO and ImagingIO`.
+- This file is the recovery-log follow-up on top of the TIFF implementation commit; fetch `main` for the exact current docs SHA.
 
 **VALIDATION**
 
-Completed before latest repair:
+Verified by repository/source review:
 
-- `TASK 011C8-A/B1-R1-W1` on `f91de7d...` proved the libjxl/Highway source-manifest repair compiles through to link.
-- libjxl/Brotli/Highway/skcms pins matched.
-- `JPEGXL_ENABLE_SKCMS=1` was confirmed.
-- lcms2 and googletest are no longer production dependencies.
-- Failure moved to linker only: undefined `skcms_private::baseline::run_program`.
-- Validator made no source changes.
+- TIFF publish is one fast-forward commit over the prior active-work checkpoint.
+- TIFF commit changes only the intended OIIO registration/package, private `FormatPolicy`, and focused tests.
+- Existing `libtiff_src` is version 4.7.2 and already configured for static Windows CLANGx64 with LZW, PackBits, ZIP/zlib and libdeflate; external JPEG/LERC/LZMA/Zstd/WebP codecs remain disabled.
+- OIIO 3.1.15.0 TIFF exports and extension tables were checked against the pinned upstream source.
+- TIFF load zero-origin enforcement already lives in the shared ImagingIO load path through `RequiresZeroOrigin`.
+- focused direct TIFF contract target: `13 passed, 0 failed`.
+- focused ImagingIO TIFF contract target: `29 passed, 0 failed`.
 
-Source review for latest repair:
+Not yet verified on Windows:
 
-- pinned skcms `BUILD.bazel` confirms `skcms_public` depends on `skcms_TransformBaseline` and x86 HSW/SKX targets separately;
-- pinned `skcms.cc` initializes dispatch from `baseline::run_program`;
-- `jpegxl_src.upp` already defines `SKCMS_DISABLE_HSW` and `SKCMS_DISABLE_SKX`;
-- therefore the smallest coherent scalar fix is adding `src/skcms_TransformBaseline.cc` only.
-
-Not yet completed:
-
-- no Windows build/runtime result has been reported for `a66e1192` or later.
+- JPEG XL R2 at/after `a66e1192`.
+- RAW/WebP/HEIF/TIFF accumulation-point runtime matrix.
+- TIFF Debug/Release compile/link/runtime.
 
 **NEXT ACTION**
 
 Validator lane:
 
-1. Fetch/fast-forward to current `origin/main`; verify `a66e1192` is an ancestor of HEAD and initialize required submodules.
-2. Build `jpegxl_prereq_test` Debug. If compile/link/run fails, stop and report the first real current-main error without patching.
-3. If Debug passes 9/0, run it five additional times; then Release once + five repeats.
-4. If backend is green, run `jpegxl_oiio_test` Debug and Release once each; expected 10/0.
-5. Stop at that checkpoint. Do not run the broad ImagingIO/OpenImageIO regression matrix yet.
+1. Fetch/fast-forward to current `origin/main`; confirm `a66e1192` is an ancestor of HEAD.
+2. Build/run `jpegxl_prereq_test` Debug; expected 9/0. If green, five repeats, then Release + five repeats.
+3. If backend is green, run `jpegxl_oiio_test` Debug/Release once; expected 10/0.
+4. Stop and report. Do not run the broad format matrix until that focused prerequisite is green.
 
 Implementation lane:
 
-1. Continue TIFF/OpenImageIO expansion as the next coherent format slice.
-2. After TIFF is internally coherent, publish it and update this file.
-3. Batch wider Windows regressions across JPEG XL + RAW + WebP + HEIF/AVIF + TIFF instead of serially blocking development on every internal package step.
+1. Resolve the remaining HEIF/AVIF output boundary: package a reproducible AV1 encoder only if it can be done cleanly without importing GPL HEVC encoding or build-time generator dependence.
+2. If AVIF output is not a clean bounded slice, leave HEIF/AVIF explicitly decode-only and move to FFmpeg as the next separate major milestone.
+3. At the next coherent implementation publish, update this file again.
+4. Once JPEG XL focused acceptance is green, batch one Windows accumulation pass across JPEG XL + RAW + WebP + HEIF/AVIF + TIFF rather than serially retesting every internal commit.
 
 ## Working rhythm
 
