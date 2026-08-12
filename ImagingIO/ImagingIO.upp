@@ -1,4 +1,4 @@
-description "Backend-neutral EXR, PNG, JPEG XL, HDR, DPX, Cineon and RAW image I/O";
+description "Backend-neutral EXR, PNG, JPEG XL, HDR, DPX, Cineon, RAW and WebP image I/O";
 
 uses
 	ImagingCore,
@@ -6,5 +6,7 @@ uses
 
 file
 	ImagingIO.h,
+	FormatPolicy.h,
+	FormatPolicy.cpp,
 	ImagingIO.cpp,
 	README.md;

@@ -1,0 +1,11 @@
+description "Focused ImagingIO WebP policy and transaction test";
+
+uses
+	ImagingIO;
+
+file
+	main.cpp,
+	README.md;
+
+mainconfig
+	"" = "CONSOLE";

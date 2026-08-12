@@ -2,7 +2,7 @@
 
 `ImagingIO` is the backend-neutral file I/O package for `Upp::Imaging`.
 Its public API exposes only `ImagingCore` types; OpenImageIO and format backends
-remain private to `ImagingIO.cpp`.
+remain private implementation details.
 
 ## Public API
 
@@ -20,6 +20,10 @@ specification, and decode the full pixel payload before promotion. Existing
 regular files are staged through a unique backup and restored if promotion
 fails. Temporary and backup cleanup failures are reported without replacing
 the primary error.
+
+Format-specific extension, sample/layout and backend-attribute rules live in the
+private `FormatPolicy` unit. Core transaction, metadata and structure mechanics
+remain format-neutral in `ImagingIO.cpp`.
 
 ## Supported files
 
@@ -60,17 +64,26 @@ the primary error.
 
 ### Camera RAW
 - input only through OpenImageIO 3.1.15.0 + repository-pinned LibRaw 0.22.2
-- representative extensions include DNG, CR2/CR3, NEF, ARW, RAF, ORF, RW2 and the remaining LibRaw/OIIO RAW extension set
+- representative extensions include DNG, CR2/CR3, NEF, ARW, RAF, ORF and RW2
 - `.hdr` is deliberately excluded from RAW routing so Radiance HDR/RGBE remains authoritative
 - initial framework contract accepts processed, demosaiced zero-origin UInt16 RGB only
 - camera white balance and camera matrix are enabled, auto-bright is disabled, and output is requested as `srgb_rec709_scene`
-- sensor-mosaic/no-demosaic access and RAW writing are deliberately outside this initial API; save attempts fail explicitly with `IMGIO_FORMAT`
+- sensor-mosaic/no-demosaic access and RAW writing are deliberately outside this initial API; save attempts fail with `IMGIO_FORMAT`
 
-Unsupported structures fail closed with stable diagnostics: multipart, mipmapped,
-deep, volume, mixed-channel-format, integer EXR, floating PNG, arbitrary PNG/JPEG XL
-multichannel files, unsupported JPEG XL channel layouts, unsupported HDR layouts,
-DPX/Cineon structures outside the initial policy, and RAW decode results outside the
-processed UInt16 RGB contract.
+### WebP
+- static zero-origin `.webp`
+- UInt8 RGB and RGBA only
+- straight/unassociated alpha is preserved
+- framework output is always lossless (`lossless:70`, method 6)
+- the repository OIIO writer adaptation enables `WebPConfig::exact=1` for lossless output, preserving hidden RGB values beneath fully transparent pixels
+- animated WebP is deliberately outside the initial framework slice; multiple frames are rejected by the shared multi-subimage structure check
+
+Unsupported structures fail closed with stable diagnostics: multipart/multi-frame,
+mipmapped, deep, volume, mixed-channel-format, integer EXR, floating PNG,
+arbitrary PNG/JPEG XL multichannel files, unsupported JPEG XL channel layouts,
+unsupported HDR layouts, DPX/Cineon structures outside the initial policy, RAW
+decode results outside processed UInt16 RGB, and WebP layouts/sample types outside
+UInt8 RGB/RGBA.
 
 ## Channel policy
 
@@ -96,9 +109,8 @@ heterogeneous, boolean, and read-only values produce `IMGIO_METADATA` warnings.
 
 ## Validation
 
-`imaging_io_test` owns the established EXR/PNG public contract matrix.
-`jpegxl_imagingio_test` owns the JPEG XL framework contract.
-`hdr_dpx_imagingio_test` owns the focused HDR/RGBE and DPX/Cineon policy,
-transaction and refusal contract.
-`raw_imagingio_test` owns deterministic RAW routing/refusal/transaction evidence;
-positive camera decode acceptance uses a pinned real RAW/DNG fixture on Windows.
+- `imaging_io_test`: established EXR/PNG public contract
+- `jpegxl_imagingio_test`: JPEG XL framework contract
+- `hdr_dpx_imagingio_test`: HDR/RGBE and DPX/Cineon policy/transaction contract
+- `raw_imagingio_test`: RAW routing/refusal/transaction evidence; positive camera decode uses a pinned real fixture on Windows
+- `webp_imagingio_test`: static exact-lossless WebP RGB/RGBA, refusal and transaction contract; animated refusal uses a real animated fixture on Windows
