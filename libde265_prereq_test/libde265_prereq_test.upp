@@ -1,0 +1,12 @@
+description "Focused pinned libde265 1.1.1 decoder contract test";
+
+uses
+	Core,
+	libde265_src;
+
+file
+	main.cpp,
+	README.md;
+
+mainconfig
+	"" = "CONSOLE";

@@ -1,0 +1,19 @@
+description "Pinned libde265 1.1.1 scalar HEVC decoder backend for U++";
+
+noblitz;
+
+include
+	config,
+	upstream;
+
+options
+	-DHAVE_CONFIG_H=1,
+	-DLIBDE265_STATIC_BUILD=1,
+	-DLIBDE265_EXPORTS=1,
+	-DDE265_LOG_ERROR=1;
+
+file
+	import.ext,
+	config/config.h,
+	config/libde265/de265-version.h,
+	README.md;

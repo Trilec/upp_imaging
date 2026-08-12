@@ -1,0 +1,12 @@
+description "Focused libheif 1.23.1 decode-only backend contract test";
+
+uses
+	Core,
+	libheif_src;
+
+file
+	main.cpp,
+	README.md;
+
+mainconfig
+	"" = "CONSOLE";

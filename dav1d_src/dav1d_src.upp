@@ -1,0 +1,16 @@
+description "Pinned dav1d 1.5.4 scalar AV1 decoder backend for U++";
+
+noblitz;
+
+include
+	config,
+	upstream,
+	upstream/include;
+
+file
+	import.ext,
+	config/config.h,
+	config/vcs_version.h,
+	generated separator,
+	generated/*.c,
+	README.md;

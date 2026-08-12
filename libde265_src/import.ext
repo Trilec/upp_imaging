@@ -1,0 +1,38 @@
+files
+	upstream/libde265/alloc_pool.cc
+	upstream/libde265/bitstream.cc
+	upstream/libde265/cabac.cc
+	upstream/libde265/contextmodel.cc
+	upstream/libde265/de265.cc
+	upstream/libde265/deblock.cc
+	upstream/libde265/decctx.cc
+	upstream/libde265/dpb.cc
+	upstream/libde265/fallback-dct.cc
+	upstream/libde265/fallback-deblk.cc
+	upstream/libde265/fallback-intrapred.cc
+	upstream/libde265/fallback-motion.cc
+	upstream/libde265/fallback.cc
+	upstream/libde265/image-io.cc
+	upstream/libde265/image.cc
+	upstream/libde265/intrapred.cc
+	upstream/libde265/md5.cc
+	upstream/libde265/motion.cc
+	upstream/libde265/nal-parser.cc
+	upstream/libde265/nal.cc
+	upstream/libde265/pps.cc
+	upstream/libde265/quality.cc
+	upstream/libde265/refpic.cc
+	upstream/libde265/sao.cc
+	upstream/libde265/scan.cc
+	upstream/libde265/sei.cc
+	upstream/libde265/slice.cc
+	upstream/libde265/sps.cc
+	upstream/libde265/threads.cc
+	upstream/libde265/transform.cc
+	upstream/libde265/util.cc
+	upstream/libde265/visualize.cc
+	upstream/libde265/vps.cc
+	upstream/libde265/vui.cc;
+
+files(WIN32)
+	upstream/extra/win32cond.c;
