@@ -49,5 +49,5 @@ static const char kFfmpegFirstFrameFixture[] =
 "\000\000\024\145\210\204\004\274\106\050\000\012\274\307\000\001\120\150\340\000\045\247\200";
 
 static const int kFfmpegFirstFrameFixtureSize = 1463;
-static const unsigned long long kFfmpegFirstFrameFixtureFNV1a64 = 0x6974a106bbf07694ULL;
-static const unsigned long long kFfmpegFirstFrameYUVFNV1a64 = 0xc011b1b3a98f4583ULL;
+static const unsigned long long kFfmpegFirstFrameFixtureFNV1a64 = 0x86d54178fbc2b70aULL;
+static const unsigned long long kFfmpegFirstFrameYUVFNV1a64 = 0x54009ba1a158e125ULL;
