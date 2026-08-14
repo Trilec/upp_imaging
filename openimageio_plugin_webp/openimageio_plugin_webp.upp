@@ -4,7 +4,8 @@ uses
 	openimageio_headers,
 	openimageio_src,
 	openimageio_plugins_src,
-	webp_src;
+	webp_src,
+	libtiff;
 
 options
 	-I../openimageio_src,
@@ -12,6 +13,7 @@ options
 	-I../webp_src,
 	-I../webp_src/upstream,
 	-I../webp_src/upstream/src,
+	-I../libtiff,
 	-DOIIO_STATIC_DEFINE=1,
 	-DHAVE_CONFIG_H=1;
 

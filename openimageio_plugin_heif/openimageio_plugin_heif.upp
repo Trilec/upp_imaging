@@ -4,12 +4,17 @@ uses
 	openimageio_headers,
 	openimageio_src,
 	openimageio_plugins_src,
-	libheif_src;
+	libheif_src,
+	libtiff;
 
 options
 	-I../openimageio_src,
 	-I../openimageio_src/upstream/libOpenImageIO,
-	-DOIIO_STATIC_DEFINE=1;
+	-I../libheif_src/config,
+	-I../libheif_src/upstream/libheif/api,
+	-I../libtiff,
+	-DOIIO_STATIC_DEFINE=1,
+	-DLIBHEIF_STATIC_BUILD=1;
 
 file
 	import.ext,

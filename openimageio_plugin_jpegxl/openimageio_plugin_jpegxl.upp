@@ -3,7 +3,8 @@ description "OpenImageIO JPEG XL plugin registration package";
 uses
 	openimageio_headers,
 	openimageio_src,
-	jpegxl_src;
+	jpegxl_src,
+	libtiff;
 
 options
 	-I../openimageio_src,
@@ -11,6 +12,7 @@ options
 	-I../jpegxl_src/generated/include,
 	-I../jpegxl_src/upstream/lib/include,
 	-I../jpegxl_src/upstream,
+	-I../libtiff,
 	-Iupstream/jpegxl.imageio,
 	-DOIIO_STATIC_DEFINE=1,
 	-DUSE_JXL;
