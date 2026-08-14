@@ -1,0 +1,9 @@
+description "Strict FFmpeg 9.0.1 public-header boundary";
+
+include
+	generated,
+	upstream;
+
+file
+	generated/libavutil/avconfig.h,
+	README.md;

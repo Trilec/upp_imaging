@@ -19,3 +19,6 @@
 [submodule "libheif_src/upstream"]
 	path = libheif_src/upstream
 	url = https://github.com/strukturag/libheif.git
+[submodule "ffmpeg_headers/upstream"]
+	path = ffmpeg_headers/upstream
+	url = https://github.com/FFmpeg/FFmpeg.git
