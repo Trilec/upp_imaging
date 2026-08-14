@@ -1,0 +1,26 @@
+files
+	../ffmpeg_headers/upstream/libswscale/alphablend.c
+	../ffmpeg_headers/upstream/libswscale/cms.c
+	../ffmpeg_headers/upstream/libswscale/csputils.c
+	../ffmpeg_headers/upstream/libswscale/hscale.c
+	../ffmpeg_headers/upstream/libswscale/hscale_fast_bilinear.c
+	../ffmpeg_headers/upstream/libswscale/filters.c
+	../ffmpeg_headers/upstream/libswscale/format.c
+	../ffmpeg_headers/upstream/libswscale/framepool.c
+	../ffmpeg_headers/upstream/libswscale/gamma.c
+	../ffmpeg_headers/upstream/libswscale/graph.c
+	../ffmpeg_headers/upstream/libswscale/input.c
+	../ffmpeg_headers/upstream/libswscale/lut3d.c
+	../ffmpeg_headers/upstream/libswscale/options.c
+	../ffmpeg_headers/upstream/libswscale/output.c
+	../ffmpeg_headers/upstream/libswscale/rgb2rgb.c
+	../ffmpeg_headers/upstream/libswscale/slice.c
+	../ffmpeg_headers/upstream/libswscale/swscale.c
+	../ffmpeg_headers/upstream/libswscale/swscale_unscaled.c
+	../ffmpeg_headers/upstream/libswscale/utils.c
+	../ffmpeg_headers/upstream/libswscale/version.c
+	../ffmpeg_headers/upstream/libswscale/yuv2rgb.c
+	../ffmpeg_headers/upstream/libswscale/vscale.c
+	../ffmpeg_headers/upstream/libswscale/x86/rgb2rgb.c
+	../ffmpeg_headers/upstream/libswscale/x86/swscale.c
+	../ffmpeg_headers/upstream/libswscale/x86/yuv2rgb.c;
