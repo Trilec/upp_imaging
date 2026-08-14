@@ -18,12 +18,12 @@ This file is the recovery authority for work currently in flight. After fetching
 
 **TOUCHED**
 
-Latest FFmpeg completion checkpoint:
+Latest FFmpeg review checkpoint:
 
-- `FFmpeg/*`
-- `ffmpeg_first_frame_test/*`
-- `docs/FFMPEG_PLAN.md`
+- `ffmpeg_first_frame_test/main.cpp`
 - this recovery file
+
+The completed direct-package slice remains `FFmpeg/*`, `ffmpeg_first_frame_test/*` and `docs/FFMPEG_PLAN.md`.
 
 Earlier source checkpoints remain unchanged: `ffmpeg_headers`, `ffmpeg_avutil_src`, `ffmpeg_avcodec_src`, `ffmpeg_avformat_src`, `ffmpeg_swscale_src` and their focused tests.
 
@@ -38,6 +38,7 @@ Earlier source checkpoints remain unchanged: `ffmpeg_headers`, `ffmpeg_avutil_sr
 - `ffmpeg_swscale_test` expected result: 13/0; deterministic limited-range ITU-601 YUV420P -> RGBA8 conversion.
 - Stable direct `FFmpeg` package now links the four implementation libraries and forwards standard FFmpeg API types through `FFmpeg/FFmpeg.h`; it adds no Imaging/U++ wrapper policy.
 - `ffmpeg_first_frame_test` expected result: 27/0. It embeds a 1,463-byte one-frame 16x16 Constrained Baseline H.264 MP4, verifies fixture FNV-1a `0x6974a106bbf07694`, exact decoded logical YUV420P FNV-1a `0xc011b1b3a98f4583`, MOV/H.264 decode, RGBA conversion and cleanup.
+- First-frame packet handling follows FFmpeg's send/receive contract: a packet is retained across `avcodec_send_packet()` `EAGAIN`, receive is attempted before retry, demux errors are preserved, EOF is drained with a null packet, and the swscale pointer is cleared with the other released resources.
 - No Windows FFmpeg compile/link/runtime result is claimed yet.
 
 **PUBLISHED**
@@ -57,7 +58,7 @@ FFmpeg line:
 - `0505675b0e1529477d1048a796d435b9ad55694d` — scalar libswscale boundary.
 - `5de2b47124e8028738fb7112036334345a958d4c` — direct `FFmpeg` package + deterministic first-frame decode slice.
 - `3aeb661848a33a1b3a994a048f143e773c37a7d0` — reconcile FFmpeg implementation plan with completed first slice.
-- This file is the recovery-log follow-up; fetch `main` for its exact docs commit SHA.
+- The strict first-frame send/receive lifecycle review follow-up and this recovery update are committed together; fetch current `main` for the exact checkpoint SHA.
 
 **VALIDATION**
 
@@ -76,6 +77,7 @@ Static/source review completed:
 - x86 architecture identity remains truthful while assembly dispatch is disabled.
 - The direct package depends only on FFmpeg implementation/header packages; no Imaging, CtrlLib, Workbench, external codec or networking dependency was introduced.
 - End-to-end fixture is embedded in test source; no external runtime asset/download is required.
+- First-frame decode lifecycle was re-reviewed against the pinned FFmpeg send/receive API; packet retry/drain/EOF error propagation and swscale cleanup are explicit before Windows handoff.
 
 Not yet Windows-verified:
 
