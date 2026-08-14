@@ -7,86 +7,83 @@ This file is the recovery authority for work currently in flight. After fetching
 **BASE**
 
 - Accepted framework foundation: ImagingCore, ImagingIO EXR/PNG baseline, ImagingColor, ImagingAnalysis, ImagingDiagnostics and the `Imaging` umbrella.
-- Format implementation line includes JPEG XL, HDR/RGBE, DPX/Cineon, camera RAW, WebP, decode-only HEIF/AVIF and TIFF.
-- JPEG XL backend repair is now Windows-proven in Debug and Release; the remaining failure observed by `011C8-A/B1-R2-W1` was in the shared static OpenImageIO plugin compilation closure, not libjxl/skcms.
+- Still-image format implementation line includes JPEG XL, HDR/RGBE, DPX/Cineon, camera RAW, WebP, decode-only HEIF/AVIF and TIFF.
+- JPEG XL backend is Windows-proven Debug/Release after `a66e1192`; the shared static OpenImageIO dependency-closure repair is `5ca436c3` and awaits Windows accumulation validation.
+- FFmpeg is a separate media subsystem and is not part of ImagingIO or the Imaging umbrella.
 
 **TASK**
 
-- Validator lane: close the repaired shared OpenImageIO static-plugin boundary, then run one accumulation pass across the later still-image formats.
-- Implementation lane: begin FFmpeg as a separate major subsystem without adding video semantics to ImagingIO.
+- Validator lane: validate the repaired aggregate OpenImageIO closure and then RAW/WebP/HEIF/TIFF as one accumulation pass.
+- Implementation lane: build the first bounded FFmpeg video-frame decode stack from the pinned upstream release.
 
 **TOUCHED**
 
-Latest coherent repair slice:
+Latest FFmpeg checkpoint:
 
-- `openimageio_plugin_dpxcineon/openimageio_plugin_dpxcineon.upp`
-- `openimageio_plugin_jpegxl/openimageio_plugin_jpegxl.upp`
-- `openimageio_plugin_png/openimageio_plugin_png.upp`
-- `openimageio_plugin_raw/openimageio_plugin_raw.upp`
-- `openimageio_plugin_webp/openimageio_plugin_webp.upp`
-- `openimageio_plugin_heif/openimageio_plugin_heif.upp`
+- `.gitmodules`
+- `ffmpeg_headers/upstream` pinned gitlink
+- `ffmpeg_headers/*`
+- `ffmpeg_headers_test/*`
+- `docs/FFMPEG_PLAN.md`
 
-No plugin source files, public framework APIs, format policies or third-party source pins changed in this repair.
+Previous shared OpenImageIO repair touched only six plugin `.upp` manifests and remains unchanged.
 
 **STATUS**
 
-- JPEG XL backend: Windows Debug/Release build, link and runtime pass at 9/0 after `a66e1192`; previous lcms2/gtest/skcms-baseline failures are closed.
-- Direct OIIO JPEG XL validation on prior main stopped before plugin execution because the aggregate `OpenImageIO` package also compiled DPX/Cineon and TIFF-related consumers with incomplete direct include visibility.
-- Shared static-plugin dependency closure is now repaired code-side:
-  - DPX/Cineon receives the public OpenEXR include root required by `<OpenEXR/ImfTimeCode.h>`;
-  - JPEG XL, PNG, RAW, WebP and HEIF declare the stable `libtiff` package and include root required by `OpenImageIO/tiffutils.h`;
-  - PNG no longer reaches into `libtiff_src` without declaring the dependency;
-  - HEIF receives the pinned libheif generated/API include roots and `LIBHEIF_STATIC_BUILD=1`, preventing Windows DLL-import annotations against the static backend.
-- Camera RAW, WebP, decode-only HEIF/AVIF and TIFF remain code-side complete and await the accumulation Windows pass.
-- AVIF output remains intentionally deferred because adding it cleanly requires a separate AOM/SVT/rav1e encoder backend; the current HEIF-family contract remains decode-only.
-- Next major implementation subsystem is FFmpeg, kept separate from ImagingIO.
+- Shared OpenImageIO dependency-closure repair remains published at `5ca436c3ba6265f6431deaf7348332940051686d`.
+- FFmpeg upstream release is pinned to signed tag `n9.0.1`, exact commit `bf1b838f2ab88b4f8fd83443325c782ea0e0f7fa`, tagged 2026-08-12.
+- `ffmpeg_headers` is implemented as a strict header-only boundary over the submodule, with repository-owned `generated/libavutil/avconfig.h` for Windows CLANGx64 public headers.
+- `ffmpeg_headers_test` is implemented; expected compile/runtime result is `SUMMARY passed=7 failed=0`. It links no FFmpeg implementation objects.
+- The FFmpeg implementation configuration is explicitly LGPL-only: no GPL/nonfree enablement, no external codecs, no filters/devices/CLI, no encoding in the first slice.
+- Planned first decode closure remains libavutil + libavcodec + libavformat + libswscale, MOV/MP4 demuxing, native H.264 decode, local file input and RGBA8 conversion.
+- AVIF output remains intentionally deferred; HEIF/AVIF stays decode-only in the still-image stack.
 
 **PUBLISHED**
 
-- `a66e1192025032823e93a890e16cc3874034a8a4` — `Add skcms baseline transform to JPEG XL backend`.
-- `c37521e050cdb1c04583c0a5bdb06763742b1669` — `Add TIFF to OpenImageIO and ImagingIO`.
-- `5ca436c3ba6265f6431deaf7348332940051686d` — `Fix static OpenImageIO plugin dependency closure`.
-- This file is the recovery-log follow-up on top of that repair; fetch `main` for its exact docs commit SHA.
+- `a66e1192025032823e93a890e16cc3874034a8a4` — JPEG XL skcms linker repair.
+- `c37521e050cdb1c04583c0a5bdb06763742b1669` — TIFF OpenImageIO/ImagingIO expansion.
+- `5ca436c3ba6265f6431deaf7348332940051686d` — static OpenImageIO plugin dependency closure.
+- `901332ce46387e0d09026cfd5f26d4528b8cd9d1` — `Pin FFmpeg 9.0.1 public header boundary`.
+- This file is the recovery-log follow-up on top of that FFmpeg checkpoint; fetch `main` for its exact docs commit SHA.
 
 **VALIDATION**
 
-Windows evidence from `TASK 011C8-A/B1-R2-W1` at `c64e304e...`:
+Windows evidence already completed:
 
-- `a66e1192` ancestor check: pass.
-- `jpegxl_prereq_test` Debug: build pass, `SUMMARY passed=9 failed=0`, exit 0.
-- `jpegxl_prereq_test` Release: build pass, `SUMMARY passed=9 failed=0`, exit 0.
-- old JPEG XL failures (`lcms2.h`, `gtest/gtest.h`, undefined `skcms_private::baseline::run_program`) do not reproduce.
-- `jpegxl_oiio_test` stopped during aggregate OpenImageIO compilation on missing `<OpenEXR/ImfTimeCode.h>` from DPX and `tiff.h` through `OpenImageIO/tiffutils.h`.
-- validator made no edits; status and `git diff --check` were clean.
+- JPEG XL backend Debug: 9/0, exit 0.
+- JPEG XL backend Release: 9/0, exit 0.
+- old JPEG XL lcms2/gtest/skcms-baseline failures are closed.
+- prior direct OIIO JPEG XL build stopped in aggregate OIIO compilation on DPX OpenEXR and TIFF header visibility; validator made no edits.
 
-Source review for `5ca436c3...`:
+Source review completed since that run:
 
-- pinned OIIO DPX source directly includes `<OpenEXR/ImfTimeCode.h>`;
-- pinned OIIO JPEG XL, RAW, WebP and HEIF sources directly include `OpenImageIO/tiffutils.h`, whose public header includes `tiff.h`;
-- pinned OIIO HEIF source directly includes `<libheif/heif_cxx.h>` and may include `<libheif/heif_properties.h>`;
-- pinned libheif public export header uses `__declspec(dllimport)` on Windows unless `LIBHEIF_STATIC_BUILD` is defined;
-- the repair changes six package manifests only and keeps all backend pins/source sets unchanged.
+- direct plugin dependencies were repaired at their owning package manifests, not in tests;
+- FFmpeg `n9.0.1` signed tag and exact commit verified against upstream;
+- FFmpeg license file confirms the default codebase is LGPL-2.1+ and GPL portions require explicit enablement;
+- upstream H.264 and MOV configure dependency selections and Makefile object ownership have been inspected for the next source-manifest step.
 
-Not yet verified on Windows:
+Not yet Windows-verified:
 
-- aggregate OpenImageIO compilation after `5ca436c3`;
-- direct OIIO JPEG XL Debug/Release 10/0;
-- RAW/WebP/HEIF/TIFF accumulation-point compile/link/runtime matrix.
+- aggregate OpenImageIO after `5ca436c3`;
+- RAW/WebP/HEIF/TIFF accumulation matrix;
+- `ffmpeg_headers_test`;
+- any FFmpeg implementation library.
 
 **NEXT ACTION**
 
 Validator lane:
 
-1. Fetch/fast-forward to current `origin/main`; confirm `5ca436c3` is an ancestor of HEAD and status is clean.
-2. Build/run `jpegxl_oiio_test` Debug and Release. This is now a shared OpenImageIO closure checkpoint, not another libjxl backend test.
-3. If aggregate OIIO compilation is green, run the focused RAW, WebP, HEIF/AVIF and TIFF direct/framework tests as one accumulation pass.
-4. Fail fast on the first new current-main compiler/link/runtime defect and report exact evidence without patching.
+1. Fetch current `origin/main`; confirm `5ca436c3` is an ancestor and status is clean.
+2. Build/run `jpegxl_oiio_test` Debug/Release; if green, run focused RAW/WebP/HEIF/TIFF direct/framework tests as one accumulation pass.
+3. Fail fast on first current-main defect and report exact evidence without patching.
+4. Do not validate FFmpeg yet; implementation work is still progressing beyond the header checkpoint.
 
 Implementation lane:
 
-1. Start FFmpeg as a separate package/framework subsystem; do not add movie/video semantics to ImagingIO.
-2. Pin one upstream FFmpeg release and define the first bounded decode surface around `libavformat`, `libavcodec`, `libavutil` and `libswscale`; keep audio, filters, devices, CLI tools and encoding out of the first slice unless a dependency audit proves they are required.
-3. Publish at coherent recovery points and update this file after each meaningful FFmpeg slice.
+1. Reconstruct the exact Windows CLANGx64 FFmpeg generated-configuration slice for the selected libraries/components.
+2. Implement explicit `_src` package manifests from upstream Makefiles; no recursive production globs.
+3. Bring up libavutil first, then H.264 codec closure, MOV/file demux closure and libswscale conversion.
+4. Publish coherent recovery checkpoints while continuing; do not hand FFmpeg to Gary until the full first decode slice is code-side coherent.
 
 ## Working rhythm
 
