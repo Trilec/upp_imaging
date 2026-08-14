@@ -1,9 +1,33 @@
-/* Enabled FFmpeg 9.0.1 components for the first U++ decode slice. */
-#ifndef UPP_FFMPEG_CONFIG_COMPONENTS_H
-#define UPP_FFMPEG_CONFIG_COMPONENTS_H
+/* Selected FFmpeg 9.0.1 component/helper closure for the first U++ decode slice. */
+#ifndef FFMPEG_CONFIG_COMPONENTS_H
+#define FFMPEG_CONFIG_COMPONENTS_H
 
 #define CONFIG_H264_DECODER 1
 #define CONFIG_MOV_DEMUXER 1
 #define CONFIG_FILE_PROTOCOL 1
 
-#endif /* UPP_FFMPEG_CONFIG_COMPONENTS_H */
+#define CONFIG_CABAC 1
+#define CONFIG_GOLOMB 1
+#define CONFIG_H264CHROMA 1
+#define CONFIG_H264DSP 1
+#define CONFIG_H264PARSE 1
+#define CONFIG_H264PRED 1
+#define CONFIG_H264QPEL 1
+#define CONFIG_H264_SEI 1
+#define CONFIG_VIDEODSP 1
+#define CONFIG_STARTCODE 1
+#define CONFIG_ITUT_T35 1
+#define CONFIG_ATSC_A53 1
+#define CONFIG_DOVI_RPUDEC 1
+#define CONFIG_ISO_MEDIA 1
+#define CONFIG_RIFFDEC 1
+#define CONFIG_MPEG4AUDIO 1
+
+#define CONFIG_HEVC_SEI 0
+#define CONFIG_VVC_SEI 0
+#define CONFIG_H264_PARSER 0
+#define CONFIG_ZLIB 0
+#define CONFIG_IAMFDEC 0
+#define CONFIG_IAMFENC 0
+
+#endif /* FFMPEG_CONFIG_COMPONENTS_H */

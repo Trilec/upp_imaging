@@ -67,4 +67,6 @@ files
 	../ffmpeg_headers/upstream/libavcodec/dynamic_hdr_vivid.c
 	../ffmpeg_headers/upstream/libavcodec/atsc_a53.c
 	../ffmpeg_headers/upstream/libavcodec/dovi_rpu.c
-	../ffmpeg_headers/upstream/libavcodec/dovi_rpudec.c;
+	../ffmpeg_headers/upstream/libavcodec/dovi_rpudec.c
+	../ffmpeg_headers/upstream/libavcodec/mpeg4audio.c
+	../ffmpeg_headers/upstream/libavcodec/mpeg4audio_sample_rates.c;
