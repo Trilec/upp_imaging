@@ -14,83 +14,87 @@ This file is the recovery authority for work currently in flight. After fetching
 **TASK**
 
 - Validator lane: validate repaired aggregate OpenImageIO + later still-image formats as one accumulation pass.
-- Implementation lane: complete bounded FFmpeg MOV/H.264-to-RGBA8 first-frame decode.
+- FFmpeg implementation lane: first bounded MOV/H.264-to-RGBA8 decode slice is code-side complete; next gate is accumulated Windows acceptance.
 
 **TOUCHED**
 
-Latest FFmpeg checkpoint:
+Latest FFmpeg completion checkpoint:
 
-- `ffmpeg_swscale_src/*`
-- `ffmpeg_swscale_test/*`
+- `FFmpeg/*`
+- `ffmpeg_first_frame_test/*`
+- `docs/FFMPEG_PLAN.md`
+- this recovery file
 
-Earlier FFmpeg implementation checkpoints remain unchanged: `ffmpeg_headers`, `ffmpeg_avutil_src`, `ffmpeg_avcodec_src` and `ffmpeg_avformat_src`.
+Earlier source checkpoints remain unchanged: `ffmpeg_headers`, `ffmpeg_avutil_src`, `ffmpeg_avcodec_src`, `ffmpeg_avformat_src`, `ffmpeg_swscale_src` and their focused tests.
 
 **STATUS**
 
 - FFmpeg remains pinned to signed `n9.0.1`, exact commit `bf1b838f2ab88b4f8fd83443325c782ea0e0f7fa`.
-- Generated-equivalent Windows x86_64 / U++ CLANGx64 configuration is static, LGPL-only, scalar, no threads/network/external codecs/filters/devices/audio-resample/CLI/encoding.
-- `ffmpeg_avutil_src` is published; focused test expects 13/0.
-- `ffmpeg_avcodec_src` is published with the native H.264 closure plus MOV-selected MPEG-4 audio helpers; public codec registry remains exactly H.264 decoder only, with no encoder/parser/BSF.
-- `ffmpeg_avformat_src` is published with MOV/MP4 demuxing and local `file` protocol only; generated registries expose exactly one demuxer, no muxers and one protocol.
-- `ffmpeg_swscale_src` is published at `0505675b0e1529477d1048a796d435b9ad55694d`. It contains the exact scalar libswscale base plus x86 C dispatch sources, with external/inline assembly disabled and shared helper objects kept in `ffmpeg_avutil_src`.
-- `ffmpeg_swscale_test` expects 13/0 and checks deterministic limited-range ITU-601 YUV420P -> RGBA8 conversion, opaque alpha, endpoints, midtones and monotonic output.
-- No Windows FFmpeg result is yet claimed.
-- The next boundary is the stable application-facing direct native `FFmpeg` package, then deterministic first-frame MOV/H.264 decode evidence.
+- Generated-equivalent Windows x86_64 / U++ CLANGx64 configuration is static, LGPL-only and scalar: no threads/network/external codecs/filters/devices/audio-resample/CLI/encoding, no external/inline assembly, no hardware acceleration.
+- `ffmpeg_headers_test` expected result: 7/0.
+- `ffmpeg_avutil_test` expected result: 13/0.
+- `ffmpeg_avcodec_test` expected result: 12/0; public codec registry is native H.264 decoder only, no encoder/parser/BSF.
+- `ffmpeg_avformat_test` expected result: 14/0; public format closure is MOV/MP4 demux + local `file` protocol, no muxers.
+- `ffmpeg_swscale_test` expected result: 13/0; deterministic limited-range ITU-601 YUV420P -> RGBA8 conversion.
+- Stable direct `FFmpeg` package now links the four implementation libraries and forwards standard FFmpeg API types through `FFmpeg/FFmpeg.h`; it adds no Imaging/U++ wrapper policy.
+- `ffmpeg_first_frame_test` expected result: 27/0. It embeds a 1,463-byte one-frame 16x16 Constrained Baseline H.264 MP4, verifies fixture FNV-1a `0x6974a106bbf07694`, exact decoded logical YUV420P FNV-1a `0xc011b1b3a98f4583`, MOV/H.264 decode, RGBA conversion and cleanup.
+- No Windows FFmpeg compile/link/runtime result is claimed yet.
 
 **PUBLISHED**
+
+Still-image repair line:
 
 - `a66e1192025032823e93a890e16cc3874034a8a4` — JPEG XL skcms linker repair.
 - `c37521e050cdb1c04583c0a5bdb06763742b1669` — TIFF expansion.
 - `5ca436c3ba6265f6431deaf7348332940051686d` — static OpenImageIO plugin dependency closure.
+
+FFmpeg line:
+
 - `901332ce46387e0d09026cfd5f26d4528b8cd9d1` — FFmpeg 9.0.1 header/pin boundary.
-- `21a72f6dfccfdc216b4f3cb180cb3ae9415c1c11` — FFmpeg libavutil scalar foundation.
+- `21a72f6dfccfdc216b4f3cb180cb3ae9415c1c11` — scalar libavutil foundation.
 - `69ea15f478cb1c0d25a0461afbaf1e16c23b22f9` — native H.264 libavcodec boundary.
 - `0291801b82dc25a78b36c884373a5ee76c92b687` — MOV/local-file libavformat boundary.
 - `0505675b0e1529477d1048a796d435b9ad55694d` — scalar libswscale boundary.
+- `5de2b47124e8028738fb7112036334345a958d4c` — direct `FFmpeg` package + deterministic first-frame decode slice.
+- `3aeb661848a33a1b3a994a048f143e773c37a7d0` — reconcile FFmpeg implementation plan with completed first slice.
 - This file is the recovery-log follow-up; fetch `main` for its exact docs commit SHA.
 
 **VALIDATION**
 
 Completed Windows evidence:
 
-- JPEG XL backend Debug 9/0 and Release 9/0; old lcms2/gtest/skcms-baseline failures closed.
-- prior direct OIIO build stopped on shared DPX/OpenEXR and TIFF header visibility; repair at `5ca436c3` remains unvalidated.
+- JPEG XL backend Debug 9/0 and Release 9/0; previous lcms2/gtest/skcms-baseline failures are closed.
+- Prior direct OIIO JPEG XL build stopped on aggregate DPX/OpenEXR and TIFF header visibility; owning package repair is published at `5ca436c3` and remains unvalidated.
 
 Static/source review completed:
 
-- OIIO direct dependencies repaired at owning manifests;
-- exact FFmpeg libavutil/libavcodec/libavformat/libswscale source ownership reconstructed from pinned Makefiles/configure selections;
-- H.264 recursion followed through ITU-T T.35, ATSC A/53 and Dolby Vision RPU;
-- MOV recursion followed through ISO-media -> MPEG4AUDIO and RIFFDEC; IAMF/zlib remain suggestions only;
-- MOV private AC-3 channel-layout symbol handled explicitly for static linkage;
-- generated codec/parser/BSF/demuxer/muxer/protocol lists are checked in instead of relying on absent configure output;
-- scalar libswscale retains truthful x86 architecture identity while disabling assembly dispatch.
+- OIIO direct dependencies were repaired at owning manifests, not tests.
+- Exact FFmpeg libavutil/libavcodec/libavformat/libswscale source ownership was reconstructed from pinned Makefiles/configure selections; production manifests are explicit.
+- H.264 recursion follows through CABAC/Golomb/chroma/DSP/parse/pred/qpel/SEI/VideoDSP, ITU-T T.35, ATSC A/53 and Dolby Vision RPU.
+- MOV recursion follows through ISO-media -> MPEG4AUDIO and RIFFDEC; IAMF/zlib suggestions remain disabled.
+- Generated codec/parser/BSF/demuxer/muxer/protocol registries are checked in instead of relying on absent configure output.
+- x86 architecture identity remains truthful while assembly dispatch is disabled.
+- The direct package depends only on FFmpeg implementation/header packages; no Imaging, CtrlLib, Workbench, external codec or networking dependency was introduced.
+- End-to-end fixture is embedded in test source; no external runtime asset/download is required.
 
 Not yet Windows-verified:
 
-- OpenImageIO accumulation pass after `5ca436c3`;
-- FFmpeg headers 7/0;
-- FFmpeg avutil 13/0;
-- FFmpeg avcodec 12/0;
-- FFmpeg avformat 14/0;
-- FFmpeg swscale 13/0;
-- direct `FFmpeg` package/full first-frame decode.
+- OpenImageIO accumulation pass after `5ca436c3`.
+- All six FFmpeg focused/end-to-end tests in Debug and Release, plus repeatability/clean shutdown.
 
 **NEXT ACTION**
 
 Validator lane:
 
-1. Fetch current `origin/main`; confirm `5ca436c3` ancestor and clean status.
-2. Run `jpegxl_oiio_test` Debug/Release, then focused RAW/WebP/HEIF/TIFF direct/framework tests if green.
-3. Fail fast on first current-main defect; report evidence without patching.
-4. Do not start FFmpeg validation yet.
+1. Fetch/fast-forward current `origin/main`; require clean status.
+2. Close the still-image repair first: run `jpegxl_oiio_test` Debug/Release. If green, run the focused RAW/WebP/HEIF/TIFF direct/framework accumulation matrix. Fail fast on first current-main defect and make no edits.
+3. If the still-image lane is green, validate accumulated FFmpeg in order: `ffmpeg_headers_test`, `ffmpeg_avutil_test`, `ffmpeg_avcodec_test`, `ffmpeg_avformat_test`, `ffmpeg_swscale_test`, `ffmpeg_first_frame_test` in Debug and Release.
+4. Repeat the end-to-end first-frame test enough times to expose lifecycle/cleanup instability; report new warnings, exit codes, summaries and final clean Git state.
 
-Implementation lane:
+Implementation lane after Windows evidence:
 
-1. Add stable application-facing `FFmpeg` package over `ffmpeg_headers`, `ffmpeg_avutil_src`, `ffmpeg_avcodec_src`, `ffmpeg_avformat_src` and `ffmpeg_swscale_src`; forward standard FFmpeg headers/types and do not invent replacement AV types.
-2. Add a deterministic one-frame MOV/MP4 + native H.264 fixture and end-to-end first-frame decode test through libavformat -> libavcodec -> libswscale -> RGBA8.
-3. Verify static package/dependency boundaries and expected decoded frame evidence; publish as one coherent slice.
-4. Update this recovery file and then hand the accumulated FFmpeg slice to Gary for Debug/Release Windows acceptance.
+1. If a current-main compile/link/runtime defect is reported, repair the owning package/config/source closure here, publish, then issue a focused validator rerun.
+2. If all first-slice acceptance passes, close the initial FFmpeg milestone before considering SIMD/hardware acceleration, broader containers/codecs, seeking/index behavior, audio, or a backend-neutral U++ media wrapper.
 
 ## Working rhythm
 
