@@ -4,14 +4,15 @@ uses
 	openimageio_headers,
 	openimageio_src,
 	libpng,
-	zlib;
+	zlib,
+	libtiff;
 
 options
 	-I../openimageio_src,
 	-I../openimageio_src/upstream/libOpenImageIO,
 	-I../libpng,
 	-I../libpng/upstream,
-	-I../libtiff_src/upstream/libtiff,
+	-I../libtiff,
 	-Iupstream/png.imageio,
 	-DOIIO_STATIC_DEFINE=1;
 

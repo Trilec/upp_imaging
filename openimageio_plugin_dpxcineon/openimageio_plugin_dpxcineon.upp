@@ -13,6 +13,7 @@ options
 	-I../openimageio_plugins_src/upstream/src/dpx.imageio/libdpx,
 	-I../openimageio_plugins_src/upstream/src/cineon.imageio,
 	-I../openimageio_plugins_src/upstream/src/cineon.imageio/libcineon,
+	-I../openexr,
 	-DOIIO_STATIC_DEFINE=1;
 
 file
