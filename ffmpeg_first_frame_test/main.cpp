@@ -47,6 +47,74 @@ static bool Near(int value, int expected, int tolerance = 2)
 	return value >= expected - tolerance && value <= expected + tolerance;
 }
 
+static int ReceiveFirstFrame(AVCodecContext* codec, AVFrame* frame, bool& got_frame)
+{
+	int result = avcodec_receive_frame(codec, frame);
+	if(result == 0)
+		got_frame = true;
+	return result;
+}
+
+static int DecodeFirstVideoFrame(AVFormatContext* format, int video_index,
+                                 AVCodecContext* codec, AVPacket* packet,
+                                 AVFrame* frame, bool& got_frame)
+{
+	got_frame = false;
+	for(;;) {
+		int read_result = av_read_frame(format, packet);
+		if(read_result < 0) {
+			if(read_result != AVERROR_EOF)
+				return read_result;
+			break;
+		}
+
+		if(packet->stream_index != video_index) {
+			av_packet_unref(packet);
+			continue;
+		}
+
+		for(;;) {
+			int send_result = avcodec_send_packet(codec, packet);
+			if(send_result == 0)
+				break;
+			if(send_result != AVERROR(EAGAIN)) {
+				av_packet_unref(packet);
+				return send_result;
+			}
+
+			int receive_result = ReceiveFirstFrame(codec, frame, got_frame);
+			if(got_frame) {
+				av_packet_unref(packet);
+				return 0;
+			}
+			if(receive_result != AVERROR(EAGAIN)) {
+				av_packet_unref(packet);
+				return receive_result;
+			}
+
+			// FFmpeg's send/receive contract forbids both sides returning EAGAIN.
+			av_packet_unref(packet);
+			return AVERROR(EAGAIN);
+		}
+
+		av_packet_unref(packet);
+		int receive_result = ReceiveFirstFrame(codec, frame, got_frame);
+		if(got_frame)
+			return 0;
+		if(receive_result != AVERROR(EAGAIN))
+			return receive_result;
+	}
+
+	int flush_result = avcodec_send_packet(codec, nullptr);
+	if(flush_result < 0 && flush_result != AVERROR_EOF)
+		return flush_result;
+
+	int receive_result = ReceiveFirstFrame(codec, frame, got_frame);
+	if(got_frame)
+		return 0;
+	return receive_result;
+}
+
 CONSOLE_APP_MAIN
 {
 	State state;
@@ -107,27 +175,10 @@ CONSOLE_APP_MAIN
 	Check(state, packet != nullptr && frame != nullptr, "packet and frame allocate");
 
 	bool got_frame = false;
-	if(format && codec && packet && frame && video_index >= 0) {
-		while(av_read_frame(format, packet) >= 0) {
-			if(packet->stream_index == video_index) {
-				int send_result = avcodec_send_packet(codec, packet);
-				if(send_result >= 0) {
-					int receive_result = avcodec_receive_frame(codec, frame);
-					if(receive_result == 0)
-						got_frame = true;
-				}
-			}
-			av_packet_unref(packet);
-			if(got_frame)
-				break;
-		}
-		if(!got_frame) {
-			avcodec_send_packet(codec, nullptr);
-			if(avcodec_receive_frame(codec, frame) == 0)
-				got_frame = true;
-		}
-	}
-	Check(state, got_frame, "first H.264 video frame decodes");
+	int decode_result = format && codec && packet && frame && video_index >= 0
+	                  ? DecodeFirstVideoFrame(format, video_index, codec, packet, frame, got_frame)
+	                  : AVERROR(EINVAL);
+	Check(state, decode_result == 0 && got_frame, "first H.264 video frame decodes");
 	Check(state, got_frame && frame->width == 16 && frame->height == 16,
 	      "decoded frame dimensions are exact");
 	Check(state, got_frame && frame->format == AV_PIX_FMT_YUV420P,
@@ -174,8 +225,10 @@ CONSOLE_APP_MAIN
 	             rgba[3] == 255,
 	      "decoded first pixel matches expected RGBA colour");
 
-	if(sws)
+	if(sws) {
 		sws_freeContext(sws);
+		sws = nullptr;
+	}
 	av_frame_free(&frame);
 	av_packet_free(&packet);
 	avcodec_free_context(&codec);
@@ -183,7 +236,8 @@ CONSOLE_APP_MAIN
 		avformat_close_input(&format);
 	DeleteFile(fixture_path);
 	Check(state, !FileExists(fixture_path), "temporary MP4 fixture cleans up");
-	Check(state, format == nullptr && codec == nullptr && frame == nullptr && packet == nullptr,
+	Check(state, format == nullptr && codec == nullptr && frame == nullptr && packet == nullptr &&
+	             sws == nullptr,
 	      "FFmpeg decode resources release cleanly");
 
 	Cout() << Format("SUMMARY passed=%d failed=%d\n", state.passed, state.failed);
