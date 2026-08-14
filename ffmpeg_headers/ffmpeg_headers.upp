@@ -12,4 +12,7 @@ file
 	generated/libavcodec/codec_list.c,
 	generated/libavcodec/parser_list.c,
 	generated/libavcodec/bsf_list.c,
+	generated/libavformat/demuxer_list.c,
+	generated/libavformat/muxer_list.c,
+	generated/libavformat/protocol_list.c,
 	README.md;
