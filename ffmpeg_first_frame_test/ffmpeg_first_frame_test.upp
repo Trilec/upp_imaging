@@ -1,0 +1,11 @@
+uses
+	Core,
+	FFmpeg;
+
+file
+	main.cpp,
+	Fixture.h,
+	README.md;
+
+mainconfig
+	"CONSOLE" = "";

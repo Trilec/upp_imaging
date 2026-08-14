@@ -1,0 +1,16 @@
+description "Stable application-facing FFmpeg 9.0.1 native decode package";
+
+uses
+	ffmpeg_headers,
+	ffmpeg_avutil_src,
+	ffmpeg_avcodec_src,
+	ffmpeg_avformat_src,
+	ffmpeg_swscale_src;
+
+include
+	../ffmpeg_headers/generated,
+	../ffmpeg_headers/upstream;
+
+file
+	FFmpeg.h,
+	README.md;
