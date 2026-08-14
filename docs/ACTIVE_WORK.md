@@ -7,92 +7,87 @@ This file is the recovery authority for work currently in flight. After fetching
 **BASE**
 
 - Accepted framework foundation: ImagingCore, ImagingIO EXR/PNG baseline, ImagingColor, ImagingAnalysis, ImagingDiagnostics and the `Imaging` umbrella.
-- Still-image format implementation line includes JPEG XL, HDR/RGBE, DPX/Cineon, camera RAW, WebP, decode-only HEIF/AVIF and TIFF.
-- JPEG XL backend is Windows-proven Debug/Release after `a66e1192`; the shared static OpenImageIO dependency-closure repair is `5ca436c3` and awaits Windows accumulation validation.
-- FFmpeg is a separate media subsystem and is not part of ImagingIO or the Imaging umbrella.
+- Still-image format line includes JPEG XL, HDR/RGBE, DPX/Cineon, camera RAW, WebP, decode-only HEIF/AVIF and TIFF.
+- JPEG XL backend is Windows-proven Debug/Release after `a66e1192`; shared static OpenImageIO dependency repair is `5ca436c3` and awaits accumulation validation.
+- FFmpeg is a separate media subsystem, not part of ImagingIO or the Imaging umbrella.
 
 **TASK**
 
-- Validator lane: validate the repaired aggregate OpenImageIO closure and later still-image formats as one accumulation pass.
-- Implementation lane: complete the first bounded FFmpeg MOV/H.264-to-RGBA8 video-frame decode stack.
+- Validator lane: validate repaired aggregate OpenImageIO + later still-image formats as one accumulation pass.
+- Implementation lane: complete bounded FFmpeg MOV/H.264-to-RGBA8 first-frame decode.
 
 **TOUCHED**
 
-Latest FFmpeg implementation checkpoint:
+Latest FFmpeg checkpoint:
 
 - `ffmpeg_headers/generated/config.h`
-- `ffmpeg_headers/generated/config_components.h`
-- `ffmpeg_headers/generated/libavutil/ffversion.h`
+- `ffmpeg_headers/generated/libavcodec/{codec_list,parser_list,bsf_list}.c`
 - `ffmpeg_headers/ffmpeg_headers.upp`
-- `ffmpeg_headers/README.md`
-- `ffmpeg_avutil_src/*`
-- `ffmpeg_avutil_test/*`
-
-Previous OpenImageIO and FFmpeg header-pin checkpoints remain unchanged.
+- `ffmpeg_avcodec_src/*`
+- `ffmpeg_avcodec_test/*`
 
 **STATUS**
 
-- Shared OpenImageIO dependency-closure repair remains published at `5ca436c3ba6265f6431deaf7348332940051686d`.
-- FFmpeg upstream remains pinned to signed `n9.0.1`, exact commit `bf1b838f2ab88b4f8fd83443325c782ea0e0f7fa`.
-- The repository now owns the generated-equivalent Windows x86_64 / U++ CLANGx64 source configuration: static, LGPL-only, no external or inline assembly, no threads/network/external codecs/filters/devices/audio-resample/CLI/encoding.
-- Architecture identity remains truthful (`ARCH_X86=1`, `ARCH_X86_64=1`); scalar behavior is obtained by disabling X86ASM/inline assembly rather than pretending the target is generic.
-- `ffmpeg_avutil_src` is implemented from the complete pinned upstream base `libavutil` object list plus the no-Vulkan hardware stub, static swscale half-float helper and required x86 CPU C source. The production source manifest is explicit; no recursive globs or tests/tools are imported.
-- `ffmpeg_avutil_test` is implemented as a linked runtime contract; expected result is `SUMMARY passed=13 failed=0`. It covers release/config/license identity, scalar CPU dispatch, buffers/frames, rational timing, aligned allocation, Win32 time and UTF-8 file mapping/cleanup.
-- No Windows build/runtime result is yet claimed for FFmpeg; implementation continues before handoff.
-- Next source boundary is `libavcodec` with native H.264 only, followed by MOV/file `libavformat` and scalar `libswscale`.
-- AVIF output remains intentionally deferred; HEIF/AVIF stays decode-only in the still-image stack.
+- FFmpeg remains pinned to signed `n9.0.1`, exact commit `bf1b838f2ab88b4f8fd83443325c782ea0e0f7fa`.
+- Generated-equivalent Windows x86_64 / U++ CLANGx64 configuration is static, LGPL-only, scalar, no threads/network/external codecs/filters/devices/audio-resample/CLI/encoding.
+- `ffmpeg_avutil_src` is published from the complete pinned upstream base source list plus required scalar helpers; `ffmpeg_avutil_test` expects 13/0.
+- `ffmpeg_avcodec_src` is now published with 69 explicit TUs: pinned base libavcodec + native H.264 decoder + recursively selected CABAC/Golomb/chroma/DSP/parse/pred/qpel/SEI/VideoDSP/startcode/ITU-T T.35 helpers, including `ITUT_T35 -> ATSC_A53 + DOVI_RPUDEC` and `DOVI_RPUDEC -> GOLOMB`.
+- Configure-equivalent libavcodec registries expose exactly one codec (`ff_h264_decoder`), no public parser and no BSFs.
+- `ffmpeg_avcodec_test` expects `SUMMARY passed=12 failed=0` and checks version/license/configuration, one-codec registration, no H.264 encoder/parser/BSF, context allocation/open/cleanup.
+- No Windows FFmpeg result is claimed yet; implementation continues before handoff.
+- Next boundaries: MOV/file `libavformat`, then scalar `libswscale`, then deterministic first-frame decode evidence.
 
 **PUBLISHED**
 
 - `a66e1192025032823e93a890e16cc3874034a8a4` — JPEG XL skcms linker repair.
-- `c37521e050cdb1c04583c0a5bdb06763742b1669` — TIFF OpenImageIO/ImagingIO expansion.
+- `c37521e050cdb1c04583c0a5bdb06763742b1669` — TIFF expansion.
 - `5ca436c3ba6265f6431deaf7348332940051686d` — static OpenImageIO plugin dependency closure.
 - `901332ce46387e0d09026cfd5f26d4528b8cd9d1` — FFmpeg 9.0.1 header/pin boundary.
-- `21a72f6dfccfdc216b4f3cb180cb3ae9415c1c11` — `Add FFmpeg libavutil scalar source foundation`.
-- This file is the recovery-log follow-up; fetch `main` for its exact docs commit SHA.
+- `21a72f6dfccfdc216b4f3cb180cb3ae9415c1c11` — FFmpeg libavutil scalar foundation.
+- `69ea15f478cb1c0d25a0461afbaf1e16c23b22f9` — `Add native H.264 FFmpeg codec boundary`.
+- This file is the recovery-log follow-up; fetch `main` for its exact docs SHA.
 
 **VALIDATION**
 
-Windows evidence already completed:
+Completed Windows evidence:
 
-- JPEG XL backend Debug: 9/0, exit 0.
-- JPEG XL backend Release: 9/0, exit 0.
+- JPEG XL backend Debug 9/0 and Release 9/0.
 - old JPEG XL lcms2/gtest/skcms-baseline failures are closed.
-- prior direct OIIO JPEG XL build stopped in aggregate OIIO compilation on DPX OpenEXR and TIFF header visibility; validator made no edits.
+- prior direct OIIO build stopped on shared DPX/OpenEXR and TIFF header visibility; repair is published at `5ca436c3` and unvalidated.
 
-Static/source review completed since that run:
+Static/source review completed:
 
-- direct OIIO plugin dependencies were repaired at their owning package manifests;
-- FFmpeg signed release pin and LGPL baseline were verified against upstream;
-- FFmpeg public/generated header boundary is explicit and separate from implementation;
-- exact pinned `libavutil/Makefile` base objects and `libavutil/x86/Makefile` were reconstructed into the U++ source manifest;
-- x86 CPU source was retained while X86ASM/inline-asm paths are disabled;
-- Windows CRT aliases, aligned allocation, Win32 time and file-map paths are represented in the generated configuration and focused test.
+- direct OIIO plugin dependencies repaired at owning manifests;
+- FFmpeg release/license/configuration boundaries verified against pinned upstream;
+- exact libavutil and libavcodec production source ownership reconstructed from pinned Makefiles/configure selections;
+- H.264 recursive configure selections followed through ITU-T T.35, ATSC A/53 and Dolby Vision RPU decoding;
+- generated codec/parser/BSF registries checked in instead of relying on absent configure output;
+- x86 architecture identity retained while x86 assembly dispatch remains disabled.
 
 Not yet Windows-verified:
 
-- aggregate OpenImageIO after `5ca436c3`;
-- RAW/WebP/HEIF/TIFF accumulation matrix;
-- `ffmpeg_headers_test` (expected 7/0);
-- `ffmpeg_avutil_test` (expected 13/0);
-- later FFmpeg implementation libraries.
+- OpenImageIO accumulation pass after `5ca436c3`;
+- `ffmpeg_headers_test` 7/0;
+- `ffmpeg_avutil_test` 13/0;
+- `ffmpeg_avcodec_test` 12/0;
+- later FFmpeg libraries/full decode.
 
 **NEXT ACTION**
 
 Validator lane:
 
-1. Fetch current `origin/main`; confirm `5ca436c3` is an ancestor and status is clean.
-2. Build/run `jpegxl_oiio_test` Debug/Release; if green, run focused RAW/WebP/HEIF/TIFF direct/framework tests as one accumulation pass.
-3. Fail fast on the first current-main defect and report exact evidence without patching.
-4. Do not start a separate FFmpeg validation loop yet; the implementation lane is deliberately continuing to the full first decode slice.
+1. Fetch current `origin/main`; confirm `5ca436c3` ancestor and clean status.
+2. Run `jpegxl_oiio_test` Debug/Release, then focused RAW/WebP/HEIF/TIFF direct/framework tests if green.
+3. Fail fast on first current-main defect; report evidence without patching.
+4. Do not start FFmpeg validation yet.
 
 Implementation lane:
 
-1. Reconstruct and implement the explicit native H.264 `libavcodec` closure from the pinned Makefile/configure selections, including required base/support objects but no unrelated decoders/encoders.
-2. Add direct codec registration/allocation/decode-contract tests without external fixtures where possible.
-3. Implement MOV/file `libavformat` closure and scalar `libswscale` conversion packages.
-4. Add one deterministic first-frame decode fixture/contract only after those library boundaries are coherent.
-5. Publish at meaningful recovery checkpoints and update this file; hand FFmpeg to Gary only when the first decode slice is code-side coherent.
+1. Reconstruct exact pinned libavformat base + MOV demux + ISO-media/RIFF-decode + local-file protocol closure and generated format/protocol registries.
+2. Add a direct MOV/file registration/open contract without broad demuxer/protocol leakage.
+3. Reconstruct scalar libswscale and add deterministic YUV-to-RGBA conversion coverage.
+4. Add first-frame MOV/H.264 decode evidence after all four library boundaries are coherent.
+5. Publish coherent checkpoints and update this file; only then hand FFmpeg to Gary.
 
 ## Working rhythm
 
