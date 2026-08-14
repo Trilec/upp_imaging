@@ -23,7 +23,7 @@ static void FNV1a64Update(unsigned long long& h, unsigned char value)
 
 static unsigned long long FNV1a64(const unsigned char* data, int size)
 {
-	unsigned long long h = 1469598103934665603ULL;
+	unsigned long long h = 14695981039346656037ULL;
 	for(int i = 0; i < size; ++i)
 		FNV1a64Update(h, data[i]);
 	return h;
@@ -31,7 +31,7 @@ static unsigned long long FNV1a64(const unsigned char* data, int size)
 
 static unsigned long long LogicalYUV420PHash(const AVFrame* frame)
 {
-	unsigned long long h = 1469598103934665603ULL;
+	unsigned long long h = 14695981039346656037ULL;
 	for(int y = 0; y < frame->height; ++y)
 		for(int x = 0; x < frame->width; ++x)
 			FNV1a64Update(h, frame->data[0][y * frame->linesize[0] + x]);
