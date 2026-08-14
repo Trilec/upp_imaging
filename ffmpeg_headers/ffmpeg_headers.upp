@@ -1,9 +1,12 @@
-description "Strict FFmpeg 9.0.1 public-header boundary";
+description "Strict FFmpeg 9.0.1 public-header and generated-config boundary";
 
 include
 	generated,
 	upstream;
 
 file
+	generated/config.h,
+	generated/config_components.h,
 	generated/libavutil/avconfig.h,
+	generated/libavutil/ffversion.h,
 	README.md;

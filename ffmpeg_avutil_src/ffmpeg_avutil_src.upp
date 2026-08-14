@@ -1,0 +1,25 @@
+description "Pinned FFmpeg 9.0.1 libavutil scalar source package";
+
+noblitz;
+
+uses
+	ffmpeg_headers;
+
+include
+	../ffmpeg_headers/generated,
+	../ffmpeg_headers/upstream;
+
+options(BUILDER_OPTION) NOWARNINGS;
+
+options
+	-std=c11,
+	-DHAVE_AV_CONFIG_H=1,
+	-D_CRT_SECURE_NO_WARNINGS,
+	-D_CRT_DECLARE_NONSTDC_NAMES=1,
+	-D_USE_MATH_DEFINES,
+	-DWIN32_LEAN_AND_MEAN,
+	-DNOMINMAX;
+
+file
+	import.ext,
+	README.md;
