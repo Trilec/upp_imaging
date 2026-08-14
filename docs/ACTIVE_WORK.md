@@ -7,7 +7,7 @@ This file is the recovery authority for work currently in flight. After fetching
 **BASE**
 
 - Accepted framework foundation: ImagingCore, ImagingIO EXR/PNG baseline, ImagingColor, ImagingAnalysis, ImagingDiagnostics and the `Imaging` umbrella.
-- Still-image format line includes JPEG XL, HDR/RGBE, DPX/Cineon, camera RAW, WebP, decode-only HEIF/AVIF and TIFF.
+- Still-image line includes JPEG XL, HDR/RGBE, DPX/Cineon, camera RAW, WebP, decode-only HEIF/AVIF and TIFF.
 - JPEG XL backend is Windows-proven Debug/Release after `a66e1192`; shared static OpenImageIO dependency repair is `5ca436c3` and awaits accumulation validation.
 - FFmpeg is a separate media subsystem, not part of ImagingIO or the Imaging umbrella.
 
@@ -20,22 +20,24 @@ This file is the recovery authority for work currently in flight. After fetching
 
 Latest FFmpeg checkpoint:
 
-- `ffmpeg_headers/generated/config.h`
-- `ffmpeg_headers/generated/libavcodec/{codec_list,parser_list,bsf_list}.c`
+- `ffmpeg_headers/generated/{config.h,config_components.h}`
+- `ffmpeg_headers/generated/libavformat/{demuxer_list,muxer_list,protocol_list}.c`
 - `ffmpeg_headers/ffmpeg_headers.upp`
-- `ffmpeg_avcodec_src/*`
-- `ffmpeg_avcodec_test/*`
+- `ffmpeg_avcodec_src/{import.ext,README.md}`
+- `ffmpeg_avformat_src/*`
+- `ffmpeg_avformat_test/*`
 
 **STATUS**
 
 - FFmpeg remains pinned to signed `n9.0.1`, exact commit `bf1b838f2ab88b4f8fd83443325c782ea0e0f7fa`.
 - Generated-equivalent Windows x86_64 / U++ CLANGx64 configuration is static, LGPL-only, scalar, no threads/network/external codecs/filters/devices/audio-resample/CLI/encoding.
-- `ffmpeg_avutil_src` is published from the complete pinned upstream base source list plus required scalar helpers; `ffmpeg_avutil_test` expects 13/0.
-- `ffmpeg_avcodec_src` is now published with 69 explicit TUs: pinned base libavcodec + native H.264 decoder + recursively selected CABAC/Golomb/chroma/DSP/parse/pred/qpel/SEI/VideoDSP/startcode/ITU-T T.35 helpers, including `ITUT_T35 -> ATSC_A53 + DOVI_RPUDEC` and `DOVI_RPUDEC -> GOLOMB`.
-- Configure-equivalent libavcodec registries expose exactly one codec (`ff_h264_decoder`), no public parser and no BSFs.
-- `ffmpeg_avcodec_test` expects `SUMMARY passed=12 failed=0` and checks version/license/configuration, one-codec registration, no H.264 encoder/parser/BSF, context allocation/open/cleanup.
-- No Windows FFmpeg result is claimed yet; implementation continues before handoff.
-- Next boundaries: MOV/file `libavformat`, then scalar `libswscale`, then deterministic first-frame decode evidence.
+- `ffmpeg_avutil_src` is published; focused test expects 13/0.
+- `ffmpeg_avcodec_src` is published and now contains 71 explicit TUs: the previous native H.264 closure plus MPEG-4 audio helpers selected by MOV's `ISO_MEDIA` dependency. Public registry remains exactly H.264 decoder only; no encoder/parser/BSF.
+- `config_components.h` now carries the selected H.264/MOV helper closure required by sources that include it directly, including explicit disabled H.264 peer components where expressions require zero-valued identifiers.
+- `ffmpeg_avformat_src` is published with 43 explicit TUs: 31 base objects, Windows MSVCRT file-open helper, ISO-media + RIFF decode, seven MOV objects, local-file protocol, and MOV's private AC-3 channel-layout helper.
+- Configure-equivalent format registries expose exactly one demuxer (`ff_mov_demuxer`), no muxers and one protocol (`ff_file_protocol`). Optional IAMF/zlib suggestions remain disabled.
+- `ffmpeg_avformat_test` expects 14/0 and covers version/license/configuration, exact demuxer/muxer/protocol registration, local AVIO byte roundtrip, malformed-MOV refusal and cleanup.
+- No Windows FFmpeg result is claimed yet. Next boundary is scalar `libswscale`, then deterministic first-frame MOV/H.264 decode evidence.
 
 **PUBLISHED**
 
@@ -44,33 +46,35 @@ Latest FFmpeg checkpoint:
 - `5ca436c3ba6265f6431deaf7348332940051686d` — static OpenImageIO plugin dependency closure.
 - `901332ce46387e0d09026cfd5f26d4528b8cd9d1` — FFmpeg 9.0.1 header/pin boundary.
 - `21a72f6dfccfdc216b4f3cb180cb3ae9415c1c11` — FFmpeg libavutil scalar foundation.
-- `69ea15f478cb1c0d25a0461afbaf1e16c23b22f9` — `Add native H.264 FFmpeg codec boundary`.
-- This file is the recovery-log follow-up; fetch `main` for its exact docs SHA.
+- `69ea15f478cb1c0d25a0461afbaf1e16c23b22f9` — native H.264 libavcodec boundary.
+- `0291801b82dc25a78b36c884373a5ee76c92b687` — `Add MOV and local-file FFmpeg format boundary`.
+- This file is the recovery-log follow-up; fetch `main` for exact docs SHA.
 
 **VALIDATION**
 
 Completed Windows evidence:
 
-- JPEG XL backend Debug 9/0 and Release 9/0.
-- old JPEG XL lcms2/gtest/skcms-baseline failures are closed.
-- prior direct OIIO build stopped on shared DPX/OpenEXR and TIFF header visibility; repair is published at `5ca436c3` and unvalidated.
+- JPEG XL backend Debug 9/0 and Release 9/0; old lcms2/gtest/skcms-baseline failures closed.
+- prior direct OIIO build stopped on shared DPX/OpenEXR and TIFF header visibility; repair at `5ca436c3` remains unvalidated.
 
 Static/source review completed:
 
-- direct OIIO plugin dependencies repaired at owning manifests;
-- FFmpeg release/license/configuration boundaries verified against pinned upstream;
-- exact libavutil and libavcodec production source ownership reconstructed from pinned Makefiles/configure selections;
-- H.264 recursive configure selections followed through ITU-T T.35, ATSC A/53 and Dolby Vision RPU decoding;
-- generated codec/parser/BSF registries checked in instead of relying on absent configure output;
-- x86 architecture identity retained while x86 assembly dispatch remains disabled.
+- OIIO direct dependencies repaired at owning manifests;
+- exact FFmpeg libavutil/libavcodec/libavformat source ownership reconstructed from pinned Makefiles/configure selections;
+- H.264 recursion followed through ITU-T T.35, ATSC A/53 and Dolby Vision RPU;
+- MOV recursion followed through ISO-media -> MPEG4AUDIO and RIFFDEC; IAMF/zlib remain suggestions only;
+- MOV private AC-3 channel-layout symbol handled explicitly for static linkage;
+- generated codec/parser/BSF/demuxer/muxer/protocol lists are checked in instead of relying on absent configure output;
+- network-disabled base format source avoids Winsock paths; Windows MSVCRT/file-open path is explicit.
 
 Not yet Windows-verified:
 
 - OpenImageIO accumulation pass after `5ca436c3`;
-- `ffmpeg_headers_test` 7/0;
-- `ffmpeg_avutil_test` 13/0;
-- `ffmpeg_avcodec_test` 12/0;
-- later FFmpeg libraries/full decode.
+- FFmpeg headers 7/0;
+- FFmpeg avutil 13/0;
+- FFmpeg avcodec 12/0;
+- FFmpeg avformat 14/0;
+- libswscale/full decode.
 
 **NEXT ACTION**
 
@@ -83,11 +87,11 @@ Validator lane:
 
 Implementation lane:
 
-1. Reconstruct exact pinned libavformat base + MOV demux + ISO-media/RIFF-decode + local-file protocol closure and generated format/protocol registries.
-2. Add a direct MOV/file registration/open contract without broad demuxer/protocol leakage.
-3. Reconstruct scalar libswscale and add deterministic YUV-to-RGBA conversion coverage.
-4. Add first-frame MOV/H.264 decode evidence after all four library boundaries are coherent.
-5. Publish coherent checkpoints and update this file; only then hand FFmpeg to Gary.
+1. Reconstruct exact pinned scalar libswscale source closure and generated configuration implications.
+2. Add deterministic YUV420P -> RGBA8 conversion coverage with exact/near-exact expected evidence.
+3. Add direct native package boundary over the four FFmpeg libraries.
+4. Add deterministic first-frame MOV/H.264 decode evidence; only after this slice is coherent hand FFmpeg to Gary.
+5. Publish coherent checkpoints and update this file.
 
 ## Working rhythm
 
