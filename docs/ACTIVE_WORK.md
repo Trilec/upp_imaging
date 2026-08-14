@@ -7,82 +7,86 @@ This file is the recovery authority for work currently in flight. After fetching
 **BASE**
 
 - Accepted framework foundation: ImagingCore, ImagingIO EXR/PNG baseline, ImagingColor, ImagingAnalysis, ImagingDiagnostics and the `Imaging` umbrella.
-- Format implementation line now includes JPEG XL, HDR/RGBE, DPX/Cineon, camera RAW, WebP, decode-only HEIF/AVIF and TIFF.
-- The historical JPEG XL failures at `deeb687c...` and `f91de7d...` are diagnostic history; current JPEG XL repair starts at `a66e1192025032823e93a890e16cc3874034a8a4`.
+- Format implementation line includes JPEG XL, HDR/RGBE, DPX/Cineon, camera RAW, WebP, decode-only HEIF/AVIF and TIFF.
+- JPEG XL backend repair is now Windows-proven in Debug and Release; the remaining failure observed by `011C8-A/B1-R2-W1` was in the shared static OpenImageIO plugin compilation closure, not libjxl/skcms.
 
 **TASK**
 
-- Validator lane: `011C8-A/B1-R2` — focused JPEG XL backend/OIIO acceptance after the skcms baseline-link repair.
-- Implementation lane: continue the remaining format roadmap without waiting on that validator lane.
+- Validator lane: close the repaired shared OpenImageIO static-plugin boundary, then run one accumulation pass across the later still-image formats.
+- Implementation lane: begin FFmpeg as a separate major subsystem without adding video semantics to ImagingIO.
 
 **TOUCHED**
 
-Latest coherent implementation slice:
+Latest coherent repair slice:
 
-- `openimageio_plugin_tiff/*`
-- `OpenImageIO/OpenImageIO.upp`
-- `OpenImageIO/OIIO.cpp`
-- `ImagingIO/FormatPolicy.cpp`
-- `tiff_oiio_test/*`
-- `tiff_imagingio_test/*`
+- `openimageio_plugin_dpxcineon/openimageio_plugin_dpxcineon.upp`
+- `openimageio_plugin_jpegxl/openimageio_plugin_jpegxl.upp`
+- `openimageio_plugin_png/openimageio_plugin_png.upp`
+- `openimageio_plugin_raw/openimageio_plugin_raw.upp`
+- `openimageio_plugin_webp/openimageio_plugin_webp.upp`
+- `openimageio_plugin_heif/openimageio_plugin_heif.upp`
 
-Explicitly unchanged by the TIFF slice:
-
-- `libtiff_src/*` — existing strict vendored libtiff 4.7.2 backend reused as-is
-- `.gitmodules`
-- `ImagingIO/ImagingIO.cpp`
-- public ImagingIO headers/API
+No plugin source files, public framework APIs, format policies or third-party source pins changed in this repair.
 
 **STATUS**
 
-- JPEG XL R2 linker repair: implementation complete; Windows focused validation pending.
-- Camera RAW: code-side complete; broader Windows acceptance pending.
-- WebP: code-side complete; broader Windows acceptance pending.
-- HEIF/AVIF: decode-only code-side slice complete; broader Windows acceptance pending. AVIF output remains a separate encoder/backend milestone rather than an implied capability.
-- TIFF: code-side complete for the first strict ImagingIO slice; Windows validation pending.
-- TIFF direct OIIO registration uses the existing bundled libtiff 4.7.2 Windows CLANGx64 package rather than adding or replacing a third-party dependency.
-- TIFF ImagingIO policy: `.tif/.tiff`, single-image/non-deep 2D through the shared structural inspector, zero-origin, UInt8/UInt16/Float32, Gray/GrayAlpha/RGB/RGBA, straight alpha, ZIP/Deflate output, verified transactional saves.
-- TIFF does not claim JPEG/OJPEG, JBIG, LERC, LZMA, Zstd or WebP-in-TIFF support in this slice.
+- JPEG XL backend: Windows Debug/Release build, link and runtime pass at 9/0 after `a66e1192`; previous lcms2/gtest/skcms-baseline failures are closed.
+- Direct OIIO JPEG XL validation on prior main stopped before plugin execution because the aggregate `OpenImageIO` package also compiled DPX/Cineon and TIFF-related consumers with incomplete direct include visibility.
+- Shared static-plugin dependency closure is now repaired code-side:
+  - DPX/Cineon receives the public OpenEXR include root required by `<OpenEXR/ImfTimeCode.h>`;
+  - JPEG XL, PNG, RAW, WebP and HEIF declare the stable `libtiff` package and include root required by `OpenImageIO/tiffutils.h`;
+  - PNG no longer reaches into `libtiff_src` without declaring the dependency;
+  - HEIF receives the pinned libheif generated/API include roots and `LIBHEIF_STATIC_BUILD=1`, preventing Windows DLL-import annotations against the static backend.
+- Camera RAW, WebP, decode-only HEIF/AVIF and TIFF remain code-side complete and await the accumulation Windows pass.
+- AVIF output remains intentionally deferred because adding it cleanly requires a separate AOM/SVT/rav1e encoder backend; the current HEIF-family contract remains decode-only.
+- Next major implementation subsystem is FFmpeg, kept separate from ImagingIO.
 
 **PUBLISHED**
 
-- JPEG XL linker repair: `a66e1192025032823e93a890e16cc3874034a8a4` — `Add skcms baseline transform to JPEG XL backend`.
-- TIFF integration: `c37521e050cdb1c04583c0a5bdb06763742b1669` — `Add TIFF to OpenImageIO and ImagingIO`.
-- This file is the recovery-log follow-up on top of the TIFF implementation commit; fetch `main` for the exact current docs SHA.
+- `a66e1192025032823e93a890e16cc3874034a8a4` — `Add skcms baseline transform to JPEG XL backend`.
+- `c37521e050cdb1c04583c0a5bdb06763742b1669` — `Add TIFF to OpenImageIO and ImagingIO`.
+- `5ca436c3ba6265f6431deaf7348332940051686d` — `Fix static OpenImageIO plugin dependency closure`.
+- This file is the recovery-log follow-up on top of that repair; fetch `main` for its exact docs commit SHA.
 
 **VALIDATION**
 
-Verified by repository/source review:
+Windows evidence from `TASK 011C8-A/B1-R2-W1` at `c64e304e...`:
 
-- TIFF publish is one fast-forward commit over the prior active-work checkpoint.
-- TIFF commit changes only the intended OIIO registration/package, private `FormatPolicy`, and focused tests.
-- Existing `libtiff_src` is version 4.7.2 and already configured for static Windows CLANGx64 with LZW, PackBits, ZIP/zlib and libdeflate; external JPEG/LERC/LZMA/Zstd/WebP codecs remain disabled.
-- OIIO 3.1.15.0 TIFF exports and extension tables were checked against the pinned upstream source.
-- TIFF load zero-origin enforcement already lives in the shared ImagingIO load path through `RequiresZeroOrigin`.
-- focused direct TIFF contract target: `13 passed, 0 failed`.
-- focused ImagingIO TIFF contract target: `29 passed, 0 failed`.
+- `a66e1192` ancestor check: pass.
+- `jpegxl_prereq_test` Debug: build pass, `SUMMARY passed=9 failed=0`, exit 0.
+- `jpegxl_prereq_test` Release: build pass, `SUMMARY passed=9 failed=0`, exit 0.
+- old JPEG XL failures (`lcms2.h`, `gtest/gtest.h`, undefined `skcms_private::baseline::run_program`) do not reproduce.
+- `jpegxl_oiio_test` stopped during aggregate OpenImageIO compilation on missing `<OpenEXR/ImfTimeCode.h>` from DPX and `tiff.h` through `OpenImageIO/tiffutils.h`.
+- validator made no edits; status and `git diff --check` were clean.
+
+Source review for `5ca436c3...`:
+
+- pinned OIIO DPX source directly includes `<OpenEXR/ImfTimeCode.h>`;
+- pinned OIIO JPEG XL, RAW, WebP and HEIF sources directly include `OpenImageIO/tiffutils.h`, whose public header includes `tiff.h`;
+- pinned OIIO HEIF source directly includes `<libheif/heif_cxx.h>` and may include `<libheif/heif_properties.h>`;
+- pinned libheif public export header uses `__declspec(dllimport)` on Windows unless `LIBHEIF_STATIC_BUILD` is defined;
+- the repair changes six package manifests only and keeps all backend pins/source sets unchanged.
 
 Not yet verified on Windows:
 
-- JPEG XL R2 at/after `a66e1192`.
-- RAW/WebP/HEIF/TIFF accumulation-point runtime matrix.
-- TIFF Debug/Release compile/link/runtime.
+- aggregate OpenImageIO compilation after `5ca436c3`;
+- direct OIIO JPEG XL Debug/Release 10/0;
+- RAW/WebP/HEIF/TIFF accumulation-point compile/link/runtime matrix.
 
 **NEXT ACTION**
 
 Validator lane:
 
-1. Fetch/fast-forward to current `origin/main`; confirm `a66e1192` is an ancestor of HEAD.
-2. Build/run `jpegxl_prereq_test` Debug; expected 9/0. If green, five repeats, then Release + five repeats.
-3. If backend is green, run `jpegxl_oiio_test` Debug/Release once; expected 10/0.
-4. Stop and report. Do not run the broad format matrix until that focused prerequisite is green.
+1. Fetch/fast-forward to current `origin/main`; confirm `5ca436c3` is an ancestor of HEAD and status is clean.
+2. Build/run `jpegxl_oiio_test` Debug and Release. This is now a shared OpenImageIO closure checkpoint, not another libjxl backend test.
+3. If aggregate OIIO compilation is green, run the focused RAW, WebP, HEIF/AVIF and TIFF direct/framework tests as one accumulation pass.
+4. Fail fast on the first new current-main compiler/link/runtime defect and report exact evidence without patching.
 
 Implementation lane:
 
-1. Resolve the remaining HEIF/AVIF output boundary: package a reproducible AV1 encoder only if it can be done cleanly without importing GPL HEVC encoding or build-time generator dependence.
-2. If AVIF output is not a clean bounded slice, leave HEIF/AVIF explicitly decode-only and move to FFmpeg as the next separate major milestone.
-3. At the next coherent implementation publish, update this file again.
-4. Once JPEG XL focused acceptance is green, batch one Windows accumulation pass across JPEG XL + RAW + WebP + HEIF/AVIF + TIFF rather than serially retesting every internal commit.
+1. Start FFmpeg as a separate package/framework subsystem; do not add movie/video semantics to ImagingIO.
+2. Pin one upstream FFmpeg release and define the first bounded decode surface around `libavformat`, `libavcodec`, `libavutil` and `libswscale`; keep audio, filters, devices, CLI tools and encoding out of the first slice unless a dependency audit proves they are required.
+3. Publish at coherent recovery points and update this file after each meaningful FFmpeg slice.
 
 ## Working rhythm
 
