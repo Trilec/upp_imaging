@@ -1,0 +1,10 @@
+uses
+	Core,
+	ffmpeg_headers;
+
+file
+	main.cpp,
+	README.md;
+
+mainconfig
+	"CONSOLE" = "";
