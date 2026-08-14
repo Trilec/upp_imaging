@@ -20,24 +20,22 @@ This file is the recovery authority for work currently in flight. After fetching
 
 Latest FFmpeg checkpoint:
 
-- `ffmpeg_headers/generated/{config.h,config_components.h}`
-- `ffmpeg_headers/generated/libavformat/{demuxer_list,muxer_list,protocol_list}.c`
-- `ffmpeg_headers/ffmpeg_headers.upp`
-- `ffmpeg_avcodec_src/{import.ext,README.md}`
-- `ffmpeg_avformat_src/*`
-- `ffmpeg_avformat_test/*`
+- `ffmpeg_swscale_src/*`
+- `ffmpeg_swscale_test/*`
+
+Earlier FFmpeg implementation checkpoints remain unchanged: `ffmpeg_headers`, `ffmpeg_avutil_src`, `ffmpeg_avcodec_src` and `ffmpeg_avformat_src`.
 
 **STATUS**
 
 - FFmpeg remains pinned to signed `n9.0.1`, exact commit `bf1b838f2ab88b4f8fd83443325c782ea0e0f7fa`.
 - Generated-equivalent Windows x86_64 / U++ CLANGx64 configuration is static, LGPL-only, scalar, no threads/network/external codecs/filters/devices/audio-resample/CLI/encoding.
 - `ffmpeg_avutil_src` is published; focused test expects 13/0.
-- `ffmpeg_avcodec_src` is published and now contains 71 explicit TUs: the previous native H.264 closure plus MPEG-4 audio helpers selected by MOV's `ISO_MEDIA` dependency. Public registry remains exactly H.264 decoder only; no encoder/parser/BSF.
-- `config_components.h` now carries the selected H.264/MOV helper closure required by sources that include it directly, including explicit disabled H.264 peer components where expressions require zero-valued identifiers.
-- `ffmpeg_avformat_src` is published with 43 explicit TUs: 31 base objects, Windows MSVCRT file-open helper, ISO-media + RIFF decode, seven MOV objects, local-file protocol, and MOV's private AC-3 channel-layout helper.
-- Configure-equivalent format registries expose exactly one demuxer (`ff_mov_demuxer`), no muxers and one protocol (`ff_file_protocol`). Optional IAMF/zlib suggestions remain disabled.
-- `ffmpeg_avformat_test` expects 14/0 and covers version/license/configuration, exact demuxer/muxer/protocol registration, local AVIO byte roundtrip, malformed-MOV refusal and cleanup.
-- No Windows FFmpeg result is claimed yet. Next boundary is scalar `libswscale`, then deterministic first-frame MOV/H.264 decode evidence.
+- `ffmpeg_avcodec_src` is published with the native H.264 closure plus MOV-selected MPEG-4 audio helpers; public codec registry remains exactly H.264 decoder only, with no encoder/parser/BSF.
+- `ffmpeg_avformat_src` is published with MOV/MP4 demuxing and local `file` protocol only; generated registries expose exactly one demuxer, no muxers and one protocol.
+- `ffmpeg_swscale_src` is published at `0505675b0e1529477d1048a796d435b9ad55694d`. It contains the exact scalar libswscale base plus x86 C dispatch sources, with external/inline assembly disabled and shared helper objects kept in `ffmpeg_avutil_src`.
+- `ffmpeg_swscale_test` expects 13/0 and checks deterministic limited-range ITU-601 YUV420P -> RGBA8 conversion, opaque alpha, endpoints, midtones and monotonic output.
+- No Windows FFmpeg result is yet claimed.
+- The next boundary is the stable application-facing direct native `FFmpeg` package, then deterministic first-frame MOV/H.264 decode evidence.
 
 **PUBLISHED**
 
@@ -47,8 +45,9 @@ Latest FFmpeg checkpoint:
 - `901332ce46387e0d09026cfd5f26d4528b8cd9d1` — FFmpeg 9.0.1 header/pin boundary.
 - `21a72f6dfccfdc216b4f3cb180cb3ae9415c1c11` — FFmpeg libavutil scalar foundation.
 - `69ea15f478cb1c0d25a0461afbaf1e16c23b22f9` — native H.264 libavcodec boundary.
-- `0291801b82dc25a78b36c884373a5ee76c92b687` — `Add MOV and local-file FFmpeg format boundary`.
-- This file is the recovery-log follow-up; fetch `main` for exact docs SHA.
+- `0291801b82dc25a78b36c884373a5ee76c92b687` — MOV/local-file libavformat boundary.
+- `0505675b0e1529477d1048a796d435b9ad55694d` — scalar libswscale boundary.
+- This file is the recovery-log follow-up; fetch `main` for its exact docs commit SHA.
 
 **VALIDATION**
 
@@ -60,12 +59,12 @@ Completed Windows evidence:
 Static/source review completed:
 
 - OIIO direct dependencies repaired at owning manifests;
-- exact FFmpeg libavutil/libavcodec/libavformat source ownership reconstructed from pinned Makefiles/configure selections;
+- exact FFmpeg libavutil/libavcodec/libavformat/libswscale source ownership reconstructed from pinned Makefiles/configure selections;
 - H.264 recursion followed through ITU-T T.35, ATSC A/53 and Dolby Vision RPU;
 - MOV recursion followed through ISO-media -> MPEG4AUDIO and RIFFDEC; IAMF/zlib remain suggestions only;
 - MOV private AC-3 channel-layout symbol handled explicitly for static linkage;
 - generated codec/parser/BSF/demuxer/muxer/protocol lists are checked in instead of relying on absent configure output;
-- network-disabled base format source avoids Winsock paths; Windows MSVCRT/file-open path is explicit.
+- scalar libswscale retains truthful x86 architecture identity while disabling assembly dispatch.
 
 Not yet Windows-verified:
 
@@ -74,7 +73,8 @@ Not yet Windows-verified:
 - FFmpeg avutil 13/0;
 - FFmpeg avcodec 12/0;
 - FFmpeg avformat 14/0;
-- libswscale/full decode.
+- FFmpeg swscale 13/0;
+- direct `FFmpeg` package/full first-frame decode.
 
 **NEXT ACTION**
 
@@ -87,11 +87,10 @@ Validator lane:
 
 Implementation lane:
 
-1. Reconstruct exact pinned scalar libswscale source closure and generated configuration implications.
-2. Add deterministic YUV420P -> RGBA8 conversion coverage with exact/near-exact expected evidence.
-3. Add direct native package boundary over the four FFmpeg libraries.
-4. Add deterministic first-frame MOV/H.264 decode evidence; only after this slice is coherent hand FFmpeg to Gary.
-5. Publish coherent checkpoints and update this file.
+1. Add stable application-facing `FFmpeg` package over `ffmpeg_headers`, `ffmpeg_avutil_src`, `ffmpeg_avcodec_src`, `ffmpeg_avformat_src` and `ffmpeg_swscale_src`; forward standard FFmpeg headers/types and do not invent replacement AV types.
+2. Add a deterministic one-frame MOV/MP4 + native H.264 fixture and end-to-end first-frame decode test through libavformat -> libavcodec -> libswscale -> RGBA8.
+3. Verify static package/dependency boundaries and expected decoded frame evidence; publish as one coherent slice.
+4. Update this recovery file and then hand the accumulated FFmpeg slice to Gary for Debug/Release Windows acceptance.
 
 ## Working rhythm
 
