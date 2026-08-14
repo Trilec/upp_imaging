@@ -1,0 +1,11 @@
+uses
+	Core,
+	ffmpeg_headers,
+	ffmpeg_avutil_src;
+
+file
+	main.cpp,
+	README.md;
+
+mainconfig
+	"CONSOLE" = "";
