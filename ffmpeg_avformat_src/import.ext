@@ -33,6 +33,8 @@ files
 	../ffmpeg_headers/upstream/libavformat/file_open.c
 	../ffmpeg_headers/upstream/libavformat/isom.c
 	../ffmpeg_headers/upstream/libavformat/riffdec.c
+	../ffmpeg_headers/upstream/libavformat/to_upper4.c
+	../ffmpeg_headers/upstream/libavformat/mpegaudiotabs.c
 	../ffmpeg_headers/upstream/libavformat/mov.c
 	../ffmpeg_headers/upstream/libavformat/mov_chan.c
 	../ffmpeg_headers/upstream/libavformat/mov_esds.c
