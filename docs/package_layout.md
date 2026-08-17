@@ -68,6 +68,10 @@ Strict and stable OpenEXR tests/probes remain separate so one target does not pu
 
 The original Windows-proven OpenEXR/PNG route remains the baseline. Code-side static plugin support now extends through the current still-image format line: JPEG XL, HDR/RGBE, DPX/Cineon, RAW, WebP, decode-only HEIF/AVIF and TIFF. The shared dependency closure repair is `5ca436c3ba6265f6431deaf7348332940051686d`; current accumulated Windows validation is still pending.
 
+The exact repository-owned accumulation targets are `openimageio_io_test`, `imaging_io_test`, `jpegxl_prereq_test`, `jpegxl_oiio_test`, `jpegxl_imagingio_test`, `hdr_oiio_test`, `dpx_cineon_oiio_test`, `hdr_dpx_imagingio_test`, `raw_oiio_test`, `raw_imagingio_test`, `webp_oiio_test`, `webp_imagingio_test`, `heif_oiio_test`, `heif_imagingio_test`, `tiff_oiio_test` and `tiff_imagingio_test`. Expected totals and the current validation boundary are authoritative in `docs/ACTIVE_WORK.md`.
+
+Positive real-file RAW, AVIF/HEIC and animated-WebP evidence depends on provenance-reviewed external fixtures and is tracked separately from repository-owned deterministic package tests.
+
 Do not describe a format as Windows-accepted through OpenImageIO merely because its plugin/source is present.
 
 ## `Upp::Imaging` framework
@@ -91,7 +95,7 @@ Established Windows framework baseline:
 - `ImagingDiagnostics` 33/0;
 - `Imaging` 6/0.
 
-Later-format `ImagingIO` accumulation remains pending after the static OpenImageIO dependency repair.
+Current-main format accumulation for `ImagingIO` remains pending after the static OpenImageIO dependency repair.
 
 ## Raster integration
 

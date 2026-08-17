@@ -1,4 +1,4 @@
-description "Backend-neutral EXR, PNG, JPEG XL, HDR, DPX, Cineon, RAW and WebP image I/O";
+description "Backend-neutral EXR, PNG, JPEG XL, HDR, DPX, Cineon, RAW, WebP, HEIF/AVIF and TIFF image I/O";
 
 uses
 	ImagingCore,

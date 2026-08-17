@@ -27,7 +27,9 @@
 * Added exact-lossless WebP support for the documented subset.
 * Added decode-only HEIF/AVIF support with pinned decoder dependencies.
 * Expanded TIFF/OpenImageIO support.
-* Repaired shared static OpenImageIO plugin dependency ownership in `5ca436c3ba6265f6431deaf7348332940051686d`; the complete post-repair later-format accumulation matrix remains Windows validation pending.
+* Repaired shared static OpenImageIO plugin dependency ownership in `5ca436c3ba6265f6431deaf7348332940051686d`; the complete current-main accumulation matrix remains Windows validation pending.
+* Aligned `ImagingIO` package documentation with the implemented HEIF/AVIF and TIFF policies and replaced later-format roadmap shorthand with the exact 16-target repository-owned Debug/Release matrix and expected totals.
+* Kept positive real-camera RAW decode, real 8/10-bit AVIF/HEIC decode and animated-WebP rejection as separately reported supplementary interoperability evidence because provenance-reviewed fixtures are not stored in the repository.
 
 ### `plugin/exr`
 
@@ -55,6 +57,7 @@
 * Reconciled README and architecture documentation with the implemented framework, still-image expansion, `plugin/exr`, and FFmpeg first-slice boundaries.
 * Reconciled package catalogue, status/roadmap, package-layout guidance, and this changelog so implemented work is no longer described as planned.
 * Formalized three distinct state labels: implemented, Windows-proven, and platform validation pending.
+* Made repository test package names and expected totals the validation authority instead of format-name roadmap shorthand.
 * `docs/ACTIVE_WORK.md` remains the recovery authority and records the exact published checkpoint, validation evidence, and next accumulated validator action.
 
 ### Deferred next scope
