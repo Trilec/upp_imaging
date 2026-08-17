@@ -1,154 +1,153 @@
 # Package Layout
 
-This repository is one U++ nest that can host many independent packages.
+This repository is one U++ nest containing independently usable packages.
 
-Rules for package layout:
+## Core layout rules
 
-- one repo/nest, many packages
-- each package should depend only on what it needs
-- third-party source should stay close to the package that owns it
-- future packages should be importable independently when practical
+- one repository/nest, many packages;
+- each package depends only on what it needs;
+- third-party source stays close to the package that owns it;
+- application code uses stable public packages, not strict `_src`, generated-header or static-registration packages;
+- public package boundaries hide strict-source filesystem layout;
+- source manifests are explicit; recursive source globs must not be used to hide missing dependency/source ownership;
+- do not link strict and stable implementations of the same underlying library into one ordinary executable;
+- generated executables/images belong under ignored output directories;
+- machine-specific U++ nest configuration is not committed.
 
-Expected dependency direction:
+## Dependency direction
 
-- `zlib_src` is the strict upstream-source base package
-- `zlib` is the user-facing compatibility layer
-- on Windows, `zlib` resolves to U++ `plugin/z` to coexist with GUI/plugin packages
-- on non-Windows targets, `zlib` delegates to `zlib_src`
-- `libpng_src` is the strict upstream-source libpng package and depends on `zlib_src`
-- `libpng` is the user-facing libpng layer and currently compiles imported libpng source against `zlib`
-- `minizip_ng_src` is the strict upstream-source minizip-ng package and depends on `zlib`
-- `minizip_ng` is the user-facing minizip-ng layer and depends on `minizip_ng_src` and `zlib`
-- `imath_src` is the strict upstream-source Imath package
-- `imath` is the user-facing Imath layer and currently delegates to `imath_src`
-- `libdeflate_src` is the strict standalone libdeflate package
-- `libdeflate` is the user-facing libdeflate layer and currently delegates to `libdeflate_src`
-- `openjph_src` is the strict standalone OpenJPH package
-- `openjph` is the user-facing OpenJPH layer and currently delegates to `openjph_src`
-- `iex_src` is the strict upstream-source Iex lower layer
-- `ilmthread_src` is the strict upstream-source IlmThread lower layer and depends on `iex_src`
-- `openexr_core_src` is the lower-level OpenEXRCore source package
-- `openexr_core` is the stable lower-level OpenEXRCore package
-- `openexr_src` is the full strict imported-source OpenEXR 3.4.13 high-level 96-source package and depends on `imath_src`, `iex_src`, `ilmthread_src`, and `openexr_core_src`
-- `openexr` is the stable application-facing high-level package and depends on `openexr_src`
-- `openexr_io` is the narrow U++ scanline RGBA helper layered on `openexr_core`
-- `fmt_src` is the strict upstream fmt header-only package
-- `fmt` is the user-facing fmt layer and currently depends on `fmt_src`
-- `robinmap_src` is the strict upstream robin-map header-only package
-- `robinmap` is the user-facing robin-map layer and currently depends on `robinmap_src`
-- `openimageio_headers` owns the strict upstream `OpenImageIO/` public-header tree
-- `openimageio_src` compiles pinned upstream OpenImageIO 3.1.15.0 sources directly; static OpenEXR and PNG plugins are integrated
-- `OpenImageIO` is the stable user-facing wrapper for OpenImageIO
-- `oiio` is the temporary compatibility-forwarding package
-- `opencolorio_src` builds imported OpenColorIO 2.5.2 directly and depends on `expat`, `yaml_cpp`, `pystring`, `minizip_ng`, `imath`, and `zlib`
-- `opencolorio_src/OCIO.h` is the strict source-boundary wrapper used by source probes
-- `OpenColorIO` is the canonical user-facing wrapper package
-- `OpenColorIO` is the sole public OpenColorIO package; the old `opencolorio` public name is not provided because Windows cannot host case-only package directories
-- `ImagingCore` is the Core-only backend-neutral framework package; its contract boundary is validated by `imaging_core_test`
+```text
+pinned / strict upstream implementation
+        ↓
+stable direct application package
+        ↓
+backend-neutral Upp::Imaging framework
+        ↓
+application / diagnostic integration
+```
 
-Current zlib package policy:
+FFmpeg is a parallel stable-direct media stack and does not depend upward into `Upp::Imaging`.
 
-- `zlib_src` builds imported upstream zlib 1.3.2 directly
-- `zlib` provides a stable include path for normal apps
-- on Windows/Core, `zlib` resolves through U++ `plugin/z` to avoid duplicate symbols
-- this Windows provider also satisfies the minimum zlib version used by the OCIO dependency foundation
-- strict proof of vendored upstream linkage belongs to `zlib_src_test`
+## Compression and image foundations
 
-Current libpng package policy:
+- `zlib_src` owns pinned upstream zlib source proof.
+- `zlib` is the stable compatibility layer; on Windows/Core it resolves through U++ `plugin/z` to avoid duplicate symbols.
+- `libpng_src` owns pinned libpng source and strict proof; `libpng` is the stable application route.
+- `imath_src` owns pinned Imath source; `imath` is the stable route.
+- `libdeflate_src` / `libdeflate` and `openjph_src` / `openjph` follow the same strict/stable split.
+- `libjpeg_turbo_src` / `libjpeg_turbo` and `libtiff_src` / `libtiff` keep codec implementation details below their stable application packages.
+- `fmt_src` / `fmt` and `robinmap_src` / `robinmap` retain the strict/stable split.
 
-- `libpng_src` builds imported upstream libpng 1.6.58 directly
-- `libpng_src` depends on `zlib_src`
-- `libpng` provides a stable include path for normal apps
-- `libpng` compiles imported libpng source against `zlib`
-- strict proof of vendored upstream linkage belongs to `libpng_src_test`
+## OpenEXR stack
 
-Current Imath package policy:
+- `iex_src` owns the exception/error layer.
+- `ilmthread_src` owns the threading layer and depends on `iex_src`.
+- `openexr_core_src` owns lower-level OpenEXRCore source.
+- `openexr_core` is the stable lower-level application package.
+- `openexr_src` owns the pinned high-level OpenEXR 3.4.13 implementation and depends on the strict lower layers.
+- `openexr` is the stable high-level application package.
+- `openexr_io` is the separate narrow U++ scanline-RGBA helper over `openexr_core`.
 
-- `imath_src` builds imported upstream Imath 3.2.2 directly
-- `imath` provides a stable include path for normal apps
-- `imath` currently delegates to `imath_src`
-- strict proof of vendored upstream linkage belongs to `imath_src_test`
+Strict and stable OpenEXR tests/probes remain separate so one target does not pull duplicate implementations.
 
-Current libdeflate package policy:
+## OpenColorIO stack
 
-- `libdeflate_src` builds official standalone libdeflate 1.25 directly
-- `libdeflate` provides a stable include path for normal apps
-- `libdeflate` currently delegates to `libdeflate_src`
-- strict proof of vendored upstream linkage belongs to `libdeflate_src_test`
+- `opencolorio_src` owns pinned OpenColorIO 2.5.2 implementation source.
+- It depends on its explicit stable prerequisite packages including `expat`, `yaml_cpp`, `pystring`, `minizip_ng`, `imath` and `zlib`.
+- `OpenColorIO` is the sole canonical public application package.
+- The old lowercase public package name is intentionally not provided on Windows because package paths cannot differ only by case.
+- Strict validation belongs to `opencolorio_src_test`; public-boundary validation belongs to `opencolorio_test`; GUI link coverage remains separate.
 
-Current OpenJPH package policy:
+## OpenImageIO stack
 
-- `openjph_src` builds official standalone OpenJPH 0.26.3 directly
-- `openjph` provides a stable include path for normal apps
-- `openjph` currently delegates to `openjph_src`
-- strict proof of vendored upstream linkage belongs to `openjph_src_test`
+- `openimageio_headers` owns the strict upstream `OpenImageIO/` public-header tree and compiles no implementation source.
+- `openimageio_src` and `openimageio_util_src` compile the pinned OpenImageIO 3.1.15.0 implementation.
+- static format-registration packages own the selected OpenImageIO plugins and declare every third-party header/dependency they directly consume;
+- `OpenImageIO` is the canonical public application package;
+- `oiio` is a compatibility forwarder, not a second implementation.
 
-Current OpenEXR package policy:
+The original Windows-proven OpenEXR/PNG route remains the baseline. Code-side static plugin support now extends through the current still-image format line: JPEG XL, HDR/RGBE, DPX/Cineon, RAW, WebP, decode-only HEIF/AVIF and TIFF. The shared dependency closure repair is `5ca436c3ba6265f6431deaf7348332940051686d`; current accumulated Windows validation is still pending.
 
-- `iex_src` is packaged and tested as the exception/error layer
-- `ilmthread_src` is packaged and tested as the threading layer
-- `openexr_core_src` is the lower-level OpenEXRCore source package
-- `openexr_core` is the stable lower-level OpenEXRCore package
-- `openexr_src` is the strict high-level OpenEXR 3.4.13 package
-- `openexr` is the stable application-facing high-level OpenEXR package
-- `openexr_io` is the narrow scanline RGBA helper
-- `openexr_src_probe` checks the strict object/header boundary
-- `openexr_src_test` checks the strict high-level file round-trip
-- `openexr_test` checks the stable high-level file round-trip
+Do not describe a format as Windows-accepted through OpenImageIO merely because its plugin/source is present.
 
-Current OpenColorIO package policy:
+## `Upp::Imaging` framework
 
-- `opencolorio_src` builds imported OpenColorIO 2.5.2 directly
-- `OpenColorIO` is the canonical application-facing wrapper
-- `opencolorio_src` depends on `expat`, `yaml_cpp`, `pystring`, `minizip_ng`, `imath`, and `zlib`
-- strict proof of vendored upstream linkage belongs to `opencolorio_src_test`
-- stable proof of the public boundary belongs to `opencolorio_test`
-- `opencolorio_gui_link_test` covers the GUI linking surface
+All framework packages are implemented.
 
-Current OpenImageIO package policy:
+- `ImagingCore` depends only on U++ Core.
+- `ImagingIO` depends on `ImagingCore` and `OpenImageIO`; OIIO types remain private.
+- `ImagingColor` depends on `ImagingCore` and `OpenColorIO`; OCIO types remain private.
+- `ImagingAnalysis` depends only on `ImagingCore` and stays GUI-independent.
+- `ImagingDiagnostics` depends only on `ImagingCore` and stays GUI-independent.
+- `Imaging` is the convenience umbrella over all five framework packages.
+- `Imaging` does not automatically include `plugin/exr` or FFmpeg.
 
-- `openimageio_headers` owns the strict upstream `OpenImageIO/` include tree, exports the native include route, and does not compile OIIO implementation source
-- `openimageio_src` builds imported OpenImageIO 3.1.15.0 directly
-- `openimageio_plugin_openexr` and `openimageio_plugin_png` provide static format registration
-- `OpenImageIO` is the current user-facing wrapper and is the package with validated EXR/PNG integration
-- `openimageio_io_test` validates the EXR/PNG integration path through `OpenImageIO`
-- JPEG and TIFF are not yet routed through the OIIO boundary
-- dynamic plugin loading is not validated
+Established Windows framework baseline:
 
-Current planned prerequisite direction:
+- `ImagingCore` 48/0;
+- `ImagingIO` 79/0 baseline;
+- `ImagingColor` 66/0 plus independent OCIO 15/0;
+- `ImagingAnalysis` 41/0;
+- `ImagingDiagnostics` 33/0;
+- `Imaging` 6/0.
 
-- `openexr`
-- `imath`
-- `zlib`
-- `libpng`
-- `libjpeg_turbo`
-- `libtiff`
-- `OpenColorIO`
-- `fmt`
-- `robinmap`
+Later-format `ImagingIO` accumulation remains pending after the static OpenImageIO dependency repair.
 
-Current prerequisite coexistence check:
+## Raster integration
 
-- `openimageio_prereq_test` passes against the stable prerequisite stack under CLANGx64
-- `openimageio_io_test` validates the EXR/PNG integration path under CLANGx64
+`plugin/exr` is implemented as an opt-in display-oriented `StreamRaster` / `Upp::Image` bridge.
 
-Planned framework dependency direction:
+It is deliberately separate from full-fidelity `ImagingIO`, OpenImageIO and OpenEXR APIs. It must remain opt-in and must not silently alter ordinary U++ raster behaviour.
 
-- `ImagingCore` depends on `Core`
-- `ImagingIO` depends on `ImagingCore` and `OpenImageIO`
-- `ImagingColor` depends on `ImagingCore` and `OpenColorIO`
-- `ImagingAnalysis` depends on `ImagingCore`
-- `ImagingDiagnostics` depends on `ImagingCore`
-- `Imaging` umbrella depends on all five framework packages
-- `plugin/exr` remains opt-in and is not included automatically by `Imaging`
+The current focused contract is 22 checks and remains Windows Debug/Release pending.
 
-Conflict rule:
+## FFmpeg stack
 
-- do not link strict and stable implementations of the same library into one normal application executable
+FFmpeg is a separate media subsystem.
 
-Examples:
+```text
+application
+    ↓
+FFmpeg
+    ├── ffmpeg_avutil_src
+    ├── ffmpeg_avcodec_src
+    ├── ffmpeg_avformat_src
+    └── ffmpeg_swscale_src
+            ↓
+      ffmpeg_headers
+```
 
-- good: `libpng_src_roundtrip_test` uses `libpng_src` only
-- good: `libpng_roundtrip_test` uses `Core + libpng`
-- bad: one target uses both `libpng_src` and `libpng`
-- reason: both layers may compile library objects and can cause duplicate symbols
+Rules:
+
+- `ffmpeg_headers` owns repository-generated equivalent config/public headers and compiles no implementation source;
+- implementation packages compile explicit source manifests reconstructed from the exact pinned upstream Makefiles/configure selections;
+- `FFmpeg` is the stable direct application package and forwards standard FFmpeg API types;
+- generated registries remain checked in but are not compiled as standalone header-package translation units;
+- required upstream materializer/duplicate objects are owned explicitly by the implementation package that needs them;
+- no recursive source globs;
+- first-slice feature policy remains scalar LGPL decode only: no threads/network/external codecs/filters/devices/audio-resample/CLI/encoding, no external/inline assembly, no hardware acceleration.
+
+Exact pin: FFmpeg `n9.0.1`, commit `bf1b838f2ab88b4f8fd83443325c782ea0e0f7fa`.
+
+The current avformat manifest explicitly includes `libavformat/to_upper4.c` and `libavformat/mpegaudiotabs.c` because pinned FFmpeg materializes those library symbols separately.
+
+## Conflict examples
+
+Good:
+
+- a strict source test links only its strict implementation package;
+- an ordinary application links only the corresponding stable public package;
+- `ImagingCore` can be used without OpenImageIO/OpenColorIO;
+- `plugin/exr` is added only by applications that explicitly want raster preview integration.
+
+Bad:
+
+- one target links both strict and stable implementations of the same library;
+- a public framework header exposes `OIIO::*`, `OCIO::*` or strict-source paths;
+- a missing source/dependency is hidden with a recursive source glob;
+- FFmpeg is added to `ImagingIO` or the `Imaging` umbrella without a separate architecture decision;
+- a code-complete format is described as Windows-accepted before its accumulated platform gate is green.
+
+## Engineering rhythm
+
+Implement coherent dependency/format/source slices, review the full touched dependency boundary, publish recoverable checkpoints, and validate accumulated matrices at meaningful boundaries. Do not turn each compiler error or one-line correction into its own milestone.
