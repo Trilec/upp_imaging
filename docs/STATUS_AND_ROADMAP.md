@@ -1,131 +1,173 @@
 # Status And Roadmap
 
+## Status labels
+
+- **implemented** — source/package/test contract exists and has passed source/static review;
+- **Windows-proven** — the relevant U++ CLANGx64 acceptance has been recorded;
+- **platform validation pending** — implementation exists but the current accumulated Windows checkpoint is not yet green.
+
+For the exact in-flight boundary, read `docs/ACTIVE_WORK.md` after fetching current `main`.
+
 ## Current framework status
 
-- Architecture and documentation pivot: complete.
-- Public OpenImageIO and OpenColorIO package renames: complete.
-- ImagingCore: implemented and validated.
-- ImagingIO: EXR/PNG contract is Windows-accepted; JPEG XL support is implemented code-side and awaiting focused Windows acceptance.
-- ImagingColor: implemented and Windows-accepted with OpenColorIO as the private backend.
-- ImagingAnalysis: implemented and Windows-accepted as a Core-only statistics, histogram and source-probe layer.
-- ImagingDiagnostics: implemented and Windows-accepted as a Core-only deterministic comparison and structured reporting layer.
-- Imaging umbrella: implemented and Windows-accepted as the standard forwarding package over all five framework packages.
-- plugin/exr: implemented code-side as an opt-in display-oriented `StreamRaster` bridge; focused Windows acceptance is tracked independently.
-- JPEG XL: pinned libjxl 0.12.0 backend, static OpenImageIO registration and strict ImagingIO slice are implemented code-side; Windows acceptance is pending.
-- LumaPix: paused; retained as reference material only.
+- `ImagingCore`: implemented and Windows-proven, 48/0.
+- `ImagingIO`: implemented; EXR/PNG baseline Windows-proven at 79/0; later-format accumulation pending.
+- `ImagingColor`: implemented and Windows-proven, 66/0 plus independent OCIO 15/0.
+- `ImagingAnalysis`: implemented and Windows-proven, 41/0.
+- `ImagingDiagnostics`: implemented and Windows-proven, 33/0.
+- `Imaging` umbrella: implemented and Windows-proven, 6/0.
+- `plugin/exr`: implemented; expanded 22-check focused Windows Debug/Release acceptance pending.
+- FFmpeg first slice: implementation/source ownership closed; current-main Debug/Release and repeatability acceptance pending.
+- LumaPix: paused/reference only; `upp_imaging` does not depend on it.
 
-## ImagingIO supported subset
+## Still-image format line
 
-- one image and one mip level only
-- non-deep, two-dimensional images only
-- EXR Float16 and Float32
-- EXR Gray, GrayAlpha, RGB, RGBA, alpha-only and named MultiChannel
-- EXR non-zero and negative data-window origins
-- PNG UInt8 and UInt16
-- PNG Gray, GrayAlpha, RGB and RGBA at zero origin
-- JPEG XL UInt8, UInt16, Float16 and Float32
-- JPEG XL Gray, RGB and RGBA at zero origin
-- JPEG XL output is explicitly lossless
-- transactional loads and same-directory transactional saves
-- completed save candidates are reopened, specification-checked and fully decoded before destination replacement
-- typed scalar and homogeneous numeric-array metadata
-- explicit backend-managed metadata omission policy
+The code-side format expansion is implemented for:
 
-Unsupported structures and formats fail closed with stable diagnostics: multipart, mipmapped, deep, volume, mixed-channel-format, integer EXR, floating PNG, arbitrary PNG/JPEG XL multichannel files, JPEG XL GrayAlpha, and non-zero-origin PNG/JPEG XL.
+- OpenEXR and PNG baseline;
+- JPEG XL;
+- Radiance HDR/RGBE;
+- DPX and input-only Cineon according to the documented subset;
+- camera RAW input;
+- exact-lossless WebP according to the documented subset;
+- decode-only HEIF/AVIF;
+- TIFF/OpenImageIO expansion.
 
-## ImagingColor supported subset
+Important acceptance state:
 
-- built-in OpenColorIO configurations and explicit OCIO config files
-- backend-neutral config inspection for colour spaces, displays, looks and defaults
-- named source-to-destination colour-space transforms
-- source/display/view display transforms
-- RGB and RGBA layouts
-- named MultiChannel images with one unambiguous `R`, `G`, `B` triplet
-- UInt8, UInt16, Float16 and Float32 storage
-- all depth slices processed independently
-- exact preservation of alpha and non-RGB channels
-- preservation of image specification, data window, channel names, sample type and metadata
-- transactional failures: output is not changed unless processing completes successfully
+- JPEG XL prerequisite/backend is Windows-proven 9/0 Debug and 9/0 Release after `a66e1192025032823e93a890e16cc3874034a8a4`.
+- Shared static OpenImageIO plugin dependency repair is `5ca436c3ba6265f6431deaf7348332940051686d`.
+- The complete post-`5ca436c3` OpenImageIO + later-format accumulation matrix is still platform-validation pending.
+- Do not describe the later format line as Windows-accepted until that accumulation pass is green.
 
-Gray and GrayAlpha transforms are deliberately unsupported in the initial slice because converting an RGB colour result back to one luminance channel would require an application policy. Ambiguous MultiChannel RGB mappings are rejected with stable diagnostics.
+## ImagingIO policy
 
-## ImagingAnalysis supported subset
+The framework remains fail-closed outside each documented format subset and preserves a shared transactional load/save contract.
 
-- Core-only dependency boundary with no OpenImageIO, OpenColorIO or GUI types
-- per-channel finite/non-finite counts, min/max and mean
-- normalized `[0,1]` histograms with explicit below/above-range evidence
-- source-coordinate pixel probes across non-zero data windows and depth slices
-- UInt8 and UInt16 normalized to `[0,1]`
-- Float16 and Float32 analyzed in source numeric space
-- canonical and named MultiChannel images, with every channel analyzed
-- transactional failure outputs and stable `IMGANALYSIS_*` diagnostics
+Established baseline includes:
 
-Waveforms and vectorscopes remain later ImagingAnalysis scope. Workbench GUI controls remain application-level and are not dependencies of the framework package.
+- single-image, non-deep 2D handling according to the documented format policy;
+- typed `ImageData`/`ImageSpec` contracts;
+- stable structured diagnostics;
+- same-directory transactional saves;
+- completed save candidates reopened and verified before destination replacement;
+- backend-managed metadata omission policy rather than accidental leakage of OIIO implementation state.
 
-## ImagingDiagnostics supported subset
+Format-specific constraints remain in `ImagingIO/FormatPolicy.*` and `ImagingIO/README.md`; this roadmap must not broaden those claims.
 
-- Core-only dependency boundary with no OpenImageIO, OpenColorIO or GUI types
-- absolute/relative scalar numerical comparisons with deterministic NaN/infinity handling
-- numerical-array comparison summaries with mismatch count, first mismatch and maximum errors
-- stable names for ImagingCore sample types, channel layouts, result codes and diagnostic severities
-- deterministic structured reports for image specifications, metadata, results and diagnostics
-- operation reports combining operation name, elapsed milliseconds, result and ordered diagnostics
-- sorted metadata keys and deterministic text rendering for tests, logs and future ImagingWorkbench presentation
-- transactional failures with stable `IMGDIAG_*` diagnostics
+## `plugin/exr`
 
-`ImagingCore::Diagnostics` remains the authoritative diagnostics container. ImagingDiagnostics formats and compares existing Core contracts rather than duplicating backend or GUI state.
+The opt-in EXR `StreamRaster` bridge is implemented for display-oriented preview, not full-fidelity EXR interchange.
 
-## plugin/exr preview subset
+Current focused contract covers:
 
-- opt-in `StreamRaster` integration; it is not pulled in by the `Imaging` umbrella
-- reads encoded EXR data from the supplied U++ `Stream` through OpenImageIO `IOProxy`, with no temporary files
-- ordinary single-image, single-mip, non-deep 2D EXR only
-- named RGB/RGBA, Gray/GrayAlpha, one-channel masks, and named MultiChannel images with an unambiguous RGB triplet
-- straight RGBA8 preview output with finite source values clamped to `[0,1]` and rounded to 8-bit
-- no implicit colour transform, exposure adjustment or tone mapping
-- no claim to preserve floating-point samples, arbitrary channels, metadata, source data-window coordinates, multipart/deep/mip structure or HDR values outside the display clamp
+- encoded EXR from supplied U++ `Stream`;
+- ordinary single-image/single-mip/non-deep 2D preview;
+- RGB/RGBA;
+- Gray/GrayAlpha;
+- one-channel masks;
+- named MultiChannel images with an unambiguous RGB triplet;
+- straight RGBA8 preview output;
+- finite values clamped to `[0,1]` and rounded to 8-bit;
+- non-finite preview samples mapped deterministically to zero;
+- truthful opaque/alpha reporting;
+- invalid/truncated input rejection and fixture cleanup.
 
-Full-fidelity EXR work remains the responsibility of ImagingIO or the direct OpenImageIO/OpenEXR APIs.
+The current focused test is 22 checks and awaits Windows Debug/Release acceptance.
 
-## JPEG XL implementation
+## FFmpeg first slice
 
-- pins upstream libjxl 0.12.0 at commit `a7a9c787341cf703dede03c2009fa460cae5e5df`
-- uses libjxl's recursively pinned Brotli 1.2.0, Highway 1.2.0 and skcms source dependencies
-- builds the codec directly as a U++ source package through `import.ext`; no system libjxl or CMake build step
-- enables JPEG XL container boxes and disables lossless JPEG reconstruction/transcoding
-- uses repository-owned static export/version headers in place of CMake-generated headers
-- registers OpenImageIO 3.1.15.0's JPEG XL reader/writer statically through the stable `OpenImageIO` package
-- focused direct tests cover backend versioning, thread runner, lossless encode/decode, OIIO registration, RGB/RGBA alpha preservation and malformed-input refusal
-- focused ImagingIO tests cover the accepted sample/layout matrix, exact lossless pixels, stable refusal diagnostics and transactional replacement
+FFmpeg remains a separate media subsystem. It is not part of `ImagingIO` or the `Imaging` umbrella.
 
-JPEG XL GrayAlpha and arbitrary extra-channel data remain deferred until the backend adapter can expose their semantics without ambiguity.
+Pinned upstream:
 
-## Next implementation order
+- signed release `n9.0.1`;
+- exact commit `bf1b838f2ab88b4f8fd83443325c782ea0e0f7fa`.
 
-1. Windows acceptance of the completed JPEG XL slice may proceed in parallel with further code-side work.
-2. HDR/RGBE.
-3. DPX/Cineon.
-4. RAW image support.
-5. WebP.
-6. HEIF/AVIF.
-7. Additional TIFF/OpenImageIO coverage.
-8. FFmpeg as a separate major milestone.
+Implemented first slice:
 
-For every additional format:
+- `ffmpeg_headers` generated/public configuration boundary;
+- scalar `ffmpeg_avutil_src`;
+- native H.264-only `ffmpeg_avcodec_src`;
+- MOV/MP4 + local-file-only `ffmpeg_avformat_src`;
+- scalar `ffmpeg_swscale_src`;
+- stable direct `FFmpeg` package;
+- deterministic embedded one-frame H.264/MP4 decode-to-RGBA test.
 
-1. package and validate required upstream dependencies;
-2. compile and register the OpenImageIO plugin where applicable;
-3. validate direct OpenImageIO loading and saving;
-4. validate the ImagingIO path;
-5. add a format-specific plugin only where ordinary Upp::Image workflows benefit.
+Deliberately disabled for this slice:
+
+- threads;
+- network protocols;
+- external codecs;
+- filters/devices;
+- audio resampling;
+- CLI/encoding;
+- external/inline assembly;
+- hardware acceleration.
+
+Current expected acceptance gates:
+
+1. `ffmpeg_headers_test` — 8/0, including generated-config parity audit;
+2. `ffmpeg_avutil_test` — 13/0;
+3. `ffmpeg_avcodec_test` — 12/0;
+4. `ffmpeg_avformat_test` — 14/0;
+5. `ffmpeg_swscale_test` — 13/0;
+6. `ffmpeg_first_frame_test` — 27/0.
+
+Recorded Windows evidence from the earlier acceptance run:
+
+- precheck/submodule pin passed;
+- old `ffmpeg_headers_test` contract passed 7/0 before the new parity check was added;
+- `ffmpeg_avutil_test` Debug passed 13/0;
+- `ffmpeg_avcodec_test` Debug passed 12/0;
+- the generated `CONFIG_*` codec errors are closed for that source/config state;
+- the run then reached `ffmpeg_avformat_test` link and failed only on `ff_toupper4` and `ff_mpa_freq_tab`.
+
+That avformat failure is repaired in published source ownership:
+
+- `libavformat/to_upper4.c` materializes `ff_toupper4`;
+- `libavformat/mpegaudiotabs.c` materializes `ff_mpa_freq_tab` and related tables;
+- no new codec/muxer/protocol/feature was enabled;
+- the parallel swscale Makefile-to-manifest audit found no analogous ownership gap.
+
+Current-main avformat/swscale/first-frame Debug, all Release gates and first-frame repeatability remain platform-validation pending.
+
+## Current closure milestone
+
+The current phase is **final acceptance**, not feature discovery.
+
+Closure requires:
+
+1. repaired OpenImageIO/later-format accumulation in Debug and Release;
+2. `plugin_exr_test` 22/0 in Debug and Release;
+3. the complete six-gate FFmpeg Debug matrix;
+4. the same six FFmpeg gates in Release;
+5. five Debug and five Release repetitions of `ffmpeg_first_frame_test`, every run 27/0 with clean shutdown/cleanup;
+6. any substantive current-main failures repaired as coherent root-cause source/config/dependency slices, followed by focused regression and accumulation rerun;
+7. repository docs/recovery state updated to mark the bounded generation complete only after platform evidence is green.
 
 ## Dependency direction
 
-- ImagingCore depends on U++ Core only.
-- ImagingIO depends on ImagingCore and OpenImageIO; OIIO types remain private.
-- ImagingColor depends on ImagingCore and OpenColorIO; OCIO types remain private.
-- ImagingAnalysis depends on ImagingCore only.
-- ImagingDiagnostics depends on ImagingCore only and remains GUI-independent.
-- Imaging depends on all five framework packages.
-- format backend source packages do not depend on the framework layer.
-- plugin/exr remains opt-in and is not included automatically by Imaging.
+- `ImagingCore` depends on U++ Core only.
+- `ImagingIO` depends on `ImagingCore` and OpenImageIO privately; OIIO types remain out of public headers.
+- `ImagingColor` depends on `ImagingCore` and OpenColorIO privately; OCIO types remain out of public headers.
+- `ImagingAnalysis` depends on `ImagingCore` only.
+- `ImagingDiagnostics` depends on `ImagingCore` only and remains GUI-independent.
+- `Imaging` depends on all five framework packages.
+- format/backend source packages do not depend upward on the framework.
+- `plugin/exr` remains opt-in and is not automatically included by `Imaging`.
+- FFmpeg remains a parallel direct media stack and is not automatically included by `Imaging`.
+
+## Deferred next scope
+
+The following are deliberately **not** blockers to the current 100% closure milestone:
+
+- FFmpeg SIMD/external assembly;
+- hardware acceleration;
+- broader containers/codecs;
+- audio;
+- seeking/index behaviour;
+- backend-neutral media wrapper;
+- waveform/vectorscope expansion.
+
+Do not revive these while current-generation acceptance defects remain.
