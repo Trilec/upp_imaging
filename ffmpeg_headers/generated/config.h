@@ -245,6 +245,7 @@
 #define HAVE_MEMALIGN 0
 #define HAVE_MALLOC_H 1
 #define HAVE_IO_H 1
+#define HAVE_DIRECT_H 1
 #define HAVE_UNISTD_H 0
 #define HAVE_WINDOWS_H 1
 #define HAVE_MAPVIEWOFFILE 1
