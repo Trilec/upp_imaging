@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <cstring>
 #include <initializer_list>
+#include <limits>
 
 using namespace Upp;
 using namespace Upp::Imaging;
@@ -115,6 +116,50 @@ CONSOLE_APP_MAIN
 	Check(state, gray_raster.Open(gray_stream) && RawPixel(gray_raster, 0, 0, gray_pixel) &&
 	      gray_pixel.r == 64 && gray_pixel.g == 64 && gray_pixel.b == 64 && gray_pixel.a == 255,
 	      "Gray preview replicates to opaque RGB");
+	Check(state, gray_raster.GetInfo().kind == IMAGE_OPAQUE,
+	      "Gray raster reports opaque preview");
+
+	ImageData gray_alpha = MakeFloatImage(ChannelLayout::GrayAlpha, 2,
+	                                      Names({"Y", "A"}), 1, 2, 1);
+	const float gray_alpha_values[] = {
+		0.75f, 0.25f,
+		std::numeric_limits<float>::quiet_NaN(),
+		std::numeric_limits<float>::infinity(),
+	};
+	for(int i = 0; i < 4; ++i)
+		SetFloat(gray_alpha, i, gray_alpha_values[i]);
+	String gray_alpha_path = AppendFileName(root, "preview-gray-alpha.exr");
+	Check(state, SaveImageFile(gray_alpha_path, gray_alpha, &diagnostics).IsOk(),
+	      "GrayAlpha EXR fixture save");
+	StringStream gray_alpha_stream(LoadFile(gray_alpha_path));
+	EXRRaster gray_alpha_raster;
+	RGBA gray_alpha_first = {}, gray_alpha_second = {};
+	Check(state, gray_alpha_raster.Open(gray_alpha_stream) &&
+	      RawPixel(gray_alpha_raster, 0, 0, gray_alpha_first) &&
+	      gray_alpha_first.r == 191 && gray_alpha_first.g == 191 &&
+	      gray_alpha_first.b == 191 && gray_alpha_first.a == 64,
+	      "GrayAlpha preview preserves straight alpha");
+	Check(state, RawPixel(gray_alpha_raster, 1, 0, gray_alpha_second) &&
+	      gray_alpha_second.r == 0 && gray_alpha_second.g == 0 &&
+	      gray_alpha_second.b == 0 && gray_alpha_second.a == 0,
+	      "non-finite preview samples map to zero");
+	Check(state, gray_alpha_raster.GetInfo().kind == IMAGE_ALPHA,
+	      "GrayAlpha raster reports alpha preview");
+
+	ImageData mask = MakeFloatImage(ChannelLayout::MultiChannel, 1,
+	                                Names({"mask"}), -1, 1, 1);
+	SetFloat(mask, 0, 0.6f);
+	String mask_path = AppendFileName(root, "preview-mask.exr");
+	Check(state, SaveImageFile(mask_path, mask, &diagnostics).IsOk(),
+	      "single-channel mask EXR fixture save");
+	StringStream mask_stream(LoadFile(mask_path));
+	EXRRaster mask_raster;
+	RGBA mask_pixel = {};
+	Check(state, mask_raster.Open(mask_stream) && RawPixel(mask_raster, 0, 0, mask_pixel) &&
+	      mask_pixel.r == 153 && mask_pixel.g == 153 &&
+	      mask_pixel.b == 153 && mask_pixel.a == 255 &&
+	      mask_raster.GetInfo().kind == IMAGE_OPAQUE,
+	      "single-channel mask previews as opaque gray");
 
 	ImageData multi = MakeFloatImage(ChannelLayout::MultiChannel, 5,
 	                                 Names({"Z", "R", "G", "B", "A"}), 4, 1, 1);
