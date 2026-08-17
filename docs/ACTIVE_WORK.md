@@ -14,25 +14,26 @@ This file is the recovery authority for work currently in flight. After fetching
 **TASK**
 
 - Still-image validator lane: validate repaired aggregate OpenImageIO + later still-image formats as one accumulation pass.
-- FFmpeg validator lane: first Windows acceptance stopped at the `ffmpeg_headers_test` Debug compile gate on current-main packaging; the owning header-package manifest is repaired and requires a focused rerun before the rest of the matrix.
+- FFmpeg validator lane: the repaired `ffmpeg_headers_test` Windows Debug gate now passes 7/0. The second acceptance stopped compiling `ffmpeg_avutil_src` because the repository-owned generated config omitted FFmpeg's probed C99/UCRT `MATH_FUNCS` capability macros; that owning config is repaired and requires a focused rerun before continuing downstream.
 
 **TOUCHED**
 
 Latest FFmpeg corrective checkpoint:
 
-- `ffmpeg_headers/ffmpeg_headers.upp`
+- `ffmpeg_headers/generated/config.h`
 - this recovery file
 
 The completed direct-package slice remains `FFmpeg/*`, `ffmpeg_first_frame_test/*` and `docs/FFMPEG_PLAN.md`.
 
-Earlier source checkpoints remain unchanged: `ffmpeg_headers` generated configuration/submodule content, `ffmpeg_avutil_src`, `ffmpeg_avcodec_src`, `ffmpeg_avformat_src`, `ffmpeg_swscale_src` and their focused tests.
+Earlier source checkpoints remain unchanged: `ffmpeg_headers` package ownership/submodule content, `ffmpeg_avutil_src`, `ffmpeg_avcodec_src`, `ffmpeg_avformat_src`, `ffmpeg_swscale_src` and their focused tests.
 
 **STATUS**
 
 - FFmpeg remains pinned to signed `n9.0.1`, exact commit `bf1b838f2ab88b4f8fd83443325c782ea0e0f7fa`.
 - Generated-equivalent Windows x86_64 / U++ CLANGx64 configuration is static, LGPL-only and scalar: no threads/network/external codecs/filters/devices/audio-resample/CLI/encoding, no external/inline assembly, no hardware acceleration.
-- `ffmpeg_headers` is again a true public-header/generated-config package: the six generated codec/parser/BSF/demuxer/muxer/protocol registry `.c` fragments remain checked in under `generated/` but are no longer standalone package translation units. They are consumed textually by the owning libavcodec/libavformat registry sources through the existing generated include route.
-- `ffmpeg_headers_test` expected result: 7/0.
+- `ffmpeg_headers` is a true public-header/generated-config package: the six generated codec/parser/BSF/demuxer/muxer/protocol registry `.c` fragments remain checked in under `generated/` but are not standalone package translation units. They are consumed textually by the owning libavcodec/libavformat registry sources through the existing generated include route.
+- The generated config now explicitly records the complete FFmpeg `MATH_FUNCS` probe set as available from the Windows UCRT: `atanf`, `atan2f`, `cbrt`, `cbrtf`, `copysign`, `cosf`, `erf`, `exp2`, `exp2f`, `expf`, `hypot`, `isfinite`, `isinf`, `isnan`, `ldexpf`, `llrint`, `llrintf`, `log2`, `log2f`, `log10f`, `lrint`, `lrintf`, `powf`, `rint`, `round`, `roundf`, `sinf`, `trunc`, `truncf`. This prevents `libavutil/libm.h` from emitting conflicting fallback declarations against UCRT `<math.h>`.
+- `ffmpeg_headers_test` expected result: 7/0; Windows Debug has passed 7/0 after the registry-source-set repair.
 - `ffmpeg_avutil_test` expected result: 13/0.
 - `ffmpeg_avcodec_test` expected result: 12/0; public codec registry is native H.264 decoder only, no encoder/parser/BSF.
 - `ffmpeg_avformat_test` expected result: 14/0; public format closure is MOV/MP4 demux + local `file` protocol, no muxers.
@@ -40,8 +41,8 @@ Earlier source checkpoints remain unchanged: `ffmpeg_headers` generated configur
 - Stable direct `FFmpeg` package links the four implementation libraries and forwards standard FFmpeg API types through `FFmpeg/FFmpeg.h`; it adds no Imaging/U++ wrapper policy.
 - `ffmpeg_first_frame_test` expected result: 27/0. It embeds a 1,463-byte one-frame 16x16 Constrained Baseline H.264 MP4, verifies standard 64-bit FNV-1a fixture evidence `0x86d54178fbc2b70a`, exact decoded logical YUV420P FNV-1a `0x54009ba1a158e125`, MOV/H.264 decode, RGBA conversion and cleanup.
 - First-frame packet handling follows FFmpeg's send/receive contract: a packet is retained across `avcodec_send_packet()` `EAGAIN`, receive is attempted before retry, demux errors are preserved, EOF is drained with a null packet, and the swscale pointer is cleared with the other released resources.
-- The FNV evidence review corrected the 64-bit offset basis to the standard `14695981039346656037`; fixture bytes, decoded-frame behavior, package manifests and FFmpeg configuration were unchanged.
-- No successful Windows FFmpeg compile/link/runtime result is claimed yet.
+- The FNV evidence review corrected the 64-bit offset basis to the standard `14695981039346656037`; fixture bytes and decoded-frame behavior are unchanged.
+- No Windows FFmpeg implementation-library link/runtime or end-to-end decode result is claimed yet beyond the public header gate.
 
 **PUBLISHED**
 
@@ -63,7 +64,9 @@ FFmpeg line:
 - `c23a7d515a8a4696f7b7f6f7b1b61f5be89843ce` — harden first-frame send/receive lifecycle and cleanup.
 - `452c66810603d5de8970938298d112bdfdf37359` — correct standard FNV-1a first-frame evidence.
 - `f92b55b3a1fae900d9ef22e221b5fe25f002bfe1` — FFmpeg Windows-acceptance handoff checkpoint that exposed the header-package source-set defect.
-- The header-package registry-fragment repair and this recovery update are committed together; fetch current `main` for the exact corrective checkpoint SHA.
+- `5b195d270811d609b1a4e03394ff7cbe6365879e` — remove generated registry fragments from the header package compilation set.
+- `fa5e72d7ff27180075c7fa71f5bf790cfd3faf81` — complete the Windows UCRT/FFmpeg `MATH_FUNCS` generated-config capabilities after the second acceptance compile failure.
+- This recovery update follows the math-capability repair; fetch current `main` for the exact docs checkpoint SHA.
 
 **VALIDATION**
 
@@ -71,7 +74,8 @@ Completed Windows evidence:
 
 - JPEG XL backend Debug 9/0 and Release 9/0; previous lcms2/gtest/skcms-baseline failures are closed.
 - Prior direct OIIO JPEG XL build stopped on aggregate DPX/OpenEXR and TIFF header visibility; owning package repair is published at `5ca436c3` and remains unvalidated.
-- FFmpeg acceptance at `f92b55b3a1fae900d9ef22e221b5fe25f002bfe1`: clean current-main checkout, required `c23a7d5` ancestor confirmed, upstream submodule initialized at `bf1b838f`; `ffmpeg_headers_test` Debug build failed before linking because six generated registry fragments were compiled standalone from `ffmpeg_headers`. Errors included unknown internal `FFCodec` / `FFCodecParser` / `FFBitStreamFilter` / `FFInputFormat` / `FFOutputFormat` / `URLProtocol` types and undeclared registry symbols. Matrix stopped correctly; no FFmpeg test executable ran and Release was not attempted.
+- FFmpeg acceptance at `f92b55b3a1fae900d9ef22e221b5fe25f002bfe1`: clean current-main checkout, required `c23a7d5` ancestor confirmed, upstream submodule initialized at `bf1b838f`; `ffmpeg_headers_test` Debug failed before linking because six generated registry fragments were compiled standalone from `ffmpeg_headers`. Matrix stopped correctly; no executable ran.
+- FFmpeg acceptance rerun at `5b195d270811d609b1a4e03394ff7cbe6365879e`: clean exact checkpoint and pinned upstream submodule; `ffmpeg_headers_test` Debug built and ran `SUMMARY passed=7 failed=0`, confirming the registry-source-set repair. The next package, `ffmpeg_avutil_src`, then failed compilation in `libavutil/libm.h` with repeated `static declaration ... follows non-static declaration` errors for UCRT math routines because the generated config left FFmpeg's `HAVE_*` math probes undefined. Matrix stopped correctly; no avutil executable, downstream Debug tests, Release tests or repeatability runs occurred.
 
 Static/source review completed:
 
@@ -81,18 +85,20 @@ Static/source review completed:
 - MOV recursion follows through ISO-media -> MPEG4AUDIO and RIFFDEC; IAMF/zlib suggestions remain disabled.
 - Generated codec/parser/BSF/demuxer/muxer/protocol registries are checked in instead of relying on absent configure output.
 - Upstream `libavcodec/allcodecs.c`, `parsers.c` and `bitstream_filters.c` include the generated codec/parser/BSF list fragments only after their internal types/symbol declarations; `libavformat/allformats.c` and `protocols.c` do the same for muxer/demuxer/protocol lists. The U++ implementation packages already compile those owning sources with `../ffmpeg_headers/generated` on their include path, so the fragments must not also be package-level translation units.
+- Pinned FFmpeg `configure` defines a 29-entry `MATH_FUNCS` set and probes each function into the corresponding `HAVE_*` capability. `libavutil/libm.h` conditions its replacement macros/functions on those capabilities. The UCRT provides the ISO C99 math surface used by this set, and Gary's CLANGx64 diagnostics independently showed the affected routines already declared by system `<math.h>`.
+- The math-capability repair changes only generated host capability declarations. It does not alter enabled FFmpeg components, source manifests, public APIs, registry contents, threading, assembly/SIMD, hardware acceleration, networking or external dependencies.
 - x86 architecture identity remains truthful while assembly dispatch is disabled.
 - The direct package depends only on FFmpeg implementation/header packages; no Imaging, CtrlLib, Workbench, external codec or networking dependency was introduced.
 - End-to-end fixture is embedded in test source; no external runtime asset/download is required.
 - First-frame decode lifecycle was re-reviewed against the pinned FFmpeg send/receive API; packet retry/drain/EOF error propagation and swscale cleanup are explicit before Windows handoff.
 - FNV-1a evidence was independently recalculated from the unchanged embedded MP4 and decoded logical YUV420P bytes using the standard 64-bit offset basis.
-- Header-package repair removes only the six generated registry `.c` entries from `ffmpeg_headers.upp`; generated files, implementation manifests, registries, enabled components, tests and public API are unchanged.
 
 Not yet Windows-verified:
 
 - OpenImageIO accumulation pass after `5ca436c3`.
-- Corrected `ffmpeg_headers_test` build/run.
-- Remaining FFmpeg focused/end-to-end tests in Debug and Release, plus repeatability/clean shutdown.
+- Corrected `ffmpeg_avutil_test` build/run after the UCRT math-capability repair.
+- `ffmpeg_avcodec_test`, `ffmpeg_avformat_test`, `ffmpeg_swscale_test` and `ffmpeg_first_frame_test` in Debug.
+- All six FFmpeg tests in Release and first-frame repeatability/clean shutdown.
 
 **NEXT ACTION**
 
@@ -104,10 +110,11 @@ Still-image validator lane (independent):
 FFmpeg validator lane:
 
 1. Fetch/fast-forward current `origin/main`; require clean status and initialize `ffmpeg_headers/upstream` at the pinned commit if needed.
-2. Confirm the corrective header-package checkpoint is an ancestor of current HEAD.
-3. Re-run `ffmpeg_headers_test` Debug first. It must build, run and report 7/0 before proceeding.
-4. If green, continue the accumulated FFmpeg matrix in order: `ffmpeg_avutil_test`, `ffmpeg_avcodec_test`, `ffmpeg_avformat_test`, `ffmpeg_swscale_test`, `ffmpeg_first_frame_test` in Debug and Release, then repeat the end-to-end first-frame test for lifecycle/cleanup stability.
-5. Fail fast on the first current-main compile/link/runtime defect and report evidence without patching.
+2. Confirm the current math-capability corrective checkpoint is an ancestor of HEAD.
+3. Re-run `ffmpeg_headers_test` Debug as a regression gate (expected 7/0), then build/run `ffmpeg_avutil_test` Debug (expected 13/0). The prior `libm.h` static/non-static declaration block must be gone.
+4. If both gates are green, continue Debug in order: `ffmpeg_avcodec_test` 12/0, `ffmpeg_avformat_test` 14/0, `ffmpeg_swscale_test` 13/0, `ffmpeg_first_frame_test` 27/0.
+5. Only after all Debug tests pass, run all six in Release with the same expected totals, then repeat `ffmpeg_first_frame_test` five times in Debug and five times in Release for lifecycle/cleanup stability.
+6. Fail fast on the first current-main compile/link/runtime defect and report evidence without patching.
 
 Implementation lane after Windows evidence:
 
