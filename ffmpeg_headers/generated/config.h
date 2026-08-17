@@ -142,6 +142,37 @@
 #define HAVE_TEMPNAM 0
 #define HAVE_LIBC_MSVCRT 1
 
+/* FFmpeg configure MATH_FUNCS capabilities provided by the Windows UCRT. */
+#define HAVE_ATANF 1
+#define HAVE_ATAN2F 1
+#define HAVE_CBRT 1
+#define HAVE_CBRTF 1
+#define HAVE_COPYSIGN 1
+#define HAVE_COSF 1
+#define HAVE_ERF 1
+#define HAVE_EXP2 1
+#define HAVE_EXP2F 1
+#define HAVE_EXPF 1
+#define HAVE_HYPOT 1
+#define HAVE_ISFINITE 1
+#define HAVE_ISINF 1
+#define HAVE_ISNAN 1
+#define HAVE_LDEXPF 1
+#define HAVE_LLRINT 1
+#define HAVE_LLRINTF 1
+#define HAVE_LOG2 1
+#define HAVE_LOG2F 1
+#define HAVE_LOG10F 1
+#define HAVE_LRINT 1
+#define HAVE_LRINTF 1
+#define HAVE_POWF 1
+#define HAVE_RINT 1
+#define HAVE_ROUND 1
+#define HAVE_ROUNDF 1
+#define HAVE_SINF 1
+#define HAVE_TRUNC 1
+#define HAVE_TRUNCF 1
+
 #define HAVE_GETSYSTEMTIMEASFILETIME 1
 #define HAVE_GETTIMEOFDAY 0
 #define HAVE_CLOCK_GETTIME 0
