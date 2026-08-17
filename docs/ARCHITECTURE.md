@@ -1,196 +1,191 @@
 # Architecture
 
-`upp_imaging` keeps upstream validation, public APIs, narrow helpers, the backend-neutral U++ Imaging framework, testing, and diagnostics separate.
+`upp_imaging` separates strict upstream source ownership, stable direct APIs, backend-neutral U++ imaging contracts, optional raster integration, and the bounded FFmpeg media stack.
 
-## Three layers
+The architecture is designed so that implementation backends can evolve without leaking their types or build layout into application code.
+
+## Layer model
 
 ```text
-Strict upstream infrastructure
-        ├── openimageio_headers
-        ├── openimageio_util_src
-        └── openimageio_src
-                ↓
-Static format registration
-        ├── openimageio_plugin_openexr
-        └── openimageio_plugin_png
-                ↓
-Canonical public application package
-        └── OpenImageIO
-
-Compatibility forwarding package
-        └── oiio
+Pinned / strict upstream source packages
+        ↓
+Stable direct public packages
+        ├── OpenImageIO
+        ├── OpenColorIO
+        ├── openexr / openexr_core
+        ├── libpng / libjpeg_turbo / libtiff / ...
+        └── FFmpeg (separate media stack)
+        ↓
+Backend-neutral Upp::Imaging framework
+        ├── ImagingCore
+        ├── ImagingIO
+        ├── ImagingColor
+        ├── ImagingAnalysis
+        ├── ImagingDiagnostics
+        └── Imaging umbrella
+        ↓
+Application / diagnostic integration
+        ├── opt-in plugin/exr
+        └── ImagingWorkbench
 ```
 
-`ImagingWorkbench` sits on top of the framework as the full-stack diagnostic application. It is not a reusable core package and applications should not depend on it.
-
-Automated tests validate each layer. `ImagingWorkbench` is the visual diagnostic. The two never outrank each other; tests are the formal pass/fail authority, and `ImagingWorkbench` is the full-stack diagnostic authority.
+Strict `_src`, generated-header and static-registration packages are implementation boundaries. Ordinary applications depend on stable public packages or the `Upp::Imaging` framework instead.
 
 ## Direct upstream-style packages
 
-These packages expose the established native APIs directly.
+Direct packages expose established native APIs without inventing substitute implementations.
 
-### OpenImageIO headers (internal package: `openimageio_headers`)
+### OpenImageIO
 
-- Purpose: own the strict upstream `OpenImageIO/` public-header tree.
-- Internal-only routing package; not the ordinary application-facing package.
-- Exports the native include route for `<OpenImageIO/...>` consumers.
-- Compiles no OIIO implementation source.
-- Preserves native `<OpenImageIO/...>` include spelling.
-- Does not register static plugins.
-- Does not own format-validation claims.
+- `openimageio_headers` owns the strict upstream public-header tree and compiles no implementation source.
+- `openimageio_src` / `openimageio_util_src` compile the pinned OpenImageIO implementation.
+- static registration packages own the configured format plugins.
+- `OpenImageIO` is the canonical application-facing package.
+- `oiio` is a temporary compatibility forwarder.
 
-### OpenImageIO source and registration
-
-- `openimageio_src` compiles pinned upstream OpenImageIO 3.1.15.0 sources directly.
-- `openimageio_plugin_openexr` and `openimageio_plugin_png` provide the static format-registration path.
-- `OpenImageIO` is the canonical public application-facing package and carries the validated EXR/PNG integration path.
-- `oiio` is the temporary forwarding compatibility package.
+The repository began with the Windows-accepted OpenEXR/PNG OIIO path and has since added the code-side still-image expansion for JPEG XL, HDR/RGBE, DPX/Cineon, RAW, WebP, decode-only HEIF/AVIF and TIFF. The post-repair accumulated Windows pass is tracked separately in `docs/ACTIVE_WORK.md`; implementation must not be confused with platform acceptance.
 
 ### OpenColorIO
 
-- Purpose: expose the native OpenColorIO API for U++ projects.
-- Users work directly with OCIO configurations, processors, transforms and GPU shader extraction.
+`OpenColorIO` is the canonical public package over the strict `opencolorio_src` implementation. Applications may use native OCIO configurations, processors and transforms directly, while `ImagingColor` keeps those types behind a backend-neutral public boundary.
 
-Existing direct packages such as `openexr`, `imath`, `libpng`, `libjpeg_turbo`, `libtiff`, `libdeflate` and `openjph` remain direct upstream-style packages. Renaming them is out of scope for this task.
+### Other direct packages
+
+`openexr`, `openexr_core`, `imath`, `libpng`, `libjpeg_turbo`, `libtiff`, `libdeflate`, `openjph`, `fmt`, `robinmap` and their dependencies remain independently usable stable direct packages. Existing package names are retained unless a separate migration explicitly changes them.
 
 ## Upp::Imaging framework
 
-All framework public types belong under `Upp::Imaging`. No `OIIO::*` or `OCIO::*` types may appear in public headers of the framework.
+All framework public types live in `Upp::Imaging`. Public framework headers must not expose `OIIO::*`, `OCIO::*`, strict-source filesystem paths or application GUI types.
 
-### `ImagingCore`
+### ImagingCore
 
-- Purpose: the backend-neutral image data model and result contracts.
-- Public concepts: `ImageSpec`, `ImageBuffer`, `ImageData`, `Metadata`, `DataWindow`, `SampleType`, `ChannelLayout`, `Result`, `Diagnostics`.
-- `ImageSpec`: dimensions, depth, channel count, channel layout, sample type, source data window.
-- `ImageBuffer`: typed pixel storage, not limited to `Upp::Image` display pixels.
-- `ImageData`: convenience aggregate containing `ImageSpec`, `ImageBuffer` and `Metadata`.
-- `Metadata`: backend-neutral metadata container.
-- `DataWindow`: preserves original source-image coordinate window including non-zero origins.
-- `SampleType`: at minimum `UInt8`, `UInt16`, `Float16`, `Float32`.
-- `ChannelLayout`: `Gray`, `GrayAlpha`, canonical `RGB`, canonical `RGBA` and `MultiChannel`. Arbitrary channel orders are not treated as canonical.
-- `Result`: stable operation outcome and error category independent of OIIO or OCIO.
-- `Diagnostics`: structured information suitable for automated tests, human-readable console reporting and `ImagingWorkbench` display.
-- Depends only on U++ Core.
-- Must not depend on OpenImageIO, OpenColorIO, CtrlLib, ImagingWorkbench or `plugin/exr`.
+- backend-neutral image data model and operation/result contracts;
+- public concepts include `ImageSpec`, `ImageBuffer`, `ImageData`, `Metadata`, `DataWindow`, `SampleType`, `ChannelLayout`, `Result` and `Diagnostics`;
+- depends only on U++ Core;
+- no OIIO, OCIO, CtrlLib, Workbench or raster-plugin dependency.
 
-### `ImagingIO`
+### ImagingIO
 
-- Purpose: full-fidelity U++ image loading and saving using `ImagingCore` types.
-- Implemented initial EXR and PNG slice with OpenImageIO as a private backend.
-- Dependency set: `ImagingCore`, `OpenImageIO`.
-- Public headers expose only `Upp::Imaging` types; no `OIIO::ImageBuf` or `OIIO::ImageSpec`.
-- Use case: typed image pixels, HDR and floating-point values, arbitrary source channels, metadata, source data-window origins, stable U++ errors, backend-independent application code.
-- Current support is ordinary single-image non-deep EXR Float16/Float32 and canonical zero-origin PNG UInt8/UInt16; unsupported structures return stable failures.
+- full-fidelity typed image loading/saving through `ImagingCore` types;
+- OpenImageIO remains a private backend;
+- supports the accepted EXR/PNG baseline and the implemented still-image expansion according to each format's documented subset;
+- preserves transactional load/save semantics and stable backend-neutral diagnostics;
+- public headers expose no OIIO types.
 
-### `ImagingColor`
+### ImagingColor
 
-- Purpose: backend-neutral colour-processing operations.
-- Planned with OpenColorIO as its initial backend.
-- Planned dependency set: `ImagingCore`, `OpenColorIO`.
-- Public headers must not expose OCIO processor, config or transform types.
-- Responsible for colour transforms and display transforms; not responsible for file loading.
+- implemented backend-neutral colour-processing layer;
+- depends on `ImagingCore` and privately on `OpenColorIO`;
+- supports named colour-space transforms and display transforms over the documented RGB/RGBA and unambiguous named multichannel subset;
+- preserves alpha and non-RGB channels and keeps OCIO objects out of public headers.
 
-### `ImagingAnalysis`
+### ImagingAnalysis
 
-- Purpose: reusable image-analysis algorithms.
-- Initial scope: histograms, channel statistics, source probes, finite and non-finite value handling.
-- Later scope: waveform analysis, vectorscope analysis, other reusable scopes.
-- Prefer numerical and non-GUI code so the same algorithms are used by tests and `ImagingWorkbench`.
+- implemented reusable numerical analysis layer;
+- depends only on `ImagingCore`;
+- provides channel statistics, normalized histograms, finite/non-finite accounting and source-coordinate probes;
+- remains GUI-independent so tests and applications share the same numerical authority;
+- waveform and vectorscope algorithms are next-scope work, not part of the current closure milestone.
 
-### `ImagingDiagnostics`
+### ImagingDiagnostics
 
-- Purpose: shared structured validation and reporting.
-- GUI-independent.
-- Depends on `ImagingCore`.
-- Supports: deterministic package tests, readable console reports, numerical comparisons, image specification reports, metadata reports, channel and sample-type reports, timing and operation diagnostics, `ImagingWorkbench` presentation.
-- Package tests remain the automated correctness gates.
+- implemented Core-only deterministic comparison/reporting layer;
+- formats and compares existing `ImagingCore` contracts rather than duplicating diagnostic state;
+- remains GUI-independent;
+- supports deterministic numerical summaries and stable text reports for tests, logs and Workbench presentation.
 
-### `Imaging` (umbrella)
+### Imaging umbrella
 
-- Convenience umbrella for applications wanting the standard complete U++ Imaging framework.
-- Planned dependency set: `ImagingCore`, `ImagingIO`, `ImagingColor`, `ImagingAnalysis`, `ImagingDiagnostics`.
-- Because `ImagingIO` and `ImagingColor` planned initial backends are OpenImageIO and OpenColorIO, including `Imaging` brings those standard backends.
-- Applications needing a lighter dependency set may include only `ImagingCore`, `ImagingIO`, `ImagingColor` or `ImagingAnalysis` individually.
-- Must not automatically include `plugin/exr`.
+`Imaging` is the implemented convenience package over `ImagingCore`, `ImagingIO`, `ImagingColor`, `ImagingAnalysis` and `ImagingDiagnostics`.
 
-## U++ raster integration (opt-in)
+Applications that need a smaller dependency set include individual packages directly. The umbrella does **not** automatically include `plugin/exr` or FFmpeg.
 
-Format plugins live under `plugin/*`. They are opt-in and display-oriented.
+## U++ raster integration
 
-### `plugin/exr`
+Raster plugins under `plugin/*` are opt-in and display-oriented.
 
-- Purpose: integrate EXR files into ordinary U++ `StreamRaster` and `Upp::Image` workflows.
-- Eventually allows display-oriented use such as loading an EXR preview into `Upp::Image`.
-- Not the full-fidelity EXR API.
-- May convert floating-point pixels to display pixels, selected RGB or RGBA channels to `Upp::Image`, HDR values through a defined display policy.
-- Must not claim to preserve arbitrary EXR channels, full source metadata, unmodified half or float pixels, source data-window semantics, or deep or multipart EXR data.
-- Users requiring those features use `ImagingIO` or the direct `openexr` / `OpenImageIO` APIs.
-- Must remain opt-in so it does not silently change normal U++ raster-loading behaviour.
-- Reserved future pattern: `plugin/exr`, `plugin/jxl`, `plugin/hdr`.
-- Only create format-specific U++ plugins where U++ does not already provide suitable native raster support.
-- Do not create a broad `plugin/imaging` package at this stage.
+### plugin/exr
+
+The implemented EXR bridge integrates ordinary single-image EXR previews with U++ `StreamRaster` / `Upp::Image` workflows.
+
+Its contract is intentionally narrower than ImagingIO/OpenEXR/OpenImageIO:
+
+- reads encoded EXR through the supplied U++ `Stream`;
+- supports the documented RGB/RGBA, Gray/GrayAlpha, mask and unambiguous named multichannel preview cases;
+- emits straight RGBA8 preview pixels;
+- finite values are clamped to `[0,1]` and rounded to 8-bit;
+- non-finite preview samples map deterministically to zero;
+- no implicit colour transform, exposure or tone map;
+- no claim to preserve arbitrary channels, source floating-point samples, complete metadata, source-window semantics, multipart/deep/mip structure or unclamped HDR values.
+
+The plugin remains opt-in so ordinary U++ raster behaviour is not silently changed. Its expanded 22-check focused contract is implemented and awaits current Windows Debug/Release acceptance.
+
+## FFmpeg media subsystem
+
+FFmpeg is a separate subsystem and is not an ImagingIO backend in the current architecture.
+
+The current first slice pins signed FFmpeg `n9.0.1` at exact commit `bf1b838f2ab88b4f8fd83443325c782ea0e0f7fa` and exposes a deliberately bounded direct stack:
+
+```text
+application
+    ↓
+FFmpeg
+    ├── ffmpeg_avutil_src
+    ├── ffmpeg_avcodec_src   (native H.264 decoder only)
+    ├── ffmpeg_avformat_src  (MOV/MP4 demux + local file only)
+    └── ffmpeg_swscale_src   (scalar YUV → RGBA path)
+            ↓
+      ffmpeg_headers
+```
+
+The generated-equivalent configuration is repository-owned and static for Windows x86_64/U++ CLANGx64. The first slice deliberately disables threads, network, external codecs, filters, devices, audio resampling, CLI/encoding, external/inline assembly and hardware acceleration.
+
+Generated configuration must be complete for every identifier referenced by the compiled source slice. `ffmpeg_headers_test` therefore performs a source/config parity preflight over the production manifests and recursively reached headers before implementation-package validation.
+
+Source manifests are explicit. Required upstream duplicate/materializer objects are owned by the package that needs them; they are not added by recursive globs. The selected avformat closure includes `to_upper4.c` and `mpegaudiotabs.c` because pinned FFmpeg materializes those symbols separately for libavformat.
+
+Current implementation/source ownership is closed; Windows Debug/Release and first-frame repeatability acceptance remains the final platform gate. `docs/FFMPEG_PLAN.md` defines the first-slice contract and `docs/ACTIVE_WORK.md` records its exact validation state.
 
 ## ImagingWorkbench
 
-`ImagingWorkbench` is the diagnostic integration application for the complete stack. Its role:
+`ImagingWorkbench` is the full-stack diagnostic application. It may inspect image specifications, metadata, channels, samples, colour transforms, probes, histograms, timings and failures.
 
-- open real and generated images
-- inspect `ImageSpec`
-- inspect metadata
-- inspect channel order and sample type
-- display source and processed pixels
-- apply colour transforms
-- probe numerical values
-- display histograms and statistics
-- report timings and failures
-- print clear human-readable console output
-- help programmers and AI agents determine whether integration behaviour is correct
+It is not a reusable core package and is never the formal correctness authority. Automated package tests remain authoritative; Workbench inspection is supplementary.
 
-`ImagingWorkbench` is not a reusable core package; applications should not depend on it. Package tests remain the formal pass/fail authority.
+## Validation state is not architecture
 
-## Internal implementation packages
+Architecture documents what packages own and how dependencies flow. Validation evidence is recorded separately so a source-complete subsystem is not accidentally described as Windows-accepted.
 
-These stay internal. Ordinary applications must not depend directly on them:
+The currently established Windows framework baseline is:
 
-- all `_src` packages
-- `openimageio_plugin_openexr`
-- `openimageio_plugin_png`
-- later OpenImageIO format-registration packages
-- source include-routing shims
-- build probes
+- ImagingCore 48/0
+- ImagingIO 79/0
+- ImagingColor 66/0 plus OCIO 15/0
+- ImagingAnalysis 41/0
+- ImagingDiagnostics 33/0
+- Imaging umbrella 6/0
 
-## Package name policy
-
-- `OpenImageIO` and `OpenColorIO` are the canonical public package names. The OpenColorIO rename is deliberately breaking because Windows cannot host case-only package directories; `opencolorio_src` remains the strict internal source package.
-- The architecture and documentation pivot is complete. Rename is an implementation task to be performed later; `OpenImageIO` and `OpenColorIO` are the intended public names, `oiio` remains a temporary OIIO forwarding package, and no case-only OCIO compatibility package is possible on Windows.
-- Other direct packages keep their current names. Renaming `openexr`, `imath`, `libpng`, `libjpeg_turbo`, `libtiff`, `libdeflate`, `openjph`, `fmt`, `robinmap` is not in scope.
-
-## LumaPix disposition
-
-`upp_lumapix` is paused after completing its OpenImageIO reader proof. It demonstrated the contracts that `ImagingCore` and `ImagingIO` should adopt. `upp_imaging` does not depend on `upp_lumapix`. The LumaPix name is reserved for a possible future image-processing application built on `upp_imaging`.
+JPEG XL prerequisite/backend acceptance is also recorded as 9/0 Debug and 9/0 Release after its skcms repair. Current still-image accumulation, expanded `plugin/exr`, and FFmpeg acceptance boundaries remain in `docs/ACTIVE_WORK.md` until green.
 
 ## Architectural rules
 
 1. Do not create fake implementations of upstream APIs.
-2. Ordinary applications do not depend directly on `_src`.
-3. Public packages must hide strict-source filesystem layout from consumers.
-4. `ImagingCore`, `ImagingIO`, `ImagingColor`, `ImagingAnalysis`, `ImagingDiagnostics` and `Imaging` public headers must not expose OIIO or OCIO types.
-5. Format helpers stay narrow.
-6. Automated comparison is authoritative.
-7. `ImagingWorkbench` is supplementary diagnostic, never the correctness authority.
-8. Generated images and executables belong under ignored output directories.
-9. Machine-specific U++ nest configuration is not committed.
-10. Format-neutral test code must not depend on a codec.
-11. Add one dependency or format slice at a time.
-12. Do not claim support that has not been tested.
-13. `plugin/exr` and other raster plugins must be opt-in.
+2. Ordinary applications do not depend directly on `_src`, generated-source or static-registration packages.
+3. Public packages hide strict-source filesystem layout from consumers.
+4. `Upp::Imaging` public headers do not expose OIIO, OCIO or application GUI types.
+5. ImagingCore stays Core-only.
+6. ImagingAnalysis and ImagingDiagnostics stay numerical/GUI-independent.
+7. Format helpers stay narrow and claims do not exceed tested contracts.
+8. Automated tests are the formal pass/fail authority; diagnostic viewers are supplementary.
+9. Generated images/executables belong under ignored output directories; machine-specific U++ nest configuration is not committed.
+10. Source/package manifests are explicit and reviewed against upstream ownership; do not use source globs to hide missing dependency closure.
+11. Implement coherent dependency/format slices, then validate accumulated boundaries rather than creating a milestone for every operation.
+12. Never describe implementation as platform-accepted until the corresponding gate is recorded green.
+13. Raster plugins remain opt-in.
+14. FFmpeg remains separate from ImagingIO and the Imaging umbrella until a future explicit media-abstraction decision changes that boundary.
 
 ## Repository strategy
 
-`upp_imaging` remains one U++ nest containing many independently usable packages.
+`upp_imaging` remains one U++ nest containing independently usable packages. Stable package boundaries provide separation without duplicating vendored source or coordinating multiple repositories.
 
-Separate `upp_openimageio` or `upp_opencolorio` repositories are not being created yet.
-
-A later split may be considered only if release cadence, ownership, distribution, or application integration needs justify it.
-
-Stable package boundaries provide the useful separation now without duplicating vendored source or coordinating multiple repositories.
+A future repository split or backend-neutral media wrapper is a separate architectural decision and is outside the current closure milestone.
