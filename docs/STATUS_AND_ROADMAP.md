@@ -11,7 +11,7 @@ For the exact in-flight boundary, read `docs/ACTIVE_WORK.md` after fetching curr
 ## Current framework status
 
 - `ImagingCore`: implemented and Windows-proven, 48/0.
-- `ImagingIO`: implemented; EXR/PNG baseline Windows-proven at 79/0; later-format accumulation pending.
+- `ImagingIO`: implemented; EXR/PNG baseline Windows-proven at 79/0; exact current-main format accumulation pending.
 - `ImagingColor`: implemented and Windows-proven, 66/0 plus independent OCIO 15/0.
 - `ImagingAnalysis`: implemented and Windows-proven, 41/0.
 - `ImagingDiagnostics`: implemented and Windows-proven, 33/0.
@@ -37,8 +37,29 @@ Important acceptance state:
 
 - JPEG XL prerequisite/backend is Windows-proven 9/0 Debug and 9/0 Release after `a66e1192025032823e93a890e16cc3874034a8a4`.
 - Shared static OpenImageIO plugin dependency repair is `5ca436c3ba6265f6431deaf7348332940051686d`.
-- The complete post-`5ca436c3` OpenImageIO + later-format accumulation matrix is still platform-validation pending.
+- The complete current-main OpenImageIO + ImagingIO deterministic accumulation matrix is still platform-validation pending.
 - Do not describe the later format line as Windows-accepted until that accumulation pass is green.
+
+Exact repository-owned Debug/Release targets:
+
+1. `openimageio_io_test` — 21/0;
+2. `imaging_io_test` — 79/0;
+3. `jpegxl_prereq_test` — 9/0;
+4. `jpegxl_oiio_test` — 10/0;
+5. `jpegxl_imagingio_test` — 50/0;
+6. `hdr_oiio_test` — 12/0;
+7. `dpx_cineon_oiio_test` — 19/0;
+8. `hdr_dpx_imagingio_test` — 38/0;
+9. `raw_oiio_test` — 9/0;
+10. `raw_imagingio_test` — 10/0;
+11. `webp_oiio_test` — 13/0;
+12. `webp_imagingio_test` — 21/0;
+13. `heif_oiio_test` — 11/0;
+14. `heif_imagingio_test` — 10/0;
+15. `tiff_oiio_test` — 13/0;
+16. `tiff_imagingio_test` — 29/0.
+
+Positive real-camera RAW decode, real 8/10-bit AVIF/HEIC decode and animated-WebP rejection require provenance-reviewed external fixtures that are not stored in the repository. Keep those as separately reported supplementary interoperability evidence; never infer them from the deterministic matrix or fabricate substitute fixtures.
 
 ## ImagingIO policy
 
@@ -138,13 +159,14 @@ The current phase is **final acceptance**, not feature discovery.
 
 Closure requires:
 
-1. repaired OpenImageIO/later-format accumulation in Debug and Release;
+1. the exact 16-target repository-owned still-image matrix above in Debug and Release;
 2. `plugin_exr_test` 22/0 in Debug and Release;
 3. the complete six-gate FFmpeg Debug matrix;
 4. the same six FFmpeg gates in Release;
 5. five Debug and five Release repetitions of `ffmpeg_first_frame_test`, every run 27/0 with clean shutdown/cleanup;
 6. any substantive current-main failures repaired as coherent root-cause source/config/dependency slices, followed by focused regression and accumulation rerun;
-7. repository docs/recovery state updated to mark the bounded generation complete only after platform evidence is green.
+7. supplementary real-file interoperability evidence recorded separately when provenance-reviewed fixtures are available;
+8. repository docs/recovery state updated to mark the bounded generation complete only after required platform evidence is green.
 
 ## Dependency direction
 

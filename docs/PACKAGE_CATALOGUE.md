@@ -45,8 +45,8 @@ This catalogue distinguishes three states:
 - Pinned version: 3.1.15.0.
 - `oiio` remains a compatibility forwarder; it is not a second implementation.
 - The original Windows-proven OpenEXR/PNG route remains the accepted baseline.
-- Code-side static format expansion now includes JPEG XL, Radiance HDR/RGBE, DPX/Cineon, camera RAW, WebP, decode-only HEIF/AVIF and TIFF support required by the current `ImagingIO` format line.
-- The shared static dependency repair is `5ca436c3ba6265f6431deaf7348332940051686d`; the complete post-repair accumulation matrix is still platform-validation pending.
+- Code-side static format expansion includes JPEG XL, Radiance HDR/RGBE, DPX/Cineon, camera RAW, WebP, decode-only HEIF/AVIF and TIFF support required by the current `ImagingIO` format line.
+- The shared static dependency repair is `5ca436c3ba6265f6431deaf7348332940051686d`; the complete current-main deterministic accumulation matrix is still platform-validation pending.
 
 ### Other stable direct packages
 
@@ -78,9 +78,9 @@ All framework public types live under `Upp::Imaging`. Public framework headers d
 - Backend-neutral typed image load/save API using OpenImageIO privately.
 - Public headers expose only `Upp::Imaging` types.
 - Accepted baseline: EXR/PNG.
-- Code-side format line: JPEG XL, HDR/RGBE, DPX/Cineon, RAW, WebP, decode-only HEIF/AVIF and TIFF expansion.
+- Code-side format line: JPEG XL, HDR/RGBE, DPX/Cineon, RAW, WebP, decode-only HEIF/AVIF and TIFF.
 - Preserves transactional load/save and stable framework diagnostics.
-- **Implemented**; baseline Windows-proven at 79/0, later-format accumulation remains pending after `5ca436c3`.
+- **Implemented**; baseline Windows-proven at 79/0, current-main format accumulation remains pending after `5ca436c3`.
 
 ### `ImagingColor`
 - Backend-neutral colour-processing API using OpenColorIO privately.
@@ -103,6 +103,20 @@ All framework public types live under `Upp::Imaging`. Public framework headers d
 - Convenience umbrella over `ImagingCore`, `ImagingIO`, `ImagingColor`, `ImagingAnalysis` and `ImagingDiagnostics`.
 - Does not automatically include `plugin/exr` or FFmpeg.
 - **Implemented and Windows-proven**: 6/0.
+
+## Still-image accumulated validation targets
+
+The current repository-owned deterministic Debug/Release accumulation uses actual U++ packages, not roadmap format labels:
+
+- baseline/shared boundary: `openimageio_io_test` 21/0, `imaging_io_test` 79/0;
+- JPEG XL: `jpegxl_prereq_test` 9/0, `jpegxl_oiio_test` 10/0, `jpegxl_imagingio_test` 50/0;
+- HDR/RGBE + DPX/Cineon: `hdr_oiio_test` 12/0, `dpx_cineon_oiio_test` 19/0, `hdr_dpx_imagingio_test` 38/0;
+- camera RAW: `raw_oiio_test` 9/0, `raw_imagingio_test` 10/0;
+- WebP: `webp_oiio_test` 13/0, `webp_imagingio_test` 21/0;
+- HEIF/AVIF: `heif_oiio_test` 11/0, `heif_imagingio_test` 10/0;
+- TIFF: `tiff_oiio_test` 13/0, `tiff_imagingio_test` 29/0.
+
+Positive real-camera RAW decode, real 8/10-bit AVIF/HEIC decode and animated-WebP rejection depend on provenance-reviewed external fixtures that are not stored in the repository. Those results are supplementary interoperability evidence and must be reported separately rather than inferred from the deterministic matrix.
 
 ## U++ raster integration
 
@@ -215,9 +229,10 @@ FFmpeg remains a parallel stable-direct media stack, not an Imaging framework de
 
 The bounded current-generation implementation is complete enough for accumulated platform acceptance. Remaining closure gates are:
 
-1. repaired OpenImageIO/later-format accumulation after `5ca436c3` in Debug and Release;
+1. the exact repository-owned still-image matrix listed above in Debug and Release;
 2. `plugin_exr_test` 22/0 in Debug and Release;
 3. all six FFmpeg gates in Debug and Release plus first-frame repeatability;
-4. coherent root-cause repairs only if current-main Windows validation exposes a substantive defect.
+4. coherent root-cause repairs only if current-main Windows validation exposes a substantive defect;
+5. supplementary external-fixture interoperability evidence reported separately when provenance-reviewed fixtures are available.
 
 SIMD/hardware FFmpeg paths, broader codecs/containers, audio, seeking/indexing, waveform/vectorscope expansion and a possible backend-neutral media wrapper are deferred next scope, not incomplete requirements of this milestone.

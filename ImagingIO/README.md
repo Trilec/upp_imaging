@@ -78,12 +78,26 @@ remain format-neutral in `ImagingIO.cpp`.
 - the repository OIIO writer adaptation enables `WebPConfig::exact=1` for lossless output, preserving hidden RGB values beneath fully transparent pixels
 - animated WebP is deliberately outside the initial framework slice; multiple frames are rejected by the shared multi-subimage structure check
 
+### HEIF/AVIF
+- input only through the statically registered OpenImageIO HEIF plugin and repository-pinned decoder dependencies
+- `.avif`, `.heif`, `.heic`, `.hif`, `.avifs`, `.heifs` and `.heics` route through the HEIF reader
+- accepted decoded framework output is zero-origin UInt8/UInt16 RGB or RGBA
+- multi-image/frame input is rejected by the shared structure check
+- save attempts fail explicitly with `IMGIO_FORMAT`
+
+### TIFF
+- zero-origin UInt8, UInt16 and Float32
+- Gray, GrayAlpha, RGB, RGBA and named MultiChannel layouts within the documented framework subset
+- framework output requests ZIP compression and preserves straight alpha semantics
+- Float16 and non-zero-origin output remain fail-closed in the current slice
+
 Unsupported structures fail closed with stable diagnostics: multipart/multi-frame,
 mipmapped, deep, volume, mixed-channel-format, integer EXR, floating PNG,
 arbitrary PNG/JPEG XL multichannel files, unsupported JPEG XL channel layouts,
 unsupported HDR layouts, DPX/Cineon structures outside the initial policy, RAW
-decode results outside processed UInt16 RGB, and WebP layouts/sample types outside
-UInt8 RGB/RGBA.
+decode results outside processed UInt16 RGB, WebP layouts/sample types outside
+UInt8 RGB/RGBA, unsupported HEIF/AVIF decoded layouts/sample types, and TIFF
+structures outside the current typed zero-origin subset.
 
 ## Channel policy
 
@@ -109,8 +123,27 @@ heterogeneous, boolean, and read-only values produce `IMGIO_METADATA` warnings.
 
 ## Validation
 
-- `imaging_io_test`: established EXR/PNG public contract
-- `jpegxl_imagingio_test`: JPEG XL framework contract
-- `hdr_dpx_imagingio_test`: HDR/RGBE and DPX/Cineon policy/transaction contract
-- `raw_imagingio_test`: RAW routing/refusal/transaction evidence; positive camera decode uses a pinned real fixture on Windows
-- `webp_imagingio_test`: static exact-lossless WebP RGB/RGBA, refusal and transaction contract; animated refusal uses a real animated fixture on Windows
+Repository-owned deterministic gates and expected summaries:
+
+- `openimageio_io_test`: established direct OpenImageIO/OpenColorIO integration — 21/0
+- `imaging_io_test`: established EXR/PNG public contract — 79/0
+- `jpegxl_prereq_test`: pinned libjxl prerequisite contract — 9/0
+- `jpegxl_oiio_test`: direct JPEG XL OpenImageIO contract — 10/0
+- `jpegxl_imagingio_test`: JPEG XL framework contract — 50/0
+- `hdr_oiio_test`: direct HDR/RGBE OpenImageIO contract — 12/0
+- `dpx_cineon_oiio_test`: direct DPX/Cineon OpenImageIO contract — 19/0
+- `hdr_dpx_imagingio_test`: HDR/RGBE and DPX/Cineon framework contract — 38/0
+- `raw_oiio_test`: RAW registration/routing contract — 9/0
+- `raw_imagingio_test`: RAW routing/refusal/transaction contract — 10/0
+- `webp_oiio_test`: direct WebP registration/fidelity contract — 13/0
+- `webp_imagingio_test`: static exact-lossless WebP framework contract — 21/0
+- `heif_oiio_test`: decode-only HEIF-family registration contract — 11/0
+- `heif_imagingio_test`: HEIF/AVIF input-only framework contract — 10/0
+- `tiff_oiio_test`: direct TIFF registration/fidelity contract — 13/0
+- `tiff_imagingio_test`: TIFF framework policy/transaction contract — 29/0
+
+Positive real-camera RAW decode, real 8/10-bit AVIF/HEIC decode and animated-WebP
+multi-frame rejection require provenance-reviewed external fixtures that are not
+stored in this repository. They are supplementary interoperability evidence and
+must be reported separately; their absence must not be silently converted into a
+pass or replaced by fabricated fixtures.
