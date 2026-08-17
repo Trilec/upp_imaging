@@ -63,11 +63,15 @@ FFmpeg normally generates `config.h`, `config_components.h`, `libavutil/avconfig
 
 Repository-owned generated-equivalent headers are checked in for the supported Windows CLANGx64 configuration. They are reviewed together with source manifests whenever the FFmpeg pin or enabled component set changes.
 
+`ffmpeg_headers_test` also performs a source/config parity audit before implementation-library acceptance. It reads the exact `import.ext` manifests for libavutil/libavcodec/libavformat/libswscale, recursively follows repository-pinned FFmpeg includes, collects `CONFIG_*`, `HAVE_*`, `ARCH_*` and `AV_HAVE_*` identifiers, and requires every referenced identifier to be defined either by the generated configuration, the implementation build option, or the scanned source itself. Missing identifiers are reported as one complete list. This prevents sparse generated configuration from failing one implementation translation unit at a time.
+
+The parity audit checks **definition completeness**, not whether a capability should be enabled. Capability values remain explicit policy for the bounded Windows build and must not be changed merely to silence the audit.
+
 ## Validation progression
 
 Code-side implementation now contains all first-slice checkpoints:
 
-1. `ffmpeg_headers_test` — expected 7/0;
+1. `ffmpeg_headers_test` — expected 8/0, including generated-config parity;
 2. `ffmpeg_avutil_test` — expected 13/0;
 3. `ffmpeg_avcodec_test` — expected 12/0;
 4. `ffmpeg_avformat_test` — expected 14/0;
