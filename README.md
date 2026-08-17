@@ -2,123 +2,136 @@
 
 ## Purpose
 
-`upp_imaging` is a U++ imaging nest that provides pinned third-party packages, strict source validation, and a layered backend-neutral U++ Imaging framework on top of those packages.
+`upp_imaging` is a U++ imaging nest that provides pinned third-party packages, strict source validation, a backend-neutral `Upp::Imaging` framework, opt-in U++ raster integration, and a separately bounded FFmpeg media stack.
 
-## Three supported use cases
+The repository deliberately distinguishes three states:
+
+- **implemented** — the package/source/test contract exists and has passed source/static review;
+- **Windows-proven** — the relevant U++ CLANGx64 Debug/Release acceptance has been recorded;
+- **platform validation pending** — implementation exists, but the current accumulated Windows checkpoint has not yet been accepted.
+
+Do not infer platform acceptance from implementation alone. `docs/ACTIVE_WORK.md` is the recovery authority for the exact in-flight validation boundary.
+
+## Supported use cases
 
 ### 1. Direct upstream-style API access
 
-Programmers who want the established native APIs directly use the direct public packages:
+Applications that want established native APIs directly use the stable public packages, including:
 
-- `openexr` — OpenEXR 3.4.13 high-level API
-- `openexr_core` — OpenEXRCore 3.4.13 C API
-- `OpenImageIO` — OpenImageIO 3.1.15.0 API
-- `oiio` — temporary compatibility forwarder for `OpenImageIO`
-- `OpenColorIO` — canonical OpenColorIO 2.5.2 API
-- `imath`, `libpng`, `libjpeg_turbo`, `libtiff`, `libdeflate`, `openjph`, `fmt`, `robinmap`
+- `openexr` / `openexr_core`
+- `OpenImageIO`
+- `OpenColorIO`
+- `imath`
+- `libpng`
+- `libjpeg_turbo`
+- `libtiff`
+- `libdeflate`
+- `openjph`
+- `fmt`
+- `robinmap`
 
-Use these when you want the established native types and APIs directly in your application code.
+`oiio` remains a compatibility forwarder to `OpenImageIO`. Strict `_src`, generated-header, source-routing and static-registration packages are implementation details and are not ordinary application dependencies.
 
 ### 2. Backend-neutral U++ Imaging framework
 
-Programmers who want a U++-native, backend-neutral image API use the `Upp::Imaging` framework:
+Applications that want U++-native image contracts use the implemented `Upp::Imaging` framework:
 
-- `ImagingCore` — the backend-neutral image data model and result contracts. Depends only on U++ Core.
-- `ImagingIO` — implemented initial EXR/PNG slice for typed image loading and saving. Depends on `ImagingCore` and privately uses OpenImageIO.
-- `ImagingColor` (planned) — backend-neutral colour-processing operations. Planned with OpenColorIO as its initial backend. Will depend on `ImagingCore` and `OpenColorIO`.
-- `ImagingAnalysis` (planned) — reusable image-analysis algorithms. Will depend on `ImagingCore`.
-- `ImagingDiagnostics` (planned) — shared structured validation and reporting; GUI-independent. Will depend on `ImagingCore`.
-- `Imaging` (planned) — convenience umbrella that pulls in Core, IO, Color, Analysis and Diagnostics.
+- `ImagingCore` — backend-neutral image data, metadata, window, result and diagnostic contracts; Core-only.
+- `ImagingIO` — full-fidelity typed image loading/saving through private backend adapters.
+- `ImagingColor` — backend-neutral colour processing with OpenColorIO private behind the public boundary.
+- `ImagingAnalysis` — Core-only statistics, histograms and source probes.
+- `ImagingDiagnostics` — Core-only deterministic comparison and structured reporting.
+- `Imaging` — convenience umbrella over the five framework packages.
 
-`ImagingCore` and the initial `ImagingIO` slice are implemented; the remaining framework packages are planned.
+Public framework headers expose only `Upp::Imaging` contracts; OIIO and OCIO types remain private implementation details.
 
-Public headers in the framework expose only `Upp::Imaging` types. No `OIIO::*` or `OCIO::*` types appear in `ImagingCore`, `ImagingIO`, `ImagingColor`, `ImagingAnalysis`, `ImagingDiagnostics` or `Imaging` public headers.
+The established Windows framework baseline is accepted at:
+
+- ImagingCore **48/0**
+- ImagingIO **79/0**
+- ImagingColor **66/0** plus independent OCIO **15/0**
+- ImagingAnalysis **41/0**
+- ImagingDiagnostics **33/0**
+- Imaging umbrella **6/0**
 
 ### 3. Optional U++ raster integration
 
-Programmers who want display-oriented access into ordinary U++ `StreamRaster` and `Upp::Image` workflows use the opt-in format plugins:
+`plugin/exr` is implemented as an opt-in display-oriented `StreamRaster` / `Upp::Image` bridge. It is deliberately separate from the full-fidelity ImagingIO and direct OpenEXR/OpenImageIO paths.
 
-- `plugin/exr` — load an EXR preview into `Upp::Image`.
+Its current focused contract covers ordinary single-image EXR preview, RGB/RGBA, Gray/GrayAlpha, one-channel masks, named multichannel RGB selection, straight alpha, deterministic finite-value clamp/rounding, non-finite-to-zero preview behaviour, and truthful opaque/alpha reporting. The expanded **22-check** contract awaits current Windows Debug/Release acceptance.
 
-These plugins are display-oriented only. They do not preserve full source data, arbitrary channels, deep or multipart layers. Use `ImagingIO` or the direct packages for full-fidelity access.
+### 4. Separate FFmpeg media subsystem
 
-## Current validated formats
+FFmpeg is not part of ImagingIO or the `Imaging` umbrella. The current first slice is an intentionally small static LGPL scalar decode stack:
 
-- OpenImageIO validated path: **OpenEXR** and **PNG** only.
-- Direct upstream packages validated independently of OpenImageIO: OpenEXR (scanline RGBA HALF ZIP), PNG (RGBA8), JPEG (RGB8 baseline), TIFF (typed RGBA scanline).
-- JPEG, TIFF and other formats are not yet routed through the OpenImageIO boundary.
+- exact signed FFmpeg `n9.0.1` pin;
+- `ffmpeg_headers` generated/public configuration boundary;
+- `ffmpeg_avutil_src`;
+- native H.264-only `ffmpeg_avcodec_src`;
+- MOV/MP4 demux + local-file-only `ffmpeg_avformat_src`;
+- scalar `ffmpeg_swscale_src`;
+- stable direct `FFmpeg` package;
+- deterministic one-frame H.264/MP4 decode-to-RGBA acceptance test.
 
-## Current major capabilities
+Threads, network protocols, external codecs, filters, devices, audio resampling, CLI/encoding, external/inline assembly and hardware acceleration remain disabled in this first slice.
 
-- strict and stable third-party source packages for all listed direct APIs
-- `openimageio_headers` internal header-routing package; `openimageio_src` and `openimageio_util_src` compile the strict OpenImageIO sources; static EXR and PNG registration is provided separately; `OpenImageIO` is the current public application package and `oiio` is the temporary forwarder
-- static OpenEXR and PNG plugins integrated into the OpenImageIO build path
-- `openimageio_io_test` validates the EXR/PNG integration path through `OpenImageIO`
-- narrow format helpers: `openexr_io`, `png_io`, `jpeg_io`, `tiff_io`
-- deterministic package tests as the formal pass/fail authority
-- `ImagingWorkbench` as a full-stack diagnostic and integration application
-- `CLANGx64` as the currently validated toolchain
+Implementation/source ownership is closed at the current checkpoint; accumulated Windows Debug/Release and repeatability acceptance is still in progress. See `docs/FFMPEG_PLAN.md` and `docs/ACTIVE_WORK.md` for the exact gate.
 
-## Current limitations
+## Current format line
 
-- OpenImageIO 3.1.15.0 covers the validated EXR/PNG integration path only; JPEG, TIFF and dynamic plugin loading are not validated.
-- `ImagingIO`, `ImagingColor`, `ImagingAnalysis`, `ImagingDiagnostics` and `Imaging` are not yet implemented; `ImagingCore` is the first implemented framework package.
-- `plugin/exr` is not yet implemented.
+The repository now contains the completed code-side still-image expansion for:
 
-## LumaPix disposition
+- OpenEXR and PNG baseline;
+- JPEG XL;
+- HDR/RGBE;
+- DPX/Cineon;
+- camera RAW;
+- WebP;
+- HEIF/AVIF decode-only;
+- TIFF expansion.
 
-`upp_lumapix` is paused after completing its OpenImageIO reader proof. The completed LumaPix work demonstrated:
+JPEG XL prerequisite/backend acceptance is Windows-proven **9/0 Debug and 9/0 Release** after the skcms link repair. The shared static OpenImageIO dependency closure and the later still-image formats are awaiting their accumulated current-main Windows pass; they must not be described as Windows-accepted until that matrix is green.
 
-- backend-neutral image specifications
-- typed image buffers
-- metadata translation
-- channel-order handling
-- data-window preservation
-- OIIO isolation behind a private implementation
-- deterministic generated-fixture testing
+Narrow direct helpers such as `openexr_io`, `png_io`, `jpeg_io` and `tiff_io` remain intentionally narrower than the full framework/backend surfaces.
 
-That work is reference material for the future `ImagingCore` and `ImagingIO` migration. `upp_imaging` does not depend on `upp_lumapix`. The LumaPix name is reserved for a possible future image-processing application built on `upp_imaging`.
+## Engineering and validation model
 
-## Next implementation order
+- Remote GitHub `main` is authoritative for published state.
+- Pinned upstream source and explicit U++ manifests are preferred over system-library assumptions or recursive source globs.
+- Public packages own stable application boundaries; `_src` and registration packages stay internal.
+- Backend-neutral framework APIs do not leak OIIO/OCIO types.
+- Tests are the formal pass/fail authority; `ImagingWorkbench` is supplementary full-stack diagnostics.
+- New implementation is grouped into coherent source/dependency/test slices, then validated through accumulated matrices.
+- `docs/ACTIVE_WORK.md` records the current base, touched paths, publication state, validation evidence and exact next action so work can recover after a session outage.
 
-1. Architecture and documentation pivot — **complete**
-2. Framework migration — establish `ImagingCore`, `ImagingIO`, `ImagingColor`, `ImagingAnalysis`, `ImagingDiagnostics` and the `Imaging` umbrella using the proven LumaPix contracts
-3. `plugin/exr` — opt-in raster integration into ordinary U++ `Upp::Image` workflows
-4. JPEG XL support
-5. HDR/RGBE support
-6. DPX/Cineon support
-7. RAW image support
-8. WebP support
-9. HEIF/AVIF support
-10. Additional TIFF/OIIO coverage — expand TIFF handling where useful and route additional formats through the OIIO boundary
-11. FFmpeg as a separate major milestone
+## Current closure milestone
 
-JPEG XL, HDR, DPX/Cineon, RAW, WebP, HEIF and AVIF come before duplicating existing ordinary PNG, JPEG or TIFF U++ raster support.
+The current bounded generation is in final acceptance rather than feature discovery. Remaining work is:
 
-For each new format the sequence is:
+1. complete the repaired OpenImageIO/still-image accumulation matrix in Debug and Release;
+2. accept the expanded `plugin/exr` 22-check contract in Debug and Release;
+3. complete the FFmpeg six-gate Debug/Release matrix and first-frame repeatability;
+4. repair any substantive failures as coherent root-cause slices and rerun the affected accumulation gate;
+5. mark the bounded generation complete only when those platform gates are green.
 
-1. package and validate required upstream dependencies
-2. compile and register the OpenImageIO format plugin where applicable
-3. validate direct OpenImageIO loading and saving
-4. validate the ImagingIO path
-5. add a format-specific `plugin/*` package only where useful for `Upp::Image` workflows
+SIMD/hardware acceleration, broader FFmpeg codecs/containers, audio, seeking/indexing, waveform/vectorscope expansion and a possible backend-neutral media wrapper are **next-scope enhancements**, not unfinished requirements of the current closure milestone.
 
 ## Choosing a package
 
 | Need | Use |
 | --- | --- |
-| Direct native EXR, OpenEXRCore, PNG, JPEG, TIFF, OCIO, OIIO access | `openexr`, `openexr_core`, `OpenColorIO`, `OpenImageIO`, `libpng`, `libjpeg_turbo`, `libtiff`, `imath`, `fmt`, `robinmap`, `libdeflate`, `openjph` |
-| Narrow RGBA-only scanline load/save helpers | `openexr_io`, `png_io`, `jpeg_io`, `tiff_io` |
-| Backend-neutral U++ image API (planned) | `ImagingCore` + `ImagingIO` (+ `ImagingColor` for colour) |
-| Standard full U++ imaging stack (planned) | `Imaging` |
-| Image analysis — histograms, statistics, probes (planned) | `ImagingAnalysis` |
-| Structured diagnostics and reporting (planned) | `ImagingDiagnostics` |
-| Load an EXR into `Upp::Image` (planned) | `plugin/exr` |
-| Full-stack visual and diagnostic application | `ImagingWorkbench` (application only, not a reusable core package) |
+| Direct native EXR/OIIO/OCIO/codec access | the corresponding stable direct package |
+| Backend-neutral typed image model | `ImagingCore` |
+| Backend-neutral image load/save | `ImagingIO` |
+| Backend-neutral colour processing | `ImagingColor` |
+| Histograms, statistics and probes | `ImagingAnalysis` |
+| Deterministic comparison/reporting | `ImagingDiagnostics` |
+| Standard complete imaging framework | `Imaging` |
+| EXR preview in ordinary `Upp::Image` workflows | `plugin/exr` |
+| Direct bounded FFmpeg API stack | `FFmpeg` |
+| Full-stack visual/diagnostic application | `ImagingWorkbench` |
 
-## Planned public include convention
-
-When the framework packages are implemented, public headers will live at the package root, for example:
+Public framework headers use the package-root convention:
 
 - `<ImagingCore/ImagingCore.h>`
 - `<ImagingIO/ImagingIO.h>`
@@ -127,11 +140,17 @@ When the framework packages are implemented, public headers will live at the pac
 - `<ImagingDiagnostics/ImagingDiagnostics.h>`
 - `<Imaging/Imaging.h>`
 
-All public types remain in the namespace `Upp::Imaging`.
+All public framework types remain in `Upp::Imaging`.
 
-## Documentation links
+## LumaPix disposition
 
-- `docs/ARCHITECTURE.md`
-- `docs/PACKAGE_CATALOGUE.md`
-- `docs/STATUS_AND_ROADMAP.md`
-- `docs/package_layout.md`
+`upp_lumapix` remains paused after its OpenImageIO reader proof. Its useful data-model and backend-isolation lessons have been carried into `upp_imaging`; this repository does not depend on `upp_lumapix`.
+
+## Documentation
+
+- `docs/ACTIVE_WORK.md` — current recovery/validation authority
+- `docs/ARCHITECTURE.md` — dependency and ownership rules
+- `docs/PACKAGE_CATALOGUE.md` — package roles and current state
+- `docs/STATUS_AND_ROADMAP.md` — accepted scope, pending gates and next scope
+- `docs/FFMPEG_PLAN.md` — FFmpeg first-slice contract and validation
+- `docs/package_layout.md` — package-layout guidance
