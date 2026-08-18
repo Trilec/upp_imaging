@@ -4,7 +4,8 @@ Recovery authority for work currently in flight. After fetching `main`, read thi
 
 ## BASE
 
-- Acceptance-definition work in this checkpoint is based on `d4f033956bccbb51a5ca41ab6e9f616b554c7b3a` on `main`.
+- The self-contained Windows validator contract is published at `docs/WINDOWS_ACCEPTANCE.md`; the validator must always record and test the exact SHA supplied with the task.
+- Acceptance-definition work was consolidated through `32e9f32666aeee129400e5562ad395ee0a94435f` on `main` before this recovery-state pointer update.
 - Current-generation framework implementation is complete: `ImagingCore`, `ImagingIO`, `ImagingColor`, `ImagingAnalysis`, `ImagingDiagnostics`, `Imaging`.
 - Established Windows framework baseline: ImagingCore 48/0, ImagingIO 79/0 baseline, ImagingColor 66/0 + independent OCIO 15/0, ImagingAnalysis 41/0, ImagingDiagnostics 33/0, Imaging umbrella 6/0.
 - Code-side still-image line: JPEG XL, HDR/RGBE, DPX/Cineon, camera RAW, WebP, decode-only HEIF/AVIF, TIFF.
@@ -24,11 +25,11 @@ Final current-generation closure:
 5. repair only substantive current-main failures as coherent root-cause slices;
 6. mark the bounded generation complete only when the required platform gates are green and any unavailable supplementary fixture evidence is reported explicitly.
 
-Documentation reconciliation is complete: README, architecture, package catalogue, status/roadmap, package layout and changelog distinguish **implemented**, **Windows-proven**, and **platform validation pending**. This checkpoint additionally replaces later-format roadmap shorthand with exact repository test targets and totals.
+The exact validator procedure, failure report, permitted tiny local correction boundary and successful-report requirements are in `docs/WINDOWS_ACCEPTANCE.md`. That file is the validator handoff; this file remains the supervisory recovery authority.
 
 ## TOUCHED / RECENT CLOSURE
 
-Still-image acceptance definition:
+Still-image acceptance definition and validator handoff:
 
 - `ImagingIO/ImagingIO.upp`
 - `ImagingIO/README.md`
@@ -42,6 +43,7 @@ Still-image acceptance definition:
 - `docs/STATUS_AND_ROADMAP.md`
 - `docs/package_layout.md`
 - `CHANGELOG.md`
+- `docs/WINDOWS_ACCEPTANCE.md`
 - `docs/ACTIVE_WORK.md`
 
 FFmpeg config/source ownership:
@@ -63,7 +65,7 @@ EXR focused contract:
 ### Still-image / OpenImageIO / ImagingIO
 
 - `ImagingIO/FormatPolicy.cpp`, `OpenImageIO/OpenImageIO.upp` and `OpenImageIO/OIIO.cpp` were source-reviewed against the bounded format line; HEIF/AVIF and TIFF are already implemented/registered and no architecture or dependency repair was identified in this documentation checkpoint.
-- `ImagingIO` package metadata and README now describe the already-implemented HEIF/AVIF and TIFF policies instead of stopping at WebP.
+- `ImagingIO` package metadata and README describe the already-implemented HEIF/AVIF and TIFF policies instead of stopping at WebP.
 - Shared static OpenImageIO dependency closure remains `5ca436c3ba6265f6431deaf7348332940051686d`.
 - The exact repository-owned deterministic accumulation matrix is:
   - `openimageio_io_test` — 21/0;
@@ -104,7 +106,7 @@ EXR focused contract:
 - `ffmpeg_avutil_test`: 13/0.
 - `ffmpeg_avcodec_test`: 12/0; native H.264 decoder only.
 - `ffmpeg_avformat_test`: 14/0; MOV/MP4 demux + local `file` protocol only.
-- Gary's earlier avformat linker failure on `ff_toupper4` and `ff_mpa_freq_tab` was traced to the exact pinned upstream materializers `libavformat/to_upper4.c` and `libavformat/mpegaudiotabs.c`; both are now explicit in `ffmpeg_avformat_src/import.ext`.
+- Gary's earlier avformat linker failure on `ff_toupper4` and `ff_mpa_freq_tab` was traced to the exact pinned upstream materializers `libavformat/to_upper4.c` and `libavformat/mpegaudiotabs.c`; both are explicit in `ffmpeg_avformat_src/import.ext`.
 - Avformat manifest remains explicit/no-glob at 45 translation units. No codec/muxer/protocol/feature was added by the repair.
 - Parallel pinned swscale Makefile-to-manifest audit found no analogous source-ownership gap; SIMD/unstable assembly remains excluded.
 - `ffmpeg_swscale_test`: 13/0.
@@ -112,12 +114,13 @@ EXR focused contract:
 
 ## PUBLISHED
 
-Recent still-image/plugin:
+Recent still-image/plugin and acceptance:
 
 - `a66e1192025032823e93a890e16cc3874034a8a4` — JPEG XL skcms linker repair.
 - `5ca436c3ba6265f6431deaf7348332940051686d` — static OpenImageIO plugin dependency closure.
 - `323c3dc29938de404fc3411b87dcaf6c6aea4559` — expanded `plugin/exr` preview contract.
-- Still-image acceptance-definition checkpoint — this file is part of that single multi-file commit; fetch current `main` and record its exact SHA before validation.
+- `b2b14c8cea9332ed6f997c5f0edd4825826eb353` — publish exact still-image acceptance matrix.
+- `32e9f32666aeee129400e5562ad395ee0a94435f` — add self-contained Windows acceptance contract.
 
 Recent FFmpeg:
 
@@ -158,6 +161,7 @@ Repository documentation:
 - Exact pinned FFmpeg configure dependency selections for H.264/MOV reviewed.
 - Exact pinned avformat Makefile/materializer ownership reviewed.
 - Exact pinned swscale Makefile/source ownership reviewed.
+- The validator handoff is repository-owned in `docs/WINDOWS_ACCEPTANCE.md` and does not depend on chat-only instructions.
 - Documentation state remains explicit about implemented versus Windows-proven versus pending platform evidence.
 
 ### Platform validation pending
@@ -182,8 +186,8 @@ These supplementary items must remain separate from deterministic repository-own
 
 ## NEXT ACTION
 
-1. Fetch/fast-forward current `origin/main`; record exact HEAD; require clean status.
-2. Run the complete repository-owned still-image matrix in Debug in the exact order listed above; stop on the first substantive failure.
+1. Fetch/fast-forward current `origin/main`; record exact HEAD; require clean status; read `docs/WINDOWS_ACCEPTANCE.md`.
+2. Give the validator the exact current published SHA and run the complete repository-owned still-image matrix in Debug in the documented order; stop on the first substantive failure.
 3. Only after the entire still-image Debug lane is green, run the same matrix in Release with the same expected totals.
 4. Run `plugin_exr_test` Debug and Release; require 22/0 each.
 5. Initialize/update `ffmpeg_headers/upstream`; require exact `bf1b838f2ab88b4f8fd83443325c782ea0e0f7fa`.
