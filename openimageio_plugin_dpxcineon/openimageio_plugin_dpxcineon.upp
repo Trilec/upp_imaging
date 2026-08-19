@@ -1,5 +1,7 @@
 description "Pinned OpenImageIO 3.1.15 DPX and Cineon plugins";
 
+noblitz;
+
 uses
 	openimageio_headers,
 	openimageio_src,
