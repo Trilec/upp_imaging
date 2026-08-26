@@ -12,13 +12,12 @@ include
 	upstream/libheif/api;
 
 options
-	-std=c++20,
 	-DLIBHEIF_STATIC_BUILD=1,
 	-DLIBHEIF_EXPORTS=1,
 	-DHAVE_DAV1D=1,
 	-DHAVE_LIBDE265=1;
 
 file
-	import.ext,
+	import.ext options(CLANG | GCC) "-std=c++20",
 	config/libheif/heif_version.h,
 	README.md;
