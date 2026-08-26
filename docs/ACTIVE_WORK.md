@@ -4,9 +4,10 @@ Recovery authority for work currently in flight. After fetching `main`, read thi
 
 ## BASE
 
-- The latest Windows final-acceptance run used exact SHA `045bb30f5a247b79a82602cd181aabce447eca15` and stopped compiling `openimageio_io_test` Debug on LibRaw math constants.
-- The LibRaw integration repair is published as `c644ba06a3671e591699d88e8046ae00599e3dac`.
-- The earlier DPX/Cineon Blitz repair remains `0523b40b0d1b09798de80760244a27f45b5ccf1b` and is an ancestor of the current repair line.
+- The latest Windows final-acceptance run used exact SHA `1847010c4f6745f5440ff28f4796d83781b62ece` and stopped compiling `openimageio_io_test` Debug on libheif C++20 requirements being compiled effectively as C++17.
+- The libheif C++20 source-boundary repair is published as `16aa8472d6e292e8bda18d440aaf26ff46004073`.
+- The earlier LibRaw Windows math-constant repair remains `c644ba06a3671e591699d88e8046ae00599e3dac`.
+- The earlier DPX/Cineon Blitz repair remains `0523b40b0d1b09798de80760244a27f45b5ccf1b`.
 - Current-generation framework implementation remains complete: `ImagingCore`, `ImagingIO`, `ImagingColor`, `ImagingAnalysis`, `ImagingDiagnostics`, `Imaging`.
 - Established Windows framework baseline remains: ImagingCore 48/0, ImagingIO 79/0 baseline, ImagingColor 66/0 + independent OCIO 15/0, ImagingAnalysis 41/0, ImagingDiagnostics 33/0, Imaging umbrella 6/0.
 - Code-side still-image line remains JPEG XL, HDR/RGBE, DPX/Cineon, camera RAW, WebP, decode-only HEIF/AVIF and TIFF.
@@ -23,46 +24,56 @@ Repair only real current-main failures as coherent root-cause slices. Keep suppl
 
 Current repair slice:
 
-- `libraw_src/libraw_src.upp`
-- `libraw_src/README.md`
+- `libheif_src/libheif_src.upp`
+- `libheif_src/README.md`
 - `docs/ACTIVE_WORK.md`
 
-Relevant inspected dependency/source slice:
+Relevant inspected dependency/source/build slice:
 
-- `libraw_src/import.ext`
-- pinned LibRaw 0.22.2 `src/decoders/decoders_dcraw.cpp`
-- pinned LibRaw 0.22.2 `internal/libraw_cxx_defs.h`
-- pinned LibRaw 0.22.2 `internal/defines.h`
-- `.gitmodules`
+- `libheif_src/import.ext`
+- pinned libheif 1.23.1 `CMakeLists.txt`
+- pinned libheif 1.23.1 `libheif/context.cc`
+- pinned libheif 1.23.1 `libheif/codecs/avc_boxes.cc`
+- pinned libheif 1.23.1 `libheif/nclx.h`
+- current U++ CLANGx64 build-method definition
+- current U++ `MakeBuild::CreateBuilder` option loading
+- current U++ `GccBuilder::BuildPackage` compile-command ordering
+- U++ package file-option contract for per-source compiler options
 
 ## STATUS
 
-### Windows acceptance defect 2 — LibRaw math constants
+### Windows acceptance defect 3 — libheif C++20 option ordering
 
-Validator report for exact SHA `045bb30f5a247b79a82602cd181aabce447eca15`:
+Validator report for task `IMG-WA-001` at exact SHA `1847010c4f6745f5440ff28f4796d83781b62ece`:
 
 - starting worktree clean;
 - `openimageio_io_test` Debug failed during compilation before execution;
-- first useful errors were undeclared `M_PI` and `M_SQRT1_2` in pinned LibRaw `src/decoders/decoders_dcraw.cpp`;
+- first useful errors were missing `std::map::contains`, missing `std::set::contains`, and failed `nclx_profile` comparison in pinned libheif sources;
 - remaining acceptance gates were not run under fail-fast policy;
 - no local edits;
-- final worktree clean.
+- final worktree clean;
+- `git diff --check` passed.
 
-Source review confirmed the integration mechanism against pinned LibRaw 0.22.2 commit `b93f6e45c194f5df9b02a43b1af9a54b4f41f33f`:
+Source/build review confirmed the mechanism:
 
-- `decoders_dcraw.cpp` uses `M_PI` and `M_SQRT1_2`;
-- `internal/libraw_cxx_defs.h` includes `<math.h>` before it includes `internal/defines.h`;
-- `internal/defines.h` later defines `_USE_MATH_DEFINES` and includes `<math.h>` again;
-- under the Windows CRT, defining `_USE_MATH_DEFINES` after the first `<math.h>` include is too late to expose those constants;
-- `libraw_src/libraw_src.upp` previously supplied only `LIBRAW_NODLL` and `LIBRAW_BUILDLIB`.
+- pinned libheif 1.23.1 commit `2c4bbb54c2738d4a5efbbe3e5fa1d5d76bb88eb0` explicitly requires C++20 in upstream `CMakeLists.txt`;
+- `libheif_src/libheif_src.upp` attempted to request `-std=c++20` as a package-wide compiler option;
+- the U++ CLANGx64 build method supplies `COMMON_CPP_OPTIONS = "-std=c++17"`;
+- U++ `GccBuilder::BuildPackage` adds package-wide `options` to the base compiler command first, then appends `COMMON_CPP_OPTIONS` for C++ translation units, so the previous command ordering effectively ended `-std=c++20 ... -std=c++17` and C++17 won;
+- U++ file-specific options are appended later still, after `COMMON_CPP_OPTIONS`;
+- imported sources inherit the file options attached to their `import.ext` package entry, so that boundary can supply the required language mode after the build-method default without altering the global CLANGx64 method.
 
-Repair `c644ba06a3671e591699d88e8046ae00599e3dac` therefore supplies `-D_USE_MATH_DEFINES=1` at the U++ LibRaw package compile boundary. This makes the compatibility definition visible before the first upstream `<math.h>` include while keeping pinned LibRaw source unchanged.
+Repair `16aa8472d6e292e8bda18d440aaf26ff46004073` therefore removes `-std=c++20` from package-wide `options` and attaches it to the `import.ext` file entry for CLANG/GCC. The imported libheif `.cc` sources now receive C++20 at the per-source boundary after U++'s C++17 method default. The rest of the application remains on the established U++ language mode.
 
-The repair does **not** change LibRaw source files, the source manifest, dependencies, APIs, tests, static registration, format policy, upstream pin or supported functionality.
+The repair does **not** change the libheif upstream pin, upstream source files, imported source selection, dependencies, APIs, tests, format policy, codec enablement or application-wide build method.
 
-### Earlier DPX/Cineon Blitz defect
+### Windows acceptance defect 2 — LibRaw math constants
 
-The first acceptance run at `19989324cb411fe46d229a0d1fa7cdd51ee7e69f` failed because U++ Blitz aggregated DPX and Cineon upstream sources and exposed an `InStream` namespace collision. Repair `0523b40b0d1b09798de80760244a27f45b5ccf1b` marks the importing `openimageio_plugin_dpxcineon` package `noblitz`, preserving upstream translation-unit assumptions. The later run at `045bb30...` progressed to the LibRaw compile failure, so DPX/Cineon was no longer the first blocker; complete package acceptance still awaits a green `openimageio_io_test` run.
+The run at `045bb30f5a247b79a82602cd181aabce447eca15` failed compiling pinned LibRaw on undeclared `M_PI` / `M_SQRT1_2`. Source review showed `_USE_MATH_DEFINES` was defined only after LibRaw's first `<math.h>` include. Repair `c644ba06a3671e591699d88e8046ae00599e3dac` supplies `-D_USE_MATH_DEFINES=1` at the U++ LibRaw package boundary while leaving pinned upstream source unchanged. The later run at `1847010...` progressed beyond this failure to libheif.
+
+### Windows acceptance defect 1 — DPX/Cineon Blitz collision
+
+The first acceptance run at `19989324cb411fe46d229a0d1fa7cdd51ee7e69f` failed because U++ Blitz aggregated DPX and Cineon upstream sources and exposed an `InStream` namespace collision. Repair `0523b40b0d1b09798de80760244a27f45b5ccf1b` marks the importing `openimageio_plugin_dpxcineon` package `noblitz`, preserving upstream translation-unit assumptions. Later runs progressed beyond this failure.
 
 ### Remaining deterministic acceptance
 
@@ -80,8 +91,9 @@ Supplementary real-camera RAW/DNG decode, real 8/10-bit AVIF/HEIC decode and ani
 
 Most relevant checkpoints:
 
+- `16aa8472d6e292e8bda18d440aaf26ff46004073` — apply libheif C++20 at imported-source boundary.
+- `1847010c4f6745f5440ff28f4796d83781b62ece` — validator base for `IMG-WA-001`; failed on effective C++17 libheif compilation.
 - `c644ba06a3671e591699d88e8046ae00599e3dac` — enable LibRaw Windows math constants at the package boundary.
-- `045bb30f5a247b79a82602cd181aabce447eca15` — previous acceptance/recovery HEAD; failed on LibRaw math constants.
 - `0523b40b0d1b09798de80760244a27f45b5ccf1b` — prevent DPX/Cineon Blitz namespace collision.
 - `32e9f32666aeee129400e5562ad395ee0a94435f` — self-contained Windows acceptance contract.
 - `b2b14c8cea9332ed6f997c5f0edd4825826eb353` — exact still-image acceptance matrix.
@@ -90,21 +102,24 @@ Most relevant checkpoints:
 
 ## VALIDATION
 
-### REPORTED — Windows acceptance at `045bb30...`
+### REPORTED — task `IMG-WA-001` at `1847010...`
 
 - clean starting and final worktree;
-- `openimageio_io_test` Debug failed compiling pinned LibRaw on undeclared `M_PI` / `M_SQRT1_2`;
+- `openimageio_io_test` Debug failed compiling pinned libheif on C++20 library/language features while effective mode remained C++17;
 - expected package result was 21/0 but execution was never reached;
 - no local edits;
-- remaining gates not run.
+- remaining gates not run;
+- `git diff --check` passed.
 
-### VERIFIED — source/static review
+### VERIFIED — source/build review
 
-- current failure sites use the missing math constants exactly as reported;
-- pinned LibRaw include order places the first `<math.h>` include before its internal `_USE_MATH_DEFINES` definition;
-- the U++ package lacked an early compatibility definition;
-- package-level compile definition is the smallest boundary repair and leaves pinned upstream source unchanged;
-- repair is published at `c644ba06a3671e591699d88e8046ae00599e3dac`.
+- libheif 1.23.1 requires C++20 upstream;
+- current U++ CLANGx64 method defaults C++ sources to C++17;
+- U++ builder ordering places `COMMON_CPP_OPTIONS` after package-wide options;
+- U++ builder ordering places file-specific source options after `COMMON_CPP_OPTIONS`;
+- `import.ext` source expansion inherits the file entry's per-source options;
+- moving C++20 to that boundary is the smallest coherent integration repair and does not require changing U++ globally or editing pinned libheif source;
+- repair is published at `16aa8472d6e292e8bda18d440aaf26ff46004073`.
 
 ### PLATFORM VALIDATION PENDING
 
@@ -117,7 +132,7 @@ Most relevant checkpoints:
 ## NEXT ACTION
 
 1. Fetch/fast-forward `origin/main`, record exact HEAD and require a clean worktree.
-2. Require LibRaw repair `c644ba06a3671e591699d88e8046ae00599e3dac` to be the tested HEAD or an ancestor of the exact current `main` HEAD.
+2. Require libheif repair `16aa8472d6e292e8bda18d440aaf26ff46004073` to be the tested HEAD or an ancestor of the exact current `main` HEAD.
 3. Read `docs/WINDOWS_ACCEPTANCE.md`.
 4. Rebuild/run `openimageio_io_test` Debug first; require 21/0.
 5. If green, continue the remaining still-image Debug targets in documented order and stop at the first substantive failure.
