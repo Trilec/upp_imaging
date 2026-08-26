@@ -4,8 +4,9 @@ Recovery authority for work currently in flight. After fetching `main`, read thi
 
 ## BASE
 
-- The latest Windows final-acceptance run used exact SHA `1847010c4f6745f5440ff28f4796d83781b62ece` and stopped compiling `openimageio_io_test` Debug on libheif C++20 requirements being compiled effectively as C++17.
-- The libheif C++20 source-boundary repair is published as `16aa8472d6e292e8bda18d440aaf26ff46004073`.
+- Latest Windows final-acceptance task `IMG-WA-002` used exact SHA `dfe34e2f1ec2c65b33cd982eedb633ff02934694` and stopped compiling `openimageio_io_test` Debug in dav1d because repository-generated Windows config aliased `fseeko`/`ftello` to `_fseeki64`/`_ftelli64`, conflicting with the active Clang/UCRT `<stdio.h>` declarations.
+- The dav1d Windows large-file config repair is published as `623b5d30a6755b9ca96a9774e0fb813620d94c10`.
+- The earlier libheif C++20 source-boundary repair remains `16aa8472d6e292e8bda18d440aaf26ff46004073`.
 - The earlier LibRaw Windows math-constant repair remains `c644ba06a3671e591699d88e8046ae00599e3dac`.
 - The earlier DPX/Cineon Blitz repair remains `0523b40b0d1b09798de80760244a27f45b5ccf1b`.
 - Current-generation framework implementation remains complete: `ImagingCore`, `ImagingIO`, `ImagingColor`, `ImagingAnalysis`, `ImagingDiagnostics`, `Imaging`.
@@ -24,52 +25,51 @@ Repair only real current-main failures as coherent root-cause slices. Keep suppl
 
 Current repair slice:
 
-- `libheif_src/libheif_src.upp`
-- `libheif_src/README.md`
+- `dav1d_src/config/config.h`
+- `dav1d_src/README.md`
 - `docs/ACTIVE_WORK.md`
 
 Relevant inspected dependency/source/build slice:
 
-- `libheif_src/import.ext`
-- pinned libheif 1.23.1 `CMakeLists.txt`
-- pinned libheif 1.23.1 `libheif/context.cc`
-- pinned libheif 1.23.1 `libheif/codecs/avc_boxes.cc`
-- pinned libheif 1.23.1 `libheif/nclx.h`
-- current U++ CLANGx64 build-method definition
-- current U++ `MakeBuild::CreateBuilder` option loading
-- current U++ `GccBuilder::BuildPackage` compile-command ordering
-- U++ package file-option contract for per-source compiler options
+- `dav1d_src/dav1d_src.upp`
+- pinned dav1d 1.5.4 upstream `meson.build`
+- active U++ CLANGx64/MinGW/UCRT compile context from validator output
+- prior libheif C++20 source-boundary repair and acceptance evidence
 
 ## STATUS
 
-### Windows acceptance defect 3 — libheif C++20 option ordering
+### Windows acceptance defect 4 — dav1d Windows large-file config branch
 
-Validator report for task `IMG-WA-001` at exact SHA `1847010c4f6745f5440ff28f4796d83781b62ece`:
+Validator report for task `IMG-WA-002` at exact SHA `dfe34e2f1ec2c65b33cd982eedb633ff02934694`:
 
 - starting worktree clean;
 - `openimageio_io_test` Debug failed during compilation before execution;
-- first useful errors were missing `std::map::contains`, missing `std::set::contains`, and failed `nclx_profile` comparison in pinned libheif sources;
+- first useful errors were conflicting declarations for `_fseeki64` and `_ftelli64` while compiling pinned dav1d sources;
+- repository-owned `dav1d_src/config/config.h` defined `fseeko` as `_fseeki64` and `ftello` as `_ftelli64`;
+- active Clang/UCRT `<stdio.h>` already declares `fseeko` and `ftello`, so those preprocessor aliases rewrite later declarations into conflicting prototypes;
 - remaining acceptance gates were not run under fail-fast policy;
 - no local edits;
-- final worktree clean;
-- `git diff --check` passed.
+- final worktree clean.
 
-Source/build review confirmed the mechanism:
+Upstream/source review confirmed the intended dav1d 1.5.4 Windows configuration branch at exact pin `54706fc6bc0cdecab7e9593974a4039cc038fca7`:
 
-- pinned libheif 1.23.1 commit `2c4bbb54c2738d4a5efbbe3e5fa1d5d76bb88eb0` explicitly requires C++20 in upstream `CMakeLists.txt`;
-- `libheif_src/libheif_src.upp` attempted to request `-std=c++20` as a package-wide compiler option;
-- the U++ CLANGx64 build method supplies `COMMON_CPP_OPTIONS = "-std=c++17"`;
-- U++ `GccBuilder::BuildPackage` adds package-wide `options` to the base compiler command first, then appends `COMMON_CPP_OPTIONS` for C++ translation units, so the previous command ordering effectively ended `-std=c++20 ... -std=c++17` and C++17 won;
-- U++ file-specific options are appended later still, after `COMMON_CPP_OPTIONS`;
-- imported sources inherit the file options attached to their `import.ext` package entry, so that boundary can supply the required language mode after the build-method default without altering the global CLANGx64 method.
+- upstream Meson always sets `_WIN32_WINNT`, Unicode macros, `__USE_MINGW_ANSI_STDIO` and `_CRT_DECLARE_NONSTDC_NAMES` on Windows;
+- it then feature-tests `fseeko` against `<stdio.h>`;
+- if `fseeko` exists, upstream sets `_FILE_OFFSET_BITS=64` and does **not** define `fseeko`/`ftello` aliases;
+- only when `fseeko` is absent does upstream define `fseeko` as `_fseeki64` and `ftello` as `_ftelli64`;
+- Gary's compiler output proves the active U++ CLANGx64 MinGW/UCRT headers already provide `fseeko`/`ftello`, so the repository-generated config had selected the wrong upstream branch.
 
-Repair `16aa8472d6e292e8bda18d440aaf26ff46004073` therefore removes `-std=c++20` from package-wide `options` and attaches it to the `import.ext` file entry for CLANG/GCC. The imported libheif `.cc` sources now receive C++20 at the per-source boundary after U++'s C++17 method default. The rest of the application remains on the established U++ language mode.
+Repair `623b5d30a6755b9ca96a9774e0fb813620d94c10` therefore removes the `fseeko`/`ftello` aliases, adds `_FILE_OFFSET_BITS=64`, and adds upstream's Windows `__USE_MINGW_ANSI_STDIO=1` definition. Pinned dav1d source and source selection remain unchanged.
 
-The repair does **not** change the libheif upstream pin, upstream source files, imported source selection, dependencies, APIs, tests, format policy, codec enablement or application-wide build method.
+The repair does **not** change the dav1d upstream pin, source files, source manifest, dependencies, API, tests, AV1 feature policy, bit-depth coverage or SIMD policy.
+
+### Windows acceptance defect 3 — libheif C++20 option ordering
+
+Task `IMG-WA-001` at `1847010c4f6745f5440ff28f4796d83781b62ece` failed because libheif 1.23.1 requires C++20 while U++ CLANGx64's C++17 option followed the package-wide C++20 option. Repair `16aa8472d6e292e8bda18d440aaf26ff46004073` moved C++20 to the imported-source boundary so it appears after the U++ method default. Task `IMG-WA-002` progressed beyond those libheif errors to the dav1d configuration failure.
 
 ### Windows acceptance defect 2 — LibRaw math constants
 
-The run at `045bb30f5a247b79a82602cd181aabce447eca15` failed compiling pinned LibRaw on undeclared `M_PI` / `M_SQRT1_2`. Source review showed `_USE_MATH_DEFINES` was defined only after LibRaw's first `<math.h>` include. Repair `c644ba06a3671e591699d88e8046ae00599e3dac` supplies `-D_USE_MATH_DEFINES=1` at the U++ LibRaw package boundary while leaving pinned upstream source unchanged. The later run at `1847010...` progressed beyond this failure to libheif.
+The run at `045bb30f5a247b79a82602cd181aabce447eca15` failed compiling pinned LibRaw on undeclared `M_PI` / `M_SQRT1_2`. Repair `c644ba06a3671e591699d88e8046ae00599e3dac` supplies `_USE_MATH_DEFINES` at the U++ LibRaw package boundary while leaving pinned upstream source unchanged. Later runs progressed beyond this failure.
 
 ### Windows acceptance defect 1 — DPX/Cineon Blitz collision
 
@@ -91,8 +91,9 @@ Supplementary real-camera RAW/DNG decode, real 8/10-bit AVIF/HEIC decode and ani
 
 Most relevant checkpoints:
 
+- `623b5d30a6755b9ca96a9774e0fb813620d94c10` — fix dav1d Windows large-file generated config branch.
+- `dfe34e2f1ec2c65b33cd982eedb633ff02934694` — validator base for `IMG-WA-002`; failed on dav1d `fseeko`/`ftello` alias conflicts.
 - `16aa8472d6e292e8bda18d440aaf26ff46004073` — apply libheif C++20 at imported-source boundary.
-- `1847010c4f6745f5440ff28f4796d83781b62ece` — validator base for `IMG-WA-001`; failed on effective C++17 libheif compilation.
 - `c644ba06a3671e591699d88e8046ae00599e3dac` — enable LibRaw Windows math constants at the package boundary.
 - `0523b40b0d1b09798de80760244a27f45b5ccf1b` — prevent DPX/Cineon Blitz namespace collision.
 - `32e9f32666aeee129400e5562ad395ee0a94435f` — self-contained Windows acceptance contract.
@@ -102,24 +103,23 @@ Most relevant checkpoints:
 
 ## VALIDATION
 
-### REPORTED — task `IMG-WA-001` at `1847010...`
+### REPORTED — task `IMG-WA-002` at `dfe34e2...`
 
 - clean starting and final worktree;
-- `openimageio_io_test` Debug failed compiling pinned libheif on C++20 library/language features while effective mode remained C++17;
+- `openimageio_io_test` Debug failed compiling pinned dav1d because generated config aliased existing `fseeko`/`ftello` declarations to `_fseeki64`/`_ftelli64`;
 - expected package result was 21/0 but execution was never reached;
 - no local edits;
-- remaining gates not run;
-- `git diff --check` passed.
+- remaining gates not run.
 
 ### VERIFIED — source/build review
 
-- libheif 1.23.1 requires C++20 upstream;
-- current U++ CLANGx64 method defaults C++ sources to C++17;
-- U++ builder ordering places `COMMON_CPP_OPTIONS` after package-wide options;
-- U++ builder ordering places file-specific source options after `COMMON_CPP_OPTIONS`;
-- `import.ext` source expansion inherits the file entry's per-source options;
-- moving C++20 to that boundary is the smallest coherent integration repair and does not require changing U++ globally or editing pinned libheif source;
-- repair is published at `16aa8472d6e292e8bda18d440aaf26ff46004073`.
+- pinned dav1d 1.5.4 upstream Meson feature-tests `fseeko` on Windows;
+- active U++ CLANGx64 UCRT headers demonstrably provide `fseeko`/`ftello`;
+- the repository-generated aliases therefore selected the wrong upstream configuration branch;
+- upstream's matching branch sets `_FILE_OFFSET_BITS=64` instead;
+- upstream also defines `__USE_MINGW_ANSI_STDIO=1` in its Windows config;
+- generated-config repair is the smallest coherent integration fix and preserves pinned upstream source;
+- repair is published at `623b5d30a6755b9ca96a9774e0fb813620d94c10`.
 
 ### PLATFORM VALIDATION PENDING
 
@@ -132,7 +132,7 @@ Most relevant checkpoints:
 ## NEXT ACTION
 
 1. Fetch/fast-forward `origin/main`, record exact HEAD and require a clean worktree.
-2. Require libheif repair `16aa8472d6e292e8bda18d440aaf26ff46004073` to be the tested HEAD or an ancestor of the exact current `main` HEAD.
+2. Require dav1d repair `623b5d30a6755b9ca96a9774e0fb813620d94c10` to be the tested HEAD or an ancestor of exact current `main` HEAD.
 3. Read `docs/WINDOWS_ACCEPTANCE.md`.
 4. Rebuild/run `openimageio_io_test` Debug first; require 21/0.
 5. If green, continue the remaining still-image Debug targets in documented order and stop at the first substantive failure.
