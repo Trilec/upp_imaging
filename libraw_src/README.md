@@ -14,6 +14,8 @@ The first U++ slice deliberately leaves optional RawSpeed, Adobe DNG SDK, LCMS a
 
 `LIBRAW_NODLL` makes the public headers match the static linkage model. `LIBRAW_BUILDLIB` identifies the package as the library build rather than a consumer.
 
+On Windows, `_USE_MATH_DEFINES` is supplied at the package compile boundary so the CRT exposes constants such as `M_PI` and `M_SQRT1_2` before LibRaw's first `<math.h>` include. The pinned upstream source defines the macro later in `internal/defines.h`, after `internal/libraw_cxx_defs.h` has already included `<math.h>`, so the package-level definition preserves the upstream source unchanged while satisfying its math-constant assumption under U++ CLANGx64.
+
 ## Intended use
 
 Application code should normally use `OpenImageIO` or `ImagingIO` rather than depend on this package directly. The direct `libraw_prereq_test` exists only to prove the pinned backend and static ABI contract independently of OpenImageIO.

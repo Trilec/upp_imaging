@@ -7,7 +7,8 @@ include
 
 options
 	-DLIBRAW_NODLL=1,
-	-DLIBRAW_BUILDLIB=1;
+	-DLIBRAW_BUILDLIB=1,
+	-D_USE_MATH_DEFINES=1;
 
 file
 	import.ext,
