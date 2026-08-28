@@ -4,12 +4,13 @@ Recovery authority for work currently in flight. After fetching `main`, read thi
 
 ## BASE
 
-- Latest Windows final-acceptance task `IMG-WA-003` used exact SHA `3e33ec9fc39f504ec674edee4f9dbbabdbf3bb2b` and stopped during dav1d archive creation because the U++ package entry `generated/*.c` survived object naming as literal `generated_*.c.o` and was passed to `llvm-ar`.
-- The dav1d generated-wrapper manifest repair is published as `b2d53719fdc926aed49f8a3bf90b10279577d33d`.
-- The earlier dav1d Windows large-file config repair remains `623b5d30a6755b9ca96a9774e0fb813620d94c10`.
-- The earlier libheif C++20 source-boundary repair remains `16aa8472d6e292e8bda18d440aaf26ff46004073`.
-- The earlier LibRaw Windows math-constant repair remains `c644ba06a3671e591699d88e8046ae00599e3dac`.
-- The earlier DPX/Cineon Blitz repair remains `0523b40b0d1b09798de80760244a27f45b5ccf1b`.
+- Latest Windows final-acceptance task `IMG-WA-004` used exact SHA `6b91c4a5833be3f9d3facda98869800da40ff204` and stopped compiling `openimageio_io_test` Debug in OpenColorIO apphelpers because `LogWarning`, `LogDebug` and `IsDebugLoggingEnabled` were undeclared.
+- OpenColorIO private-logging include repair is published as `3f4c0a44740e91bd845fe078cd400e5d7eef0935`.
+- Earlier dav1d generated-wrapper manifest repair remains `b2d53719fdc926aed49f8a3bf90b10279577d33d`.
+- Earlier dav1d Windows large-file config repair remains `623b5d30a6755b9ca96a9774e0fb813620d94c10`.
+- Earlier libheif C++20 source-boundary repair remains `16aa8472d6e292e8bda18d440aaf26ff46004073`.
+- Earlier LibRaw Windows math-constant repair remains `c644ba06a3671e591699d88e8046ae00599e3dac`.
+- Earlier DPX/Cineon Blitz repair remains `0523b40b0d1b09798de80760244a27f45b5ccf1b`.
 - Current-generation framework implementation remains complete: `ImagingCore`, `ImagingIO`, `ImagingColor`, `ImagingAnalysis`, `ImagingDiagnostics`, `Imaging`.
 - Established Windows framework baseline remains: ImagingCore 48/0, ImagingIO 79/0 baseline, ImagingColor 66/0 + independent OCIO 15/0, ImagingAnalysis 41/0, ImagingDiagnostics 33/0, Imaging umbrella 6/0.
 - Code-side still-image line remains JPEG XL, HDR/RGBE, DPX/Cineon, camera RAW, WebP, decode-only HEIF/AVIF and TIFF.
@@ -26,59 +27,57 @@ Repair only real current-main failures as coherent root-cause slices. Keep suppl
 
 Current repair slice:
 
-- `dav1d_src/dav1d_src.upp`
-- `dav1d_src/README.md`
+- `opencolorio_src/Logging.h`
+- `opencolorio_src/README.md`
 - `docs/ACTIVE_WORK.md`
 
-Relevant inspected dependency/source/build slice:
+Relevant inspected source/build slice:
 
-- `dav1d_src/import.ext`
-- all 26 repository-owned files under `dav1d_src/generated/`
-- representative generated wrapper `dav1d_src/generated/8_cdef.c`
-- pinned dav1d 1.5.4 upstream source boundary
-- prior dav1d Windows config repair and validator evidence
+- `opencolorio_src/opencolorio_src.upp`
+- `opencolorio_src/upstream/src/OpenColorIO/Logging.h`
+- `opencolorio_src/upstream/src/OpenColorIO/Logging.cpp`
+- `opencolorio_src/upstream/src/OpenColorIO/apphelpers/ColorSpaceHelpers.cpp`
+- `opencolorio_src/compat_include/`
+- validator diagnostics from `IMG-WA-004`
 
 ## STATUS
 
-### Windows acceptance defect 5 — dav1d generated-wrapper wildcard
+### Windows acceptance defect 6 — OpenColorIO private logging include resolution
 
-Validator report for task `IMG-WA-003` at exact SHA `3e33ec9fc39f504ec674edee4f9dbbabdbf3bb2b`:
+Validator report for task `IMG-WA-004` at exact SHA `6b91c4a5833be3f9d3facda98869800da40ff204`:
 
 - starting worktree clean;
-- `openimageio_io_test` Debug progressed through dav1d compilation to archive creation;
-- `llvm-ar` failed on literal object path `generated_*.c.o` with `Invalid argument`;
-- `dav1d_src/dav1d_src.upp` contained `generated/*.c` as a compiled source entry;
+- `openimageio_io_test` Debug progressed beyond the prior dav1d archive-manifest failure;
+- compilation then failed in OpenColorIO apphelpers on undeclared `LogWarning`, with additional missing `LogDebug` and `IsDebugLoggingEnabled`;
+- representative failures were in `apphelpers/ColorSpaceHelpers.cpp`, `apphelpers/mergeconfigs/SectionMerger.h` and `apphelpers/mergeconfigs/OCIOMYaml.cpp`;
+- expected package result was 21/0 but execution was never reached;
 - remaining acceptance gates were not run under fail-fast policy;
 - no local edits;
 - final worktree clean.
 
-Repository/source review confirmed the package boundary:
+Verified source/package facts:
 
-- `dav1d_src/import.ext` explicitly owns the ordinary scalar dav1d sources plus the Windows thread shim;
-- `dav1d_src/generated/` contains exactly 26 repository-owned wrapper files: 13 upstream bit-depth templates instantiated once for 8-bit and once for 16-bit;
-- representative wrappers only set `BITDEPTH` and include the matching pinned upstream template source;
-- the wrapper set is therefore fixed repository source, not runtime-generated or discovery-dependent input;
-- the wildcard package entry did not expand into concrete archive object membership under the observed U++ build and instead survived as the literal object identity reported by `llvm-ar`.
+- `opencolorio_src.upp` already compiles upstream `Logging.cpp` and lists upstream `Logging.h`;
+- the package also supplies `upstream/src/OpenColorIO` as an include root and defines `OCIO_HEADLESS_ENABLED`;
+- upstream `upstream/src/OpenColorIO/Logging.h` unconditionally declares `LogWarning`, `LogDebug` and `IsDebugLoggingEnabled` in `OCIO_NAMESPACE`; these declarations are not removed by headless mode;
+- upstream apphelpers include the private API by the generic quoted name `"Logging.h"` rather than by a path-qualified include;
+- therefore the observed undeclared identifiers are inconsistent with the intended upstream private header being the header visible to those translation units.
 
-Repair `b2d53719fdc926aed49f8a3bf90b10279577d33d` replaces `generated/*.c` with the exact 26 wrapper paths in `dav1d_src.upp`. This keeps source ownership deterministic and preserves exactly the existing 13-by-2 wrapper set.
+The exact alternate header identity selected by the Windows compiler was not captured in the validator report, so do not claim a specific competing header without new evidence. The integration defect is bounded to making OpenColorIO's intended private logging header resolution deterministic inside the U++ aggregate include graph.
 
-The repair does **not** change wrapper contents, pinned dav1d source, upstream pin, ordinary source selection, dependencies, API, tests, AV1 feature policy, bit-depth coverage or SIMD policy.
+Repair `3f4c0a44740e91bd845fe078cd400e5d7eef0935` adds repository-owned package-root `opencolorio_src/Logging.h`, which forwards directly to `upstream/src/OpenColorIO/Logging.h`. The package already exposes its root as an include path, so apphelper `"Logging.h"` lookup now has a package-owned deterministic target before relying on a generic cross-package name. The package README records this integration boundary.
 
-### Windows acceptance defect 4 — dav1d Windows large-file config branch
+The repair does **not** modify vendored OpenColorIO 2.5.2 source, the OCIO pin, `Logging.cpp`, dependencies, public API, tests, headless policy, CPU/GPU policy, SIMD policy or source selection.
 
-Task `IMG-WA-002` at `dfe34e2f1ec2c65b33cd982eedb633ff02934694` failed because repository-generated Windows config aliased existing `fseeko`/`ftello` declarations to `_fseeki64`/`_ftelli64`. Upstream dav1d 1.5.4 feature-tests those names and, when present, uses `_FILE_OFFSET_BITS=64` instead. Repair `623b5d30a6755b9ca96a9774e0fb813620d94c10` selected that upstream branch. Task `IMG-WA-003` progressed beyond compilation to archive creation.
+### Earlier acceptance defects — preserved checkpoints
 
-### Windows acceptance defect 3 — libheif C++20 option ordering
+1. **DPX/Cineon Blitz collision** — acceptance at `19989324cb411fe46d229a0d1fa7cdd51ee7e69f` exposed an `InStream` collision after Blitz combined upstream translation units. Repair `0523b40b0d1b09798de80760244a27f45b5ccf1b` marks the importing package `noblitz`.
+2. **LibRaw Windows math constants** — acceptance at `045bb30f5a247b79a82602cd181aabce447eca15` failed on undeclared `M_PI` / `M_SQRT1_2`. Repair `c644ba06a3671e591699d88e8046ae00599e3dac` supplies `_USE_MATH_DEFINES` at the package boundary.
+3. **libheif C++20 option ordering** — `IMG-WA-001` at `1847010c4f6745f5440ff28f4796d83781b62ece` failed because U++'s C++17 option followed package-wide C++20. Repair `16aa8472d6e292e8bda18d440aaf26ff46004073` applies C++20 at the imported-source boundary.
+4. **dav1d Windows large-file config** — `IMG-WA-002` at `dfe34e2f1ec2c65b33cd982eedb633ff02934694` failed because generated config aliased existing `fseeko`/`ftello`. Repair `623b5d30a6755b9ca96a9774e0fb813620d94c10` follows dav1d's feature-tested `_FILE_OFFSET_BITS=64` branch.
+5. **dav1d generated-wrapper wildcard** — `IMG-WA-003` at `3e33ec9fc39f504ec674edee4f9dbbabdbf3bb2b` reached archive creation but `llvm-ar` received literal `generated_*.c.o`. Repair `b2d53719fdc926aed49f8a3bf90b10279577d33d` explicitly enumerates the fixed 26 wrapper files.
 
-Task `IMG-WA-001` at `1847010c4f6745f5440ff28f4796d83781b62ece` failed because libheif 1.23.1 requires C++20 while U++ CLANGx64's C++17 option followed the package-wide C++20 option. Repair `16aa8472d6e292e8bda18d440aaf26ff46004073` moved C++20 to the imported-source boundary so it appears after the U++ method default. Later runs progressed beyond those libheif errors.
-
-### Windows acceptance defect 2 — LibRaw math constants
-
-The run at `045bb30f5a247b79a82602cd181aabce447eca15` failed compiling pinned LibRaw on undeclared `M_PI` / `M_SQRT1_2`. Repair `c644ba06a3671e591699d88e8046ae00599e3dac` supplies `_USE_MATH_DEFINES` at the U++ LibRaw package boundary while leaving pinned upstream source unchanged. Later runs progressed beyond this failure.
-
-### Windows acceptance defect 1 — DPX/Cineon Blitz collision
-
-The first acceptance run at `19989324cb411fe46d229a0d1fa7cdd51ee7e69f` failed because U++ Blitz aggregated DPX and Cineon upstream sources and exposed an `InStream` namespace collision. Repair `0523b40b0d1b09798de80760244a27f45b5ccf1b` marks the importing `openimageio_plugin_dpxcineon` package `noblitz`, preserving upstream translation-unit assumptions. Later runs progressed beyond this failure.
+Later validator progress past an earlier failure is evidence that the build moved beyond that failure point; it is not by itself full runtime acceptance of the affected subsystem.
 
 ### Remaining deterministic acceptance
 
@@ -96,6 +95,8 @@ Supplementary real-camera RAW/DNG decode, real 8/10-bit AVIF/HEIC decode and ani
 
 Most relevant checkpoints:
 
+- `3f4c0a44740e91bd845fe078cd400e5d7eef0935` — pin OpenColorIO apphelper `"Logging.h"` to the intended private upstream header at the U++ package boundary.
+- `6b91c4a5833be3f9d3facda98869800da40ff204` — validator base for `IMG-WA-004`; failed compiling OCIO apphelpers on missing logging declarations.
 - `b2d53719fdc926aed49f8a3bf90b10279577d33d` — enumerate the exact dav1d generated wrapper source set.
 - `3e33ec9fc39f504ec674edee4f9dbbabdbf3bb2b` — validator base for `IMG-WA-003`; failed during dav1d archive creation on literal wildcard object name.
 - `623b5d30a6755b9ca96a9774e0fb813620d94c10` — fix dav1d Windows large-file generated config branch.
@@ -109,22 +110,21 @@ Most relevant checkpoints:
 
 ## VALIDATION
 
-### REPORTED — task `IMG-WA-003` at `3e33ec9...`
+### REPORTED — task `IMG-WA-004` at `6b91c4a...`
 
 - clean starting and final worktree;
-- `openimageio_io_test` Debug reached dav1d archive creation;
-- `llvm-ar` rejected literal `generated_*.c.o` with `Invalid argument`;
+- `openimageio_io_test` Debug failed compiling OCIO apphelpers on missing logging identifiers;
 - expected package result was 21/0 but execution was never reached;
 - no local edits;
 - remaining gates not run.
 
 ### VERIFIED — source/build review
 
-- the repository contains exactly 26 generated wrapper `.c` files, matching the documented 13 templates × two bit depths;
-- ordinary dav1d source ownership is separate in `import.ext`;
-- generated wrappers are repository-owned fixed source files rather than discovered build artifacts;
-- explicit package enumeration is therefore the smallest coherent source-manifest repair;
-- repair is published at `b2d53719fdc926aed49f8a3bf90b10279577d33d`.
+- the intended upstream private `Logging.h` declares every missing identifier from the report;
+- the declarations are not headless-gated;
+- upstream apphelpers request that header by the generic quoted name `"Logging.h"`;
+- package-root forwarding is a bounded U++ integration repair that leaves vendored source and source ownership intact;
+- source repair is published at `3f4c0a44740e91bd845fe078cd400e5d7eef0935`.
 
 ### PLATFORM VALIDATION PENDING
 
@@ -137,7 +137,7 @@ Most relevant checkpoints:
 ## NEXT ACTION
 
 1. Fetch/fast-forward `origin/main`, record exact HEAD and require a clean worktree.
-2. Require dav1d generated-wrapper repair `b2d53719fdc926aed49f8a3bf90b10279577d33d` to be the tested HEAD or an ancestor of exact current `main` HEAD.
+2. Require OpenColorIO logging include repair `3f4c0a44740e91bd845fe078cd400e5d7eef0935` to be the tested HEAD or an ancestor of exact current `main` HEAD.
 3. Read `docs/WINDOWS_ACCEPTANCE.md`.
 4. Rebuild/run `openimageio_io_test` Debug first; require 21/0.
 5. If green, continue the remaining still-image Debug targets in documented order and stop at the first substantive failure.
