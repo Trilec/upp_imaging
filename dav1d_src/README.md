@@ -10,6 +10,8 @@ Pinned scalar dav1d AV1 decoder backend for the HEIF/AVIF import stack.
 
 The package compiles dav1d's ordinary scalar library sources plus the Windows thread shim. The 13 upstream bit-depth template sources are instantiated separately for 8-bit and 16-bit through repository-owned wrappers. Assembly/SIMD is deliberately disabled in the first U++ slice; both AV1 bit-depth paths remain enabled.
 
+The 26 repository-owned bit-depth wrapper sources are enumerated explicitly in `dav1d_src.upp`. For this package, a compiled-source wildcard such as `generated/*.c` can survive U++ object naming and reach archive creation as a literal `generated_*.c.o` path instead of a concrete object list. Explicit enumeration keeps archive membership deterministic while preserving exactly the same 13-by-2 wrapper set.
+
 Repository-owned `config.h` and `vcs_version.h` replace Meson-generated headers. No Meson/Ninja step, CLI tools, examples or tests are part of the package build.
 
 On Windows, the repository-generated config follows dav1d's upstream feature-test branch: when the active CRT already declares `fseeko`/`ftello`, it enables `_FILE_OFFSET_BITS=64` instead of aliasing those names to `_fseeki64`/`_ftelli64`. The U++ CLANGx64 MinGW/UCRT headers provide the POSIX names, so defining the aliases would rewrite declarations inside `<stdio.h>` and create conflicting prototypes.
