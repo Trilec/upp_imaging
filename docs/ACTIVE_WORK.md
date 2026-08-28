@@ -4,8 +4,9 @@ Recovery authority for work currently in flight. After fetching `main`, read thi
 
 ## BASE
 
-- Latest Windows final-acceptance task `IMG-WA-002` used exact SHA `dfe34e2f1ec2c65b33cd982eedb633ff02934694` and stopped compiling `openimageio_io_test` Debug in dav1d because repository-generated Windows config aliased `fseeko`/`ftello` to `_fseeki64`/`_ftelli64`, conflicting with the active Clang/UCRT `<stdio.h>` declarations.
-- The dav1d Windows large-file config repair is published as `623b5d30a6755b9ca96a9774e0fb813620d94c10`.
+- Latest Windows final-acceptance task `IMG-WA-003` used exact SHA `3e33ec9fc39f504ec674edee4f9dbbabdbf3bb2b` and stopped during dav1d archive creation because the U++ package entry `generated/*.c` survived object naming as literal `generated_*.c.o` and was passed to `llvm-ar`.
+- The dav1d generated-wrapper manifest repair is published as `b2d53719fdc926aed49f8a3bf90b10279577d33d`.
+- The earlier dav1d Windows large-file config repair remains `623b5d30a6755b9ca96a9774e0fb813620d94c10`.
 - The earlier libheif C++20 source-boundary repair remains `16aa8472d6e292e8bda18d440aaf26ff46004073`.
 - The earlier LibRaw Windows math-constant repair remains `c644ba06a3671e591699d88e8046ae00599e3dac`.
 - The earlier DPX/Cineon Blitz repair remains `0523b40b0d1b09798de80760244a27f45b5ccf1b`.
@@ -25,47 +26,51 @@ Repair only real current-main failures as coherent root-cause slices. Keep suppl
 
 Current repair slice:
 
-- `dav1d_src/config/config.h`
+- `dav1d_src/dav1d_src.upp`
 - `dav1d_src/README.md`
 - `docs/ACTIVE_WORK.md`
 
 Relevant inspected dependency/source/build slice:
 
-- `dav1d_src/dav1d_src.upp`
-- pinned dav1d 1.5.4 upstream `meson.build`
-- active U++ CLANGx64/MinGW/UCRT compile context from validator output
-- prior libheif C++20 source-boundary repair and acceptance evidence
+- `dav1d_src/import.ext`
+- all 26 repository-owned files under `dav1d_src/generated/`
+- representative generated wrapper `dav1d_src/generated/8_cdef.c`
+- pinned dav1d 1.5.4 upstream source boundary
+- prior dav1d Windows config repair and validator evidence
 
 ## STATUS
 
-### Windows acceptance defect 4 — dav1d Windows large-file config branch
+### Windows acceptance defect 5 — dav1d generated-wrapper wildcard
 
-Validator report for task `IMG-WA-002` at exact SHA `dfe34e2f1ec2c65b33cd982eedb633ff02934694`:
+Validator report for task `IMG-WA-003` at exact SHA `3e33ec9fc39f504ec674edee4f9dbbabdbf3bb2b`:
 
 - starting worktree clean;
-- `openimageio_io_test` Debug failed during compilation before execution;
-- first useful errors were conflicting declarations for `_fseeki64` and `_ftelli64` while compiling pinned dav1d sources;
-- repository-owned `dav1d_src/config/config.h` defined `fseeko` as `_fseeki64` and `ftello` as `_ftelli64`;
-- active Clang/UCRT `<stdio.h>` already declares `fseeko` and `ftello`, so those preprocessor aliases rewrite later declarations into conflicting prototypes;
+- `openimageio_io_test` Debug progressed through dav1d compilation to archive creation;
+- `llvm-ar` failed on literal object path `generated_*.c.o` with `Invalid argument`;
+- `dav1d_src/dav1d_src.upp` contained `generated/*.c` as a compiled source entry;
 - remaining acceptance gates were not run under fail-fast policy;
 - no local edits;
 - final worktree clean.
 
-Upstream/source review confirmed the intended dav1d 1.5.4 Windows configuration branch at exact pin `54706fc6bc0cdecab7e9593974a4039cc038fca7`:
+Repository/source review confirmed the package boundary:
 
-- upstream Meson always sets `_WIN32_WINNT`, Unicode macros, `__USE_MINGW_ANSI_STDIO` and `_CRT_DECLARE_NONSTDC_NAMES` on Windows;
-- it then feature-tests `fseeko` against `<stdio.h>`;
-- if `fseeko` exists, upstream sets `_FILE_OFFSET_BITS=64` and does **not** define `fseeko`/`ftello` aliases;
-- only when `fseeko` is absent does upstream define `fseeko` as `_fseeki64` and `ftello` as `_ftelli64`;
-- Gary's compiler output proves the active U++ CLANGx64 MinGW/UCRT headers already provide `fseeko`/`ftello`, so the repository-generated config had selected the wrong upstream branch.
+- `dav1d_src/import.ext` explicitly owns the ordinary scalar dav1d sources plus the Windows thread shim;
+- `dav1d_src/generated/` contains exactly 26 repository-owned wrapper files: 13 upstream bit-depth templates instantiated once for 8-bit and once for 16-bit;
+- representative wrappers only set `BITDEPTH` and include the matching pinned upstream template source;
+- the wrapper set is therefore fixed repository source, not runtime-generated or discovery-dependent input;
+- the wildcard package entry did not expand into concrete archive object membership under the observed U++ build and instead survived as the literal object identity reported by `llvm-ar`.
 
-Repair `623b5d30a6755b9ca96a9774e0fb813620d94c10` therefore removes the `fseeko`/`ftello` aliases, adds `_FILE_OFFSET_BITS=64`, and adds upstream's Windows `__USE_MINGW_ANSI_STDIO=1` definition. Pinned dav1d source and source selection remain unchanged.
+Repair `b2d53719fdc926aed49f8a3bf90b10279577d33d` replaces `generated/*.c` with the exact 26 wrapper paths in `dav1d_src.upp`. This keeps source ownership deterministic and preserves exactly the existing 13-by-2 wrapper set.
 
-The repair does **not** change the dav1d upstream pin, source files, source manifest, dependencies, API, tests, AV1 feature policy, bit-depth coverage or SIMD policy.
+The repair does **not** change wrapper contents, pinned dav1d source, upstream pin, ordinary source selection, dependencies, API, tests, AV1 feature policy, bit-depth coverage or SIMD policy.
+
+### Windows acceptance defect 4 — dav1d Windows large-file config branch
+
+Task `IMG-WA-002` at `dfe34e2f1ec2c65b33cd982eedb633ff02934694` failed because repository-generated Windows config aliased existing `fseeko`/`ftello` declarations to `_fseeki64`/`_ftelli64`. Upstream dav1d 1.5.4 feature-tests those names and, when present, uses `_FILE_OFFSET_BITS=64` instead. Repair `623b5d30a6755b9ca96a9774e0fb813620d94c10` selected that upstream branch. Task `IMG-WA-003` progressed beyond compilation to archive creation.
 
 ### Windows acceptance defect 3 — libheif C++20 option ordering
 
-Task `IMG-WA-001` at `1847010c4f6745f5440ff28f4796d83781b62ece` failed because libheif 1.23.1 requires C++20 while U++ CLANGx64's C++17 option followed the package-wide C++20 option. Repair `16aa8472d6e292e8bda18d440aaf26ff46004073` moved C++20 to the imported-source boundary so it appears after the U++ method default. Task `IMG-WA-002` progressed beyond those libheif errors to the dav1d configuration failure.
+Task `IMG-WA-001` at `1847010c4f6745f5440ff28f4796d83781b62ece` failed because libheif 1.23.1 requires C++20 while U++ CLANGx64's C++17 option followed the package-wide C++20 option. Repair `16aa8472d6e292e8bda18d440aaf26ff46004073` moved C++20 to the imported-source boundary so it appears after the U++ method default. Later runs progressed beyond those libheif errors.
 
 ### Windows acceptance defect 2 — LibRaw math constants
 
@@ -91,8 +96,9 @@ Supplementary real-camera RAW/DNG decode, real 8/10-bit AVIF/HEIC decode and ani
 
 Most relevant checkpoints:
 
+- `b2d53719fdc926aed49f8a3bf90b10279577d33d` — enumerate the exact dav1d generated wrapper source set.
+- `3e33ec9fc39f504ec674edee4f9dbbabdbf3bb2b` — validator base for `IMG-WA-003`; failed during dav1d archive creation on literal wildcard object name.
 - `623b5d30a6755b9ca96a9774e0fb813620d94c10` — fix dav1d Windows large-file generated config branch.
-- `dfe34e2f1ec2c65b33cd982eedb633ff02934694` — validator base for `IMG-WA-002`; failed on dav1d `fseeko`/`ftello` alias conflicts.
 - `16aa8472d6e292e8bda18d440aaf26ff46004073` — apply libheif C++20 at imported-source boundary.
 - `c644ba06a3671e591699d88e8046ae00599e3dac` — enable LibRaw Windows math constants at the package boundary.
 - `0523b40b0d1b09798de80760244a27f45b5ccf1b` — prevent DPX/Cineon Blitz namespace collision.
@@ -103,23 +109,22 @@ Most relevant checkpoints:
 
 ## VALIDATION
 
-### REPORTED — task `IMG-WA-002` at `dfe34e2...`
+### REPORTED — task `IMG-WA-003` at `3e33ec9...`
 
 - clean starting and final worktree;
-- `openimageio_io_test` Debug failed compiling pinned dav1d because generated config aliased existing `fseeko`/`ftello` declarations to `_fseeki64`/`_ftelli64`;
+- `openimageio_io_test` Debug reached dav1d archive creation;
+- `llvm-ar` rejected literal `generated_*.c.o` with `Invalid argument`;
 - expected package result was 21/0 but execution was never reached;
 - no local edits;
 - remaining gates not run.
 
 ### VERIFIED — source/build review
 
-- pinned dav1d 1.5.4 upstream Meson feature-tests `fseeko` on Windows;
-- active U++ CLANGx64 UCRT headers demonstrably provide `fseeko`/`ftello`;
-- the repository-generated aliases therefore selected the wrong upstream configuration branch;
-- upstream's matching branch sets `_FILE_OFFSET_BITS=64` instead;
-- upstream also defines `__USE_MINGW_ANSI_STDIO=1` in its Windows config;
-- generated-config repair is the smallest coherent integration fix and preserves pinned upstream source;
-- repair is published at `623b5d30a6755b9ca96a9774e0fb813620d94c10`.
+- the repository contains exactly 26 generated wrapper `.c` files, matching the documented 13 templates × two bit depths;
+- ordinary dav1d source ownership is separate in `import.ext`;
+- generated wrappers are repository-owned fixed source files rather than discovered build artifacts;
+- explicit package enumeration is therefore the smallest coherent source-manifest repair;
+- repair is published at `b2d53719fdc926aed49f8a3bf90b10279577d33d`.
 
 ### PLATFORM VALIDATION PENDING
 
@@ -132,7 +137,7 @@ Most relevant checkpoints:
 ## NEXT ACTION
 
 1. Fetch/fast-forward `origin/main`, record exact HEAD and require a clean worktree.
-2. Require dav1d repair `623b5d30a6755b9ca96a9774e0fb813620d94c10` to be the tested HEAD or an ancestor of exact current `main` HEAD.
+2. Require dav1d generated-wrapper repair `b2d53719fdc926aed49f8a3bf90b10279577d33d` to be the tested HEAD or an ancestor of exact current `main` HEAD.
 3. Read `docs/WINDOWS_ACCEPTANCE.md`.
 4. Rebuild/run `openimageio_io_test` Debug first; require 21/0.
 5. If green, continue the remaining still-image Debug targets in documented order and stop at the first substantive failure.
