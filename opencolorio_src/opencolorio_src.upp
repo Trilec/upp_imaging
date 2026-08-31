@@ -9,6 +9,7 @@ options
 	-I.,
 	-Iupstream/src,
 	-Iupstream/src/OpenColorIO,
+	-iquoteupstream/src/OpenColorIO,
 	-DOCIO_HEADLESS_ENABLED,
 	-Icompat_include,
 	-Igenerated_include,

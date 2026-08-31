@@ -34,7 +34,7 @@ Configuration:
 
 Generated headers: `OpenColorIO/OpenColorABI.h`, `OpenColorIO/OpenColorIOConfig.h`, `upstream/src/OpenColorIO/CPUInfoConfig.h`.
 
-The package-root `Logging.h` is a repository-owned forwarding header for OpenColorIO's private `upstream/src/OpenColorIO/Logging.h`. Upstream apphelper sources include this private header by the generic name `"Logging.h"`; the forwarding header keeps that resolution deterministic in U++'s aggregate include graph without modifying the pinned OpenColorIO source or logging implementation.
+OpenColorIO private quoted headers use the package-local `-iquote upstream/src/OpenColorIO` search path. This prevents generic private names such as `Logging.h` from colliding with dependency headers in U++'s aggregate include graph; pinned upstream OpenColorIO sources remain unmodified.
 
 Validated toolchain: `CLANGx64` (`clang++ 21.1.1`, target `x86_64-w64-windows-gnu`).
 
