@@ -121,6 +121,7 @@ static void CheckRoundTrip(State& state, const String& root,
 
 CONSOLE_APP_MAIN
 {
+	ImageIOApplicationScope io_scope;
 	State state;
 	String root = AppendFileName(GetTempPath(), "imaging_io_contract");
 	std::filesystem::path root_path(root.Begin());
