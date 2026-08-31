@@ -6,6 +6,7 @@ uses
 
 file
 	ImagingIO.h,
+	Lifecycle.cpp,
 	FormatPolicy.h,
 	FormatPolicy.cpp,
 	ImagingIO.cpp,
