@@ -29,16 +29,20 @@ Current repair slice:
 
 - `opencolorio_src/Logging.h`
 - `opencolorio_src/README.md`
+- `opencolorio_src/opencolorio_src.upp`
+- `libheif_src/libheif_src.upp`
+- `libraw_src/libraw_src.upp`
 - `docs/ACTIVE_WORK.md`
 
 Relevant inspected source/build slice:
 
-- `opencolorio_src/opencolorio_src.upp`
 - `opencolorio_src/upstream/src/OpenColorIO/Logging.h`
 - `opencolorio_src/upstream/src/OpenColorIO/Logging.cpp`
 - `opencolorio_src/upstream/src/OpenColorIO/apphelpers/ColorSpaceHelpers.cpp`
-- `opencolorio_src/compat_include/`
-- validator diagnostics from `IMG-WA-004`
+- `libheif_src/upstream/libheif/plugins/decoder_libde265.cc`
+- `libde265_src/upstream/libde265/de265.h`
+- `libraw_src/upstream/src/**` (hton*/ntoh* reference sites)
+- validator diagnostics from `IMG-WA-004`, `IMG-DIAG-006`, `IMG-FIX-007`
 
 ## STATUS
 
@@ -69,6 +73,17 @@ Repair `3f4c0a44740e91bd845fe078cd400e5d7eef0935` adds repository-owned package-
 
 The repair does **not** modify vendored OpenColorIO 2.5.2 source, the OCIO pin, `Logging.cpp`, dependencies, public API, tests, headless policy, CPU/GPU policy, SIMD policy or source selection.
 
+### Windows acceptance defect 7 — OpenColorIO quote-resolution and HEIF/libde265 link boundary
+
+The earlier package-root forwarding `Logging.h` from `3f4c0a4` did not control resolution because the aggregate U++ include graph searched `libheif_src/upstream/libheif` before OpenColorIO's `-Iupstream/src/OpenColorIO`, so Clang resolved `"Logging.h"` to LibHeif's header (verifier IMG-DIAG-006). `IMG-FIX-007` replaced the forwarder with a package-level `-iquoteupstream/src/OpenColorIO` in `opencolorio_src.upp`, deleted the obsolete forwarder and documented the mechanism. `-H` now resolves `"Logging.h"` to `opencolorio_src/upstream/src/OpenColorIO/Logging.h` with no case warning.
+
+With OpenColorIO compiling, the next Debug failure was a Windows link boundary in `openimageio_io_test`:
+
+- `libheif_src` consumes `upstream/libheif/plugins/decoder_libde265.cc`, but `libheif_src.upp` did not define `LIBDE265_STATIC_BUILD=1`. Pinned `libde265/de265.h` declares `LIBDE265_API` as `dllimport` unless `LIBDE265_STATIC_BUILD` is defined for the consuming TU, so the linker saw `__imp_de265_*` references even though `libde265_src` defines the real symbols. Repair adds `-DLIBDE265_STATIC_BUILD=1` to `libheif_src.upp` (no `LIBDE265_EXPORTS` added).
+- The `htons`/`ntohs`/`htonl`/`ntohl` references originate in `libraw_src`; on Windows these require Winsock. Repair adds `library(WIN32) ws2_32;` to `libraw_src.upp`, the package that owns the references (no Winsock placed on OpenImageIO/ImagingIO/the test).
+
+Both repairs are bounded to the owning package manifests; no upstream source/manifest/dependency-architecture change was made.
+
 ### Earlier acceptance defects — preserved checkpoints
 
 1. **DPX/Cineon Blitz collision** — acceptance at `19989324cb411fe46d229a0d1fa7cdd51ee7e69f` exposed an `InStream` collision after Blitz combined upstream translation units. Repair `0523b40b0d1b09798de80760244a27f45b5ccf1b` marks the importing package `noblitz`.
@@ -95,7 +110,9 @@ Supplementary real-camera RAW/DNG decode, real 8/10-bit AVIF/HEIC decode and ani
 
 Most relevant checkpoints:
 
-- `3f4c0a44740e91bd845fe078cd400e5d7eef0935` — pin OpenColorIO apphelper `"Logging.h"` to the intended private upstream header at the U++ package boundary.
+- `50544b8` — isolate OpenColorIO private include resolution via `-iquoteupstream/src/OpenColorIO`; removes the obsolete package-root forwarding `Logging.h`.
+- `4e3a9fa0a1ba8eebe19a84a738091ee4c53a2e06` — validator base for the link-boundary task; also the upstream base checked for dependency advancement.
+- `3f4c0a44740e91bd845fe078cd400e5d7eef0935` — earlier pin of OpenColorIO apphelper `"Logging.h"` (superseded by `50544b8` for resolution).
 - `6b91c4a5833be3f9d3facda98869800da40ff204` — validator base for `IMG-WA-004`; failed compiling OCIO apphelpers on missing logging declarations.
 - `b2d53719fdc926aed49f8a3bf90b10279577d33d` — enumerate the exact dav1d generated wrapper source set.
 - `3e33ec9fc39f504ec674edee4f9dbbabdbf3bb2b` — validator base for `IMG-WA-003`; failed during dav1d archive creation on literal wildcard object name.
@@ -126,10 +143,17 @@ Most relevant checkpoints:
 - package-root forwarding is a bounded U++ integration repair that leaves vendored source and source ownership intact;
 - source repair is published at `3f4c0a44740e91bd845fe078cd400e5d7eef0935`.
 
+### PLATFORM VALIDATION — task `IMG-FIX-008` base `4e3a9fa...`
+
+- `openimageio_io_test` Debug: build clean, link clean, **21/0** (Gate 1 green).
+- OpenColorIO `-H` on the exact `ColorSpaceHelpers.cpp` TU: `"Logging.h"` resolves to `opencolorio_src/upstream/src/OpenColorIO/Logging.h`; case-mismatch warning absent; LibHeif `Logging.h` no longer wins.
+- Link diagnosis verified: `de265.cc` object `upstream_libde265_de265.cc.o` defines `T de265_get_version`, `T de265_init`, `T de265_new_decoder`, etc.; unresolved references were the consuming-TU `dllimport` spelling; `htons`/`ntohs`/`htonl`/`ntohl` owned entirely by `libraw_src`.
+- Subsequent Gate 2 Debug target `imaging_io_test`: summary `79/0` but process exits with access violation `0xC0000005` (reproducible). This is a separate runtime defect, not a compile/link failure.
+
 ### PLATFORM VALIDATION PENDING
 
-- `openimageio_io_test` Debug 21/0 on current repaired `main`;
-- remaining still-image Debug matrix, then full Release matrix;
+- remaining still-image Debug matrix (stopped at `imaging_io_test` abnormal exit);
+- full Release matrix;
 - `plugin_exr_test` 22/0 Debug/Release;
 - complete FFmpeg Debug/Release matrix and repeatability;
 - supplementary real-file evidence separately pending/unavailable as applicable.
@@ -137,12 +161,11 @@ Most relevant checkpoints:
 ## NEXT ACTION
 
 1. Fetch/fast-forward `origin/main`, record exact HEAD and require a clean worktree.
-2. Require OpenColorIO logging include repair `3f4c0a44740e91bd845fe078cd400e5d7eef0935` to be the tested HEAD or an ancestor of exact current `main` HEAD.
-3. Read `docs/WINDOWS_ACCEPTANCE.md`.
-4. Rebuild/run `openimageio_io_test` Debug first; require 21/0.
-5. If green, continue the remaining still-image Debug targets in documented order and stop at the first substantive failure.
-6. Any substantive source-manifest, dependency, API, test, feature/component, format-policy or multi-file defect returns to the supervisor.
-7. After every supervisor repair, publish a coherent checkpoint and resume validation from the new exact SHA.
+2. Re-run `openimageio_io_test` Debug first; require 21/0 (Gate 1 already green on the current published link-fix head).
+3. Diagnose `imaging_io_test` Debug exit-time access violation `0xC0000005` (summary 79/0 but abnormal shutdown), which currently stops the still-image Debug lane.
+4. After that defect is repaired, continue the remaining still-image Debug targets in documented order; then Release, `plugin_exr_test`, FFmpeg and repeatability.
+5. Any substantive source-manifest, dependency, API, test, feature/component, format-policy or multi-file defect returns to the supervisor.
+6. After every supervisor repair, publish a coherent checkpoint and resume validation from the new exact SHA.
 
 ## WORKING RHYTHM
 

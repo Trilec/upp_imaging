@@ -10,6 +10,8 @@ options
 	-DLIBRAW_BUILDLIB=1,
 	-D_USE_MATH_DEFINES=1;
 
+library(WIN32) ws2_32;
+
 file
 	import.ext,
 	README.md;
