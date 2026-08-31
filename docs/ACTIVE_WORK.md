@@ -4,7 +4,7 @@ Recovery authority for current work only. Remote `main` is authoritative. For ex
 
 ## BASE
 
-- Current published baseline before this repair: `4f86dee683f372e887669ac31a88a155e72aa2ed`.
+- Last Windows-validated baseline before the current lifecycle repair: `4f86dee683f372e887669ac31a88a155e72aa2ed`.
 - That checkpoint fixed the OpenColorIO quoted-header collision, the libheif/libde265 static ABI boundary and LibRaw Winsock ownership.
 - Windows evidence at that baseline:
   - `openimageio_io_test` Debug: build/link clean, **21/0**, normal exit.
@@ -52,18 +52,16 @@ Implementation slice:
 
 **IMPLEMENTATION COMPLETE — PLATFORM VALIDATION PENDING**
 
-Supervisor branch: `supervisor/img-shutdown-009`.
-
-The source repair is ready for review/publish. Windows execution is not available in the supervisor environment, so Gary must validate the published checkpoint.
+The source repair is published on `main`. Windows execution is not available in the supervisor environment, so Gary must validate the exact current-main SHA.
 
 ## PUBLISHED
 
-- Last validated baseline: `4f86dee683f372e887669ac31a88a155e72aa2ed`.
-- `IMG-FIX-009`: pending supervisor publish after full diff review.
+- Lifecycle source checkpoint: `3c1c7e3662cd13fca6c073fd631c1b4edd43e412` — `Shut down OpenImageIO before U++ app exit`.
+- Current `main`: this recovery-log follow-up commit; verify with `git rev-parse HEAD` before validation.
 
 ## VALIDATION REQUIRED
 
-On the published `IMG-FIX-009` main SHA, CLANGx64 Debug / Debug_Full / Noblitz:
+On current `main`, first confirm `3c1c7e3662cd13fca6c073fd631c1b4edd43e412` is an ancestor of HEAD. Then use CLANGx64 Debug / Debug_Full / Noblitz:
 
 1. Build/run `openimageio_io_test`; require **21/0** and normal exit.
 2. Build/run `imaging_io_test` at least three times; every run must report **79/0** and process exit **0** with no `0xC0000005`.
@@ -84,6 +82,6 @@ Do not weaken tests, add forced process termination, edit pinned upstream source
 
 ## NEXT ACTION
 
-1. Supervisor: review complete branch diff against `4f86dee...`, verify only intended paths, then publish a coherent checkpoint to `main`.
-2. Gary: validate the exact published SHA using the steps above.
-3. If `imaging_io_test` exits cleanly, resume fail-fast Windows acceptance from the remaining Debug lane.
+1. Gary: fetch current `main`, verify the lifecycle checkpoint is an ancestor, then run the validation sequence above.
+2. If `imaging_io_test` exits cleanly, resume fail-fast Windows acceptance from the remaining Debug lane.
+3. Return the first substantive failure with exact SHA/configuration/stage/evidence; make no architecture changes.
