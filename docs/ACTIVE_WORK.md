@@ -33,7 +33,7 @@ Repository hygiene and retired-package cleanup, plus removal of the disproven Op
 
 ## PUBLISHED
 
-- None for this cleanup until the coherent publish is recorded here with its exact SHA.
+- `692a2616492b72704b8a22aaa7f0fe44978ea65d` — cleanup commit: removed retired imaging probes and stale lifecycle code.
 
 ## VALIDATION
 
