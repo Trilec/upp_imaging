@@ -1,7 +1,0 @@
-description "Strict OpenImageIO main source probe";
-
-uses
-	openimageio_src;
-
-file
-	main.cpp;

@@ -7,8 +7,7 @@ Current meaning:
 - it imports the upstream `src/lib/OpenEXR` implementation set
 - it depends on `imath_src`, `iex_src`, `ilmthread_src`, and `openexr_core_src`
 - it keeps repository-owned generated config headers and include bridges alongside the imported sources
-- `openexr_src_probe` verifies the strict source boundary and package version
-- `openexr_src_test` now exercises a deterministic 4 x 3 scanline RGBA HALF round-trip and malformed-file rejection
+- `openexr_src_test` exercises the strict source boundary, package version and a deterministic 4 x 3 scanline RGBA HALF round-trip with malformed-file rejection
 - `openexr` is the stable application-facing wrapper above this package
 
 ## Upstream preflight target

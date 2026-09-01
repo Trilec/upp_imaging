@@ -7,7 +7,7 @@ Current scope:
 - `imath_src` provides strict imported-source validation for Imath 3.2.2
 - `imath` provides the user-facing U++ package layer
 - `openexr_src` is now the strict imported-source OpenEXR high-level package
-- `openexr_src_probe` is now the strict source-boundary probe
+- `openexr_src_test` is the strict source-boundary validation target
 
 Why Imath first:
 
