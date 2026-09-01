@@ -3,7 +3,7 @@
 ## Current status
 
 - the strict `openexr_src` package now exists and builds successfully
-- `openexr_src_probe` now builds and runs successfully
+- `openexr_src_test` is the strict source-boundary validation target
 
 ## Version inspected
 
@@ -71,7 +71,7 @@ Recommended package direction:
 What was added for the strict package:
 
 - `openexr_src/`: full imported high-level source package with generated config and include bridges
-- `openexr_src_probe/`: strict boundary probe
+- `openexr_src_test/`: strict source-boundary validation
 
 Historical probe limitation that was resolved:
 

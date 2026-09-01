@@ -13,7 +13,6 @@
 namespace UppImaging {
 
 void InitializeOpenImageIO();
-void ShutdownOpenImageIO();
 bool LoadImage(const char* filename, OIIO::ImageBuf& destination,
                std::string* error = nullptr);
 bool SaveImage(const char* filename, const OIIO::ImageBuf& source,

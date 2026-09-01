@@ -90,12 +90,8 @@ Strict upstream OpenImageIO utility package for U++.
 
 ## Validation
 
-- the strict probe lives in `openimageio_util_src_probe`
+- the strict validation lives in `openimageio_prereq_test` (utility-source boundary) and `openimageio_io_test` (accumulation)
 - current build target: `CLANGx64`
-- probe status: pass
-- probe output: `source_count=18`, `version=3.1.15.0`, `namespace=v3_1`, `SUMMARY passed=10 failed=0`
-- clean probe rebuild: pass
-- remaining utility warnings: genuine upstream deprecation noise from `benchmark.cpp` and `argparse.cpp` (`time_trial`, `callback_t`)
 - dependent test matrix: `openimageio_prereq_test`, `imath_test`, `fmt_test`, and `robinmap_test` all pass
 - dependency test noise that remains outside this package: OpenColorIO/OpenEXR casing warnings in `openimageio_prereq_test`
 

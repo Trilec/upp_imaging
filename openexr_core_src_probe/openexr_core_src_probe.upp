@@ -1,7 +1,0 @@
-description "OpenEXRCore first package attempt probe";
-
-uses
-	openexr_core_src;
-
-file
-	main.cpp;

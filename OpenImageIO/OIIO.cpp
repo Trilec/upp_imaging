@@ -30,14 +30,6 @@ void InitializeOpenImageIO()
     });
 }
 
-void ShutdownOpenImageIO()
-{
-    static std::once_flag once;
-    std::call_once(once, [] {
-        OIIO::shutdown();
-    });
-}
-
 bool LoadImage(const char* filename, OIIO::ImageBuf& destination,
                std::string* error)
 {

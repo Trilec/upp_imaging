@@ -39,8 +39,8 @@ Strict upstream OpenImageIO 3.1.15.0 main-library package for U++.
 
 ## Validation
 
-- probe target: `openimageio_src_probe`
+- validation target: `openimageio_prereq_test` (boundary) and `openimageio_io_test` (accumulation)
 - strict markers: main and utility markers are both required
-- no-file-I/O probe only
-- probe uses the static `OIIO` API path
-- consumer probes do not define package export macros
+- no-file-I/O validation only
+- validation uses the static `OIIO` API path
+- consumer targets do not define package export macros
