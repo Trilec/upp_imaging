@@ -118,7 +118,7 @@ Its contract is intentionally narrower than ImagingIO/OpenEXR/OpenImageIO:
 - no implicit colour transform, exposure or tone map;
 - no claim to preserve arbitrary channels, source floating-point samples, complete metadata, source-window semantics, multipart/deep/mip structure or unclamped HDR values.
 
-The plugin remains opt-in so ordinary U++ raster behaviour is not silently changed. Its expanded 22-check focused contract is implemented and awaits current Windows Debug/Release acceptance.
+The plugin remains opt-in so ordinary U++ raster behaviour is not silently changed. Its expanded 22-check focused contract is implemented and Windows-proven in Debug and Release.
 
 ## FFmpeg media subsystem
 
@@ -144,7 +144,7 @@ Generated configuration must be complete for every identifier referenced by the 
 
 Source manifests are explicit. Required upstream duplicate/materializer objects are owned by the package that needs them; they are not added by recursive globs. The selected avformat closure includes `to_upper4.c` and `mpegaudiotabs.c` because pinned FFmpeg materializes those symbols separately for libavformat.
 
-Current implementation/source ownership is closed; Windows Debug/Release and first-frame repeatability acceptance remains the final platform gate. `docs/FFMPEG_PLAN.md` defines the first-slice contract and `docs/ACTIVE_WORK.md` records its exact validation state.
+Implementation/source ownership and Windows Debug/Release acceptance are closed, including five additional first-frame runs per configuration. `docs/FFMPEG_PLAN.md` defines the first-slice contract and `docs/ACTIVE_WORK.md` records its exact validation evidence.
 
 ## ImagingWorkbench
 
@@ -165,7 +165,7 @@ The currently established Windows framework baseline is:
 - ImagingDiagnostics 33/0
 - Imaging umbrella 6/0
 
-JPEG XL prerequisite/backend acceptance is also recorded as 9/0 Debug and 9/0 Release after its skcms repair. Current still-image accumulation, expanded `plugin/exr`, and FFmpeg acceptance boundaries remain in `docs/ACTIVE_WORK.md` until green.
+The complete still-image accumulation, expanded `plugin/exr`, and bounded FFmpeg lanes are Windows-proven in Debug and Release. Exact totals and repeatability evidence are recorded in `docs/ACTIVE_WORK.md`.
 
 ## Architectural rules
 

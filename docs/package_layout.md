@@ -66,7 +66,7 @@ Strict and stable OpenEXR tests/probes remain separate so one target does not pu
 - `OpenImageIO` is the canonical public application package;
 - `oiio` is a compatibility forwarder, not a second implementation.
 
-The original Windows-proven OpenEXR/PNG route remains the baseline. Code-side static plugin support now extends through the current still-image format line: JPEG XL, HDR/RGBE, DPX/Cineon, RAW, WebP, decode-only HEIF/AVIF and TIFF. The shared dependency closure repair is `5ca436c3ba6265f6431deaf7348332940051686d`; current accumulated Windows validation is still pending.
+The original OpenEXR/PNG route remains the baseline. Static plugin support now extends through the current still-image format line: JPEG XL, HDR/RGBE, DPX/Cineon, RAW, WebP, decode-only HEIF/AVIF and TIFF. The complete accumulated line is Windows-proven in Debug and Release.
 
 The exact repository-owned accumulation targets are `openimageio_io_test`, `imaging_io_test`, `jpegxl_prereq_test`, `jpegxl_oiio_test`, `jpegxl_imagingio_test`, `hdr_oiio_test`, `dpx_cineon_oiio_test`, `hdr_dpx_imagingio_test`, `raw_oiio_test`, `raw_imagingio_test`, `webp_oiio_test`, `webp_imagingio_test`, `heif_oiio_test`, `heif_imagingio_test`, `tiff_oiio_test` and `tiff_imagingio_test`. Expected totals and the current validation boundary are authoritative in `docs/ACTIVE_WORK.md`.
 
@@ -95,7 +95,7 @@ Established Windows framework baseline:
 - `ImagingDiagnostics` 33/0;
 - `Imaging` 6/0.
 
-Current-main format accumulation for `ImagingIO` remains pending after the static OpenImageIO dependency repair.
+Current-main format accumulation for `ImagingIO` is Windows-proven in Debug and Release after the static OpenImageIO dependency and lifecycle repairs.
 
 ## Raster integration
 
@@ -103,7 +103,7 @@ Current-main format accumulation for `ImagingIO` remains pending after the stati
 
 It is deliberately separate from full-fidelity `ImagingIO`, OpenImageIO and OpenEXR APIs. It must remain opt-in and must not silently alter ordinary U++ raster behaviour.
 
-The current focused contract is 22 checks and remains Windows Debug/Release pending.
+The current focused contract is Windows-proven at 22/0 in Debug and Release.
 
 ## FFmpeg stack
 
@@ -133,7 +133,9 @@ Rules:
 
 Exact pin: FFmpeg `n9.0.1`, commit `bf1b838f2ab88b4f8fd83443325c782ea0e0f7fa`.
 
-The current avformat manifest explicitly includes `libavformat/to_upper4.c` and `libavformat/mpegaudiotabs.c` because pinned FFmpeg materializes those library symbols separately.
+The current avformat manifest explicitly includes `libavformat/to_upper4.c` and `libavformat/mpegaudiotabs.c` because pinned FFmpeg materializes those library symbols separately. The swscale package owns one guarded stable-graph compatibility materializer required when unstable backends remain disabled.
+
+All six bounded FFmpeg gates are Windows-proven in Debug and Release, followed by five additional 27/0 first-frame runs per configuration.
 
 ## Conflict examples
 
