@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <fstream>
 #include <string>
+#include <thread>
 #include <vector>
 
 using namespace OIIO;
@@ -116,15 +117,24 @@ CONSOLE_APP_MAIN
         stream.write(reinterpret_cast<const char*>(garbage.data()),
                      static_cast<std::streamsize>(garbage.size()));
     }
-    ImageBuf rejected;
-    error.clear();
-    Check(state, !LoadImage(invalid.string().c_str(), rejected, &error),
-          "malformed JPEG XL is rejected");
-    Check(state, !error.empty(), "malformed JPEG XL reports an error");
+    OIIO::attribute("try_all_readers", 0);
+    bool malformed_rejected = false;
+    bool malformed_error = false;
+    std::thread malformed_check([&] {
+        ImageBuf rejected;
+        std::string rejection_error;
+        malformed_rejected = !LoadImage(invalid.string().c_str(), rejected,
+                                        &rejection_error);
+        malformed_error = !rejection_error.empty();
+    });
+    malformed_check.join();
+    OIIO::attribute("try_all_readers", 1);
+    Check(state, malformed_rejected, "malformed JPEG XL is rejected");
+    Check(state, malformed_error, "malformed JPEG XL reports an error");
 
     std::filesystem::remove_all(root);
     Check(state, !std::filesystem::exists(root), "fixture cleanup");
 
     std::printf("SUMMARY passed=%d failed=%d\n", state.passed, state.failed);
-    SetExitCode(state.failed ? 1 : 0);
+    Upp::SetExitCode(state.failed ? 1 : 0);
 }
