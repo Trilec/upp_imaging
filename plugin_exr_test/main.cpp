@@ -5,6 +5,7 @@
 #include <cstring>
 #include <initializer_list>
 #include <limits>
+#include <thread>
 
 using namespace Upp;
 using namespace Upp::Imaging;
@@ -176,14 +177,21 @@ CONSOLE_APP_MAIN
 	      multi_pixel.r == 51 && multi_pixel.g == 102 && multi_pixel.b == 153 && multi_pixel.a == 204,
 	      "named MultiChannel selects RGB and ignores extra channel");
 
-	StringStream invalid_stream("not an exr file");
-	EXRRaster invalid_raster;
-	Check(state, !invalid_raster.Open(invalid_stream), "non-EXR stream rejected");
-
 	String truncated = rgba_encoded.Left(min(12, rgba_encoded.GetLength()));
-	StringStream truncated_stream(truncated);
-	EXRRaster truncated_raster;
-	Check(state, !truncated_raster.Open(truncated_stream), "truncated EXR stream rejected");
+	bool invalid_rejected = false;
+	bool truncated_rejected = false;
+	std::thread rejection_check([&] {
+		StringStream invalid_stream("not an exr file");
+		EXRRaster invalid_raster;
+		invalid_rejected = !invalid_raster.Open(invalid_stream);
+
+		StringStream truncated_stream(truncated);
+		EXRRaster truncated_raster;
+		truncated_rejected = !truncated_raster.Open(truncated_stream);
+	});
+	rejection_check.join();
+	Check(state, invalid_rejected, "non-EXR stream rejected");
+	Check(state, truncated_rejected, "truncated EXR stream rejected");
 
 	std::filesystem::remove_all(root_path, error);
 	Check(state, !std::filesystem::exists(root_path), "fixture cleanup");

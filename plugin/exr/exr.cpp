@@ -125,9 +125,16 @@ bool EXRRaster::Create()
 
 	UppImaging::InitializeOpenImageIO();
 	OIIO::Filesystem::IOMemReader reader(encoded.Begin(), encoded.GetLength());
-	OIIO::ImageInput::unique_ptr input = OIIO::ImageInput::open("stream.exr", nullptr, &reader);
-	if(!input)
+	OIIO::ImageInput::unique_ptr input = OIIO::ImageInput::create("openexr");
+	if(!input) {
+		OIIO::geterror();
 		return false;
+	}
+	OIIO::ImageSpec opened;
+	if(!input->set_ioproxy(&reader) || !input->open("stream.exr", opened)) {
+		input->geterror();
+		return false;
+	}
 
 	const OIIO::ImageSpec primary = input->spec();
 	if(primary.width <= 0 || primary.height <= 0 || primary.nchannels <= 0 ||
