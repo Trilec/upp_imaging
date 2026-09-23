@@ -16,10 +16,26 @@ Result SaveImageFile(const String& path, const ImageData& image,
 Loads are transactional: `output` is changed only after structure, sample,
 channel, pixel, metadata, close, and Core validation succeed. Saves write a
 same-directory temporary file, close it completely, reopen it, verify its
-specification, and decode the full pixel payload before promotion. Existing
-regular files are staged through a unique backup and restored if promotion
-fails. Temporary and backup cleanup failures are reported without replacing
-the primary error.
+specification, and decode the full pixel payload before promotion. This is a
+readability/integrity check, not a source-pixel comparison: quantized formats
+such as RGBE cannot promise source bit identity. Scratch storage is bounded to
+about 1 MiB (or one wide scanline); codecs may retain their own storage.
+
+Temporary names contain the process ID and a fresh 128-bit random U++ UUID,
+and are reserved exclusively before a writer opens them. Stale names are never
+reused or cleaned up by another transaction. Candidates stay beside the target.
+Promotion uses POSIX rename or Windows MoveFileExW(REPLACE_EXISTING), without a
+copy/delete fallback. The old destination is never moved aside, so handled
+promotion failures need no restoration and leave its contents intact. There is
+no backup name to collide with. Cleanup errors preserve the primary diagnostic.
+Concurrent writers publish complete candidates; the last successful promotion
+wins. This is not a power-loss durability or hostile-directory security contract.
+
+ReplaceFileW was considered: it preserves additional destination metadata but
+has documented partial-failure states requiring recovery. Same-volume
+MoveFileExW is a smaller fit for this existing content-replacement contract.
+See [MoveFileExW](https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-movefileexw)
+and [ReplaceFileW](https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-replacefilew).
 
 Format-specific extension, sample/layout and backend-attribute rules live in the
 private `FormatPolicy` unit. Core transaction, metadata and structure mechanics
@@ -80,14 +96,14 @@ remain format-neutral in `ImagingIO.cpp`.
 
 ### HEIF/AVIF
 - input only through the statically registered OpenImageIO HEIF plugin and repository-pinned decoder dependencies
-- `.avif`, `.heif`, `.heic`, `.hif`, `.avifs`, `.heifs` and `.heics` route through the HEIF reader
-- accepted decoded framework output is zero-origin UInt8/UInt16 RGB or RGBA
+- `.avif`, `.heif`, `.heic`, `.hif` and `.heics` route through the HEIF reader
+- accepted decoded framework output is zero-origin UInt8/UInt16 Gray, GrayAlpha, RGB or RGBA
 - multi-image/frame input is rejected by the shared structure check
 - save attempts fail explicitly with `IMGIO_FORMAT`
 
 ### TIFF
 - zero-origin UInt8, UInt16 and Float32
-- Gray, GrayAlpha, RGB, RGBA and named MultiChannel layouts within the documented framework subset
+- Gray, GrayAlpha, RGB and RGBA; named MultiChannel remains fail-closed
 - framework output requests ZIP compression and preserves straight alpha semantics
 - Float16 and non-zero-origin output remain fail-closed in the current slice
 
@@ -126,7 +142,7 @@ heterogeneous, boolean, and read-only values produce `IMGIO_METADATA` warnings.
 Repository-owned deterministic gates and expected summaries:
 
 - `openimageio_io_test`: established direct OpenImageIO/OpenColorIO integration — 21/0
-- `imaging_io_test`: established EXR/PNG public contract — 79/0
+- `imaging_io_test`: established EXR/PNG public contract — 89/0
 - `jpegxl_prereq_test`: pinned libjxl prerequisite contract — 9/0
 - `jpegxl_oiio_test`: direct JPEG XL OpenImageIO contract — 10/0
 - `jpegxl_imagingio_test`: JPEG XL framework contract — 50/0

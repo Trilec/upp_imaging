@@ -1,9 +1,9 @@
 #include "ImagingIO.h"
 #include "FormatPolicy.h"
+#include "Transaction.h"
 
 #include <OpenImageIO/OIIO.h>
 
-#include <atomic>
 #include <climits>
 #include <filesystem>
 
@@ -447,17 +447,6 @@ static void SetCanonicalChannelNames(const ImageSpec& source,
 		target.channelnames.emplace_back(name.Begin());
 }
 
-static String TemporaryPath(const String& path, const String& extension,
-                            unsigned serial)
-{
-	std::filesystem::path final_path(path.Begin());
-	std::filesystem::path directory = final_path.parent_path();
-	std::string filename = final_path.filename().string();
-	std::string temporary = filename + ".imagingio-" +
-	                        std::to_string(serial) + extension.Begin();
-	return (directory / temporary).string().c_str();
-}
-
 static Result WriteTemporaryFile(const String& temporary,
                                  const OIIO::ImageSpec& target,
                                  const ImageData& image,
@@ -482,7 +471,7 @@ static Result WriteTemporaryFile(const String& temporary,
 	return Result::Success();
 }
 
-static Result VerifyTemporaryFile(const String& temporary,
+static Result VerifyTemporaryReadability(const String& temporary,
                                   const ImageData& image,
                                   Diagnostics* diagnostics,
                                   const String& final_path)
@@ -514,12 +503,27 @@ static Result VerifyTemporaryFile(const String& temporary,
 		            "temporary image specification differs from the requested image",
 		            final_path, "IMGIO_VERIFY");
 
+	// This is a complete payload readability check, not a fidelity comparison:
+	// RGBE and other format conversions need not preserve source sample bits.
+	// Our writers emit scanline images. Bound scratch storage to about 1 MiB
+	// (or one wide row); codecs may still retain their own decoded storage.
+	int64 row_bytes = bytes / height;
+	int rows = (int)min<int64>(height, max<int64>(1, 1024 * 1024 / row_bytes));
 	Vector<byte> decoded;
-	decoded.SetCount((int)bytes);
-	if(!input->read_image(0, 0, 0, source.nchannels, backend_type,
-	                      decoded.Begin(), AutoStride, AutoStride, AutoStride))
+	decoded.SetCount((int)(row_bytes * rows));
+	if(source.tile_width || source.deep || source.depth != 1 ||
+	   (int64)source.y + height > INT_MAX)
 		return Fail(ResultCode::IOError, diagnostics,
-		            input->geterror().c_str(), final_path, "IMGIO_VERIFY");
+		            "temporary image has unexpected storage geometry",
+		            final_path, "IMGIO_VERIFY");
+	for(int64 y = 0; y < height; y += rows) {
+		int begin = (int)(source.y + y);
+		int end = (int)(source.y + min<int64>(height, y + rows));
+		if(!input->read_scanlines(0, 0, begin, end, 0, 0, source.nchannels,
+		                          backend_type, decoded.Begin()))
+			return Fail(ResultCode::IOError, diagnostics,
+			            input->geterror().c_str(), final_path, "IMGIO_VERIFY");
+	}
 	if(!input->close())
 		return Fail(ResultCode::IOError, diagnostics,
 		            input->geterror().c_str(), final_path, "IMGIO_VERIFY");
@@ -531,9 +535,8 @@ static bool RemovePath(const std::filesystem::path& path,
                        Diagnostics* diagnostics, const char* code)
 {
 	std::error_code error;
-	if(!std::filesystem::exists(path, error))
-		return true;
-	if(std::filesystem::remove(path, error))
+	std::filesystem::remove(path, error);
+	if(!error)
 		return true;
 	Warn(diagnostics, "temporary path cleanup failed",
 	     path.string().c_str(), code);
@@ -701,13 +704,13 @@ Result SaveImageFile(const String& path, const ImageData& image,
 		                   image.metadata.Items()[i], target, diagnostics);
 
 	UppImaging::InitializeOpenImageIO();
-	static std::atomic<unsigned> serial{0};
-	unsigned transaction = ++serial;
-	String temporary = TemporaryPath(path, extension, transaction);
 	std::filesystem::path final_path(path.Begin());
-	std::filesystem::path temporary_path(temporary.Begin());
-	std::filesystem::path backup_path = final_path;
-	backup_path += ".imagingio-backup-" + std::to_string(transaction);
+	std::filesystem::path temporary_path;
+	std::error_code error;
+	if(!IOTransaction::ReserveTemporary(final_path, extension, temporary_path, error))
+		return Fail(ResultCode::IOError, diagnostics,
+		            "unable to reserve a unique temporary image", path, "IMGIO_WRITE");
+	String temporary = temporary_path.string().c_str();
 
 	Result write = WriteTemporaryFile(temporary, target, image, diagnostics, path);
 	if(!write) {
@@ -715,13 +718,12 @@ Result SaveImageFile(const String& path, const ImageData& image,
 		return write;
 	}
 
-	Result verify = VerifyTemporaryFile(temporary, image, diagnostics, path);
+	Result verify = VerifyTemporaryReadability(temporary, image, diagnostics, path);
 	if(!verify) {
 		RemovePath(temporary_path, diagnostics, "IMGIO_CLEANUP");
 		return verify;
 	}
 
-	std::error_code error;
 	bool target_exists = std::filesystem::exists(final_path, error);
 	if(error) {
 		RemovePath(temporary_path, diagnostics, "IMGIO_CLEANUP");
@@ -735,34 +737,13 @@ Result SaveImageFile(const String& path, const ImageData& image,
 		            "IMGIO_REPLACE");
 	}
 
-	if(target_exists) {
-		std::filesystem::rename(final_path, backup_path, error);
-		if(error) {
-			RemovePath(temporary_path, diagnostics, "IMGIO_CLEANUP");
-			return Fail(ResultCode::IOError, diagnostics,
-			            "unable to stage the existing destination", path,
-			            "IMGIO_REPLACE");
-		}
-	}
-
-	error.clear();
-	std::filesystem::rename(temporary_path, final_path, error);
-	if(error) {
+	if(!IOTransaction::Promote(temporary_path, final_path, error)) {
 		String primary = "unable to promote the completed temporary image";
-		if(target_exists) {
-			std::error_code restore_error;
-			std::filesystem::rename(backup_path, final_path, restore_error);
-			if(restore_error)
-				Warn(diagnostics, "destination restoration failed",
-				     final_path.string().c_str(), "IMGIO_REPLACE");
-		}
 		RemovePath(temporary_path, diagnostics, "IMGIO_CLEANUP");
 		return Fail(ResultCode::IOError, diagnostics, primary, path,
 		            "IMGIO_REPLACE");
 	}
 
-	if(target_exists)
-		RemovePath(backup_path, diagnostics, "IMGIO_CLEANUP");
 	return Result::Success();
 }
 
