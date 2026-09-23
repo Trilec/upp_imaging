@@ -478,6 +478,42 @@ CONSOLE_APP_MAIN
 	             untouched.color_spaces[0] == "sentinel-space",
 	      "failed config inspection preserves output");
 
+	// Compare the packed RGB view against the general multichannel row path.
+	ImageData packed = MakeImage(SampleType::Float32, ChannelLayout::RGBA, 19, 7);
+	ImageData general;
+	general.spec = packed.spec;
+	general.spec.channels = 5;
+	general.spec.channel_layout = ChannelLayout::MultiChannel;
+	general.spec.channel_names.Add("Z");
+	general.buffer.Allocate(general.spec);
+	const uint32_t alpha_bits[] = {0x80000000u, 0x7fc01234u, 0x3f000000u};
+	for(int i = 0; i < 19 * 7; ++i) {
+		for(int c = 0; c < 3; ++c) {
+			float value = float((i * 3 + c) % 17) / 16;
+			SetSample(packed, i * 4 + c, value);
+			SetSample(general, i * 5 + c, value);
+		}
+		memcpy(packed.buffer.Begin() + (i * 4 + 3) * 4, &alpha_bits[i % 3], 4);
+		memcpy(general.buffer.Begin() + (i * 5 + 3) * 4, &alpha_bits[i % 3], 4);
+		SetSample(general, i * 5 + 4, 42.0f);
+	}
+	ImageData packed_out, general_out;
+	bool paths_ok = ApplyColorSpaceTransform(packed, packed_out, LogToLinear(config_path)).IsOk() &&
+	                ApplyColorSpaceTransform(general, general_out, LogToLinear(config_path)).IsOk();
+	Check(state, paths_ok, "packed and general multi-row transforms succeed");
+	bool rgb_equal = paths_ok, alpha_exact = paths_ok;
+	if(paths_ok)
+		for(int i = 0; i < 19 * 7; ++i) {
+			for(int c = 0; c < 3; ++c)
+				rgb_equal = rgb_equal && Near(GetSample(packed_out, i * 4 + c),
+				                              GetSample(general_out, i * 5 + c));
+			alpha_exact = alpha_exact &&
+			              memcmp(packed_out.buffer.Begin() + (i * 4 + 3) * 4,
+			                     &alpha_bits[i % 3], 4) == 0 &&
+			              GetSample(general_out, i * 5 + 4) == 42.0f;
+		}
+	Check(state, rgb_equal, "packed Float32 RGB agrees with general path across rows");
+	Check(state, alpha_exact, "packed path preserves signed zero and NaN alpha bits");
 	FileDelete(config_path);
 	Check(state, !FileExists(config_path), "fixture cleanup");
 

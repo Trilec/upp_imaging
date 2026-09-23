@@ -36,3 +36,15 @@ Stable diagnostic codes used by this package include:
 - `IMGCOLOR_SAMPLE` — unsupported sample storage;
 - `IMGCOLOR_PROCESSOR` — OCIO processor construction;
 - `IMGCOLOR_PIXELS` — pixel conversion or OCIO application failure.
+
+Float32 RGB/RGBA with contiguous RGB channels now processes the transactional
+candidate directly using an RGB-only OCIO image descriptor and explicit pixel
+stride. Alpha is excluded, including its NaN payloads; the row allocation and
+sample gather/scatter are avoided. Other sample/layout combinations retain the
+single reusable float row. The full candidate copy is intentional for failure
+atomicity and input/output aliasing.
+
+A future prepared-transform object could retain the validated config and CPU
+processor across repeated frames, avoiding config I/O/validation and processor
+lookup. Defer that API until repeated-frame profiling and config-file
+invalidation/lifetime rules are defined; no global cache is introduced here.

@@ -364,10 +364,24 @@ static Result ApplyProcessor(const ImageData& input, ImageData& output,
 		return Fail(ResultCode::Overflow, diagnostics,
 		            "image row is too wide for colour processing", "image",
 		            "IMGCOLOR_PIXELS");
-	row.SetCount((int)width * 3);
+	const bool packed_float = input.spec.sample_type == SampleType::Float32 &&
+	                          red == 0 && green == 1 && blue == 2 &&
+	                          (input.spec.channels == 3 || input.spec.channels == 4);
+	if(!packed_float)
+		row.SetCount((int)width * 3);
 
 	try {
-		for(int z = 0; z < input.spec.depth; ++z) {
+		if(packed_float) {
+			// Present only RGB, even for RGBA: alpha is never handed to OCIO.
+			// Keep the candidate copy for exception safety and input/output aliasing.
+			ptrdiff_t pixel_stride = input.spec.channels * sizeof(float);
+			OCIO::PackedImageDesc image(candidate.buffer.Begin(), (long)width,
+			                            (long)(height * input.spec.depth), 3,
+			                            OCIO::BIT_DEPTH_F32, sizeof(float),
+			                            pixel_stride, pixel_stride * width);
+			cpu->apply(image);
+		}
+		else for(int z = 0; z < input.spec.depth; ++z) {
 			for(int64 y = 0; y < height; ++y) {
 				for(int64 x = 0; x < width; ++x) {
 					int64 pixel = ((int64)z * height + y) * width + x;

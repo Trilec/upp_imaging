@@ -46,3 +46,9 @@ Debug gates, verify the combined published diff and synchronize main without for
 - Two concurrent processes each performed twelve successful saves to one destination (both exits 0), with no transaction residue.
 - All affected format ImagingIO gates passed in both configurations with clean exits; shared direct gate remains 21/0.
 - Corrected README format-policy overclaims for HEIF extensions and TIFF multichannel support.
+
+## CHECKPOINT 4 — PACKED FLOAT COLOUR PATH
+
+- Float32 RGB/RGBA uses an RGB-only strided OCIO descriptor over the transactional candidate, avoiding row allocation and gather/scatter. Other paths retain their reusable row.
+- `imaging_color_test` 69/0 and independent `imaging_color_ocio_test` 15/0 pass in Debug and Release, exit 0. New checks compare multiple rows against the general multichannel path and preserve signed-zero/NaN alpha bits.
+- Retained candidate copying for failure atomicity and alias safety. Prepared config/processor caching is documented as deferred pending profiling and invalidation rules.
