@@ -80,6 +80,6 @@ Code-side implementation now contains all first-slice checkpoints:
 
 The end-to-end test embeds a 1,463-byte one-frame 16x16 MP4 containing Constrained Baseline H.264. It verifies exact fixture identity, MOV demux, native H.264 decode, exact logical YUV420P evidence, scalar swscale conversion to RGBA8, and deterministic cleanup without an external runtime fixture.
 
-The remaining gate for this first slice is Windows Debug/Release acceptance and repeatability. Only after that should SIMD, hardware acceleration, broader containers/codecs, audio, seeking/index behavior, or a backend-neutral U++ media API be considered.
+The first slice is Windows-proven: all six gates passed in Debug and Release, followed by five additional `ffmpeg_first_frame_test` runs per configuration at 27/0 with clean exits. SIMD, hardware acceleration, broader containers/codecs, audio, seeking/index behavior and a backend-neutral U++ media API remain deferred next scope.
 
 The still-image OpenImageIO accumulation pass remains a separate validator lane and must not be blocked by FFmpeg work.

@@ -10,7 +10,7 @@ The repository deliberately distinguishes three states:
 - **Windows-proven** — the relevant U++ CLANGx64 Debug/Release acceptance has been recorded;
 - **platform validation pending** — implementation exists, but the current accumulated Windows checkpoint has not yet been accepted.
 
-Do not infer platform acceptance from implementation alone. `docs/ACTIVE_WORK.md` is the recovery authority for the exact in-flight validation boundary.
+Do not infer platform acceptance from implementation alone. `docs/ACTIVE_WORK.md` is the recovery authority for the exact accepted checkpoint and evidence.
 
 ## Supported use cases
 
@@ -58,7 +58,7 @@ The established Windows framework baseline is accepted at:
 
 `plugin/exr` is implemented as an opt-in display-oriented `StreamRaster` / `Upp::Image` bridge. It is deliberately separate from the full-fidelity ImagingIO and direct OpenEXR/OpenImageIO paths.
 
-Its current focused contract covers ordinary single-image EXR preview, RGB/RGBA, Gray/GrayAlpha, one-channel masks, named multichannel RGB selection, straight alpha, deterministic finite-value clamp/rounding, non-finite-to-zero preview behaviour, and truthful opaque/alpha reporting. The expanded **22-check** contract awaits current Windows Debug/Release acceptance.
+Its current focused contract covers ordinary single-image EXR preview, RGB/RGBA, Gray/GrayAlpha, one-channel masks, named multichannel RGB selection, straight alpha, deterministic finite-value clamp/rounding, non-finite-to-zero preview behaviour, and truthful opaque/alpha reporting. The expanded **22-check** contract is Windows-proven in Debug and Release.
 
 ### 4. Separate FFmpeg media subsystem
 
@@ -75,7 +75,7 @@ FFmpeg is not part of ImagingIO or the `Imaging` umbrella. The current first sli
 
 Threads, network protocols, external codecs, filters, devices, audio resampling, CLI/encoding, external/inline assembly and hardware acceleration remain disabled in this first slice.
 
-Implementation/source ownership is closed at the current checkpoint; accumulated Windows Debug/Release and repeatability acceptance is still in progress. See `docs/FFMPEG_PLAN.md` and `docs/ACTIVE_WORK.md` for the exact gate.
+Implementation/source ownership and accumulated Windows Debug/Release acceptance are closed. All six focused gates are Windows-proven in both configurations, and five additional first-frame runs per configuration passed `27/0` with clean exits. See `docs/FFMPEG_PLAN.md` and `docs/ACTIVE_WORK.md` for the exact evidence.
 
 ## Current format line
 
@@ -90,7 +90,7 @@ The repository now contains the completed code-side still-image expansion for:
 - HEIF/AVIF decode-only;
 - TIFF expansion.
 
-JPEG XL prerequisite/backend acceptance is Windows-proven **9/0 Debug and 9/0 Release** after the skcms link repair. The shared static OpenImageIO dependency closure and the later still-image formats are awaiting their accumulated current-main Windows pass; they must not be described as Windows-accepted until that matrix is green.
+The complete 16-gate still-image matrix is Windows-proven in Debug and Release with the exact totals in `docs/WINDOWS_ACCEPTANCE.md`. This includes the shared OpenImageIO/ImagingIO boundary and JPEG XL, HDR/RGBE, DPX/Cineon, RAW, WebP, HEIF/AVIF and TIFF gates.
 
 Narrow direct helpers such as `openexr_io`, `png_io`, `jpeg_io` and `tiff_io` remain intentionally narrower than the full framework/backend surfaces.
 
@@ -106,13 +106,7 @@ Narrow direct helpers such as `openexr_io`, `png_io`, `jpeg_io` and `tiff_io` re
 
 ## Current closure milestone
 
-The current bounded generation is in final acceptance rather than feature discovery. Remaining work is:
-
-1. complete the repaired OpenImageIO/still-image accumulation matrix in Debug and Release;
-2. accept the expanded `plugin/exr` 22-check contract in Debug and Release;
-3. complete the FFmpeg six-gate Debug/Release matrix and first-frame repeatability;
-4. repair any substantive failures as coherent root-cause slices and rerun the affected accumulation gate;
-5. mark the bounded generation complete only when those platform gates are green.
+The current bounded generation is complete: the 16-target still-image matrix, expanded `plugin/exr` contract, FFmpeg six-gate matrix and FFmpeg repeatability evidence are all Windows-proven in Debug and Release. Provenance-reviewed real-file RAW/DNG, AVIF/HEIC and animated-WebP fixtures remain optional supplementary evidence and are not stored in the repository.
 
 SIMD/hardware acceleration, broader FFmpeg codecs/containers, audio, seeking/indexing, waveform/vectorscope expansion and a possible backend-neutral media wrapper are **next-scope enhancements**, not unfinished requirements of the current closure milestone.
 

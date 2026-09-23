@@ -1,58 +1,58 @@
 # Active Work
 
-Recovery authority for work currently in flight. After fetching `main`, read this file before using chat history or starting validation. `docs/WINDOWS_ACCEPTANCE.md` is the self-contained validator contract and remains authoritative for gate order and expected totals.
+Recovery authority for the current published state. `docs/WINDOWS_ACCEPTANCE.md` remains the self-contained validator contract and gate-order authority.
 
 ## BASE
 
-- Acceptance started at `d4016ee168b38c66af5db4bdd5cc68f9ff541c0e` (`origin/main` at refresh).
+- Final acceptance started from `d4016ee168b38c66af5db4bdd5cc68f9ff541c0e` (`origin/main` at refresh).
 - U++ installation: `E:/upp-18468`; builder: `E:/upp-18468/umk.exe`; method: `GitHubOut`, `CLANGx64`, Debug `DEBUG_FULL` Noblitz and Release.
 - Installed U++ and pinned upstream sources were not modified.
 
 ## TASK
 
-Complete the bounded Windows acceptance matrix. The sixteen still-image gates are green in Debug and Release. The opt-in EXR raster gate is repaired and green; FFmpeg Debug/Release and repeatability remain.
+The bounded Windows acceptance generation is complete. Mandatory still-image, opt-in EXR raster, FFmpeg Debug/Release and FFmpeg repeatability lanes are green; only optional external-fixture interoperability evidence remains pending.
 
 ## TOUCHED
 
-- `plugin/exr/exr.cpp` - selects the registered OpenEXR reader directly for already magic-validated input and consumes reader diagnostics on open failure.
-- `plugin_exr_test/main.cpp` - runs deliberate malformed/truncated input checks on a joined worker so OpenImageIO thread-local diagnostics are destroyed before U++ HEAPDBG teardown.
-- `ffmpeg_headers/generated/config.h` and `config_components.h` - explicitly disable every optional capability/component referenced by the imported scalar source closure without enabling new FFmpeg features.
-- `ffmpeg_headers_test/main.cpp` - excludes bare token-paste prefixes such as `HAVE_` from the generated-macro coverage audit.
-- `ffmpeg_swscale_src/chroma_pos_compat.c` and `import.ext` - materialize the one legacy chroma-position helper that pinned FFmpeg hides when unstable swscale backends are disabled.
+- `OpenImageIO/OIIO.cpp`, `openimageio_plugin_heif/RegisterHEIF.*` - pair the statically linked OIIO HEIF initialization with process-exit `heif_deinit()` so libde265 state is released before U++ HEAPDBG.
+- backend integration tests - keep deliberate OIIO error paths on joined workers so upstream thread-local diagnostics are destroyed before main-thread HEAPDBG teardown.
+- `plugin/exr/exr.cpp`, `plugin_exr_test/main.cpp` - select the OpenEXR reader directly, drain expected open errors and isolate malformed-input diagnostics on a joined worker.
+- `ffmpeg_headers/generated/config.h`, `config_components.h`, `ffmpeg_headers_test/main.cpp` - make the bounded generated-equivalent configuration explicit and audit the imported source closure.
+- `ffmpeg_swscale_src/chroma_pos_compat.c`, `import.ext` - materialize the pinned stable-graph helper hidden by `CONFIG_UNSTABLE=0`, without enabling unstable backends.
+- closure documentation - distinguish implemented, Windows-proven and deferred scope using the completed evidence.
 
 ## STATUS
 
-- The previously published ImagingIO root shutdown defect remains closed: libheif/libde265 cleanup runs before U++ leak diagnostics, and the main ImagingIO gate completed five consecutive `79/0`, exit `0` runs without the temporary VppLog prewarm.
-- All sixteen still-image gates passed in required order in both Debug and Release with exact totals and normal exits.
-- `plugin_exr_test` initially reported `22/0` and then failed during HEAPDBG shutdown. A temporary prewarmed diagnostic log identified live OpenImageIO error strings from the intentional truncated EXR probe. The diagnostic was removed.
-- The production adapter now avoids unrelated fallback-reader probing, drains its expected open error, and the focused test confines unavoidable OIIO error-storage lifetime to a joined worker.
-- The first FFmpeg Debug gate initially stopped at `7/1`: the generated-config audit found 108 real identifiers left implicitly false plus a bare token-paste `HAVE_` prefix. The generated-equivalent headers now state every disabled value explicitly, preserving the existing scalar/disabled behavior, and the audit only accepts prefixes followed by an identifier suffix.
-- The restarted FFmpeg Debug lane passed headers, avutil, avcodec and avformat, then stopped while compiling swscale. Four CPU capabilities formed through token concatenation are now explicitly `0`. The next link exposed pinned FFmpeg's unconditional stable-graph reference to `ff_sws_chroma_pos()` even though its definition is inside `CONFIG_UNSTABLE`; a guarded local materializer supplies that exact helper without enabling unstable backends or changing the upstream submodule.
-- No expected total, feature policy, installed U++ file, or pinned upstream file changed.
+- Root shutdown defect closed: libheif's built-in libde265 registration allocated a 60-byte `pps_scan_cache` through `pps_scan_cache_init()` -> `de265_init()` -> `libde265_init_plugin()` without matching teardown before U++ leak diagnostics. Repository-owned HEIF integration now calls `heif_deinit()` at process exit, reaching `de265_free()` before `MemoryDumpLeaks()`.
+- Temporary VppLog prewarm and all source-level diagnostic experiments are removed. `OIIO_USTRING_CLEANUP` is not required.
+- All 16 still-image gates passed in required order in Debug and Release with exact totals and exit `0`.
+- `plugin_exr_test` passed `22/0` in Debug and Release; three additional focused Debug runs also exited `0` after its repair.
+- FFmpeg remains pinned to signed `n9.0.1`, commit `bf1b838f2ab88b4f8fd83443325c782ea0e0f7fa`, with the scalar static LGPL feature policy unchanged.
+- All six FFmpeg gates passed in required order in Debug and Release; five additional first-frame runs per configuration each passed `27/0`, exit `0`.
+- Provenance-reviewed real-camera RAW/DNG, 8-bit and 10-bit AVIF/HEIC, and animated-WebP fixtures are not stored in the repository: fixture unavailable / evidence pending.
 
 ## PUBLISHED
 
-- This checkpoint: scalar swscale configuration and pinned stable-graph closure.
+- Final acceptance/documentation closure: this checkpoint.
+- `ffb191d` - scalar swscale configuration and pinned stable-graph closure.
 - `eb56539` - FFmpeg generated-configuration coverage closure.
 - `06e195d` - EXR negative-input teardown and direct-reader repair.
-- `d4016ee168b38c66af5db4bdd5cc68f9ff541c0e` - preceding published acceptance ledger.
-- `93c4bc38e1f0d2ac505e06d84d35894a8768709f` - ImagingIO integration-gate teardown repair.
-- `626282d90efe40ccc9517bec13245e5bcab15d16` - focused OIIO gate teardown and pinned-API repair.
-- `5ef0f3e70df06e0d6e5e5263df213392a6223041` - HEIF lifecycle and focused-gate repair.
+- `93c4bc3` - ImagingIO accumulated-gate teardown repair.
+- `626282d` - focused OIIO teardown and pinned-API repair.
+- `5ef0f3e` - HEIF/libde265 lifecycle and focused-gate repair.
 
 ## VALIDATION
 
-- Still image Debug: all 16 required gates passed in order with exact totals; all exited `0`.
-- Still image Release: all 16 required gates passed in order with exact totals; all exited `0`.
-- `plugin_exr_test` Debug after repair: `22/0`, exit `0`, plus three additional `22/0`, exit `0` runs; no HEAPDBG/access violation or pending OIIO error.
-- `plugin_exr_test` Release after repair: `22/0`, exit `0`.
-- FFmpeg pin verified locally: signed tag `n9.0.1`, exact submodule commit `bf1b838f2ab88b4f8fd83443325c782ea0e0f7fa`.
-- `ffmpeg_headers_test` focused Debug regression: config audit `sources=237`, `scanned=608`, `referenced=260`, `generated=393`, `missing=0`; `8/0`, exit `0`.
-- Restarted FFmpeg Debug lane before the swscale repair: headers `8/0`, avutil `13/0`, avcodec `12/0`, avformat `14/0`, all exit `0`; stopped at the swscale build and did not run first-frame.
-- `ffmpeg_swscale_test` focused Debug regression after repair: `13/0`, exit `0`.
+- Still image Debug and Release, exact order: `openimageio_io_test` 21/0; `imaging_io_test` 79/0; `jpegxl_prereq_test` 9/0; `jpegxl_oiio_test` 10/0; `jpegxl_imagingio_test` 50/0; `hdr_oiio_test` 12/0; `dpx_cineon_oiio_test` 19/0; `hdr_dpx_imagingio_test` 38/0; `raw_oiio_test` 9/0; `raw_imagingio_test` 10/0; `webp_oiio_test` 13/0; `webp_imagingio_test` 21/0; `heif_oiio_test` 11/0; `heif_imagingio_test` 10/0; `tiff_oiio_test` 13/0; `tiff_imagingio_test` 29/0. Every build/link/run completed normally.
+- Root blocker regression: five consecutive `imaging_io_test` Debug runs at 79/0, exit `0`, with `OIIO_USTRING_CLEANUP` unset and no HEAPDBG/access violation.
+- EXR: Debug 22/0, exit `0`, plus three additional 22/0 Debug runs; Release 22/0, exit `0`.
+- FFmpeg pin: exact tag `n9.0.1`, submodule commit `bf1b838f2ab88b4f8fd83443325c782ea0e0f7fa`.
+- FFmpeg Debug and Release, exact order: headers 8/0; avutil 13/0; avcodec 12/0; avformat 14/0; swscale 13/0; first-frame 27/0. Every build/link/run completed normally.
+- FFmpeg repeatability: five additional Debug and five additional Release first-frame runs, every run 27/0 and exit `0`.
+- Hygiene: no tracked build artifacts/logs, no tracked output directory, no retired probe/lifecycle references, pinned submodules clean, `git diff --check` clean.
 
 ## NEXT ACTION
 
-- Publish this swscale checkpoint, then restart the six-gate FFmpeg Debug lane at `ffmpeg_headers_test`.
-- Continue with all six Release gates and five additional first-frame runs per configuration.
-- Stop on the first substantive failure, repair the root cause, publish a coherent checkpoint, and restart the affected accumulated lane.
+- No mandatory acceptance action remains for this bounded generation.
+- Keep optional provenance-reviewed real-file interoperability evidence separate when suitable fixtures become available.
+- Preserve deferred next scope: FFmpeg SIMD/assembly, hardware acceleration, broader codecs/containers, audio, seeking/indexing, backend-neutral media wrapper and waveform/vectorscope work.

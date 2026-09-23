@@ -10,7 +10,7 @@ This catalogue distinguishes three states:
 - **Windows-proven** — the relevant U++ CLANGx64 acceptance has been recorded;
 - **platform validation pending** — implementation exists but the current accumulated Windows checkpoint is not yet accepted.
 
-`docs/ACTIVE_WORK.md` is the authority for the exact in-flight validation boundary.
+`docs/ACTIVE_WORK.md` is the authority for the exact accepted checkpoint and validation evidence.
 
 ## Package model
 
@@ -44,9 +44,9 @@ This catalogue distinguishes three states:
 - Canonical application-facing OpenImageIO package over `openimageio_headers`, `openimageio_src`, `openimageio_util_src` and statically registered format packages.
 - Pinned version: 3.1.15.0.
 - `oiio` remains a compatibility forwarder; it is not a second implementation.
-- The original Windows-proven OpenEXR/PNG route remains the accepted baseline.
+- The original OpenEXR/PNG route remains the accepted baseline.
 - Code-side static format expansion includes JPEG XL, Radiance HDR/RGBE, DPX/Cineon, camera RAW, WebP, decode-only HEIF/AVIF and TIFF support required by the current `ImagingIO` format line.
-- The shared static dependency repair is `5ca436c3ba6265f6431deaf7348332940051686d`; the complete current-main deterministic accumulation matrix is still platform-validation pending.
+- The shared static dependency repair is `5ca436c3ba6265f6431deaf7348332940051686d`; the complete current-main deterministic accumulation matrix is Windows-proven in Debug and Release.
 
 ### Other stable direct packages
 
@@ -80,7 +80,7 @@ All framework public types live under `Upp::Imaging`. Public framework headers d
 - Accepted baseline: EXR/PNG.
 - Code-side format line: JPEG XL, HDR/RGBE, DPX/Cineon, RAW, WebP, decode-only HEIF/AVIF and TIFF.
 - Preserves transactional load/save and stable framework diagnostics.
-- **Implemented**; baseline Windows-proven at 79/0, current-main format accumulation remains pending after `5ca436c3`.
+- **Implemented and Windows-proven**; the shared 79/0 boundary and complete current format accumulation passed in Debug and Release.
 
 ### `ImagingColor`
 - Backend-neutral colour-processing API using OpenColorIO privately.
@@ -125,7 +125,7 @@ Positive real-camera RAW decode, real 8/10-bit AVIF/HEIC decode and animated-Web
 - Not a full-fidelity EXR API and not part of the `Imaging` umbrella.
 - Current contract covers ordinary single-image EXR preview, RGB/RGBA, Gray/GrayAlpha, one-channel masks, named multichannel RGB selection, straight alpha, deterministic finite-value clamp/rounding, non-finite-to-zero preview behaviour, and truthful opaque/alpha reporting.
 - Does not claim arbitrary-channel preservation, source floating-point preservation, full metadata/window semantics, multipart/deep/mip support or unclamped HDR fidelity.
-- **Implemented** through `323c3dc29938de404fc3411b87dcaf6c6aea4559`; expanded `plugin_exr_test` contract is 22 checks and remains Windows Debug/Release pending.
+- **Implemented and Windows-proven**; expanded `plugin_exr_test` passed 22/0 in Debug and Release.
 
 ## Narrow format helpers
 
@@ -175,9 +175,9 @@ Current expected focused gates:
 - `ffmpeg_swscale_test` 13/0
 - `ffmpeg_first_frame_test` 27/0
 
-The avformat manifest explicitly owns the two pinned FFmpeg materializers `libavformat/to_upper4.c` and `libavformat/mpegaudiotabs.c`; this closes the current `ff_toupper4` / `ff_mpa_freq_tab` linker defect without enabling any new component.
+The avformat manifest explicitly owns the two pinned FFmpeg materializers `libavformat/to_upper4.c` and `libavformat/mpegaudiotabs.c`. The swscale package also owns a guarded compatibility materializer for the single stable-graph helper hidden by pinned FFmpeg when unstable backends are disabled. Neither repair enables a new component or feature.
 
-**Implementation/source ownership is closed; current-main Debug/Release and repeatability acceptance remains pending.**
+**Implemented and Windows-proven**: all six gates passed in Debug and Release, followed by five additional 27/0 first-frame runs per configuration with clean exits.
 
 ## Strict imported-source/package boundaries
 
@@ -227,12 +227,6 @@ FFmpeg remains a parallel stable-direct media stack, not an Imaging framework de
 
 ## Current closure boundary
 
-The bounded current-generation implementation is complete enough for accumulated platform acceptance. Remaining closure gates are:
-
-1. the exact repository-owned still-image matrix listed above in Debug and Release;
-2. `plugin_exr_test` 22/0 in Debug and Release;
-3. all six FFmpeg gates in Debug and Release plus first-frame repeatability;
-4. coherent root-cause repairs only if current-main Windows validation exposes a substantive defect;
-5. supplementary external-fixture interoperability evidence reported separately when provenance-reviewed fixtures are available.
+The bounded current generation is complete and Windows-proven. The exact repository-owned still-image matrix passed in Debug and Release, `plugin_exr_test` passed 22/0 in both configurations, and all six FFmpeg gates plus five additional first-frame runs per configuration passed with clean exits. Supplementary external-fixture interoperability evidence remains separate and is reported when provenance-reviewed fixtures are available.
 
 SIMD/hardware FFmpeg paths, broader codecs/containers, audio, seeking/indexing, waveform/vectorscope expansion and a possible backend-neutral media wrapper are deferred next scope, not incomplete requirements of this milestone.

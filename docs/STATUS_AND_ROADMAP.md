@@ -6,18 +6,18 @@
 - **Windows-proven** — the relevant U++ CLANGx64 acceptance has been recorded;
 - **platform validation pending** — implementation exists but the current accumulated Windows checkpoint is not yet green.
 
-For the exact in-flight boundary, read `docs/ACTIVE_WORK.md` after fetching current `main`.
+For the exact accepted checkpoint and evidence, read `docs/ACTIVE_WORK.md` after fetching current `main`.
 
 ## Current framework status
 
 - `ImagingCore`: implemented and Windows-proven, 48/0.
-- `ImagingIO`: implemented; EXR/PNG baseline Windows-proven at 79/0; exact current-main format accumulation pending.
+- `ImagingIO`: implemented and Windows-proven; the 79/0 shared boundary and complete current format accumulation passed in Debug and Release.
 - `ImagingColor`: implemented and Windows-proven, 66/0 plus independent OCIO 15/0.
 - `ImagingAnalysis`: implemented and Windows-proven, 41/0.
 - `ImagingDiagnostics`: implemented and Windows-proven, 33/0.
 - `Imaging` umbrella: implemented and Windows-proven, 6/0.
-- `plugin/exr`: implemented; expanded 22-check focused Windows Debug/Release acceptance pending.
-- FFmpeg first slice: implementation/source ownership closed; current-main Debug/Release and repeatability acceptance pending.
+- `plugin/exr`: implemented and Windows-proven at 22/0 in Debug and Release.
+- FFmpeg first slice: implemented and Windows-proven; all six gates passed in Debug and Release plus five additional 27/0 first-frame runs per configuration.
 - LumaPix: paused/reference only; `upp_imaging` does not depend on it.
 
 ## Still-image format line
@@ -35,10 +35,9 @@ The code-side format expansion is implemented for:
 
 Important acceptance state:
 
-- JPEG XL prerequisite/backend is Windows-proven 9/0 Debug and 9/0 Release after `a66e1192025032823e93a890e16cc3874034a8a4`.
+- JPEG XL prerequisite/backend is Windows-proven 9/0 Debug and 9/0 Release.
 - Shared static OpenImageIO plugin dependency repair is `5ca436c3ba6265f6431deaf7348332940051686d`.
-- The complete current-main OpenImageIO + ImagingIO deterministic accumulation matrix is still platform-validation pending.
-- Do not describe the later format line as Windows-accepted until that accumulation pass is green.
+- The complete current-main OpenImageIO + ImagingIO deterministic accumulation matrix is Windows-proven in Debug and Release.
 
 Exact repository-owned Debug/Release targets:
 
@@ -94,7 +93,7 @@ Current focused contract covers:
 - truthful opaque/alpha reporting;
 - invalid/truncated input rejection and fixture cleanup.
 
-The current focused test is 22 checks and awaits Windows Debug/Release acceptance.
+The current focused test is Windows-proven at 22/0 in Debug and Release.
 
 ## FFmpeg first slice
 
@@ -135,38 +134,18 @@ Current expected acceptance gates:
 5. `ffmpeg_swscale_test` — 13/0;
 6. `ffmpeg_first_frame_test` — 27/0.
 
-Recorded Windows evidence from the earlier acceptance run:
-
-- precheck/submodule pin passed;
-- old `ffmpeg_headers_test` contract passed 7/0 before the new parity check was added;
-- `ffmpeg_avutil_test` Debug passed 13/0;
-- `ffmpeg_avcodec_test` Debug passed 12/0;
-- the generated `CONFIG_*` codec errors are closed for that source/config state;
-- the run then reached `ffmpeg_avformat_test` link and failed only on `ff_toupper4` and `ff_mpa_freq_tab`.
-
-That avformat failure is repaired in published source ownership:
+Source-ownership and generated-configuration failures exposed during acceptance are repaired in published checkpoints:
 
 - `libavformat/to_upper4.c` materializes `ff_toupper4`;
 - `libavformat/mpegaudiotabs.c` materializes `ff_mpa_freq_tab` and related tables;
 - no new codec/muxer/protocol/feature was enabled;
-- the parallel swscale Makefile-to-manifest audit found no analogous ownership gap.
+- the swscale package explicitly disables synthesized CPU capability names and materializes the pinned stable-graph `ff_sws_chroma_pos()` helper without enabling unstable backends.
 
-Current-main avformat/swscale/first-frame Debug, all Release gates and first-frame repeatability remain platform-validation pending.
+Current-main Windows evidence is complete: headers 8/0, avutil 13/0, avcodec 12/0, avformat 14/0, swscale 13/0 and first-frame 27/0 all passed in Debug and Release; five additional first-frame runs per configuration also passed 27/0 with exit 0.
 
 ## Current closure milestone
 
-The current phase is **final acceptance**, not feature discovery.
-
-Closure requires:
-
-1. the exact 16-target repository-owned still-image matrix above in Debug and Release;
-2. `plugin_exr_test` 22/0 in Debug and Release;
-3. the complete six-gate FFmpeg Debug matrix;
-4. the same six FFmpeg gates in Release;
-5. five Debug and five Release repetitions of `ffmpeg_first_frame_test`, every run 27/0 with clean shutdown/cleanup;
-6. any substantive current-main failures repaired as coherent root-cause source/config/dependency slices, followed by focused regression and accumulation rerun;
-7. supplementary real-file interoperability evidence recorded separately when provenance-reviewed fixtures are available;
-8. repository docs/recovery state updated to mark the bounded generation complete only after required platform evidence is green.
+The current bounded generation is complete. The 16-target still-image matrix, `plugin_exr_test`, both six-gate FFmpeg lanes and all ten additional first-frame runs are Windows-proven with exact totals and clean exits. Supplementary real-file interoperability evidence remains separate and optional when provenance-reviewed fixtures become available.
 
 ## Dependency direction
 

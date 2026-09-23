@@ -77,6 +77,19 @@ The repository does not store provenance-reviewed fixtures for:
 
 If suitable fixtures are already available, report those interoperability results separately. If they are not available, report `fixture unavailable / evidence pending`. Do not fabricate substitute fixtures and do not convert their absence into either PASS or FAIL for the deterministic package matrix.
 
+## Recorded current-generation result
+
+The bounded current generation completed this contract under Windows U++ CLANGx64:
+
+- all sixteen Phase A targets passed in order in Debug and Release with the exact totals above and normal exits;
+- `plugin_exr_test` passed 22/0 in Debug and Release;
+- the FFmpeg pin resolved to signed `n9.0.1` at `bf1b838f2ab88b4f8fd83443325c782ea0e0f7fa`;
+- all six Phase C targets passed in order in Debug and Release with the exact totals above and normal exits;
+- five additional Debug and five additional Release first-frame runs each passed 27/0 with exit 0;
+- supplementary provenance-reviewed fixtures were unavailable, so that evidence remains pending and non-blocking.
+
+The exact repair history and accepted checkpoint are recorded in `docs/ACTIVE_WORK.md` and Git history. Deferred FFmpeg features remain disabled.
+
 ## Failure handling
 
 On the first substantive failure, stop that lane and report:
