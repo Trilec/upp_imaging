@@ -1,4 +1,5 @@
 files
+	chroma_pos_compat.c
 	../ffmpeg_headers/upstream/libswscale/alphablend.c
 	../ffmpeg_headers/upstream/libswscale/cms.c
 	../ffmpeg_headers/upstream/libswscale/csputils.c
