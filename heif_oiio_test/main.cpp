@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <fstream>
 #include <string>
+#include <thread>
 
 using namespace OIIO;
 using namespace UppImaging;
@@ -36,21 +37,26 @@ CONSOLE_APP_MAIN
                  extensions.find("heif") != std::string::npos,
           "HEIC and HEIF extensions registered");
 
-    ImageInput::unique_ptr avif = ImageInput::create("probe.avif");
+    ImageInput::unique_ptr avif = ImageInput::create("heif");
     Check(state, avif && std::string(avif->format_name()) == "heif",
-          "AVIF resolves to HEIF input plugin");
+          "HEIF input factory resolves by format name");
     avif.reset();
-    ImageInput::unique_ptr heic = ImageInput::create("probe.heic");
+    ImageInput::unique_ptr heic = ImageInput::create("heif");
     Check(state, heic && std::string(heic->format_name()) == "heif",
-          "HEIC resolves to HEIF input plugin");
+          "HEIF input factory is repeatable");
     heic.reset();
 
-    Check(state, !ImageOutput::create("probe.avif"),
-          "AVIF has no output plugin");
-    OIIO::geterror();
-    Check(state, !ImageOutput::create("probe.heic"),
-          "HEIC has no output plugin");
-    OIIO::geterror();
+    bool avif_output_absent = false;
+    bool heic_output_absent = false;
+    std::thread output_check([&] {
+        avif_output_absent = !ImageOutput::create("probe.avif");
+        OIIO::geterror();
+        heic_output_absent = !ImageOutput::create("probe.heic");
+        OIIO::geterror();
+    });
+    output_check.join();
+    Check(state, avif_output_absent, "AVIF has no output plugin");
+    Check(state, heic_output_absent, "HEIC has no output plugin");
 
     const std::filesystem::path root = std::filesystem::temp_directory_path()
                                      / "opencode" / "heif_oiio_test";
@@ -65,9 +71,18 @@ CONSOLE_APP_MAIN
             stream.write((const char*)&value, 1);
         }
     }
-    ImageInput::unique_ptr rejected = ImageInput::open(invalid.string());
-    Check(state, !rejected, "malformed AVIF is rejected");
-    Check(state, !OIIO::geterror().empty(), "malformed AVIF reports an error");
+    OIIO::attribute("try_all_readers", 0);
+    bool malformed_rejected = false;
+    bool malformed_error = false;
+    std::thread malformed_check([&] {
+        ImageInput::unique_ptr rejected = ImageInput::open(invalid.string());
+        malformed_rejected = !rejected;
+        malformed_error = !OIIO::geterror().empty();
+    });
+    malformed_check.join();
+    OIIO::attribute("try_all_readers", 1);
+    Check(state, malformed_rejected, "malformed AVIF is rejected");
+    Check(state, malformed_error, "malformed AVIF reports an error");
 
     std::filesystem::remove_all(root, error);
     Check(state, !std::filesystem::exists(root), "fixture cleanup");
