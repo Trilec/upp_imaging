@@ -158,9 +158,9 @@ Architecture documents what packages own and how dependencies flow. Validation e
 
 The currently established Windows framework baseline is:
 
-- ImagingCore 48/0
-- ImagingIO 79/0
-- ImagingColor 66/0 plus OCIO 15/0
+- ImagingCore 52/0
+- ImagingIO 89/0
+- ImagingColor 69/0 plus OCIO 15/0
 - ImagingAnalysis 41/0
 - ImagingDiagnostics 33/0
 - Imaging umbrella 6/0

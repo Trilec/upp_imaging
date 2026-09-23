@@ -10,9 +10,9 @@ For the exact accepted checkpoint and evidence, read `docs/ACTIVE_WORK.md` after
 
 ## Current framework status
 
-- `ImagingCore`: implemented and Windows-proven, 48/0.
-- `ImagingIO`: implemented and Windows-proven; the 79/0 shared boundary and complete current format accumulation passed in Debug and Release.
-- `ImagingColor`: implemented and Windows-proven, 66/0 plus independent OCIO 15/0.
+- `ImagingCore`: implemented and Windows-proven, 52/0.
+- `ImagingIO`: implemented and Windows-proven; the 89/0 shared boundary and complete current format accumulation passed in Debug and Release.
+- `ImagingColor`: implemented and Windows-proven, 69/0 plus independent OCIO 15/0.
 - `ImagingAnalysis`: implemented and Windows-proven, 41/0.
 - `ImagingDiagnostics`: implemented and Windows-proven, 33/0.
 - `Imaging` umbrella: implemented and Windows-proven, 6/0.
@@ -42,7 +42,7 @@ Important acceptance state:
 Exact repository-owned Debug/Release targets:
 
 1. `openimageio_io_test` — 21/0;
-2. `imaging_io_test` — 79/0;
+2. `imaging_io_test` — 89/0;
 3. `jpegxl_prereq_test` — 9/0;
 4. `jpegxl_oiio_test` — 10/0;
 5. `jpegxl_imagingio_test` — 50/0;
