@@ -52,3 +52,10 @@ Debug gates, verify the combined published diff and synchronize main without for
 - Float32 RGB/RGBA uses an RGB-only strided OCIO descriptor over the transactional candidate, avoiding row allocation and gather/scatter. Other paths retain their reusable row.
 - `imaging_color_test` 69/0 and independent `imaging_color_ocio_test` 15/0 pass in Debug and Release, exit 0. New checks compare multiple rows against the general multichannel path and preserve signed-zero/NaN alpha bits.
 - Retained candidate copying for failure atomicity and alias safety. Prepared config/processor caching is documented as deferred pending profiling and invalidation rules.
+
+## CHECKPOINT 5 — FFMPEG CONFIG AUDIT
+
+- Config parity now reads local C materializers as well as upstream manifest entries; no production source, generated configuration value or feature policy changed.
+- Pinned ff_sws_chroma_pos compatibility body matches upstream after comments/whitespace removal; !CONFIG_UNSTABLE prevents duplicate ownership. Pin-change reassessment is documented.
+- All six FFmpeg Debug gates pass and exit 0: headers 8/0, avutil 13/0, avcodec 12/0, avformat 14/0, swscale 13/0, first-frame 27/0.
+- Audit evidence: 238 source entries, 609 scanned files, 260 referenced macros, 397 generated definitions, zero missing. Release was not repeated for this test/documentation-only FFmpeg change.

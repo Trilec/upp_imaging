@@ -83,3 +83,15 @@ The end-to-end test embeds a 1,463-byte one-frame 16x16 MP4 containing Constrain
 The first slice is Windows-proven: all six gates passed in Debug and Release, followed by five additional `ffmpeg_first_frame_test` runs per configuration at 27/0 with clean exits. SIMD, hardware acceleration, broader containers/codecs, audio, seeking/index behavior and a backend-neutral U++ media API remain deferred next scope.
 
 The still-image OpenImageIO accumulation pass remains a separate validator lane and must not be blocked by FFmpeg work.
+
+## Pin-change maintenance
+
+Reassess both the generated configuration and
+ffmpeg_swscale_src/chroma_pos_compat.c whenever the FFmpeg pin changes. The
+materializer is token-equivalent (comments/whitespace aside) to n9.0.1's
+ff_sws_chroma_pos body; !CONFIG_UNSTABLE prevents duplicate ownership with
+format.c. It must be removed or adjusted if upstream moves or changes that
+helper. This does not authorize enabling unstable backends. The parity scanner
+includes repository-local C materializers as well as upstream manifest entries;
+it checks literal macro references, not conditional-preprocessor semantics or
+arbitrary token-pasted macro expansion. Generated values remain policy-reviewed.
