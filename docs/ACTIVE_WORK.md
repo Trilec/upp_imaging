@@ -1,61 +1,89 @@
 # Active Work
 
-Recovery authority for the current hardening checkpoint. `docs/WINDOWS_ACCEPTANCE.md`
-is the gate-order contract; `docs/HARDENING_REVIEW.md` will record the complete review.
+Recovery authority for the published hardening checkpoint. See
+`docs/HARDENING_REVIEW.md` for the ten-area review and deferred work;
+`docs/WINDOWS_ACCEPTANCE.md` remains the acceptance gate-order authority.
 
 ## BASE
 
-- Fetched `origin/main` at task start: `f67e9a53b70be84cb5dd40586f59e1009c1724ab`; no intervening commits.
+- START SHA: `f67e9a53b70be84cb5dd40586f59e1009c1724ab`, fetched current main; no intervening changes.
 - U++ `E:/upp-18468/umk.exe`, local `GitHubOut`, `CLANGx64`, Debug `DEBUG_FULL` Noblitz and Release.
-- Installed U++ and pinned upstream source trees are unchanged.
+- Installed U++ and pinned upstream sources are unchanged.
 
-## HARDENING CHECKPOINTS
+## STATUS
 
-### 1. Shared backend lifetime and pinned dependency debt
+PASS — HARDENING COMPLETE, PERFORMANCE ITEMS DEFERRED
 
-- The link-only umbrella test exposed a real shutdown failure: 6/0 followed by exit -1073741819, with the debugger tracing U++ MemoryDumpLeaks through logging to a destroyed mutex.
-- libheif registers built-in plugins before main even without an imaging call. The normal OIIO-owned init/deinit callback was never installed in that case. A diagnostic initializer-only probe confirmed the cause; no test prewarm is part of the repair.
-- `libheif_src/plugin_registry_lifetime.cc` includes the unchanged pinned registry and adds ordered cleanup of remaining registrations. Its destructor runs before registry storage and plugin initialization mutexes are destroyed. Normal heif_deinit empties those registries first, preventing duplicate cleanup.
-- Existing OIIO call_once initialization and its single paired heif_deinit are retained. HEIF's gate now repeats InitializeOpenImageIO sixteen times.
-- Documented OIIO 3.1.15.0 thread-local error-map debt, joined-worker test scopes and upstream fix ce1be9749586ee7ef3f2b9cb82aee8b199991f03. Generic production probing and pinned sources remain unchanged.
+- Save transactions use exclusively reserved process-ID/UUID names and same-directory native promotion without staging the destination away.
+- Complete-payload readability verification uses about 1 MiB scratch or one wide row; no universal source-bit comparison is imposed.
+- ImageData rejects mismatched specification/buffer sample types; U++ buffer moves transfer ownership without deep copying.
+- Packed Float32 RGB/RGBA avoids the float-row gather/scatter path, while excluding alpha from OCIO processing and retaining transactional output.
+- Fixed the unused-backend lifecycle defect discovered during this pass. The unchanged umbrella test initially printed 6/0 then crashed during heap-leak reporting (exit -1073741819). libheif's implicit static decoder registration is now paired with ordered fallback cleanup in the same translation unit. Normal OIIO heif_init/heif_deinit remains a single balanced pair, with no test prewarm or extra production thread.
+- Pinned OIIO error-map debt and joined-worker workarounds are documented for reassessment on upgrade. Production reader fallback semantics remain unchanged.
+- FFmpeg parity scans repository-local materializers; production config/source and bounded scalar scope are unchanged.
+- ImagingIO documentation now matches HEIF extensions/layouts and TIFF multichannel refusal.
+
+## PUBLISHED CHECKPOINTS
+
+- `bac083e` — HEIF unused-library shutdown and OIIO dependency-debt documentation.
+- `b43594e` — Core sample-storage invariant and move regression checks.
+- `2415a54` — save transactions and bounded readability verification.
+- `e56d3ba` — packed Float32 colour processing and alpha-preservation regressions.
+- `af4914d` — FFmpeg parity coverage and pin-change maintenance.
+- This documentation closure — complete findings, updated expected totals and consolidated evidence.
 
 ## VALIDATION
 
-- Debug still-image matrix passed with clean exits after the lifecycle repair. Release still-image matrix also passed with clean exits.
-- Unchanged `imaging_test` now passes 6/0 and exits 0 under the debugger and in the normal Debug run.
-- HEIF direct 11/0 and ImagingIO 10/0 pass in both configurations. The direct gate includes sixteen repeated initializer calls.
-- Remaining focused hardening checkpoints and final consolidated evidence are in progress; do not infer final completion from this checkpoint.
+The shared lifecycle change justified repeating the still-image dependency boundary.
+Every following build/run completed with normal process exit 0; expected negative
+codec messages in stderr did not change check totals or exit status.
 
-## NEXT ACTION
+Debug and Release, each in required still-image order:
 
-Complete Core/ImagingIO/colour/config-audit checkpoints, repeat shutdown-sensitive
-Debug gates, verify the combined published diff and synchronize main without force.
+| Gate | Passed/failed in each configuration |
+| --- | --- |
+| openimageio_io_test | 21/0 |
+| imaging_io_test | 89/0 |
+| jpegxl_prereq_test | 9/0 |
+| jpegxl_oiio_test | 10/0 |
+| jpegxl_imagingio_test | 50/0 |
+| hdr_oiio_test | 12/0 |
+| dpx_cineon_oiio_test | 19/0 |
+| hdr_dpx_imagingio_test | 38/0 |
+| raw_oiio_test | 9/0 |
+| raw_imagingio_test | 10/0 |
+| webp_oiio_test | 13/0 |
+| webp_imagingio_test | 21/0 |
+| heif_oiio_test | 11/0 |
+| heif_imagingio_test | 10/0 |
+| tiff_oiio_test | 13/0 |
+| tiff_imagingio_test | 29/0 |
 
-## CHECKPOINT 2 — CORE INVARIANT
+Additional affected Debug and Release gates: Core 52/0, Color 69/0,
+independent OCIO 15/0, Analysis 41/0, Diagnostics 33/0, umbrella 6/0,
+and unchanged EXR preview 22/0. HEIF's direct gate repeats initialization sixteen times.
 
-- `ImagingCore/ImagingCore.h`: require buffer/specification sample-type agreement in ImageData::IsValid; mismatched widths could otherwise allow consumers to read beyond the buffer.
-- Added equal-width and differing-width mismatch tests and pointer-identity move construction/assignment checks. Existing pick/move implementations remain unchanged.
-- `imaging_core_test` passes 52/0 in Debug and Release. Affected numerical/colour/IO Debug gates pass; combined Release/repeat validation continues.
-- Preceding lifecycle commit: `bac083e`.
+FFmpeg Debug, all six in order: headers 8/0, avutil 13/0, avcodec 12/0,
+avformat 14/0, swscale 13/0, first-frame 27/0. Parity audit: 238 sources,
+609 scanned files, 260 referenced identifiers, 397 generated definitions,
+zero missing. Compatibility helper body is token-equivalent to the pin.
+FFmpeg Release was not rerun for its test/documentation-only change; the
+previous accepted Release evidence remains in the starting checkpoint.
 
-## CHECKPOINT 3 — IMAGINGIO TRANSACTION AND VERIFICATION
+Three additional Debug runs each of imaging_io_test (89/0) and imaging_test
+(6/0), all exit 0. Consolidated final validation: **58 runs, 1,576 passed
+checks, zero failed checks**. Additionally, two processes each performed twelve
+saves to the same destination; both exited 0 and left no transaction residue.
 
-- Exclusive process-ID/UUID temporary reservation replaces process-local counters. Same-directory native promotion replaces the backup/restore sequence.
-- Full payload readability verification uses bounded scanline scratch; no universal exact comparison is imposed on quantized formats.
-- `imaging_io_test`: 89/0 Debug and Release, plus three Debug repeats; stale candidates/backups, unique reservations, locked destination, promotion failure and multi-batch decode are covered.
-- Two concurrent processes each performed twelve successful saves to one destination (both exits 0), with no transaction residue.
-- All affected format ImagingIO gates passed in both configurations with clean exits; shared direct gate remains 21/0.
-- Corrected README format-policy overclaims for HEIF extensions and TIFF multichannel support.
+Logs/binaries are under ignored `out/hardening-*`; no diagnostic prewarm or
+probe package is tracked. All eight submodules are clean at their existing pins,
+including FFmpeg `bf1b838f2ab88b4f8fd83443325c782ea0e0f7fa`.
 
-## CHECKPOINT 4 — PACKED FLOAT COLOUR PATH
+## LIMITS AND NEXT ACTION
 
-- Float32 RGB/RGBA uses an RGB-only strided OCIO descriptor over the transactional candidate, avoiding row allocation and gather/scatter. Other paths retain their reusable row.
-- `imaging_color_test` 69/0 and independent `imaging_color_ocio_test` 15/0 pass in Debug and Release, exit 0. New checks compare multiple rows against the general multichannel path and preserve signed-zero/NaN alpha bits.
-- Retained candidate copying for failure atomicity and alias safety. Prepared config/processor caching is documented as deferred pending profiling and invalidation rules.
-
-## CHECKPOINT 5 — FFMPEG CONFIG AUDIT
-
-- Config parity now reads local C materializers as well as upstream manifest entries; no production source, generated configuration value or feature policy changed.
-- Pinned ff_sws_chroma_pos compatibility body matches upstream after comments/whitespace removal; !CONFIG_UNSTABLE prevents duplicate ownership. Pin-change reassessment is documented.
-- All six FFmpeg Debug gates pass and exit 0: headers 8/0, avutil 13/0, avcodec 12/0, avformat 14/0, swscale 13/0, first-frame 27/0.
-- Audit evidence: 238 source entries, 609 scanned files, 260 referenced macros, 397 generated definitions, zero missing. Release was not repeated for this test/documentation-only FFmpeg change.
+- Prepared OCIO processor/config reuse and EXR chunk/tile preview conversion remain documented performance follow-ups.
+- Private float/double sample helpers remain separate to preserve their precision/rounding policies.
+- POSIX transaction branches were reviewed but not runtime-tested on this Windows host.
+- Optional real-camera RAW, 8/10-bit HEIF and animated-WebP fixture evidence remains pending, unchanged from the accepted baseline.
+- No new formats/codecs, FFmpeg SIMD/hardware/audio/container/seek scope, media framework or GUI work was started.
+- Publish this coherent checkpoint after diff checks; fetch before push, no force, and verify HEAD equals origin/main and the published diff.

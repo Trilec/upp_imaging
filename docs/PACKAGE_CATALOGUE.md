@@ -72,7 +72,7 @@ All framework public types live under `Upp::Imaging`. Public framework headers d
 - Backend-neutral image data model, metadata, window, result and diagnostic contracts.
 - Core-only dependency boundary.
 - Public concepts include `ImageSpec`, `ImageBuffer`, `ImageData`, `Metadata`, `DataWindow`, `SampleType`, `ChannelLayout`, `Result` and `Diagnostics`.
-- **Implemented and Windows-proven**: established baseline `imaging_core_test` 48/0.
+- **Implemented and Windows-proven**: established baseline `imaging_core_test` 52/0.
 
 ### `ImagingIO`
 - Backend-neutral typed image load/save API using OpenImageIO privately.
@@ -80,12 +80,12 @@ All framework public types live under `Upp::Imaging`. Public framework headers d
 - Accepted baseline: EXR/PNG.
 - Code-side format line: JPEG XL, HDR/RGBE, DPX/Cineon, RAW, WebP, decode-only HEIF/AVIF and TIFF.
 - Preserves transactional load/save and stable framework diagnostics.
-- **Implemented and Windows-proven**; the shared 79/0 boundary and complete current format accumulation passed in Debug and Release.
+- **Implemented and Windows-proven**; the shared 89/0 boundary and complete current format accumulation passed in Debug and Release.
 
 ### `ImagingColor`
 - Backend-neutral colour-processing API using OpenColorIO privately.
 - Supports the documented RGB/RGBA and unambiguous named multichannel transform subset while preserving alpha and non-RGB channels.
-- **Implemented and Windows-proven**: 66/0 plus independent OCIO 15/0.
+- **Implemented and Windows-proven**: 69/0 plus independent OCIO 15/0.
 
 ### `ImagingAnalysis`
 - Core-only numerical analysis layer.
@@ -108,7 +108,7 @@ All framework public types live under `Upp::Imaging`. Public framework headers d
 
 The current repository-owned deterministic Debug/Release accumulation uses actual U++ packages, not roadmap format labels:
 
-- baseline/shared boundary: `openimageio_io_test` 21/0, `imaging_io_test` 79/0;
+- baseline/shared boundary: `openimageio_io_test` 21/0, `imaging_io_test` 89/0;
 - JPEG XL: `jpegxl_prereq_test` 9/0, `jpegxl_oiio_test` 10/0, `jpegxl_imagingio_test` 50/0;
 - HDR/RGBE + DPX/Cineon: `hdr_oiio_test` 12/0, `dpx_cineon_oiio_test` 19/0, `hdr_dpx_imagingio_test` 38/0;
 - camera RAW: `raw_oiio_test` 9/0, `raw_imagingio_test` 10/0;

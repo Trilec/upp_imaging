@@ -14,3 +14,10 @@ Initial preview policy:
 - no colour transform, exposure adjustment or tone mapping is applied.
 
 This package is intentionally not a full-fidelity EXR API. It does not preserve floating-point samples, arbitrary channels, metadata, source data-window coordinates, multipart/deep/mip structures, or HDR values outside the display clamp. Use `ImagingIO`, `OpenImageIO`, or `openexr` when those semantics matter.
+
+The hardening review retained the current complete float decode. A scanline-only
+replacement would narrow tiled EXR support; a safe memory reduction needs both
+scanline and tile/chunk handling plus fixtures for tiled images and negative
+origins. The current peak includes encoded input, decoded float samples and
+RGBA8 preview. Revisit chunked conversion if large-preview profiling justifies
+that additional decoder path; keep the existing 22-check contract intact.

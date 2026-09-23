@@ -20,7 +20,7 @@ If HEAD does not match the SHA supplied with the validator task, stop and report
 Run Debug first, in this order. Stop on the first substantive compile, link or runtime failure.
 
 1. `openimageio_io_test` — require 21/0
-2. `imaging_io_test` — require 79/0
+2. `imaging_io_test` — require 89/0
 3. `jpegxl_prereq_test` — require 9/0
 4. `jpegxl_oiio_test` — require 10/0
 5. `jpegxl_imagingio_test` — require 50/0
