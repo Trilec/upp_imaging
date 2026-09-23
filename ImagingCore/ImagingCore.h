@@ -165,7 +165,13 @@ struct ImageData {
 	ImageSpec spec;
 	ImageBuffer buffer;
 	Metadata metadata;
-	bool IsValid() const { int64 samples; return spec.IsValid() && buffer.IsValid() && spec.GetSampleCount(samples) && buffer.GetSampleCount() == samples; }
+	bool IsValid() const
+	{
+		int64 samples;
+		return spec.IsValid() && buffer.IsValid() &&
+		       spec.sample_type == buffer.GetSampleType() &&
+		       spec.GetSampleCount(samples) && buffer.GetSampleCount() == samples;
+	}
 	void Clear() { spec = ImageSpec(); buffer.Clear(); metadata.Clear(); }
 };
 
