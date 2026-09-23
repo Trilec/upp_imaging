@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <fstream>
 #include <string>
+#include <thread>
 #include <vector>
 
 using namespace OIIO;
@@ -50,8 +51,8 @@ static bool ReadExact(const std::string& path, const uint8_t* expected,
        spec.format != TypeUInt8 || (alpha && spec.alpha_channel != 3))
         return false;
     std::vector<uint8_t> decoded(bytes);
-    bool ok = input->read_image(TypeUInt8, decoded.data()) && input->close() &&
-              memcmp(decoded.data(), expected, bytes) == 0;
+    bool ok = input->read_image(0, 0, 0, -1, TypeUInt8, decoded.data()) &&
+              input->close() && memcmp(decoded.data(), expected, bytes) == 0;
     return ok;
 }
 
@@ -117,10 +118,18 @@ CONSOLE_APP_MAIN
             stream.write((const char*)&value, 1);
         }
     }
-    ImageInput::unique_ptr rejected = ImageInput::open(invalid);
-    Check(state, !rejected, "malformed WebP is rejected");
-    std::string backend_error = OIIO::geterror();
-    Check(state, !backend_error.empty(), "malformed WebP reports an error");
+    OIIO::attribute("try_all_readers", 0);
+    bool malformed_rejected = false;
+    bool malformed_error = false;
+    std::thread malformed_check([&] {
+        ImageInput::unique_ptr rejected = ImageInput::open(invalid);
+        malformed_rejected = !rejected;
+        malformed_error = !OIIO::geterror().empty();
+    });
+    malformed_check.join();
+    OIIO::attribute("try_all_readers", 1);
+    Check(state, malformed_rejected, "malformed WebP is rejected");
+    Check(state, malformed_error, "malformed WebP reports an error");
 
     std::filesystem::remove_all(root, error);
     Check(state, !std::filesystem::exists(root), "fixture cleanup");

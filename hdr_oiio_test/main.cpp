@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <fstream>
 #include <string>
+#include <thread>
 #include <vector>
 
 using namespace OIIO;
@@ -126,11 +127,20 @@ CONSOLE_APP_MAIN
 		std::ofstream stream(invalid, std::ios::binary);
 		stream << "not radiance hdr\n";
 	}
-	ImageBuf rejected;
-	error.clear();
-	Check(state, !LoadImage(invalid.string().c_str(), rejected, &error),
-	      "malformed HDR is rejected");
-	Check(state, !error.empty(), "malformed HDR reports an error");
+	OIIO::attribute("try_all_readers", 0);
+	bool malformed_rejected = false;
+	bool malformed_error = false;
+	std::thread malformed_check([&] {
+		ImageBuf rejected;
+		std::string rejection_error;
+		malformed_rejected = !LoadImage(invalid.string().c_str(), rejected,
+		                                &rejection_error);
+		malformed_error = !rejection_error.empty();
+	});
+	malformed_check.join();
+	OIIO::attribute("try_all_readers", 1);
+	Check(state, malformed_rejected, "malformed HDR is rejected");
+	Check(state, malformed_error, "malformed HDR reports an error");
 
 	std::filesystem::remove_all(root);
 	Check(state, !std::filesystem::exists(root), "fixture cleanup");

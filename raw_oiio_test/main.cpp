@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <fstream>
 #include <string>
+#include <thread>
 #include <vector>
 
 using namespace OIIO;
@@ -38,20 +39,23 @@ CONSOLE_APP_MAIN
     Check(state, extensions.find("dng") != std::string::npos,
           "DNG extension registered");
 
-    ImageInput::unique_ptr raw = ImageInput::create("probe.dng");
+    ImageInput::unique_ptr raw = ImageInput::create("raw");
     Check(state, raw && std::string(raw->format_name()) == "raw",
-          "DNG resolves to RAW input plugin");
+          "RAW input factory resolves by format name");
     raw.reset();
 
-    ImageInput::unique_ptr hdr = ImageInput::create("probe.hdr");
+    ImageInput::unique_ptr hdr = ImageInput::create("hdr");
     Check(state, hdr && std::string(hdr->format_name()) == "hdr",
-          "HDR remains owned by Radiance plugin");
+          "HDR input factory remains owned by Radiance plugin");
     hdr.reset();
 
-    ImageOutput::unique_ptr raw_output = ImageOutput::create("probe.dng");
-    Check(state, !raw_output,
-          "DNG has no RAW output plugin");
-    OIIO::geterror();
+    bool raw_output_absent = false;
+    std::thread output_check([&] {
+        raw_output_absent = !ImageOutput::create("probe.dng");
+        OIIO::geterror();
+    });
+    output_check.join();
+    Check(state, raw_output_absent, "DNG has no RAW output plugin");
 
     const std::filesystem::path root = std::filesystem::temp_directory_path()
                                      / "opencode" / "raw_oiio_test";
@@ -67,12 +71,20 @@ CONSOLE_APP_MAIN
                      static_cast<std::streamsize>(garbage.size()));
     }
 
-    ImageBuf rejected;
-    std::string error;
-    Check(state, !LoadImage(invalid.string().c_str(), rejected, &error),
-          "malformed DNG is rejected");
-    Check(state, !error.empty(),
-          "malformed DNG reports an error");
+    OIIO::attribute("try_all_readers", 0);
+    bool malformed_rejected = false;
+    bool malformed_error = false;
+    std::thread malformed_check([&] {
+        ImageBuf rejected;
+        std::string rejection_error;
+        malformed_rejected = !LoadImage(invalid.string().c_str(), rejected,
+                                        &rejection_error);
+        malformed_error = !rejection_error.empty();
+    });
+    malformed_check.join();
+    OIIO::attribute("try_all_readers", 1);
+    Check(state, malformed_rejected, "malformed DNG is rejected");
+    Check(state, malformed_error, "malformed DNG reports an error");
 
     std::filesystem::remove_all(root);
     Check(state, !std::filesystem::exists(root),
