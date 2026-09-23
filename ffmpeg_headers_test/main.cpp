@@ -53,10 +53,10 @@ static bool IsIdentifierChar(int c)
 
 static bool HasConfigPrefix(const String& id)
 {
-	return id.GetCount() >= 7 && id.Mid(0, 7) == "CONFIG_" ||
-	       id.GetCount() >= 5 && id.Mid(0, 5) == "HAVE_" ||
-	       id.GetCount() >= 5 && id.Mid(0, 5) == "ARCH_" ||
-	       id.GetCount() >= 8 && id.Mid(0, 8) == "AV_HAVE_";
+	return id.GetCount() > 7 && id.Mid(0, 7) == "CONFIG_" ||
+	       id.GetCount() > 5 && id.Mid(0, 5) == "HAVE_" ||
+	       id.GetCount() > 5 && id.Mid(0, 5) == "ARCH_" ||
+	       id.GetCount() > 8 && id.Mid(0, 8) == "AV_HAVE_";
 }
 
 static String StripComments(const String& source)

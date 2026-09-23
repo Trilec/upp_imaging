@@ -59,6 +59,12 @@
 #define CONFIG_GRAY 0
 #define CONFIG_SWSCALE_ALPHA 1
 #define CONFIG_OSSFUZZ 0
+#define CONFIG_JNI 0
+#define CONFIG_LIBDRM 0
+#define CONFIG_LINUX_PERF 0
+#define CONFIG_MACOS_KPERF 0
+#define CONFIG_UNSTABLE 0
+#define CONFIG_VALGRIND_BACKTRACE 0
 
 #define CONFIG_AVUTIL 1
 #define CONFIG_AVCODEC 1
@@ -240,6 +246,57 @@
 #define HAVE_AVX512 0
 #define HAVE_AVX512ICL 0
 
+/*
+ * Optional architecture/compiler capabilities referenced by the imported
+ * scalar closure. They remain disabled by the first-slice policy.
+ */
+#define HAVE_AESNI_EXTERNAL 0
+#define HAVE_ALTIVEC 0
+#define HAVE_ARMV5TE_INLINE 0
+#define HAVE_ARMV6 0
+#define HAVE_ARMV6T2_INLINE 0
+#define HAVE_ARMV6_INLINE 0
+#define HAVE_ARM_CRC 0
+#define HAVE_ASM_MOD_Q 0
+#define HAVE_AVX2_EXTERNAL 0
+#define HAVE_AVX_EXTERNAL 0
+#define HAVE_CLMUL_EXTERNAL 0
+#define HAVE_EBP_AVAILABLE 0
+#define HAVE_EBX_AVAILABLE 0
+#define HAVE_EOR3 0
+#define HAVE_FAST_CMOV 0
+#define HAVE_FAST_FLOAT16 0
+#define HAVE_I686 0
+#define HAVE_INLINE_ASM_DIRECT_SYMBOL_REFS 0
+#define HAVE_INTRINSICS_NEON 0
+#define HAVE_INTRINSICS_SSE2 0
+#define HAVE_LDBRX 0
+#define HAVE_LOONGSON2 0
+#define HAVE_LOONGSON3 0
+#define HAVE_MIPS32R2 0
+#define HAVE_MIPS32R6 0
+#define HAVE_MIPS64R2 0
+#define HAVE_MIPS64R6 0
+#define HAVE_MIPSFPU 0
+#define HAVE_MMX 0
+#define HAVE_MMXEXT 0
+#define HAVE_MMXEXT_INLINE 0
+#define HAVE_MSA 0
+#define HAVE_NEON 0
+#define HAVE_PMULL 0
+#define HAVE_PPC4XX 0
+#define HAVE_RDTSC 0
+#define HAVE_RV 0
+#define HAVE_RVV 0
+#define HAVE_SME 0
+#define HAVE_SSE2_EXTERNAL 0
+#define HAVE_SSE3_EXTERNAL 0
+#define HAVE_SVE 0
+#define HAVE_VFP 0
+#define HAVE_X86_32_7REGS 0
+#define HAVE_XFORM_ASM 0
+#define HAVE_XMM_CLOBBERS 0
+
 #define HAVE_ALIGNED_MALLOC 1
 #define HAVE_POSIX_MEMALIGN 0
 #define HAVE_MEMALIGN 0
@@ -254,6 +311,44 @@
 #define HAVE_MKSTEMP 0
 #define HAVE_TEMPNAM 0
 #define HAVE_LIBC_MSVCRT 1
+
+/* Optional platform APIs intentionally excluded by --disable-autodetect. */
+#define HAVE_ACCESS 0
+#define HAVE_ARPA_INET_H 0
+#define HAVE_CLOSESOCKET 0
+#define HAVE_DIRENT_H 0
+#define HAVE_GETADDRINFO 0
+#define HAVE_GETHRTIME 0
+#define HAVE_GETSTDHANDLE 0
+#define HAVE_GMTIME_R 0
+#define HAVE_INET_ATON 0
+#define HAVE_ISATTY 0
+#define HAVE_LOCALTIME_R 0
+#define HAVE_LSTAT 0
+#define HAVE_MACH_ABSOLUTE_TIME 0
+#define HAVE_MPROTECT 0
+#define HAVE_POLL_H 0
+#define HAVE_PRAGMA_DEPRECATED 0
+#define HAVE_PRCTL 0
+#define HAVE_PTHREAD_NP_H 0
+#define HAVE_PTHREAD_SETNAME_NP 0
+#define HAVE_PTHREAD_SET_NAME_NP 0
+#define HAVE_SETCONSOLETEXTATTRIBUTE 0
+#define HAVE_SETMODE 0
+#define HAVE_SOCKLEN_T 0
+#define HAVE_STRERROR_R 0
+#define HAVE_STRUCT_POLLFD 0
+#define HAVE_STRUCT_SOCKADDR_IN6 0
+#define HAVE_STRUCT_SOCKADDR_SA_LEN 0
+#define HAVE_SYSCONF 0
+#define HAVE_SYS_PARAM_H 0
+#define HAVE_SYS_SELECT_H 0
+#define HAVE_SYS_TIME_H 0
+#define HAVE_UWP 0
+#define HAVE_VALGRIND_VALGRIND_H 0
+#define HAVE_VIRTUALALLOC 0
+#define HAVE_WINRT 0
+#define HAVE_WINSOCK2_H 0
 
 /* FFmpeg configure MATH_FUNCS capabilities provided by the Windows UCRT. */
 #define HAVE_ATANF 1
