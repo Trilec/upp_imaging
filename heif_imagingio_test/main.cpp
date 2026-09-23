@@ -3,6 +3,7 @@
 #include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <thread>
 
 using namespace Upp;
 using namespace Upp::Imaging;
@@ -93,15 +94,26 @@ CONSOLE_APP_MAIN
             stream.write((const char*)&value, 1);
         }
     }
-    ImageData preserved = source;
-    uint64 before = Hash(preserved.buffer);
-    Result invalid_load = LoadImageFile(invalid, preserved, &diagnostics);
-    Check(state, invalid_load.code == ResultCode::IOError,
+    bool invalid_io_error = false;
+    bool invalid_diagnostic = false;
+    bool invalid_preserved = false;
+    std::thread malformed_check([&] {
+        Diagnostics rejection_diagnostics;
+        ImageData preserved = source;
+        uint64 before = Hash(preserved.buffer);
+        Result invalid_load = LoadImageFile(invalid, preserved,
+                                            &rejection_diagnostics);
+        invalid_io_error = invalid_load.code == ResultCode::IOError;
+        invalid_diagnostic = HasCode(rejection_diagnostics, "IMGIO_OPEN");
+        invalid_preserved = Hash(preserved.buffer) == before &&
+                            preserved.spec.channel_layout == ChannelLayout::RGBA;
+    });
+    malformed_check.join();
+    Check(state, invalid_io_error,
           "malformed AVIF reaches HEIF reader and fails as I/O");
-    Check(state, HasCode(diagnostics, "IMGIO_OPEN"),
+    Check(state, invalid_diagnostic,
           "malformed AVIF reports IMGIO_OPEN");
-    Check(state, Hash(preserved.buffer) == before &&
-                 preserved.spec.channel_layout == ChannelLayout::RGBA,
+    Check(state, invalid_preserved,
           "failed HEIF-family load preserves prior output");
 
     std::filesystem::remove_all(root_path, error);
