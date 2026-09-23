@@ -4,6 +4,8 @@
 namespace UppImaging {
 
 void RegisterOpenImageIOHEIFPlugin();
+void InitializeOpenImageIOHEIFPlugin();
+void ShutdownOpenImageIOHEIFPlugin();
 
 }
 

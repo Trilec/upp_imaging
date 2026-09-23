@@ -1,5 +1,6 @@
 #include "OIIO.h"
 
+#include <cstdlib>
 #include <mutex>
 
 #include <openimageio_plugin_openexr/RegisterOpenEXR.h>
@@ -14,6 +15,15 @@
 
 namespace UppImaging {
 
+namespace {
+
+void ShutdownHEIFAtExit()
+{
+    ShutdownOpenImageIOHEIFPlugin();
+}
+
+}
+
 void InitializeOpenImageIO()
 {
     static std::once_flag once;
@@ -27,6 +37,8 @@ void InitializeOpenImageIO()
         UppImaging::RegisterOpenImageIOWebPPlugin();
         UppImaging::RegisterOpenImageIOHEIFPlugin();
         UppImaging::RegisterOpenImageIOTIFFPlugin();
+        UppImaging::InitializeOpenImageIOHEIFPlugin();
+        std::atexit(ShutdownHEIFAtExit);
     });
 }
 
