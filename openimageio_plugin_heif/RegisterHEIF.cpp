@@ -35,6 +35,8 @@ void InitializeOpenImageIOHEIFPlugin()
 
 void ShutdownOpenImageIOHEIFPlugin()
 {
+    // Balance OIIO's call_once heif_init: libheif requires explicit pairing
+    // to release decoder plugin caches before process heap diagnostics.
     heif_deinit();
 }
 

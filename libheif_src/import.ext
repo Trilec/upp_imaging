@@ -1,6 +1,7 @@
 files upstream/libheif/*.cc;
 
 exclude
+	upstream/libheif/plugin_registry.cc
 	upstream/libheif/plugins/*.cc
 	upstream/libheif/plugins_unix.cc
 	upstream/libheif/plugins_windows.cc
@@ -9,6 +10,7 @@ exclude
 	upstream/libheif/image-items/unc_image.cc;
 
 files
+	plugin_registry_lifetime.cc
 	upstream/libheif/plugins/decoder_dav1d.cc
 	upstream/libheif/plugins/decoder_libde265.cc
 	upstream/libheif/plugins/encoder_mask.cc

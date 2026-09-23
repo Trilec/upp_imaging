@@ -17,3 +17,15 @@ libheif 1.23.1 requires C++20. U++ CLANG/GCC build methods currently supply `COM
 No AOM, x265, ffmpeg, JPEG/JPEG2000 codec backend, VVC backend or runtime plugin DLL is part of this slice. Consequently AVIF/HEIC/HEIF are decode-only here. AVIF encoding is a separate future backend milestone rather than being hidden behind an unvalidated generated AOM build.
 
 libheif and libde265 are LGPL-3.0. Static redistribution therefore carries LGPL combined-work/relinking/source obligations. The repository keeps exact source pins and dependency boundaries explicit so downstream distributors can meet those obligations.
+
+The repository compiles plugin_registry_lifetime.cc in place of upstream's
+plugin_registry.cc. It includes that unmodified pinned file and adds a destructor
+in the same translation unit, after the registry's automatic registration.
+This ordering matters: libheif allocates built-in decoder state even when an
+application only links it and never calls an image API. The destructor empties
+any remaining plugin registries before their containers and plugin-init mutexes
+are destroyed. A normal heif_deinit already empties them, so the fallback does
+not repeat plugin cleanup or add an unmatched heif_deinit. Keep this adaptation
+paired with the exact pin and reassess it on upgrade. imaging_test is the
+link-without-initialization regression; HEIF/ImagingIO gates exercise the normal
+paired path. All native objects and worker threads must finish before teardown.
