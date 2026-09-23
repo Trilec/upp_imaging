@@ -313,20 +313,14 @@ static void LoadManifestSources(const String& root, const char *package,
 	}
 
 	StringStream stream(LoadFile(manifest));
-	const String marker = "../ffmpeg_headers/upstream/";
 	while(!stream.IsEof()) {
-		String line = stream.GetLine();
-		int p = line.Find(marker);
-		if(p < 0)
+		String rel = TrimBoth(stream.GetLine());
+		if(rel.EndsWith(";"))
+			rel = TrimBoth(rel.Left(rel.GetCount() - 1));
+		if(!rel.EndsWith(".c"))
 			continue;
-		String rel = line.Mid(p + 3);
-		while(!rel.IsEmpty()) {
-			int c = rel[rel.GetCount() - 1];
-			if(c != ';' && c != ' ' && c != '\t' && c != '\r')
-				break;
-			rel = rel.Left(rel.GetCount() - 1);
-		}
-		String path = NormalizePath(AppendFileName(root, rel));
+		// Include repository-owned materializers as well as pinned upstream C.
+		String path = NormalizePath(AppendFileName(GetFileFolder(manifest), rel));
 		if(!FileExists(path)) {
 			Cout() << "CONFIG AUDIT missing source " << path << '\n';
 			audit.manifests_ok = false;
