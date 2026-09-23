@@ -99,6 +99,21 @@ CONSOLE_APP_MAIN
 	Check(state, image.IsValid() && image.metadata.Get("name") == Value("replacement"), "coherent image data");
 	ImageData image_copy = image; Check(state, image_copy.IsValid(), "image data copy"); image.Clear(); Check(state, !image.IsValid() && image.metadata.IsEmpty(), "image data clear");
 
+	ImageData mismatched = image_copy;
+	mismatched.spec.sample_type = SampleType::UInt8;
+	Check(state, !mismatched.IsValid(), "different buffer and specification sample widths rejected");
+	mismatched.spec.sample_type = SampleType::UInt16;
+	mismatched.buffer.Allocate(mismatched.spec);
+	mismatched.spec.sample_type = SampleType::Float16;
+	Check(state, !mismatched.IsValid(), "same-width buffer and specification sample types rejected");
+	const byte* moved_pixels = image_copy.buffer.Begin();
+	ImageData image_moved = pick(image_copy);
+	Check(state, image_moved.IsValid() && image_moved.buffer.Begin() == moved_pixels &&
+	      !image_copy.IsValid(), "image move transfers pixel storage without copying");
+	image_copy.Clear();
+	image_copy = pick(image_moved);
+	Check(state, image_copy.IsValid() && image_copy.buffer.Begin() == moved_pixels &&
+	      !image_moved.IsValid(), "image move assignment transfers pixel storage without copying");
 	Result success = Result::Success();
 	Result failure = Result::Failure(ResultCode::Overflow, "too large", "ImageSpec.byte_count");
 	Result normalized = Result::Failure(ResultCode::Ok, "invalid failure");

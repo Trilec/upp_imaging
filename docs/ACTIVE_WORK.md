@@ -30,3 +30,10 @@ is the gate-order contract; `docs/HARDENING_REVIEW.md` will record the complete 
 
 Complete Core/ImagingIO/colour/config-audit checkpoints, repeat shutdown-sensitive
 Debug gates, verify the combined published diff and synchronize main without force.
+
+## CHECKPOINT 2 — CORE INVARIANT
+
+- `ImagingCore/ImagingCore.h`: require buffer/specification sample-type agreement in ImageData::IsValid; mismatched widths could otherwise allow consumers to read beyond the buffer.
+- Added equal-width and differing-width mismatch tests and pointer-identity move construction/assignment checks. Existing pick/move implementations remain unchanged.
+- `imaging_core_test` passes 52/0 in Debug and Release. Affected numerical/colour/IO Debug gates pass; combined Release/repeat validation continues.
+- Preceding lifecycle commit: `bac083e`.
