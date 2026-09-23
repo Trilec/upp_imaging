@@ -22,7 +22,9 @@ static void Check(State& state, bool condition, const char* label)
 CONSOLE_APP_MAIN
 {
     State state;
-    InitializeOpenImageIO();
+    // Repeated calls must still acquire exactly one OIIO/libheif init count.
+    for(int i = 0; i < 16; ++i)
+        InitializeOpenImageIO();
 
     const std::string inputs = get_string_attribute("input_format_list");
     const std::string outputs = get_string_attribute("output_format_list");
