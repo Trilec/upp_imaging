@@ -4,6 +4,7 @@ Recovery authority for work currently in flight. After fetching `main`, read thi
 
 ## BASE
 
+- Current repair SHA: `d3300a023d0c41837a6f1ccfd05e2490ef869b7f`.
 - HEIF lifecycle repair SHA: `5ef0f3e70df06e0d6e5e5263df213392a6223041`.
 - Repair was built with U++ `CLANGx64`, Debug, `DEBUG_FULL`, Noblitz (`umk -a`).
 - Installed U++ was not modified. `E:/upp-18468/uppsrc/Core/Mt.h` retained SHA256 `5A83CA7EAE38A41811A7A1E7AFFDA3BC4C3D2070CE120EEF3E05C71974C99524` during diagnosis.
@@ -18,6 +19,7 @@ Continue the complete Windows acceptance matrix from Phase A Debug on the exact 
 - `openimageio_plugin_heif/RegisterHEIF.cpp` and `RegisterHEIF.h` - expose the OIIO/libheif initialization pair and call `heif_deinit()` at shutdown.
 - `imaging_io_test/main.cpp` - removes the temporary `VppLog()` HEAPDBG prewarm diagnostic.
 - `heif_oiio_test/main.cpp` - uses OIIO 3.1 format-name factory semantics and runs error-producing checks on joined worker threads so upstream thread-local error storage is released before U++ HEAPDBG teardown.
+- `jpegxl_oiio_test/main.cpp` - qualifies the U++ exit API and applies the same joined-thread isolation to its deliberate malformed-input error checks.
 
 ## STATUS
 
@@ -25,10 +27,12 @@ Continue the complete Windows acceptance matrix from Phase A Debug on the exact 
 - Exact allocation path: `pps_scan_cache_init()` -> `de265_init()` -> `libde265_init_plugin()` -> libheif built-in decoder registration.
 - Repair: pair OIIO's existing `oiio_heif_init()` with `heif_deinit()` through the repository integration package and an `atexit` callback registered during normal application initialization.
 - Separate focused-test issue: OIIO 3.1 treats `ImageInput::create("probe.avif")` as a filename to validate/open, not a static factory-only query. OIIO also retains cleared global errors in main-thread TLS until thread exit, which occurs after U++ HEAPDBG's static destructor under this MinGW runtime. The test now queries the `heif` factory key and performs deliberate error checks on joined threads; expected totals are unchanged.
+- Exact-SHA acceptance at `2dfcd94a11ac4786bd9cef0b5f89e70b32f6cf7e` passed Phase A Debug targets 1-3, then stopped at target 4: `jpegxl_oiio_test` had an unqualified `SetExitCode` compile error. After the mechanical namespace correction, its malformed-input probe exposed the same main-thread OIIO TLS teardown ordering. Both issues are repaired in `d3300a0`; expected totals and codec behavior are unchanged.
 - No pinned upstream source, feature policy, package ownership, or installed U++ file was changed.
 
 ## PUBLISHED
 
+- `d3300a023d0c41837a6f1ccfd05e2490ef869b7f` - JPEG XL focused-gate compile and teardown repair.
 - `5ef0f3e70df06e0d6e5e5263df213392a6223041` - HEIF lifecycle and focused-gate repair.
 - `527f2d2a92691622dab13ff4df6c58a396577183` - preceding cleanup checkpoint.
 
@@ -37,10 +41,11 @@ Continue the complete Windows acceptance matrix from Phase A Debug on the exact 
 - `openimageio_io_test` Debug `DEBUG_FULL` Noblitz: `21/0`, exit `0`.
 - `imaging_io_test` Debug `DEBUG_FULL` Noblitz: five consecutive `79/0`, exit `0`, with `OIIO_USTRING_CLEANUP` unset and no HEAPDBG/access-violation output.
 - `heif_oiio_test` Debug `DEBUG_FULL` Noblitz: three consecutive `11/0`, exit `0`, with no HEAPDBG/access-violation output.
+- `jpegxl_oiio_test` Debug `DEBUG_FULL` Noblitz after repair: three consecutive `10/0`, exit `0`, with no HEAPDBG/access-violation output.
 - Diagnostic cdb breakpoints confirmed process-exit cleanup reaches both `heif_deinit()` and `de265_free()` before `Upp::MemoryDumpLeaks()`.
 
 ## NEXT ACTION
 
-- Commit and publish this recovery ledger, then begin exact-SHA acceptance at Phase A Debug target 1.
+- Commit and publish this recovery ledger, then restart exact-SHA acceptance at Phase A Debug target 1.
 - Run all sixteen still-image Debug targets in order, then all sixteen Release targets, `plugin_exr_test` Debug/Release, and the FFmpeg Debug/Release plus repeatability lanes from `docs/WINDOWS_ACCEPTANCE.md`.
 - Stop on the first substantive failure, publish any required repair as a new checkpoint, and restart exact-SHA acceptance from the authoritative order.
