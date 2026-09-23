@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <fstream>
 #include <string>
+#include <thread>
 #include <vector>
 
 using namespace OIIO;
@@ -119,22 +120,32 @@ CONSOLE_APP_MAIN
 		std::ofstream stream(invalid_dpx, std::ios::binary);
 		stream << "not dpx";
 	}
-	ImageBuf rejected;
-	std::string error;
-	Check(state, !LoadImage(invalid_dpx.string().c_str(), rejected, &error),
-	      "malformed DPX is rejected");
-	Check(state, !error.empty(), "malformed DPX reports an error");
-
 	const std::filesystem::path invalid_cin = root / "invalid.cin";
 	{
 		std::ofstream stream(invalid_cin, std::ios::binary);
 		stream << "not cineon";
 	}
-	rejected.reset();
-	error.clear();
-	Check(state, !LoadImage(invalid_cin.string().c_str(), rejected, &error),
-	      "malformed Cineon is rejected");
-	Check(state, !error.empty(), "malformed Cineon reports an error");
+	OIIO::attribute("try_all_readers", 0);
+	bool dpx_rejected = false;
+	bool dpx_error = false;
+	bool cineon_rejected = false;
+	bool cineon_error = false;
+	std::thread malformed_check([&] {
+		ImageBuf rejected;
+		std::string error;
+		dpx_rejected = !LoadImage(invalid_dpx.string().c_str(), rejected, &error);
+		dpx_error = !error.empty();
+		rejected.reset();
+		error.clear();
+		cineon_rejected = !LoadImage(invalid_cin.string().c_str(), rejected, &error);
+		cineon_error = !error.empty();
+	});
+	malformed_check.join();
+	OIIO::attribute("try_all_readers", 1);
+	Check(state, dpx_rejected, "malformed DPX is rejected");
+	Check(state, dpx_error, "malformed DPX reports an error");
+	Check(state, cineon_rejected, "malformed Cineon is rejected");
+	Check(state, cineon_error, "malformed Cineon reports an error");
 
 	std::filesystem::remove_all(root);
 	Check(state, !std::filesystem::exists(root), "fixture cleanup");

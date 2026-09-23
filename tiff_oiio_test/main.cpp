@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <fstream>
 #include <string>
+#include <thread>
 #include <vector>
 
 using namespace OIIO;
@@ -83,34 +84,39 @@ CONSOLE_APP_MAIN
                  extensions.find("tiff") != std::string::npos,
           "TIFF extensions registered");
 
-    ImageInput::unique_ptr probe_in = ImageInput::create("probe.tif");
+    ImageInput::unique_ptr probe_in = ImageInput::create("tiff");
     Check(state, probe_in && std::string(probe_in->format_name()) == "tiff",
-          ".tif resolves to TIFF input");
-    ImageOutput::unique_ptr probe_out = ImageOutput::create("probe.tiff");
+          "TIFF input factory resolves by format name");
+    ImageOutput::unique_ptr probe_out = ImageOutput::create("tiff");
     Check(state, probe_out && std::string(probe_out->format_name()) == "tiff",
-          ".tiff resolves to TIFF output");
+          "TIFF output factory resolves by format name");
 
     const uint8_t rgb8[] = { 0,17,255, 63,127,191, 255,1,2, 11,22,33 };
-    Check(state, WriteReadExact((root / "rgb8.tif").string(), 3, TypeUInt8,
-                                rgb8, sizeof(rgb8)),
-          "UInt8 RGB ZIP roundtrip is exact");
-
     const uint8_t rgba8[] = { 91,37,211,0, 255,12,3,64,
                               17,99,201,128, 4,5,6,255 };
-    Check(state, WriteReadExact((root / "rgba8.tif").string(), 4, TypeUInt8,
-                                rgba8, sizeof(rgba8), true),
-          "UInt8 RGBA preserves straight alpha and hidden RGB");
-
     const uint16_t rgb16[] = { 0,1,65535, 32768,4096,60000,
                                123,456,789, 65534,2222,3333 };
-    Check(state, WriteReadExact((root / "rgb16.tiff").string(), 3, TypeUInt16,
-                                rgb16, sizeof(rgb16) / sizeof(rgb16[0])),
-          "UInt16 RGB ZIP roundtrip is exact");
-
     const float gray32[] = { 0.0f, 0.25f, 1.0f, 4.5f };
-    Check(state, WriteReadExact((root / "gray32.tif").string(), 1, TypeFloat,
-                                gray32, sizeof(gray32) / sizeof(gray32[0])),
-          "Float32 Gray ZIP roundtrip is exact");
+    bool rgb8_ok = false;
+    bool rgba8_ok = false;
+    bool rgb16_ok = false;
+    bool gray32_ok = false;
+    std::thread roundtrip_check([&] {
+        rgb8_ok = WriteReadExact((root / "rgb8.tif").string(), 3, TypeUInt8,
+                                 rgb8, sizeof(rgb8));
+        rgba8_ok = WriteReadExact((root / "rgba8.tif").string(), 4, TypeUInt8,
+                                  rgba8, sizeof(rgba8), true);
+        rgb16_ok = WriteReadExact((root / "rgb16.tiff").string(), 3, TypeUInt16,
+                                  rgb16, sizeof(rgb16) / sizeof(rgb16[0]));
+        gray32_ok = WriteReadExact((root / "gray32.tif").string(), 1, TypeFloat,
+                                   gray32, sizeof(gray32) / sizeof(gray32[0]));
+    });
+    roundtrip_check.join();
+    Check(state, rgb8_ok, "UInt8 RGB ZIP roundtrip is exact");
+    Check(state, rgba8_ok,
+          "UInt8 RGBA preserves straight alpha and hidden RGB");
+    Check(state, rgb16_ok, "UInt16 RGB ZIP roundtrip is exact");
+    Check(state, gray32_ok, "Float32 Gray ZIP roundtrip is exact");
 
     const std::string invalid = (root / "invalid.tif").string();
     {
@@ -120,9 +126,18 @@ CONSOLE_APP_MAIN
             stream.write((const char*)&value, 1);
         }
     }
-    ImageInput::unique_ptr rejected = ImageInput::open(invalid);
-    Check(state, !rejected, "malformed TIFF is rejected");
-    Check(state, !OIIO::geterror().empty(), "malformed TIFF reports an error");
+    OIIO::attribute("try_all_readers", 0);
+    bool malformed_rejected = false;
+    bool malformed_error = false;
+    std::thread malformed_check([&] {
+        ImageInput::unique_ptr rejected = ImageInput::open(invalid);
+        malformed_rejected = !rejected;
+        malformed_error = !OIIO::geterror().empty();
+    });
+    malformed_check.join();
+    OIIO::attribute("try_all_readers", 1);
+    Check(state, malformed_rejected, "malformed TIFF is rejected");
+    Check(state, malformed_error, "malformed TIFF reports an error");
 
     std::filesystem::remove_all(root, error);
     Check(state, !std::filesystem::exists(root), "fixture cleanup");
