@@ -37,3 +37,12 @@ Debug gates, verify the combined published diff and synchronize main without for
 - Added equal-width and differing-width mismatch tests and pointer-identity move construction/assignment checks. Existing pick/move implementations remain unchanged.
 - `imaging_core_test` passes 52/0 in Debug and Release. Affected numerical/colour/IO Debug gates pass; combined Release/repeat validation continues.
 - Preceding lifecycle commit: `bac083e`.
+
+## CHECKPOINT 3 — IMAGINGIO TRANSACTION AND VERIFICATION
+
+- Exclusive process-ID/UUID temporary reservation replaces process-local counters. Same-directory native promotion replaces the backup/restore sequence.
+- Full payload readability verification uses bounded scanline scratch; no universal exact comparison is imposed on quantized formats.
+- `imaging_io_test`: 89/0 Debug and Release, plus three Debug repeats; stale candidates/backups, unique reservations, locked destination, promotion failure and multi-batch decode are covered.
+- Two concurrent processes each performed twelve successful saves to one destination (both exits 0), with no transaction residue.
+- All affected format ImagingIO gates passed in both configurations with clean exits; shared direct gate remains 21/0.
+- Corrected README format-policy overclaims for HEIF extensions and TIFF multichannel support.

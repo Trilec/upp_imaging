@@ -1,4 +1,5 @@
 #include <ImagingIO/ImagingIO.h>
+#include <ImagingIO/Transaction.h>
 
 #include <filesystem>
 #include <cstring>
@@ -121,6 +122,16 @@ static void CheckRoundTrip(State& state, const String& root,
 
 CONSOLE_APP_MAIN
 {
+	if(CommandLine().GetCount() == 2 && CommandLine()[0] == "--save-worker") {
+		ImageData image = MakeImage(SampleType::UInt8, ChannelLayout::RGBA, 128, 128);
+		for(int i = 0; i < 12; ++i)
+			if(!SaveImageFile(CommandLine()[1], image)) {
+				SetExitCode(1);
+				return;
+			}
+		SetExitCode(0);
+		return;
+	}
 	State state;
 	String root = AppendFileName(GetTempPath(), "imaging_io_contract");
 	std::filesystem::path root_path(root.Begin());
@@ -221,6 +232,9 @@ CONSOLE_APP_MAIN
 	CheckRoundTrip(state, root, "PNG UInt16 RGBA", "u16_rgba.png",
 	               MakeImage(SampleType::UInt16, ChannelLayout::RGBA, 3, 2));
 
+	CheckRoundTrip(state, root, "PNG multi-batch payload", "large.png",
+	               MakeImage(SampleType::UInt8, ChannelLayout::RGBA, 1024, 300));
+
 	ImageData preserved = exr_loaded;
 	Result empty_load = LoadImageFile(String(), preserved, &diagnostics);
 	Check(state, empty_load.code == ResultCode::InvalidArgument &&
@@ -243,6 +257,45 @@ CONSOLE_APP_MAIN
 	      SameBytes(replaced.buffer, png.buffer),
 	      "replacement publishes new contents");
 
+	// Exercise the same exclusive reservation primitive used by SaveImageFile.
+	std::filesystem::path reserved_a, reserved_b;
+	bool reserve_a = IOTransaction::ReserveTemporary(replacement.Begin(), ".png", reserved_a, error);
+	bool reserve_b = IOTransaction::ReserveTemporary(replacement.Begin(), ".png", reserved_b, error);
+	Check(state, reserve_a && reserve_b && reserved_a != reserved_b &&
+	      reserved_a.parent_path() == root_path && reserved_b.parent_path() == root_path,
+	      "temporary reservations are unique and beside destination");
+	Check(state, !IOTransaction::Reserve(reserved_a, error) &&
+	      error == std::errc::file_exists, "exclusive reservation refuses an occupied name");
+	String stale = reserved_a.string().c_str();
+	SaveFile(stale, "stale transaction");
+	String legacy_temp = replacement + ".imagingio-1.png";
+	String legacy_backup = replacement + ".imagingio-backup-1";
+	SaveFile(legacy_temp, "old temporary");
+	SaveFile(legacy_backup, "old backup");
+	Check(state, SaveImageFile(replacement, png, &diagnostics).IsOk() &&
+	      LoadFile(stale) == "stale transaction" && LoadFile(legacy_temp) == "old temporary" &&
+	      LoadFile(legacy_backup) == "old backup", "stale transactions are never overwritten or removed");
+	std::filesystem::remove(reserved_a, error);
+	std::filesystem::remove(reserved_b, error);
+	FileDelete(legacy_temp);
+	FileDelete(legacy_backup);
+
+	String before_failure = LoadFile(replacement);
+	Check(state, !IOTransaction::Promote(root_path / "missing-candidate.png",
+	                                    replacement.Begin(), error) &&
+	      LoadFile(replacement) == before_failure,
+	      "failed promotion preserves destination without restoration");
+#ifdef PLATFORM_WIN32
+	HANDLE locked = CreateFileW(std::filesystem::path(replacement.Begin()).c_str(),
+	                            GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING,
+	                            FILE_ATTRIBUTE_NORMAL, nullptr);
+	Result locked_save = SaveImageFile(replacement, old, &diagnostics);
+	if(locked != INVALID_HANDLE_VALUE)
+		CloseHandle(locked);
+	Check(state, locked != INVALID_HANDLE_VALUE && !locked_save &&
+	      HasCode(diagnostics, "IMGIO_REPLACE") && LoadFile(replacement) == before_failure &&
+	      NoTransactionResidue(root_path), "locked destination survives failed save promotion");
+#endif
 	String directory_target = AppendFileName(root, "directory.png");
 	std::filesystem::create_directories(directory_target.Begin(), error);
 	Result directory_result = SaveImageFile(directory_target, png, &diagnostics);
