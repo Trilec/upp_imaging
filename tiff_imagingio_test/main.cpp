@@ -3,6 +3,7 @@
 #include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <thread>
 
 using namespace Upp;
 using namespace Upp::Imaging;
@@ -139,15 +140,21 @@ CONSOLE_APP_MAIN
     std::filesystem::create_directories(root_path, error);
     Check(state, !error, "fixture directory creation");
 
-    Roundtrip(root, "rgb8.tif", MakeImage(ChannelLayout::RGB, SampleType::UInt8),
-              state, "TIFF UInt8 RGB");
-    Roundtrip(root, "rgba8.tiff", MakeImage(ChannelLayout::RGBA, SampleType::UInt8),
-              state, "TIFF UInt8 RGBA");
-    Roundtrip(root, "grayalpha16.tif",
-              MakeImage(ChannelLayout::GrayAlpha, SampleType::UInt16),
-              state, "TIFF UInt16 GrayAlpha");
-    Roundtrip(root, "gray32.tif", MakeImage(ChannelLayout::Gray, SampleType::Float32),
-              state, "TIFF Float32 Gray");
+    std::thread roundtrip_check([&] {
+        Roundtrip(root, "rgb8.tif",
+                  MakeImage(ChannelLayout::RGB, SampleType::UInt8),
+                  state, "TIFF UInt8 RGB");
+        Roundtrip(root, "rgba8.tiff",
+                  MakeImage(ChannelLayout::RGBA, SampleType::UInt8),
+                  state, "TIFF UInt8 RGBA");
+        Roundtrip(root, "grayalpha16.tif",
+                  MakeImage(ChannelLayout::GrayAlpha, SampleType::UInt16),
+                  state, "TIFF UInt16 GrayAlpha");
+        Roundtrip(root, "gray32.tif",
+                  MakeImage(ChannelLayout::Gray, SampleType::Float32),
+                  state, "TIFF Float32 Gray");
+    });
+    roundtrip_check.join();
 
     Diagnostics diagnostics;
     ImageData half = MakeImage(ChannelLayout::RGB, SampleType::Float16);
@@ -176,14 +183,23 @@ CONSOLE_APP_MAIN
             stream.write((const char*)&value, 1);
         }
     }
-    ImageData preserved = MakeImage(ChannelLayout::RGBA, SampleType::UInt8);
-    uint64 before = Hash(preserved.buffer);
-    Result invalid_load = LoadImageFile(invalid, preserved, &diagnostics);
-    Check(state, invalid_load.code == ResultCode::IOError &&
-                 HasCode(diagnostics, "IMGIO_OPEN"),
+    bool invalid_diagnostic = false;
+    bool invalid_preserved = false;
+    std::thread malformed_check([&] {
+        Diagnostics rejection_diagnostics;
+        ImageData preserved = MakeImage(ChannelLayout::RGBA, SampleType::UInt8);
+        uint64 before = Hash(preserved.buffer);
+        Result invalid_load = LoadImageFile(invalid, preserved,
+                                            &rejection_diagnostics);
+        invalid_diagnostic = invalid_load.code == ResultCode::IOError &&
+                             HasCode(rejection_diagnostics, "IMGIO_OPEN");
+        invalid_preserved = Hash(preserved.buffer) == before &&
+                            preserved.spec.channel_layout == ChannelLayout::RGBA;
+    });
+    malformed_check.join();
+    Check(state, invalid_diagnostic,
           "malformed TIFF fails with stable open diagnostic");
-    Check(state, Hash(preserved.buffer) == before &&
-                 preserved.spec.channel_layout == ChannelLayout::RGBA,
+    Check(state, invalid_preserved,
           "failed TIFF load preserves prior output");
 
     Check(state, NoResidue(root_path), "TIFF operations leave no transaction residue");
