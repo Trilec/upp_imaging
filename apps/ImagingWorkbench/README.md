@@ -3,11 +3,15 @@
 Small interactive EXR and PNG workbench built on the stable `OpenImageIO` and
 `OpenColorIO` application packages.
 
-Build with:
+Build and publish using [build and run](../../docs/BUILD_AND_RUN.md).
+The normal Windows Release launch location is
+`bin/windows-x64/ImagingWorkbench.exe` after local validation. Debug builds,
+staging, logs and test executables belong under `build/windows-x64/`.
 
-```text
-E:\upp-18468\umk.exe GitHubOut ImagingWorkbench CLANGx64 -br out\ImagingWorkbench.exe
-```
+This is the primary interactive integration check. Its visual smoke check and
+clean shutdown supplement, rather than replace, the deterministic tests.
+The build/bin migration still requires local execution; do not treat the new
+path as an already-validated or already-populated artifact.
 
 Current scope:
 - EXR and PNG loading

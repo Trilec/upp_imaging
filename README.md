@@ -23,12 +23,16 @@ ImagingIO supports EXR, PNG, JPEG XL, HDR/RGBE, DPX/Cineon, camera RAW, WebP, HE
 Our framework is in [imaging](imaging/), native dependencies in [third_party](third_party/), U++ adapters in [integrations](integrations/), and ImagingWorkbench in [apps](apps/). Tests, examples, tools and documentation have their own directories.
 
 1. Initialize the pinned submodules with `git submodule update --init --recursive`.
-2. Copy [GitHubOut.var.example](GitHubOut.var.example) to `GitHubOut.var` and set local absolute nest paths, including your U++ installation and `upp_Ui` for the workbench.
-3. Build, for example, `umk GitHubOut imaging_io_test CLANGx64 -H8 out/imaging_io_test.exe`.
-4. Run the current Debug/Release acceptance set with `./tools/validate.ps1 -Umk /path/to/umk.exe`.
+2. Configure the active `GitHubOut` assembly from [GitHubOut.var.example](GitHubOut.var.example), using local absolute nest paths and an absolute `OUTPUT` path ending in `build/windows-x64/umk`. Existing local assembly files are not updated by pulling Git.
+3. On Windows, build/run a focused test with `powershell -ExecutionPolicy Bypass -File tools/validate.ps1 -Package imaging_io_test`. Omit `-Package` for the retained Debug/Release suite; use `-Umk` to override the builder path.
+4. Follow [build and run](docs/BUILD_AND_RUN.md) to stage ImagingWorkbench under `build/` and publish a verified Release executable to `bin/windows-x64/ImagingWorkbench.exe`.
 
-See [layout](docs/package_layout.md), [package catalogue](docs/PACKAGE_CATALOGUE.md), [usage](docs/USAGE.md), and [acceptance](docs/WINDOWS_ACCEPTANCE.md). The workbench is supplementary diagnostics; deterministic tests are the correctness authority.
+See [layout](docs/package_layout.md), [package catalogue](docs/PACKAGE_CATALOGUE.md), [usage](docs/USAGE.md), and [acceptance](docs/WINDOWS_ACCEPTANCE.md). ImagingWorkbench is the primary interactive integration check; deterministic tests remain the correctness authority. Compiler/test/log output belongs under `build/<platform>/`; `bin/<platform>/` contains only verified runnable Release applications and required runtime payloads.
 
 The FFmpeg stack remains pinned to `n9.0.1`, scalar/static, native H.264 decode, MOV/MP4 demux, local-file protocol and swscale. Networking, external codecs, hardware acceleration, encoding and other media subsystems remain disabled.
 
 [THIRD_PARTY.md](THIRD_PARTY.md) records provenance and pins; [LICENSES.md](LICENSES.md) lists licenses. [STRUCTURE_MIGRATION.md](docs/STRUCTURE_MIGRATION.md) records every test cleanup decision.
+
+## Release readiness
+
+The last recorded Windows acceptance is the structure-migration checkpoint `17bdbb3e326a07e71f159cb034c34534fb6f6bff`: 49 tests per configuration, 2,734 checks across Debug/Release, all exits 0. This does not establish a current dependency-security clearance or Linux/macOS runtime acceptance. The build/bin routing changes still need local validation. See [release preparation](docs/RELEASE_PREPARATION.md) and [active work](docs/ACTIVE_WORK.md) for the remaining gates.

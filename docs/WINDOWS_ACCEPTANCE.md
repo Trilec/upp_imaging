@@ -7,7 +7,9 @@ failures, missing summaries, failed checks, nonzero exits and timeouts.
 
 ## Reproduce
 
-Configure the family nests using `GitHubOut.var.example`, then run from the repository:
+Configure the active family-nest assembly using `GitHubOut.var.example` and
+[BUILD_AND_RUN.md](BUILD_AND_RUN.md), including its absolute compiler-output path.
+Then run from the repository:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File tools/validate.ps1
@@ -16,9 +18,16 @@ powershell -ExecutionPolicy Bypass -File tools/validate.ps1
 The accepted environment is Windows U++ `E:/upp-18468/umk.exe`, `CLANGx64`,
 Debug (`-H8`) and Release (`-rH8`). Record the checked-out commit before validation.
 Use `-Rebuild` to clean the first target and its dependencies in each configuration.
-Logs and binaries belong under ignored `out/validation/`.
+The runner now writes test executables/logs to
+`build/windows-x64/validation/debug/` and `build/windows-x64/validation/release/`,
+with `results.txt` in their parent. U++ intermediate output is controlled
+separately by the active assembly: `build/windows-x64/umk/`.
 
-## Migration evidence
+These output-routing changes are source-reviewed but have not yet been run on
+Windows. The evidence below remains the previous accepted source checkpoint,
+not proof of the new output layout, dependency upgrades or other platforms.
+
+## Recorded migration evidence — 17bdbb3e326a07e71f159cb034c34534fb6f6bff
 
 All test C++ entry points and headers were timestamp-touched before the final run,
 forcing their compilation against the new nests rather than reusing old test objects.
@@ -27,7 +36,8 @@ Every process exited normally with code 0, including the Debug heap-audit shutdo
 Earlier clean Debug and Release dependency builds and staged representative builds
 are recorded in `STRUCTURE_MIGRATION.md`.
 
-Local evidence: `out/structure-authoritative.log`, `out/validation/results.txt`,
+Historical local evidence paths (not current output destinations):
+`out/structure-authoritative.log`, `out/validation/results.txt`,
 per-target build/run/stderr logs, and `out/structure-app-builds-final.log`.
 
 | Test package | Debug passed/failed | Release passed/failed |

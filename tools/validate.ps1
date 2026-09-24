@@ -9,15 +9,18 @@ param(
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot
 Set-Location $root
-$out=Join-Path $root 'out/validation'
+# Windows runner: keep test executables and logs out of the runnable-app bin.
+$out=Join-Path $root 'build/windows-x64/validation'
 New-Item -ItemType Directory -Path $out -Force | Out-Null
 if(!$Package.Count) { $Package=Get-Content (Join-Path $root 'tests/acceptance.txt') | Where-Object {$_ -and !$_.StartsWith('#')} }
 $results=@()
 foreach($cfg in $Configuration) {
+ $configOut=Join-Path $out $cfg
+ New-Item -ItemType Directory -Path $configOut -Force | Out-Null
  foreach($t in $Package) {
   $flags=if($cfg -eq 'release') {'-rH8'} else {'-H8'}
   if($Rebuild -and $t -eq $Package[0]) { $flags=$flags.Replace('-', '-a') }
-  $base=Join-Path $out "$t-$cfg"
+  $base=Join-Path $configOut $t
   & $Umk $Assembly $t $Method $flags "$base.exe" > "$base-build.log" 2>&1
   if($LASTEXITCODE -ne 0) { Get-Content "$base-build.log" -Tail 25; throw "BUILD FAILED: $t $cfg" }
   $proc=Start-Process -FilePath "$base.exe" -WorkingDirectory $root -WindowStyle Hidden -PassThru -RedirectStandardOutput "$base-run.log" -RedirectStandardError "$base-stderr.log"

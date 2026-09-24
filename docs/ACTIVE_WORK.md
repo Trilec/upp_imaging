@@ -1,25 +1,49 @@
 # Active Work
 
-The repository structure migration is complete and accepted. This document travels
-with the migration commit; resolve its final SHA with `git rev-parse HEAD`.
+## BASE
 
-- START SHA: `db87e3787e1d01cb75c982ae7ee0c315161b431f`.
-- Source root directories: 177 to 8 (ignored `out/` is build output).
-- Packages: 174 to 124; 50 removed, zero merged.
-- Test/probe/benchmark packages: 91 to 50; 49 deterministic tests and one manual
-  benchmark remain. The 41 removals and their reasons are individually recorded.
-- Authoritative acceptance: all 49 tests in Debug and Release, 98 normal exits,
-  2734 passed checks, zero failures.
-- Production app/benchmark builds and separate openjph public API checks pass
-  in both configurations. Release benchmark quick smoke passes; Debug manual
-  benchmark exceeded its observation timeout.
-- Pinned upstream content and all eight submodule revisions are unchanged.
+`17bdbb3e326a07e71f159cb034c34534fb6f6bff` / main, freshly read before this work.
+The structure migration remains the last recorded Windows-accepted source:
+eight source directories, 124 packages, 49 tests per configuration, 2,734 checks
+and 98 clean exits. See WINDOWS_ACCEPTANCE.md and STRUCTURE_MIGRATION.md.
 
-See [migration decisions](STRUCTURE_MIGRATION.md),
-[acceptance evidence and commands](WINDOWS_ACCEPTANCE.md), and
-[current package layout](package_layout.md).
-The prior hardening review remains historical context and records deferred
-performance work; its removed probe packages are no longer acceptance gates.
+## TASK
 
-Final publication checks: clean staged diff, fetch before ordinary push, no force,
-HEAD equal to origin/main, and a clean worktree.
+IMG-REL-001: normalize build/bin output and documentation, then complete local
+release preparation under RELEASE_PREPARATION.md. Dependency security refresh,
+branch/artifact cleanup and Linux/macOS validation are not yet completed.
+
+## TOUCHED
+
+- `.gitignore`, `GitHubOut.var.example`, `tools/validate.ps1`: ignore build/bin,
+  redirect compiler template and validation outputs away from legacy out.
+- `README.md`, `CHANGELOG.md`, `apps/ImagingWorkbench/README.md`.
+- `docs/BUILD_AND_RUN.md`, `docs/RELEASE_PREPARATION.md` (new contracts).
+- `docs/USAGE.md`, `docs/package_layout.md`, `docs/WINDOWS_ACCEPTANCE.md`, this file.
+
+## STATUS
+
+IMPLEMENTATION COMPLETE — PLATFORM VALIDATION PENDING for output routing.
+Documentation/source review only in this checkpoint. No C++ source, upstream pin,
+package topology or test assertions changed. No local Windows files or remote
+branches were deleted. The previous acceptance is not a new-layout or security pass.
+
+## PUBLISHED
+
+This coherent checkpoint; resolve with `git log -1 -- docs/ACTIVE_WORK.md`.
+No follow-up commit solely to insert this commit's own SHA is required.
+
+## VALIDATION
+
+Complete touched files were fetched at BASE; locally reconstructed originals
+match their Git blob SHAs. Scoped diff/whitespace and path-consistency checks
+were performed. PowerShell/umk and Windows GUI execution are unavailable here;
+no new runtime result is claimed. Prior migration evidence remains unchanged.
+
+## NEXT ACTION
+
+Gary: refresh main, read BUILD_AND_RUN.md and RELEASE_PREPARATION.md, update the
+actual local assembly, validate new paths and Workbench, inventory safe cleanup,
+then verify/update security-relevant dependency families with focused tests.
+Finish with the retained Windows suite and explicit per-platform status.
+Keep the optional Debug benchmark timeout and external-fixture gaps separate.
