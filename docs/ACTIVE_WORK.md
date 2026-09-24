@@ -2,33 +2,37 @@
 
 ## BASE
 
-`d9b7867619365bd564cf444cf8e3a808bfddccf0` on current main after
-the first IMG-REL-002 checkpoint. The original required checkpoint,
+`ccaeaafa34a91f23c413674ae9bd1f580f0cb5be` on current main after
+the Expat checkpoint. The original required checkpoint,
 `58f317135f19ec254e2fae016a9962c82420ff8f`, remains an ancestor.
 
 ## TASK
 
 IMG-REL-002: local release preparation, security refresh and cleanup.
-This is the second coherent checkpoint: update the linked Expat family
-from 2.7.2 to 2.8.5, review the advisories against the compiled code,
-and record the Windows and other-platform boundaries.
+This is the third coherent checkpoint: update the linked libheif family
+from 1.23.1 to the 1.23.5 security release, retain its decode-only
+backend and lifetime overlay, and extend the HEIF/AVIF regressions.
 
 ## TOUCHED
 
-- `third_party/support/expat_src/`: all upstream library source and public
-  headers from the verified 2.8.5 release archive, plus a reviewed generated
-  Windows x64 configuration and `rand_s` entropy source in the U++ manifest.
-- `tests/expat_test/main.cpp` and `tests/expected_counts.txt`: 64 repeated
-  caller-thread malformed UTF-16 parses and a 4-check minimum.
-- `THIRD_PARTY.md`, `LICENSES.md`, `README.md`, `CHANGELOG.md`, Expat README,
-  package catalogue, build/release docs and this report: provenance and status.
-- New `docs/THIRD_PARTY_SECURITY.md` and `docs/PORTABILITY_MATRIX.md`.
+- `third_party/codecs/libheif_src/upstream`: submodule pin moved from
+  `2c4bbb54c2738d4a5efbbe3e5fa1d5d76bb88eb0` to the verified
+  upstream 1.23.5 tag at `413e2a87e6a70b3eccc3a3adc5801179dd2d9e00`.
+- Generated `heif_version.h`, package manifests/READMEs and the retained
+  `plugin_registry_lifetime.cc` comment now match the pin.
+- `tests/heif_imagingio_test/main.cpp`, `tests/heif_oiio_test/main.cpp`
+  and `tests/expected_counts.txt`: exact AVIF/HEIC pixel fixtures,
+  oversized AV1-header rejection, repeated caller-thread malformed input.
+- `tools/validate.ps1`: drain redirected process streams and capture a
+  scalar exit code after the timed wait; still reject missing/nonzero exits.
+- `THIRD_PARTY.md`, `LICENSES.md`, `CHANGELOG.md`, package catalogue,
+  security review and this report: provenance and advisory applicability.
 
 ## STATUS
 
-PARTIAL — the linked Expat update and OCIO callers pass the focused Debug
-and Release matrix. The full clean suite, Workbench manual checks, other dependency
-families, input limits and Linux/macOS execution remain release gates.
+PARTIAL — linked Expat/OCIO and libheif/HEIF focused Debug and Release
+matrices pass. The full clean suite, Workbench manual checks, other
+dependency families, input limits and Linux/macOS execution remain gates.
 No release binary is published.
 
 The [security review](THIRD_PARTY_SECURITY.md) records an unfixed upstream
@@ -39,8 +43,9 @@ repository's 1.3.2 source copy. Do not call this release security-cleared.
 The old `out/` tree was inventoried: 12,689 untracked generated files,
 26,490,790,815 bytes, no tracked files or reparse points. Historical
 structure logs and results were copied to
-`build/windows-x64/legacy-evidence/`. Delete the old tree only after
-the clean full build succeeds.
+`build/windows-x64/legacy-evidence/`. An older Workbench process is still
+running from `out/ImagingWorkbench.exe`; leave the tree intact until it
+closes and a clean full build succeeds.
 
 Remote branch cleanup: deleted
 `recovery/still-image-acceptance-20260818` at
@@ -59,26 +64,35 @@ lifecycle decision.
 
 ## PUBLISHED
 
-The first checkpoint is `d9b7867619365bd564cf444cf8e3a808bfddccf0`.
+The first checkpoint is `d9b7867619365bd564cf444cf8e3a808bfddccf0`;
+the Expat checkpoint is `ccaeaafa34a91f23c413674ae9bd1f580f0cb5be`.
 This checkpoint's final SHA resolves with `git log -1 -- docs/ACTIVE_WORK.md`.
 The branch deletions above are already verified on origin.
 
 ## VALIDATION
 
-The final focused runner pass recorded `expat_test` 4/0,
-`opencolorio_test` 18/0 and `imaging_workbench_ocio_test` 136/0
-in both Debug and Release: six clean exits and 316 checks. Executables,
-build/run/stderr logs and `results.txt` are under
-`build/windows-x64/validation/`. The direct Expat tests also passed
-4/0 and exit 0 in each configuration before the final runner pass.
-Both OCIO generator `--check` modes passed. The new minimum manifest has
-49 targets, 1,368 checks per configuration. The first checkpoint's
-Core/IO/EXR focused matrix passed 316 checks and eight clean exits.
-This is not a clean full-suite or manual Workbench acceptance claim.
+The final libheif focused pass recorded `heif_imagingio_test` 13/0,
+`heif_oiio_test` 12/0 and `imaging_test` 6/0 in both Debug and Release:
+six clean exits and 62 checks. The AVIF/HEIC decoded dimensions and FNV
+pixel hashes match in both configurations. The oversized AV1 corpus
+was rejected promptly. Earlier Expat/OCIO focused tests passed 316
+checks and six clean exits; the first checkpoint's Core/IO/EXR matrix
+passed 316 checks and eight clean exits. Both OCIO generator `--check`
+modes passed. The minimum manifest now has 49 targets and 1,372 checks
+per configuration (2,744 total). Logs and executables are under
+`build/windows-x64/validation/`.
+
+The first clean full-suite attempt stopped at `dpx_cineon_oiio_test`
+Debug after its 19/0 summary because `Start-Process` reported a blank
+exit code. Its failed result is preserved at
+`build/windows-x64/validation/full-clean-attempt-1-results.txt`.
+Direct and focused runner repeats both returned 19/0 and exit 0;
+the runner now completes the stream-draining wait before reading the
+exit code. The integrated clean suite has not yet passed.
 
 ## NEXT ACTION
 
-Publish the Expat/OCIO checkpoint. Then clean the complete intermediate
+Publish the libheif checkpoint. Then clean the complete intermediate
 root and run all 49 retained tests in both Windows
 configurations, build and exercise Workbench, remove the proven generated
 legacy `out/` tree and inspect `bin/`. Continue per-family security and

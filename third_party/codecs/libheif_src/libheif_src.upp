@@ -1,4 +1,4 @@
-description "Pinned libheif 1.23.1 decode-only HEIF/AVIF container backend";
+description "Pinned libheif 1.23.5 decode-only HEIF/AVIF container backend";
 
 noblitz;
 

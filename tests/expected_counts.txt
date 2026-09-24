@@ -10,8 +10,8 @@ ffmpeg_headers_test 8
 ffmpeg_swscale_test 13
 hdr_dpx_imagingio_test 38
 hdr_oiio_test 12
-heif_imagingio_test 10
-heif_oiio_test 11
+heif_imagingio_test 13
+heif_oiio_test 12
 imaging_analysis_test 41
 imaging_color_ocio_test 15
 imaging_color_test 69

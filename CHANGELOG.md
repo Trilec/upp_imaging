@@ -11,6 +11,10 @@
   public/source headers, Windows configuration and a malformed UTF-16
   regression. Upstream still reports an unfixed denial of service, so
   security clearance remains pending.
+* Updated the linked decode-only libheif family from 1.23.1 to the 1.23.5
+  security release, retaining the verified dav1d/libde265 source slice and
+  registry-lifetime overlay. HEIF/AVIF validation and the full suite remain
+  release gates.
 * Retired four reviewed recovery branches. The shutdown experiment branch
   remains for a separate lifecycle decision.
 

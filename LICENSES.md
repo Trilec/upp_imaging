@@ -6,6 +6,15 @@ This repository contains original repository content plus imported third-party c
 
 The repository-level license is in `LICENSE`.
 
+## libheif
+
+`third_party/codecs/libheif_src/upstream/` is pinned to libheif 1.23.5
+under LGPL-3.0-or-later. The original license and copyright notices are
+preserved in the submodule, including `COPYING`. Static redistribution
+requires review of the LGPL combined-work, relinking and source obligations.
+The generated version header and registry-lifetime overlay are repository
+integration files and do not alter the upstream license.
+
 ## Expat
 
 `third_party/support/expat_src/upstream/` contains Expat 2.8.5 source

@@ -1,5 +1,20 @@
 # Third-Party Code
 
+## libheif
+
+- Upstream version: 1.23.5 (from 1.23.1)
+- Official release: `https://github.com/strukturag/libheif/releases/tag/v1.23.5`
+- Pinned submodule commit: `413e2a87e6a70b3eccc3a3adc5801179dd2d9e00`
+- Release archive SHA-256, computed locally:
+  `3BE49950C75D3FD9318BA775E8253248DD9E08C61EA955FCA81B6B89C02D6B2B`
+- License: LGPL-3.0-or-later; upstream `COPYING` is retained in the submodule.
+- Imported 2026-09-24. The upstream tag was verified with `git ls-remote`;
+  only the submodule pin and repository-owned generated version header and
+  package metadata changed. The decode-only dav1d/libde265 source manifest
+  and registry-lifetime overlay are retained. No upstream source was edited.
+- Security scope and applicable 1.23.4/1.23.5 fixes are in
+  `docs/THIRD_PARTY_SECURITY.md`.
+
 ## Expat
 
 - Upstream version: 2.8.5 (from 2.7.2)

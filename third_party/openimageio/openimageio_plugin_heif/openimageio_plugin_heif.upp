@@ -1,4 +1,4 @@
-description "OpenImageIO HEIF/AVIF input plugin backed by decode-only libheif 1.23.1";
+description "OpenImageIO HEIF/AVIF input plugin backed by decode-only libheif 1.23.5";
 
 uses
 	openimageio_headers,
