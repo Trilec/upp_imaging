@@ -2,48 +2,53 @@
 
 ## BASE
 
-`b80ddbfa1ae35dbce797b111d9b53620dac7509f` on current main after
-the OpenImageIO checkpoint. The original required checkpoint,
+`26c494498e6d975c77c552d002ce4e65a06c1960` was the reviewed
+Windows-validation checkpoint; the evidence documentation was published at
+`019b71b03691c24455020520946dc2e4d28da1ac`. The original required checkpoint,
 `58f317135f19ec254e2fae016a9962c82420ff8f`, remains an ancestor.
 
 ## TASK
 
 IMG-REL-002: local release preparation, security refresh and cleanup.
-This is the sixth coherent checkpoint: refresh the bounded FFmpeg source
-and generated header/configuration family from 9.0.1 to 9.0.2, then run
-integrated clean Windows acceptance and stage the Workbench.
+This checkpoint continues dependency hardening and local cleanup after the
+clean Windows acceptance run, and exposes additional registered image readers
+in the Workbench Open dialog.
 
 ## TOUCHED
 
-- `third_party/ffmpeg/`: advance the upstream submodule to
-  `946fcce07b6dcd0331c8cc609192aeff5e1924f8`, update the generated
-  version/configuration labels and package manifests, and retain the
-  reviewed `chroma_pos_compat.c` overlay.
-- `tests/ffmpeg_avutil_test/` and `tests/ffmpeg_headers_test/`: assert the
-  new release string and version contract without changing check counts.
-- Security, licensing, package catalogue, roadmap and changelog docs:
-  record the applicable MOV/H.264 changes and remaining release gates.
+- `third_party/openexr/`: import OpenEXR 3.4.14 changes across the linked
+  high-level and Core source slices; advance the separately pinned OpenJPH
+  provider to 0.27.1 and update repository-generated configuration.
+- `third_party/codecs/plugin/z/`: resolve Windows U++ Core's zlib provider to
+  the repository's 1.3.2 source. `third_party/openimageio/OpenImageIO/OIIO.cpp`
+  now sets a 2,048 MiB image and 65,536-pixel per-dimension read budget.
+- `apps/ImagingWorkbench/` and focused tests: expose registered input families,
+  retain EXR/PNG save scope, and use generated small fixtures plus existing
+  upstream AVIF/HEIC samples.
+- Security, package catalogue, acceptance and release-preparation records.
 
 ## STATUS
 
-PARTIAL — the FFmpeg family and clean Windows Debug/Release suite pass.
+PARTIAL — the historical FFmpeg checkpoint passed the clean Windows suite;
+the present security and Workbench changes have focused Windows checks only.
 Workbench manually accepted by Curt. That confirmation does not identify
-the exact staged executable hash. Other dependency families, input limits,
-security clearance and Linux/macOS execution remain gates. No release
+the exact staged executable hash. The unfixed Expat issue, remaining
+dependency-family review, metadata/subimage policies, and Linux/macOS/
+sanitizer/fuzz execution remain gates. No release
 binary is published.
 
-The [security review](THIRD_PARTY_SECURITY.md) records an unfixed upstream
-Expat denial of service with unresolved reachability through OCIO user XML,
-as well as the installed U++ Windows zlib 1.3.1 provider despite the
-repository's 1.3.2 source copy. Do not call this release security-cleared.
+The [security review](THIRD_PARTY_SECURITY.md) shows that user-selected
+OCIO XML reaches Expat, but the unfixed issue's trigger is non-public.
+The Windows zlib provider mismatch is resolved in this assembly and
+OpenEXR's linked source is now 3.4.14 with OpenJPH 0.27.1. Do not call
+the release cleared.
 
 The old `out/` tree was inventoried: 12,689 untracked generated files,
 26,490,790,815 bytes, no tracked files or reparse points. Historical
 structure logs and results were copied to
-`build/windows-x64/legacy-evidence/`. An older Workbench was running from
-`out/ImagingWorkbench.exe` at the earlier inventory. Recheck its current
-process identity and arrange normal closure before rechecking and removing
-that generated tree.
+`build/windows-x64/legacy-evidence/`. A fresh process check found no
+Workbench running from `out/` (only the current staged Release process).
+The tree was rechecked and removed; no tracked source was deleted.
 
 Remote branch cleanup: deleted
 `recovery/still-image-acceptance-20260818` at
@@ -54,11 +59,13 @@ deleted `recovery/still-image-acceptance-final`, `final2` and
 retained migration and current 89-check IO contract). The GitHub API
 reported no open PRs; each remote deletion used an exact expected-tip
 lease, and fetch/prune confirmed the refs are gone.
-Retained `supervisor/img-shutdown-009` at
-`f278f14ba9936f3b827396eeb929ab906edce10b`: its
-application-scoped `OIIO::shutdown()` experiment is absent from main,
-which uses different targeted lifetime fixes. Keep it for a separate
-lifecycle decision.
+Deleted `supervisor/img-shutdown-009` at
+`f278f14ba9936f3b827396eeb929ab906edce10b` after comparing its unique
+application-scoped `OIIO::shutdown()` experiment with current main's
+targeted lifetime fixes. Only main had a local worktree, GitHub reported
+no open PR for that branch, the remote tip was unchanged immediately before
+the lease-protected deletion, and fetch/prune verified removal. The old
+shutdown code was not restored.
 
 ## PUBLISHED
 
@@ -68,6 +75,8 @@ libheif is `319b0e6d8c32f08e325862c1d18ec8622ab45f8e`;
 the process runner is `a1ed7337a343311d1823c374f31ac3ffda92dc30`;
 OpenImageIO is `b80ddbfa1ae35dbce797b111d9b53620dac7509f`.
 FFmpeg is `26c494498e6d975c77c552d002ce4e65a06c1960`.
+The Windows acceptance documentation checkpoint is
+`019b71b03691c24455020520946dc2e4d28da1ac`.
 This evidence update's final SHA resolves with `git log -1 -- docs/ACTIVE_WORK.md`.
 The branch deletions above are already verified on origin.
 
@@ -82,8 +91,9 @@ pixel hashes match in both configurations. The oversized AV1 corpus
 was rejected promptly. Earlier Expat/OCIO focused tests passed 316
 checks and six clean exits; the first checkpoint's Core/IO/EXR matrix
 passed 316 checks and eight clean exits. Both OCIO generator `--check`
-modes passed. The minimum manifest now has 49 targets and 1,373 checks
-per configuration (2,746 total). Logs and executables are under
+modes passed. That historical minimum manifest had 49 targets and 1,373
+checks per configuration (2,746 total). The expanded Workbench test has
+since raised the current minimum to 1,385 per configuration. Logs and executables are under
 `build/windows-x64/validation/`.
 
 The 3.1.17.0 OpenImageIO focused matrix passed 10 targets in each Windows
@@ -91,6 +101,15 @@ configuration: 153 checks and 10 exits at 0 per configuration (306 checks,
 20 exits total). The DPX/Cineon test now performs 64 alternating malformed
 opens on the caller thread in addition to the existing worker path; its
 Debug and Release runs each passed 20/0. This is focused evidence only.
+
+The OpenJPH 0.27.1 update passed `openexr_core_rgba_zip_test` 6/0,
+`openexr_test` 11/0 and `imaging_io_test` 89/0 in both Windows
+configurations: 212 checks and six clean exits. This is normal-path
+evidence, not a malformed HTJ2K advisory reproduction. The expanded
+Workbench test passed 148/0 in Debug and Release with generated WebP,
+TIFF, HDR, DPX and JPEG XL files and retained AVIF/HEIC samples.
+After the OpenJPH import, a separate focused Workbench/zlib matrix passed
+148/0 and 2/0 in each configuration: 300 checks and four clean exits.
 
 The FFmpeg 9.0.2 focused matrix passed six targets in each Windows
 configuration: 87 checks and six exits at 0 per configuration (174 checks,
@@ -130,11 +149,10 @@ by Curt; the GUI is no longer a release gate.
 
 ## NEXT ACTION
 
-Determine applicability of the unresolved Expat DoS through OCIO's actual
-XML path and resolve the linked Windows U++ zlib provider. Complete the
-remaining dependency-family audit and configurable input limits with
-focused regressions. Recheck the old Workbench process, then remove only
-verified generated `out/` contents after normal closure. Finish review
-of `supervisor/img-shutdown-009`. Do not publish `bin/` until the
-security and final artifact gates pass. Linux/macOS and sanitizer/fuzz
-execution remain untested.
+Resolve or isolate the reachable, unfixed Expat XML denial-of-service,
+complete the remaining dependency-family review and metadata/subimage
+limits, and perform Linux/macOS and sanitizer/fuzz validation separately.
+At a substantive release-candidate checkpoint, run a new clean integrated
+Windows acceptance and verify a fresh Release Workbench artifact before
+publishing to `bin/`. The earlier staged hashes are identification evidence
+for the pre-hardening binaries only.

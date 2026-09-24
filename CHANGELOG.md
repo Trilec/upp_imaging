@@ -6,7 +6,17 @@
 
 * Completed a clean intermediate-root Windows run of all 49 retained tests
   in Debug and Release: 2,746 checks and 98 clean exits. Workbench was
-  manually accepted by Curt; security and artifact publication remain open.
+  manually accepted by Curt at that source checkpoint. The later security
+  changes have focused tests; final clean acceptance and publication remain open.
+* Exposed the registered WebP, TIFF, HDR, DPX, JPEG XL, AVIF, HEIC and other
+  supported input families in Workbench. Small generated fixtures and retained
+  upstream HEIF examples validate the expanded Open path; saving remains EXR/PNG.
+* Updated the linked OpenEXR and OpenEXRCore source slices from 3.4.13 to
+  the 3.4.14 security release and standalone OpenJPH from 0.26.3 to
+  0.27.1, retaining explicit generated configuration.
+  Limited OIIO read dimensions and decoded size and redirected the Windows
+  U++ `plugin/z` provider to pinned zlib 1.3.2. Expat XML and remaining
+  dependency/input-boundary review still block release clearance.
 * Refreshed the bounded FFmpeg source and generated header family from
   9.0.1 to 9.0.2, including a reachable MOV metadata allocation bound and
   native H.264 corrections. Kept the scalar configuration and the required
@@ -28,8 +38,9 @@
   fixes. Retained the separate MinGW main-thread error-storage wrappers and
   added repeated caller-thread malformed DPX/Cineon coverage. Full clean
   validation and Workbench acceptance remain release gates.
-* Retired four reviewed recovery branches. The shutdown experiment branch
-  remains for a separate lifecycle decision.
+* Retired four reviewed recovery branches and the obsolete shutdown
+  experiment branch; removed the inventoried generated `out/` tree after
+  preserving validation evidence.
 
 ### Build-output convention and release preparation
 

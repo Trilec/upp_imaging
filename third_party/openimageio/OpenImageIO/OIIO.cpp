@@ -50,6 +50,10 @@ void InitializeOpenImageIO()
 {
     static std::once_flag once;
     std::call_once(once, [] {
+        // Match the largest image buffer representable by ImagingCore while
+        // leaving room for decoder scratch. OIIO checks these before decode.
+        OIIO::attribute("limits:imagesize_MB", 2048);
+        OIIO::attribute("limits:resolution", 65536);
         UppImaging::RegisterOpenImageIOOpenEXRPlugin();
         UppImaging::RegisterOpenImageIOPNGPlugin();
         UppImaging::RegisterOpenImageIOJPEGXLPlugin();

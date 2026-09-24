@@ -1,6 +1,7 @@
 #include "ImagingWorkbench.h"
 
 #include <imaging_tone_conversion/imaging_tone_conversion.h>
+#include <ImagingIO/FormatPolicy.h>
 
 #include <algorithm>
 #include <chrono>
@@ -372,7 +373,7 @@ void ImagingWorkbench::PostBuild()
 	histogram_display.SetMinSize(Size(DPI(220), DPI(140)));
 	pageC.Add(histogram_display.SizePos());
 
-	canvas.SetPlaceholderText("Open an EXR or PNG to begin");
+	canvas.SetPlaceholderText("Open an image to begin");
 	canvas.WhenViewChanged = [=] { UpdateCanvasZoomLabel(); };
 	canvas.WhenSourcePixelMove = [=](Point p) { UpdateProbe(p); };
 	canvas.WhenSourcePixelLeave = [=] { ClearProbe(); };
@@ -416,8 +417,8 @@ void ImagingWorkbench::PostBuild()
 	label_02.SetText("—");
 	xy_info.SetText("—");
 	color_info.SetText("—");
-	status.SetText("Open an EXR or PNG to begin");
-	layers_summary.SetText("Open an EXR or PNG to inspect channels and subimages.");
+	status.SetText("Open an image to begin");
+	layers_summary.SetText("Open an image to inspect channels and subimages.");
 	layers_detail.SetText("No image loaded.");
 	right_tab.SetActiveTab(0);
 	UpdateOcioControls(OcioControlChange::Enable);
@@ -1850,9 +1851,9 @@ void ImagingWorkbench::UpdateLayersPage()
 
 	if(!source_image.initialized()) {
 		UiModelItem empty("No image loaded");
-		empty.description = "Open an EXR or PNG to inspect channels and subimages.";
+		empty.description = "Open an image to inspect channels and subimages.";
 		model.AddChild(model.Root(), empty);
-		layers_summary.SetText("Open an EXR or PNG to inspect channels and subimages.");
+		layers_summary.SetText("Open an image to inspect channels and subimages.");
 		layers_detail.SetText("No image loaded.");
 		layers_tree.ClearSelection();
 		selected_preview_group = -1;
@@ -1966,7 +1967,8 @@ void ImagingWorkbench::UpdateLayersPage()
 void ImagingWorkbench::DoLoad()
 {
 	FileSel selector;
-	selector.Type("OpenEXR and PNG", "*.exr;*.png");
+	selector.Type("Supported image formats", "*.exr;*.png;*.jxl;*.hdr;*.rgbe;*.dpx;*.cin;*.webp;*.avif;*.heic;*.heif;*.heics;*.hif;*.tif;*.tiff;*.dng;*.cr2;*.cr3;*.nef;*.arw;*.raf;*.rw2;*.orf;*.pef;*.sr2;*.x3f");
+	selector.Type("All files (other camera RAW)", "*.*");
 	if(!selector.ExecuteOpen("Open image"))
 		return;
 
@@ -1986,8 +1988,8 @@ void ImagingWorkbench::DoLoad()
 
 bool ImagingWorkbench::LoadImageFile(const String& path, String& error, bool populate_ui)
 {
-	String ext = ToLower(GetFileExt(path));
-	if(ext != ".exr" && ext != ".png") {
+	String ext = Imaging::IOFormatPolicy::Extension(path);
+	if(!Imaging::IOFormatPolicy::IsSupportedExtension(ext)) {
 		error = "unsupported extension";
 		return false;
 	}

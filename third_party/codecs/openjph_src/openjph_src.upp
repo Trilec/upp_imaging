@@ -1,4 +1,4 @@
-description "Strict standalone OpenJPH 0.26.3 source package for U++";
+description "Strict standalone OpenJPH 0.27.1 source package for U++";
 
 noblitz;
 
@@ -34,7 +34,7 @@ file
 	upstream\openjph\ojph_version.h,
 	upstream\others\ojph_arch.cpp,
 	upstream\others\ojph_file.cpp,
-	upstream\others\ojph_mem.c,
+	upstream\others\ojph_mem_c.c,
 	upstream\others\ojph_mem.cpp,
 	upstream\others\ojph_message.cpp,
 	upstream\transform\ojph_colour.cpp,

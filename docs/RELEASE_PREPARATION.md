@@ -7,6 +7,15 @@ after IMG-REL-002 began.
 The clean Windows suite has since passed 49 Debug and 49 Release targets
 with 2,746 total checks and 98 clean exits. Workbench manually accepted
 by Curt. Security clearance and final `bin/` publication remain pending.
+The later OpenEXR 3.4.14, OpenJPH 0.27.1, Windows zlib 1.3.2 provider,
+OIIO read limits and expanded Workbench input path have focused Windows
+checks recorded in [ACTIVE_WORK.md](ACTIVE_WORK.md). The
+historical 2,746-check ledger does not validate those later changes; run a
+new clean integrated suite at the next substantive release-candidate point.
+The unresolved Expat XML denial-of-service and remaining dependency/input
+review still prevent security clearance. The obsolete `out/` tree and five
+reviewed remote branches have been removed; their evidence remains under
+`build/windows-x64/` and in [ACTIVE_WORK.md](ACTIVE_WORK.md).
 
 ## Boundary and authority
 

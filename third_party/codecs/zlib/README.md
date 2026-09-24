@@ -16,7 +16,8 @@ The package provides a stable user-facing include path.
 
 - `zlib_src` is the pinned strict-source package for zlib 1.3.2
 - `zlib` is the stable user-facing package
-- on Windows, `zlib` resolves through U++ `plugin/z` (runtime/header 1.3.1)
+- on Windows, `zlib` resolves through the repository-owned `plugin/z` overlay,
+  which delegates to the pinned `zlib_src` 1.3.2 implementation
 - on non-Windows targets, `zlib` delegates to `zlib_src`
 - the Windows provider is selected to coexist with U++ GUI/plugin linkage and still satisfies the OpenColorIO minimum version
 
@@ -27,10 +28,13 @@ The package provides a stable user-facing include path.
 
 ## Windows behavior
 
-On Windows builds that also use `Core`, U++ already links `plugin/z`.
-To avoid duplicate zlib symbols, this package resolves to `plugin/z` on that target.
+On Windows builds that also use `Core`, U++ already depends on `plugin/z`.
+The repository assembly resolves that package name to
+`third_party/codecs/plugin/z`, which delegates to `zlib_src` rather than
+compiling another zlib copy.
 
-That means `zlib` is a compatibility package on Windows/Core, not proof that the imported upstream zlib 1.3.2 objects are linked.
+The runtime provider still requires verification for each assembly and
+toolchain; the repository manifest alone does not prove linkage.
 
 On targets without that conflict, `zlib` can delegate to `zlib_src`.
 

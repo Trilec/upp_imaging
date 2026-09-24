@@ -37,8 +37,11 @@ The complete `build/windows-x64/umk/` intermediate root was verified to
 contain no tracked files or reparse points and emptied before this run.
 `tools/validate.ps1 -Umk E:/upp-18468/umk.exe -Rebuild` then completed:
 49 Debug targets and 49 Release targets, 1,373 checks per configuration,
-2,746 total checks and 98 process exits at 0. The current minimum manifest
-has the same totals. The full ledger is
+2,746 total checks and 98 process exits at 0. This is historical evidence
+for the FFmpeg 9.0.2 source checkpoint. The later Workbench-format test
+raises the current minimum to 1,385 checks per configuration, and the
+subsequent OpenEXR/zlib/input-limit changes have focused checks pending a
+new clean integrated release-candidate run. The full historical ledger is
 `build/windows-x64/release/acceptance-26c4944-clean-results.txt`
 (SHA-256 `5244B2EC1B15ACDE06E9EAA1FC588F31CCBECEAEFFE49FF462AF82ED4E6A684D`).
 

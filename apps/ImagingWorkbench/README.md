@@ -1,6 +1,6 @@
 # ImagingWorkbench
 
-Small interactive EXR and PNG workbench built on the stable `OpenImageIO` and
+Small interactive image workbench built on the stable `OpenImageIO` and
 `OpenColorIO` application packages.
 
 Build and publish using [build and run](../../docs/BUILD_AND_RUN.md).
@@ -16,7 +16,8 @@ Curt; that confirmation does not identify a staged executable hash.
 Security clearance and `bin/` publication remain pending.
 
 Current scope:
-- EXR and PNG loading
+- loading the registered EXR, PNG, JPEG XL, Radiance HDR, DPX, Cineon,
+  WebP, HEIF/AVIF, TIFF and camera RAW reader families
 - EXR and PNG saving
 - channel and pass selection
 - RGB, R, G, B, and A display modes
@@ -29,7 +30,7 @@ Current scope:
 - source-referred histogram analysis on the Analysis tab
 
 Navigation behavior:
-- new PNG and EXR loads start in Fit mode
+- new image loads start in Fit mode
 - wheel zoom enters Manual mode and keeps the source point beneath the cursor stable until edge clamping is required
 - a middle-button drag enters Manual mode; when the image is smaller than the viewport, pan bounds keep it centred
 - releasing the middle button or receiving cancellation ends the pan gesture and releases capture safely
@@ -71,7 +72,9 @@ Known limits:
 - histogram graph uses linear scaling and filled polygon traces
 - no logarithmic graph scale
 - no waveform or vectorscope
-- no JPEG or TIFF support in ImagingWorkbench
+- Cineon and camera RAW are input-only; JPEG is not registered in this build
+- the Open dialog lists common RAW extensions and offers an All files filter
+  for other camera RAW extensions accepted by the reader policy
 - multipart EXR remains metadata-only for later subimages
 - Fit resets on new image load; manual navigation is preserved across preview changes when dimensions allow
 

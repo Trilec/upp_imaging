@@ -72,7 +72,11 @@ Notes:
 
 - The imported upstream source tree is preserved under `third_party/codecs/zlib_src/upstream/`.
 - `zlib_src` is the strict package that compiles imported upstream zlib 1.3.2 sources directly.
-- `zlib` is a compatibility package. On Windows/Core builds it can reuse U++ `plugin/z` linkage to avoid duplicate static zlib symbols, because `Core` already links `plugin/z` on Windows.
+- `zlib` is a compatibility package. On the `GitHubOut` Windows assembly,
+  U++ Core's `plugin/z` dependency resolves to the repository-owned
+  `third_party/codecs/plugin/z` package, which delegates to this 1.3.2
+  `zlib_src` implementation without compiling a duplicate source copy.
+  Compile-time and runtime versions are asserted by `zlib_test`.
 
 ## libpng
 
@@ -116,26 +120,45 @@ Notes:
 ## OpenEXR
 
 - Upstream name: OpenEXR
-- Upstream version inspected: 3.4.13
+- Upstream version inspected: 3.4.14 (security update from 3.4.13)
 - Upstream authors: Contributors to the OpenEXR Project / Academy Software Foundation
-- Source archive inspected: `https://github.com/AcademySoftwareFoundation/openexr/archive/refs/tags/v3.4.13.tar.gz`
-- SHA-256: `1ED0CEE48AC8C77DA235C8CA8AB85D031D43CD790EDA36AF87FED4CF316CF2DF`
+- Source tag inspected: `https://github.com/AcademySoftwareFoundation/openexr/releases/tag/v3.4.14`
+- Tagged commit: `777d231a179de1711d2a942810d9559216ab3f4c`
+- Previous 3.4.13 archive SHA-256: `1ED0CEE48AC8C77DA235C8CA8AB85D031D43CD790EDA36AF87FED4CF316CF2DF`
 - License: BSD-3-Clause
-- Date inspected: 2026-06-28
+- Date inspected: 2026-09-24
 - Files modified after import: repository-owned wrapper/header and config files were added around the imported upstream source tree
 
 Notes:
 
 - This task does not add full OpenEXR support.
-- `openexr_src` now carries the full high-level OpenEXR source package for 3.4.13.
+- `openexr_src` carries the high-level OpenEXR 3.4.14 source package. The
+  changed 3.4.14 OpenEXR and OpenEXRCore implementation files and version
+  bridges were imported together; generated build configuration stays
+  repository-owned. OpenEXRUtil, tools and Python bindings are not built.
 - Repository-owned generated config and bridge headers remain in `third_party/openexr/openexr_src/upstream/` to preserve the strict source boundary.
 - The package depends directly on `imath_src`, `iex_src`, `ilmthread_src`, and `openexr_core_src`.
+
+## OpenJPH
+
+- Upstream name: OpenJPH
+- Linked standalone source version: 0.27.1 (security update from 0.26.3)
+- Official tag: `https://github.com/aous72/OpenJPH/releases/tag/0.27.1`
+- Tagged commit: `871c6adf18c4875c498bafa32afb842e6b145755`
+- Enabled slice: portable `src/core` library; CLI, TIFF and SIMD sources excluded
+- License: BSD-2-Clause; see `LICENSES.md`
+
+The changed core files were imported together with the `ojph_mem_c.c`
+source rename. A single whitespace-only blank line in `ojph_file.h` was
+normalized. OpenEXR's generated configuration names the separate 0.27.1
+provider. The 0.31.0 OpenJPH release changes API/ABI and is not used by
+this package graph; see [security review](docs/THIRD_PARTY_SECURITY.md).
 
 ## Iex
 
 - Upstream name: Iex
-- Upstream version inspected from OpenEXR release: 3.4.13 source tree
-- Source origin: `openexr-3.4.13/src/lib/Iex`
+- Upstream version inspected from OpenEXR release: 3.4.14 source tree
+- Source origin: `openexr-3.4.14/src/lib/Iex` (unchanged from 3.4.13)
 - Files modified after import: Yes
 
 Notes:
@@ -147,8 +170,8 @@ Notes:
 ## IlmThread
 
 - Upstream name: IlmThread
-- Upstream version inspected from OpenEXR release: 3.4.13 source tree
-- Source origin: `openexr-3.4.13/src/lib/IlmThread`
+- Upstream version inspected from OpenEXR release: 3.4.14 source tree
+- Source origin: `openexr-3.4.14/src/lib/IlmThread` (unchanged from 3.4.13)
 - Files modified after import: No imported upstream source files modified
 
 Notes:
@@ -204,7 +227,7 @@ Notes:
 - Exact plugin-source submodule: `73bc189f7d8469a9760ce9c5099b686c77695074`
 - Enabled: copied main, utility and public-header slices with statically registered selected image plugins; `third_party/openimageio/` package READMEs identify the compiled files.
 - Local integration: robinmap/Imath include adaptations and separate MinGW main-thread error-storage wrappers are retained. The upstream source license is Apache-2.0; see `LICENSES.md`.
-- Security validation: 10 affected test targets in both Windows configurations, 306 checks and 20 clean exits. The clean full suite and Workbench remain pending.
+- Security validation: 10 affected test targets in both Windows configurations, 306 checks and 20 clean exits. A later clean Windows suite and Curt's manual Workbench acceptance are recorded in `docs/ACTIVE_WORK.md`; the current post-hardening source needs new integrated acceptance at the release-candidate checkpoint.
 
 ## OpenImageIO JPEG XL plugin
 

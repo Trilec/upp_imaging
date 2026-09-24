@@ -5,7 +5,7 @@ A named target is not a passed target.
 
 | Target | Build evidence | Runtime evidence | Status |
 | --- | --- | --- | --- |
-| Windows x64, U++ CLANGx64 | Clean 49-target Debug and 49-target Release suite passed from an emptied intermediate root | 2,746 checks and 98 exits at 0; Workbench manually accepted by Curt | Test validation PASS; release PARTIAL pending security and artifact gates |
+| Windows x64, U++ CLANGx64 | Clean 49-target Debug and 49-target Release suite passed from an emptied intermediate root at the FFmpeg 9.0.2 checkpoint; later security changes have focused builds | Historical 2,746 checks and 98 exits at 0; Workbench manually accepted by Curt; new full suite pending | Historical test validation PASS; current release PARTIAL pending security, new acceptance and artifact gates |
 | Linux x64 | No local Linux compiler/U++ assembly; Expat generated config deliberately rejects non-Windows; FFmpeg generated `config.h` declares x86_64 and Windows capabilities | None in this checkpoint | BLOCKED / untested |
 | macOS ARM64 | No macOS host/U++ assembly; Expat generated config deliberately rejects non-Windows; FFmpeg generated `config.h` assumes x86_64 | None | BLOCKED / untested |
 | macOS x64 | Not adopted as a supported release target | None | Unsupported |
