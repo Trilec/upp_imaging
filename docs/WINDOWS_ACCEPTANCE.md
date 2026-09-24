@@ -31,9 +31,29 @@ exit codes and log paths in `results.txt`. An increased check count is
 accepted and should be reviewed and reflected in the minimum-count manifest
 at a coherent checkpoint.
 
-The new output routing has focused Windows evidence recorded in ACTIVE_WORK.md.
-The evidence below remains the previous full accepted source checkpoint,
-not proof of a clean full build, dependency upgrades or other platforms.
+## Clean IMG-REL-002 Windows run — FFmpeg 9.0.2 source checkpoint
+
+The complete `build/windows-x64/umk/` intermediate root was verified to
+contain no tracked files or reparse points and emptied before this run.
+`tools/validate.ps1 -Umk E:/upp-18468/umk.exe -Rebuild` then completed:
+49 Debug targets and 49 Release targets, 1,373 checks per configuration,
+2,746 total checks and 98 process exits at 0. The current minimum manifest
+has the same totals. The full ledger is
+`build/windows-x64/release/acceptance-26c4944-clean-results.txt`
+(SHA-256 `5244B2EC1B15ACDE06E9EAA1FC588F31CCBECEAEFFE49FF462AF82ED4E6A684D`).
+
+Its `source=` header says `b80ddbfa1ae35dbce797b111d9b53620dac7509f`:
+the runner read HEAD before the already-applied FFmpeg 9.0.2 worktree
+change was committed as `26c494498e6d975c77c552d002ce4e65a06c1960`.
+No compiled source, generated header or test assertion changed after the
+runner started; the later edits before that commit were documentation.
+Both configurations passed the exact 9.0.2 `ffmpeg_avutil_test` assertion.
+The ledger therefore validates the compiled source at the published
+FFmpeg checkpoint despite its pre-commit header. No repeat suite was run
+solely to update that label. This is Windows evidence only; security and
+other-platform gates are tracked in [ACTIVE_WORK.md](ACTIVE_WORK.md).
+
+The table below remains the earlier structure-migration evidence.
 
 ## Recorded migration evidence — 17bdbb3e326a07e71f159cb034c34534fb6f6bff
 

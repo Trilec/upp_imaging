@@ -4,6 +4,9 @@
 
 ### Local release preparation in progress
 
+* Completed a clean intermediate-root Windows run of all 49 retained tests
+  in Debug and Release: 2,746 checks and 98 clean exits. Workbench was
+  manually accepted by Curt; security and artifact publication remain open.
 * Refreshed the bounded FFmpeg source and generated header family from
   9.0.1 to 9.0.2, including a reachable MOV metadata allocation bound and
   native H.264 corrections. Kept the scalar configuration and the required

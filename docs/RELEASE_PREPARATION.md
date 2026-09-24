@@ -4,6 +4,9 @@ Current execution evidence is in [ACTIVE_WORK.md](ACTIVE_WORK.md).
 This document preserves the original release-preparation contract and
 its starting-point statements below; those statements are historical
 after IMG-REL-002 began.
+The clean Windows suite has since passed 49 Debug and 49 Release targets
+with 2,746 total checks and 98 clean exits. Workbench manually accepted
+by Curt. Security clearance and final `bin/` publication remain pending.
 
 ## Boundary and authority
 
