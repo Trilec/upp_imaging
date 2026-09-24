@@ -551,8 +551,8 @@ Filesystem::fopen(string_view path, string_view mode)
 int
 Filesystem::fseek(FILE* file, int64_t offset, int whence)
 {
-#ifdef _MSC_VER
-    return _fseeki64(file, __int64(offset), whence);
+#ifdef _WIN32
+    return _fseeki64(file, static_cast<__int64>(offset), whence);
 #else
     return fseeko(file, offset, whence);
 #endif
@@ -563,7 +563,7 @@ Filesystem::fseek(FILE* file, int64_t offset, int whence)
 int64_t
 Filesystem::ftell(FILE* file)
 {
-#ifdef _MSC_VER
+#ifdef _WIN32
     return _ftelli64(file);
 #else
     return ftello(file);
@@ -1423,15 +1423,16 @@ Filesystem::IOMemReader::pread(void* buf, size_t size, int64_t offset)
     // N.B. No lock necessary
     if (!m_buf.size() || !size)
         return 0;
-    if (size + size_t(offset) > std::size(m_buf)) {
-        if (offset < 0 || size_t(offset) >= std::size(m_buf)) {
-            error(Strutil::fmt::format(
-                "Invalid pread offset {} for an IOMemReader buffer of size {}",
-                offset, m_buf.size()));
-            return 0;
-        }
-        size = std::size(m_buf) - size_t(offset);
+    // Validate the offset before any arithmetic that could overflow.
+    if (offset < 0 || size_t(offset) >= m_buf.size()) {
+        error(Strutil::format(
+            "Invalid pread offset {} for an IOMemReader buffer of size {}",
+            offset, m_buf.size()));
+        return 0;
     }
+    // offset is now known to be in [0, buffer size), so this subtraction
+    // cannot underflow. Clamp the read to the bytes actually available.
+    size = std::min(size, m_buf.size() - size_t(offset));
     memcpy(buf, m_buf.data() + offset, size);
     return size;
 }

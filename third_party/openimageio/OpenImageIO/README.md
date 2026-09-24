@@ -7,7 +7,7 @@ plugins.
 
 JPEG XL uses the repository-pinned libjxl 0.12.0 backend. HDR/RGBE is
 self-contained. DPX and Cineon compile from the exact signed OpenImageIO
-3.1.15.0 plugin source tree; DPX is read/write and Cineon is input-only, matching
+3.1.17.0 plugin source tree; DPX is read/write and Cineon is input-only, matching
 upstream capability. RAW reuses that same OpenImageIO source pin and is backed
 by repository-pinned LibRaw 0.22.2. RAW is input-only, and its upstream `.hdr`
 extension alias is deliberately excluded so `.hdr` remains the Radiance format.
@@ -21,7 +21,7 @@ this cleanup without changing pinned upstream files. This fixes Debug GUI
 process teardown; it does not change errors during normal image operations or
 claim to fix the upstream per-object error-storage growth described below.
 
-OpenImageIO 3.1.15.0 stores per-ImageInput/ImageOutput errors in thread-local
+OpenImageIO 3.1.17.0 stores per-ImageInput/ImageOutput errors in thread-local
 maps keyed by object ID. Draining geterror() erases entries but retains map
 capacity; destructors do not erase undrained errors. This is the issue addressed upstream by
 [ce1be9749586ee7ef3f2b9cb82aee8b199991f03](https://github.com/AcademySoftwareFoundation/OpenImageIO/commit/ce1be9749586ee7ef3f2b9cb82aee8b199991f03),

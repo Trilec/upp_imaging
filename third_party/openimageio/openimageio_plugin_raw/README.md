@@ -1,8 +1,8 @@
 # openimageio_plugin_raw
 
-Static OpenImageIO 3.1.15.0 RAW input registration backed by repository-pinned LibRaw 0.22.2.
+Static OpenImageIO 3.1.17.0 RAW input registration backed by repository-pinned LibRaw 0.22.2.
 
-The plugin compiles the exact upstream `src/raw.imageio/rawinput.cpp` from the neutral `openimageio_plugins_src` OpenImageIO 3.1.15.0 source pin; it does not carry another copy of OpenImageIO source.
+The plugin compiles the exact upstream `src/raw.imageio/rawinput.cpp` from the neutral `openimageio_plugins_src` OpenImageIO 3.1.17.0 source pin; it does not carry another copy of OpenImageIO source.
 
 ## Policy
 

@@ -176,19 +176,27 @@ Notes:
 - lcms, googletest, sjpeg, libpng, zlib, testdata and command-line tools are not compiled by this package.
 - Repository-owned generated `version.h` and static export headers replace CMake-generated headers for this U++ source build.
 
+## OpenImageIO source family
+
+- Upstream release: [v3.1.17.0](https://github.com/AcademySoftwareFoundation/OpenImageIO/releases/tag/v3.1.17.0)
+- Exact plugin-source submodule: `73bc189f7d8469a9760ce9c5099b686c77695074`
+- Enabled: copied main, utility and public-header slices with statically registered selected image plugins; `third_party/openimageio/` package READMEs identify the compiled files.
+- Local integration: robinmap/Imath include adaptations and separate MinGW main-thread error-storage wrappers are retained. The upstream source license is Apache-2.0; see `LICENSES.md`.
+- Security validation: 10 affected test targets in both Windows configurations, 306 checks and 20 clean exits. The clean full suite and Workbench remain pending.
+
 ## OpenImageIO JPEG XL plugin
 
 - Upstream project: OpenImageIO
-- Upstream version: 3.1.15.0
+- Upstream version: 3.1.17.0
 - Source origin: `src/jpegxl.imageio/jxlinput.cpp` and `src/jpegxl.imageio/jxloutput.cpp`
 - Upstream source license: Apache-2.0
-- Date integrated: 2026-08-12
+- Date integrated: 2026-08-12; source refreshed: 2026-09-24
 - Backend: repository-pinned libjxl 0.12.0
 
 Notes:
 
 - `openimageio_plugin_jpegxl` statically registers the OpenImageIO JPEG XL reader/writer through the stable `OpenImageIO` package.
-- The reader is retained from the 3.1.15.0 source slice; the repository copy of the writer is packaged locally for the U++ static plugin model.
+- The reader is retained from the 3.1.17.0 source slice; the repository copy of the writer is packaged locally for the U++ static plugin model.
 - ImagingIO applies a stricter framework policy than the raw plugin and currently rejects JPEG XL GrayAlpha and arbitrary extra-channel/MultiChannel layouts.
 
 ## Local lifetime integration

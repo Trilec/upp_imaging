@@ -141,11 +141,23 @@ CONSOLE_APP_MAIN
 		cineon_error = !error.empty();
 	});
 	malformed_check.join();
+	bool repeated_caller_rejection = true;
+	for(int i = 0; i < 64; ++i) {
+		ImageBuf rejected;
+		std::string error;
+		const std::filesystem::path& path = (i & 1) ? invalid_cin : invalid_dpx;
+		if(LoadImage(path.string().c_str(), rejected, &error) || error.empty()) {
+			repeated_caller_rejection = false;
+			break;
+		}
+	}
 	OIIO::attribute("try_all_readers", 1);
 	Check(state, dpx_rejected, "malformed DPX is rejected");
 	Check(state, dpx_error, "malformed DPX reports an error");
 	Check(state, cineon_rejected, "malformed Cineon is rejected");
 	Check(state, cineon_error, "malformed Cineon reports an error");
+	Check(state, repeated_caller_rejection,
+	      "malformed DPX/Cineon repeated on caller thread");
 
 	std::filesystem::remove_all(root);
 	Check(state, !std::filesystem::exists(root), "fixture cleanup");

@@ -56,6 +56,7 @@ int dds_bc5normal(0);
 int limit_channels(1024);
 int limit_imagesize_MB(std::min(32 * 1024,
                                 int(Sysutil::physical_memory() >> 20)));
+int limit_resolution(1 << 20);  // max pixels along any single dimension
 int imageinput_strict(0);
 ustring font_searchpath(Sysutil::getenv("OPENIMAGEIO_FONTS"));
 ustring plugin_searchpath(OIIO_DEFAULT_PLUGIN_SEARCHPATH);
@@ -178,6 +179,7 @@ hw_simd_caps()
     if (cpu_has_f16c())        caps.emplace_back ("f16c");
     if (cpu_has_popcnt())      caps.emplace_back ("popcnt");
     if (cpu_has_rdrand())      caps.emplace_back ("rdrand");
+    if (cpu_has_neon())        caps.emplace_back ("neon");
     return Strutil::join (caps, ",");
     // clang-format on
 }
@@ -419,6 +421,10 @@ attribute(string_view name, TypeDesc type, const void* val)
         limit_imagesize_MB = *(const int*)val;
         return true;
     }
+    if (name == "limits:resolution" && type == TypeInt) {
+        limit_resolution = *(const int*)val;
+        return true;
+    }
     if (name == "oiio:print_uncaught_errors" && type == TypeInt) {
         oiio_print_uncaught_errors = *(const int*)val;
         return true;
@@ -611,6 +617,10 @@ getattribute(string_view name, TypeDesc type, void* val)
     }
     if (name == "limits:imagesize_MB" && type == TypeInt) {
         *(int*)val = limit_imagesize_MB;
+        return true;
+    }
+    if (name == "limits:resolution" && type == TypeInt) {
+        *(int*)val = limit_resolution;
         return true;
     }
     if (name == "tiff:multithread" && type == TypeInt) {

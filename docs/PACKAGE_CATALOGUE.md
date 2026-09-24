@@ -101,8 +101,8 @@ Package names are stable across nests. See [layout](package_layout.md) for assem
 | `openexr_core_src` | `third_party/openexr/openexr_core_src` | Pinned OpenEXRCore source ownership for U++ |
 | `openexr_src` | `third_party/openexr/openexr_src` | Strict upstream OpenEXR 3.4.13 high-level source package for U++ |
 | `OpenImageIO` | `third_party/openimageio/OpenImageIO` | Stable application-facing OpenImageIO package |
-| `openimageio_headers` | `third_party/openimageio/openimageio_headers` | Strict internal OpenImageIO 3.1.15.0 public-header package |
-| `openimageio_plugin_dpxcineon` | `third_party/openimageio/openimageio_plugin_dpxcineon` | Pinned OpenImageIO 3.1.15 DPX and Cineon plugins |
+| `openimageio_headers` | `third_party/openimageio/openimageio_headers` | Strict internal OpenImageIO 3.1.17.0 public-header package |
+| `openimageio_plugin_dpxcineon` | `third_party/openimageio/openimageio_plugin_dpxcineon` | Pinned OpenImageIO 3.1.17 DPX and Cineon plugins |
 | `openimageio_plugin_hdr` | `third_party/openimageio/openimageio_plugin_hdr` | OpenImageIO Radiance HDR/RGBE plugin registration package |
 | `openimageio_plugin_heif` | `third_party/openimageio/openimageio_plugin_heif` | OpenImageIO HEIF/AVIF input plugin backed by decode-only libheif 1.23.5 |
 | `openimageio_plugin_jpegxl` | `third_party/openimageio/openimageio_plugin_jpegxl` | OpenImageIO JPEG XL plugin registration package |
@@ -111,9 +111,9 @@ Package names are stable across nests. See [layout](package_layout.md) for assem
 | `openimageio_plugin_raw` | `third_party/openimageio/openimageio_plugin_raw` | OpenImageIO RAW input plugin backed by pinned LibRaw 0.22.2 |
 | `openimageio_plugin_tiff` | `third_party/openimageio/openimageio_plugin_tiff` | OpenImageIO TIFF plugin backed by bundled libtiff 4.7.2 |
 | `openimageio_plugin_webp` | `third_party/openimageio/openimageio_plugin_webp` | OpenImageIO WebP plugin backed by pinned libwebp 1.6.0 |
-| `openimageio_plugins_src` | `third_party/openimageio/openimageio_plugins_src` | Pinned OpenImageIO 3.1.15.0 plugin source tree |
-| `openimageio_src` | `third_party/openimageio/openimageio_src` | Strict upstream OpenImageIO 3.1.15.0 main source package |
-| `openimageio_util_src` | `third_party/openimageio/openimageio_util_src` | Strict upstream OpenImageIO 3.1.15.0 utility source package |
+| `openimageio_plugins_src` | `third_party/openimageio/openimageio_plugins_src` | Pinned OpenImageIO 3.1.17.0 plugin source tree |
+| `openimageio_src` | `third_party/openimageio/openimageio_src` | Strict upstream OpenImageIO 3.1.17.0 main source package |
+| `openimageio_util_src` | `third_party/openimageio/openimageio_util_src` | Strict upstream OpenImageIO 3.1.17.0 utility source package |
 | `expat` | `third_party/support/expat` | Stable Expat user-facing package |
 | `expat_src` | `third_party/support/expat_src` | Strict upstream Expat 2.8.5 source package |
 | `fmt` | `third_party/support/fmt` | fmt package with stable public include path |
