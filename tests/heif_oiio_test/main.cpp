@@ -86,6 +86,14 @@ CONSOLE_APP_MAIN
     Check(state, malformed_rejected, "malformed AVIF is rejected");
     Check(state, malformed_error, "malformed AVIF reports an error");
 
+    bool caller_rejections = true;
+    for(int i = 0; i < 64; ++i) {
+        ImageInput::unique_ptr rejected = ImageInput::open(invalid.string());
+        caller_rejections &= !rejected && !OIIO::geterror().empty();
+    }
+    Check(state, caller_rejections,
+          "malformed AVIF repeatedly rejects on caller thread");
+
     std::filesystem::remove_all(root, error);
     Check(state, !std::filesystem::exists(root), "fixture cleanup");
 

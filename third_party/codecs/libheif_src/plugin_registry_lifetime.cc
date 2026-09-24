@@ -1,4 +1,4 @@
-// libheif 1.23.1 registers built-in plugins during static initialization,
+// libheif 1.23.5 registers built-in plugins during static initialization,
 // even in applications that only link the library and never call heif_init.
 // Compile the unmodified registry here so the fallback cleanup is ordered
 // after registration (and therefore before registry destruction at exit).

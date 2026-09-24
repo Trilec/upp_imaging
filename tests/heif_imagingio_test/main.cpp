@@ -1,6 +1,7 @@
 #include <ImagingIO/ImagingIO.h>
 
 #include <cstring>
+#include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <thread>
@@ -115,6 +116,59 @@ CONSOLE_APP_MAIN
           "malformed AVIF reports IMGIO_OPEN");
     Check(state, invalid_preserved,
           "failed HEIF-family load preserves prior output");
+
+    // Exercise actual decoder output from the pinned upstream corpus.
+    std::filesystem::path source_file(__FILE__);
+    if(!source_file.is_absolute())
+        source_file = std::filesystem::absolute(source_file);
+    const std::filesystem::path fixture_dir =
+        source_file.parent_path().parent_path().parent_path() /
+        "third_party/codecs/libheif_src/upstream";
+    for(const char* name : {"examples/example.avif",
+                            "tests/data/rainbow-451x461.heic"}) {
+        const std::filesystem::path fixture = fixture_dir / name;
+        ImageData decoded;
+        Diagnostics decode_diagnostics;
+        Result loaded = LoadImageFile(fixture.string().c_str(), decoded,
+                                      &decode_diagnostics);
+        const bool avif = std::strcmp(name, "examples/example.avif") == 0;
+        const int64 expected_width = avif ? 800 : 451;
+        const int64 expected_height = avif ? 533 : 461;
+        const uint64 expected_hash = avif ? 18323130967258849309ULL :
+                                          3690900658414717745ULL;
+        int64 width = 0, height = 0;
+        const bool valid = loaded && decoded.IsValid() &&
+                           decoded.spec.GetWidth(width) &&
+                           decoded.spec.GetHeight(height) &&
+                           width == expected_width && height == expected_height &&
+                           decoded.spec.channels == 3 &&
+                           Hash(decoded.buffer) == expected_hash;
+        if(!valid) {
+            Cout() << "decode failure " << name << " code=" << (int)loaded.code << '\n';
+            for(const DiagnosticEntry& entry : decode_diagnostics.Entries())
+                Cout() << entry.code << ": " << entry.message << '\n';
+        }
+        Check(state, valid,
+              avif ? "upstream AVIF fixture decodes exact pixels" :
+                     "upstream HEIC fixture decodes exact pixels");
+    }
+
+    // Upstream's compact oversized AV1 header corpus must fail before
+    // the coded frame can drive a large decoder allocation.
+    const std::filesystem::path oversized = fixture_dir /
+        "fuzzing/data/corpus/av1-huge-frame-header-oom.heic";
+    ImageData preserved = source;
+    Diagnostics oversized_diagnostics;
+    const uint64 before_oversized = Hash(preserved.buffer);
+    const auto begin_oversized = std::chrono::steady_clock::now();
+    Result oversized_result = LoadImageFile(oversized.string().c_str(),
+                                            preserved, &oversized_diagnostics);
+    const auto elapsed_oversized = std::chrono::steady_clock::now() -
+                                   begin_oversized;
+    Check(state, !oversized_result &&
+                 Hash(preserved.buffer) == before_oversized &&
+                 elapsed_oversized < std::chrono::seconds(10),
+          "oversized coded AV1 frame rejects promptly without replacing output");
 
     std::filesystem::remove_all(root_path, error);
     Check(state, !std::filesystem::exists(root_path), "fixture cleanup");

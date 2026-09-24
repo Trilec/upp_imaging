@@ -71,7 +71,7 @@ Package names are stable across nests. See [layout](package_layout.md) for assem
 | `libde265_src` | `third_party/codecs/libde265_src` | Pinned libde265 1.1.1 scalar HEVC decoder backend for U++ |
 | `libdeflate` | `third_party/codecs/libdeflate` | libdeflate package with stable public include path |
 | `libdeflate_src` | `third_party/codecs/libdeflate_src` | Strict standalone libdeflate 1.25 source package for U++ |
-| `libheif_src` | `third_party/codecs/libheif_src` | Pinned libheif 1.23.1 decode-only HEIF/AVIF container backend |
+| `libheif_src` | `third_party/codecs/libheif_src` | Pinned libheif 1.23.5 decode-only HEIF/AVIF container backend |
 | `libjpeg_turbo` | `third_party/codecs/libjpeg_turbo` | Stable user-facing libjpeg-turbo package for U++ |
 | `libjpeg_turbo_src` | `third_party/codecs/libjpeg_turbo_src` | Strict upstream libjpeg-turbo 3.2.0 source package for U++ |
 | `libpng` | `third_party/codecs/libpng` | libpng package with stable public include path |
@@ -104,7 +104,7 @@ Package names are stable across nests. See [layout](package_layout.md) for assem
 | `openimageio_headers` | `third_party/openimageio/openimageio_headers` | Strict internal OpenImageIO 3.1.15.0 public-header package |
 | `openimageio_plugin_dpxcineon` | `third_party/openimageio/openimageio_plugin_dpxcineon` | Pinned OpenImageIO 3.1.15 DPX and Cineon plugins |
 | `openimageio_plugin_hdr` | `third_party/openimageio/openimageio_plugin_hdr` | OpenImageIO Radiance HDR/RGBE plugin registration package |
-| `openimageio_plugin_heif` | `third_party/openimageio/openimageio_plugin_heif` | OpenImageIO HEIF/AVIF input plugin backed by decode-only libheif 1.23.1 |
+| `openimageio_plugin_heif` | `third_party/openimageio/openimageio_plugin_heif` | OpenImageIO HEIF/AVIF input plugin backed by decode-only libheif 1.23.5 |
 | `openimageio_plugin_jpegxl` | `third_party/openimageio/openimageio_plugin_jpegxl` | OpenImageIO JPEG XL plugin registration package |
 | `openimageio_plugin_openexr` | `third_party/openimageio/openimageio_plugin_openexr` | OpenImageIO OpenEXR plugin registration package |
 | `openimageio_plugin_png` | `third_party/openimageio/openimageio_plugin_png` | OpenImageIO PNG plugin registration package |

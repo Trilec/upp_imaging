@@ -1,6 +1,6 @@
 # openimageio_plugin_heif
 
-Static OpenImageIO 3.1.15.0 HEIF-family input registration backed by `libheif_src` 1.23.1.
+Static OpenImageIO 3.1.15.0 HEIF-family input registration backed by `libheif_src` 1.23.5.
 
 Supported registry extensions are `.heic`, `.heif`, `.heics`, `.hif` and `.avif`. The exact upstream OIIO `heifinput.cpp` is compiled from `openimageio_plugins_src`; no OIIO HEIF writer is compiled or registered.
 

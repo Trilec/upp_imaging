@@ -63,18 +63,21 @@ foreach ($cfg in $Configuration) {
    "FAIL package=$name configuration=$cfg stage=timeout runlog=$runLog stderr=$stderrLog" | Add-Content $resultsPath
    throw "TIMEOUT: $name $cfg"
   }
+  # Wait for redirected streams to drain before reading the final exit code.
+  $proc.WaitForExit()
   $proc.Refresh()
+  $runExit = $proc.ExitCode
   $summaries = @(Get-Content $runLog | Where-Object { $_ -match '^SUMMARY\b' })
   $valid = $summaries.Count -eq 1 -and $summaries[0] -cmatch '^SUMMARY passed=([0-9]+) failed=([0-9]+)$'
   if ($valid) {
    $passed = [int]$Matches[1]
    $failed = [int]$Matches[2]
   }
-  if (!$valid -or $proc.ExitCode -ne 0 -or $failed -ne 0 -or $passed -lt $expected[$name]) {
-   "FAIL package=$name configuration=$cfg stage=run exit=$($proc.ExitCode) summary=$($summaries -join ';') minimum=$($expected[$name]) runlog=$runLog stderr=$stderrLog" | Add-Content $resultsPath
+  if (!$valid -or $null -eq $runExit -or $runExit -ne 0 -or $failed -ne 0 -or $passed -lt $expected[$name]) {
+   "FAIL package=$name configuration=$cfg stage=run exit=$runExit summary=$($summaries -join ';') minimum=$($expected[$name]) runlog=$runLog stderr=$stderrLog" | Add-Content $resultsPath
    throw "TEST FAILED: $name $cfg"
   }
-  $line = "PASS package=$name configuration=$cfg passed=$passed failed=$failed exit=$($proc.ExitCode) minimum=$($expected[$name]) buildlog=$buildLog runlog=$runLog stderr=$stderrLog"
+  $line = "PASS package=$name configuration=$cfg passed=$passed failed=$failed exit=$runExit minimum=$($expected[$name]) buildlog=$buildLog runlog=$runLog stderr=$stderrLog"
   Write-Output $line
   $line | Add-Content $resultsPath
  }
