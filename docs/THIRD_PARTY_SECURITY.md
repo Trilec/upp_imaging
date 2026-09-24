@@ -122,10 +122,36 @@ opening 64 times on the caller thread. The clean full suite and Workbench
 checks remain pending. The old 1.23.1 build is affected and must not be
 published.
 
+## OpenImageIO: 3.1.15.0 affected, 3.1.17.0 target
+
+The actual linked OIIO main, utility, public-header and static-plugin
+family is 3.1.15.0 at `cbe57bc005678ca310835473568121719861734c`.
+The stable 3.1.17.0 tag is `73bc189f7d8469a9760ce9c5099b686c77695074`.
+This repository compiles separately copied main/utility/header files and
+direct plugin sources from a pinned submodule, so advancing only the
+plugin pointer would create a mixed-version library. The MinGW
+main-thread input/output/global error wrappers are separate downstream
+files and have a distinct lifetime contract.
+
+The [3.1.16.0 release](https://github.com/AcademySoftwareFoundation/OpenImageIO/releases/tag/v3.1.16.0)
+fixes Cineon invalid-bit-depth heap overflow (`CVE-2026-63638`) and
+OpenEXR edge-tile heap write (`CVE-2026-63422`), both in linked readers
+reachable from user images. It also hardens linked DPX, EXIF, filesystem
+and other readers, and adds the `limits:resolution` per-dimension guard
+to complement `limits:imagesize_MB`. The
+[3.1.17.0 release](https://github.com/AcademySoftwareFoundation/OpenImageIO/releases/tag/v3.1.17.0)
+adds reader `check_open()`/compression-ratio coverage, shared EXIF/ICC
+bounds fixes, and RAW/TIFF/JPEG XL hardening. These are in the retained
+reader surface; exact issue-by-issue reachability depends on the enabled
+format and caller, but the named Cineon/EXR defects are clearly relevant.
+The coherent 3.1.17.0 family update and its focused/full regressions are
+an **affected release gate**. No version-only, plugin-only or untested
+copy replacement is sufficient.
+
 ## Remaining graph and release boundary
 
 The remaining graph includes libde265 and dav1d below libheif,
-OpenImageIO source/header/plugin copies, OpenEXR with Imath, OpenJPH and
+OpenEXR with Imath, OpenJPH and
 libdeflate, JPEG XL with nested Brotli/Highway/skcms, OpenColorIO with
 bundled internals, minizip-ng, yaml-cpp, and the bounded FFmpeg source
 slice. PNG/JPEG/WebP/TIFF/RAW/support packages and U++ `plugin/z` must

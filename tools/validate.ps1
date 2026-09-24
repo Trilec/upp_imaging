@@ -7,6 +7,35 @@ param(
  [switch]$Rebuild
 )
 $ErrorActionPreference = 'Stop'
+function Invoke-ValidatedProcess {
+ param([string]$Exe, [string]$WorkingDirectory,
+       [string]$RunLog, [string]$StderrLog)
+ $start = [System.Diagnostics.ProcessStartInfo]::new()
+ $start.FileName = $Exe
+ $start.WorkingDirectory = $WorkingDirectory
+ $start.UseShellExecute = $false
+ $start.CreateNoWindow = $true
+ $start.RedirectStandardOutput = $true
+ $start.RedirectStandardError = $true
+ $process = [System.Diagnostics.Process]::new()
+ $process.StartInfo = $start
+ try {
+  if (!$process.Start()) { throw "Unable to start $Exe" }
+  $stdout = $process.StandardOutput.ReadToEndAsync()
+  $stderr = $process.StandardError.ReadToEndAsync()
+  $finished = $process.WaitForExit(120000)
+  if (!$finished) {
+   $process.Kill()
+  }
+  $process.WaitForExit()
+  [System.IO.File]::WriteAllText($RunLog, $stdout.GetAwaiter().GetResult())
+  [System.IO.File]::WriteAllText($StderrLog, $stderr.GetAwaiter().GetResult())
+  return [pscustomobject]@{ TimedOut = !$finished; ExitCode = $process.ExitCode }
+ }
+ finally {
+  $process.Dispose()
+ }
+}
 $root = Split-Path $PSScriptRoot
 Set-Location $root
 $sourceSha = (git rev-parse HEAD).Trim()
@@ -56,17 +85,20 @@ foreach ($cfg in $Configuration) {
    Get-Content $buildLog -Tail 25
    throw "BUILD FAILED: $name $cfg"
   }
-  $proc = Start-Process -FilePath $exe -WorkingDirectory $root -WindowStyle Hidden -PassThru -RedirectStandardOutput $runLog -RedirectStandardError $stderrLog
-  if (!$proc.WaitForExit(120000)) {
-   $proc.Kill()
-   $proc.WaitForExit()
+  if (Test-Path $runLog) { Remove-Item -LiteralPath $runLog -Force }
+  if (Test-Path $stderrLog) { Remove-Item -LiteralPath $stderrLog -Force }
+  try {
+   $run = Invoke-ValidatedProcess -Exe $exe -WorkingDirectory $root -RunLog $runLog -StderrLog $stderrLog
+  }
+  catch {
+   "FAIL package=$name configuration=$cfg stage=start error=$($_.Exception.Message) runlog=$runLog stderr=$stderrLog" | Add-Content $resultsPath
+   throw
+  }
+  if ($run.TimedOut) {
    "FAIL package=$name configuration=$cfg stage=timeout runlog=$runLog stderr=$stderrLog" | Add-Content $resultsPath
    throw "TIMEOUT: $name $cfg"
   }
-  # Wait for redirected streams to drain before reading the final exit code.
-  $proc.WaitForExit()
-  $proc.Refresh()
-  $runExit = $proc.ExitCode
+  $runExit = $run.ExitCode
   $summaries = @(Get-Content $runLog | Where-Object { $_ -match '^SUMMARY\b' })
   $valid = $summaries.Count -eq 1 -and $summaries[0] -cmatch '^SUMMARY passed=([0-9]+) failed=([0-9]+)$'
   if ($valid) {
