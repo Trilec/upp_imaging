@@ -2,33 +2,39 @@
 
 ## BASE
 
-`58f317135f19ec254e2fae016a9962c82420ff8f` on current main after
-`git fetch --prune origin`; the required checkpoint is an ancestor.
-The worktree was clean before IMG-REL-002.
+`d9b7867619365bd564cf444cf8e3a808bfddccf0` on current main after
+the first IMG-REL-002 checkpoint. The original required checkpoint,
+`58f317135f19ec254e2fae016a9962c82420ff8f`, remains an ancestor.
 
 ## TASK
 
 IMG-REL-002: local release preparation, security refresh and cleanup.
-This is the first coherent checkpoint: finish local build output routing,
-tighten validation evidence and stop tests recreating `out/`.
+This is the second coherent checkpoint: update the linked Expat family
+from 2.7.2 to 2.8.5, review the advisories against the compiled code,
+and record the Windows and other-platform boundaries.
 
 ## TOUCHED
 
-- `tools/validate.ps1` and `tests/expected_counts.txt`: exact summary
-  validation, expected count floor, stale-executable prevention, evidence.
-- `tests/openexr_test/main.cpp` and
-  `tests/openexr_core_rgba_zip_test/main.cpp`: runtime fixtures under
-  `build/windows-x64/runtime/` when run by the Windows validator instead
-  of `out/`; standalone runs use the platform temp directory.
-- `docs/BUILD_AND_RUN.md`, `docs/WINDOWS_ACCEPTANCE.md`, this report.
-- Local ignored `GitHubOut.var`: absolute
-  `OUTPUT = "E:/apps/github/upp_imaging/build/windows-x64/umk";`.
+- `third_party/support/expat_src/`: all upstream library source and public
+  headers from the verified 2.8.5 release archive, plus a reviewed generated
+  Windows x64 configuration and `rand_s` entropy source in the U++ manifest.
+- `tests/expat_test/main.cpp` and `tests/expected_counts.txt`: 64 repeated
+  caller-thread malformed UTF-16 parses and a 4-check minimum.
+- `THIRD_PARTY.md`, `LICENSES.md`, `README.md`, `CHANGELOG.md`, Expat README,
+  package catalogue, build/release docs and this report: provenance and status.
+- New `docs/THIRD_PARTY_SECURITY.md` and `docs/PORTABILITY_MATRIX.md`.
 
 ## STATUS
 
-PARTIAL — focused Windows output-path validation passes. The full clean
-suite, Workbench release checks, security refresh, input limits and
-Linux/macOS execution remain release gates. No release binary is published.
+PARTIAL — the linked Expat update and OCIO callers pass the focused Debug
+and Release matrix. The full clean suite, Workbench manual checks, other dependency
+families, input limits and Linux/macOS execution remain release gates.
+No release binary is published.
+
+The [security review](THIRD_PARTY_SECURITY.md) records an unfixed upstream
+Expat denial of service with unresolved reachability through OCIO user XML,
+as well as the installed U++ Windows zlib 1.3.1 provider despite the
+repository's 1.3.2 source copy. Do not call this release security-cleared.
 
 The old `out/` tree was inventoried: 12,689 untracked generated files,
 26,490,790,815 bytes, no tracked files or reparse points. Historical
@@ -53,28 +59,28 @@ lifecycle decision.
 
 ## PUBLISHED
 
-This checkpoint; resolve with `git log -1 -- docs/ACTIVE_WORK.md`.
+The first checkpoint is `d9b7867619365bd564cf444cf8e3a808bfddccf0`.
+This checkpoint's final SHA resolves with `git log -1 -- docs/ACTIVE_WORK.md`.
 The branch deletions above are already verified on origin.
 
 ## VALIDATION
 
-Focused Windows CLANGx64 / `E:/upp-18468/umk.exe`:
-`imaging_core_test` 52/0, `imaging_io_test` 89/0,
-`openexr_test` 11/0, `openexr_core_rgba_zip_test` 6/0
-in both Debug and Release: eight clean exits and 316 checks.
-The compiler created intermediates in `build/windows-x64/umk/`;
-executables and logs are in `build/windows-x64/validation/`.
-Invalid configuration names are rejected. The first sandboxed IO build
-could not write a U++ response file in `E:/upp-18468/cache`; the
-unsandboxed retry and the focused matrix passed.
-`git diff --check` passes. This focused run predates its commit and
-does not claim a clean full release build.
+The final focused runner pass recorded `expat_test` 4/0,
+`opencolorio_test` 18/0 and `imaging_workbench_ocio_test` 136/0
+in both Debug and Release: six clean exits and 316 checks. Executables,
+build/run/stderr logs and `results.txt` are under
+`build/windows-x64/validation/`. The direct Expat tests also passed
+4/0 and exit 0 in each configuration before the final runner pass.
+Both OCIO generator `--check` modes passed. The new minimum manifest has
+49 targets, 1,368 checks per configuration. The first checkpoint's
+Core/IO/EXR focused matrix passed 316 checks and eight clean exits.
+This is not a clean full-suite or manual Workbench acceptance claim.
 
 ## NEXT ACTION
 
-Publish this checkpoint. Upgrade the reachable Expat 2.7.2 family
-using the verified official 2.8.5 archive as a separate checkpoint.
-Then audit the remaining dependency graph and advisories, enforce
-input limits, complete Windows Workbench/manual checks and the clean
-retained suite, remove proven legacy artifacts, and record the
-Linux/macOS boundary. No security or cross-platform PASS is claimed.
+Publish the Expat/OCIO checkpoint. Then clean the complete intermediate
+root and run all 49 retained tests in both Windows
+configurations, build and exercise Workbench, remove the proven generated
+legacy `out/` tree and inspect `bin/`. Continue per-family security and
+input-limit work. Resolve the upstream Expat DoS and actual Windows zlib
+provider before any security clearance; Linux/macOS remain untested.

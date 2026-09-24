@@ -1,5 +1,10 @@
 # Release preparation
 
+Current execution evidence is in [ACTIVE_WORK.md](ACTIVE_WORK.md).
+This document preserves the original release-preparation contract and
+its starting-point statements below; those statements are historical
+after IMG-REL-002 began.
+
 ## Boundary and authority
 
 This is the next release-preparation contract, not a completed release report.

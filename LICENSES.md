@@ -6,6 +6,13 @@ This repository contains original repository content plus imported third-party c
 
 The repository-level license is in `LICENSE`.
 
+## Expat
+
+`third_party/support/expat_src/upstream/` contains Expat 2.8.5 source
+under its MIT/X Consortium license. The complete upstream notice is
+preserved in `third_party/support/expat_src/upstream/COPYING`.
+The generated Windows configuration header is repository-owned.
+
 ## zlib
 
 The `zlib_src/` package includes upstream zlib source code under the zlib License.

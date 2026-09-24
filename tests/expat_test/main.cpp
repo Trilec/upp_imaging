@@ -76,7 +76,7 @@ int main()
 	int passed = 0;
 	int failed = 0;
 
-	if(XML_MAJOR_VERSION == 2 && XML_MINOR_VERSION == 7 && XML_MICRO_VERSION == 2) {
+	if(XML_MAJOR_VERSION == 2 && XML_MINOR_VERSION == 8 && XML_MICRO_VERSION == 5) {
 		printf("version macros: OK\n");
 		passed++;
 	} else {
@@ -126,6 +126,36 @@ int main()
 		failed++;
 	}
 	XML_ParserFree(bad);
+
+	// A high surrogate followed by an ASCII character must be rejected.
+	// Repeat on the caller thread to exercise parser/error cleanup.
+	const unsigned char invalid_utf16[] = {
+		0xff, 0xfe,
+		'<', 0, 'r', 0, '>', 0,
+		0x00, 0xd8, 'A', 0,
+		'<', 0, '/', 0, 'r', 0, '>', 0
+	};
+	bool rejected_utf16 = true;
+	for(int i = 0; i < 64; ++i) {
+		XML_Parser parser = XML_ParserCreate(NULL);
+		if(!parser) {
+			rejected_utf16 = false;
+			break;
+		}
+		const int rc = XML_Parse(parser,
+			reinterpret_cast<const char*>(invalid_utf16),
+			(int)sizeof(invalid_utf16), XML_TRUE);
+		rejected_utf16 &= rc == XML_STATUS_ERROR &&
+		                  XML_GetErrorCode(parser) != XML_ERROR_NONE;
+		XML_ParserFree(parser);
+	}
+	if(rejected_utf16) {
+		printf("malformed UTF-16 rejected repeatedly: OK\n");
+		passed++;
+	} else {
+		printf("malformed UTF-16 rejected repeatedly: FAIL\n");
+		failed++;
+	}
 
 	printf("SUMMARY passed=%d failed=%d\n", passed, failed);
 	return failed ? 1 : 0;

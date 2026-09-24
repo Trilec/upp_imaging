@@ -2,9 +2,11 @@
 
 ## Status
 
-The assembly example and Windows validation runner now target `build/` instead
-of `out/`. Their local Windows verification is pending. The last accepted run
-is recorded in [WINDOWS_ACCEPTANCE.md](WINDOWS_ACCEPTANCE.md) at `17bdbb3`.
+The assembly example and Windows validation runner target `build/` instead
+of `out/`. Focused Windows tests have verified the new output path; the
+clean full suite and Workbench release pass are pending. The last full
+accepted run is recorded in [WINDOWS_ACCEPTANCE.md](WINDOWS_ACCEPTANCE.md)
+at `17bdbb3`.
 A Git pull does not edit an existing local `.var` file, relocate old artifacts,
 redirect application runtime logs, or populate `bin/`.
 

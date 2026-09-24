@@ -31,8 +31,8 @@ See [layout](docs/package_layout.md), [package catalogue](docs/PACKAGE_CATALOGUE
 
 The FFmpeg stack remains pinned to `n9.0.1`, scalar/static, native H.264 decode, MOV/MP4 demux, local-file protocol and swscale. Networking, external codecs, hardware acceleration, encoding and other media subsystems remain disabled.
 
-[THIRD_PARTY.md](THIRD_PARTY.md) records provenance and pins; [LICENSES.md](LICENSES.md) lists licenses. [STRUCTURE_MIGRATION.md](docs/STRUCTURE_MIGRATION.md) records every test cleanup decision.
+[THIRD_PARTY.md](THIRD_PARTY.md) records provenance and pins; [LICENSES.md](LICENSES.md) lists licenses. The current [security review](docs/THIRD_PARTY_SECURITY.md) and [portability matrix](docs/PORTABILITY_MATRIX.md) record unresolved release gates. [STRUCTURE_MIGRATION.md](docs/STRUCTURE_MIGRATION.md) records every test cleanup decision.
 
 ## Release readiness
 
-The last recorded Windows acceptance is the structure-migration checkpoint `17bdbb3e326a07e71f159cb034c34534fb6f6bff`: 49 tests per configuration, 2,734 checks across Debug/Release, all exits 0. This does not establish a current dependency-security clearance or Linux/macOS runtime acceptance. The build/bin routing changes still need local validation. See [release preparation](docs/RELEASE_PREPARATION.md) and [active work](docs/ACTIVE_WORK.md) for the remaining gates.
+The last recorded full Windows acceptance is the structure-migration checkpoint `17bdbb3e326a07e71f159cb034c34534fb6f6bff`: 49 tests per configuration, 2,734 checks across Debug/Release, all exits 0. Focused tests now verify the new build output routing. A clean full run, Workbench manual checks, dependency-security clearance and Linux/macOS runtime acceptance remain pending. See [release preparation](docs/RELEASE_PREPARATION.md) and [active work](docs/ACTIVE_WORK.md) for the current evidence.

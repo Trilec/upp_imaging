@@ -2,12 +2,24 @@
 
 ## Unreleased
 
+### Local release preparation in progress
+
+* Verified the new U++ intermediate path and focused Debug/Release tests;
+  added exact per-target check minima and stopped EXR tests writing to
+  the legacy `out/` directory.
+* Updated the linked Expat family from 2.7.2 to 2.8.5 with matching
+  public/source headers, Windows configuration and a malformed UTF-16
+  regression. Upstream still reports an unfixed denial of service, so
+  security clearance remains pending.
+* Retired four reviewed recovery branches. The shutdown experiment branch
+  remains for a separate lifecycle decision.
+
 ### Build-output convention and release preparation
 
 * Redirected the assembly example to `build/windows-x64/umk` and the Windows validation runner to configuration-specific directories under `build/windows-x64/validation`.
 * Reserved `bin/<platform>` for verified runnable Release applications; updated build, usage and Workbench documentation and ignored generated build/bin trees.
-* Preserved the accepted migration evidence at `17bdbb3e326a07e71f159cb034c34534fb6f6bff`: 49 tests in each configuration, 2,734 checks and 98 clean exits. The new output routing still needs local Windows validation.
-* Defined release-preparation gates for safe local/branch cleanup, verified dependency-security refresh, Workbench checks and separately evidenced Linux/macOS portability. No dependency pin or C++ behavior changed in this checkpoint.
+* Preserved the accepted migration evidence at `17bdbb3e326a07e71f159cb034c34534fb6f6bff`: 49 tests in each configuration, 2,734 checks and 98 clean exits. This is historical full-suite evidence.
+* Defined release-preparation gates for safe local/branch cleanup, verified dependency-security refresh, Workbench checks and separately evidenced Linux/macOS portability. That documentation checkpoint did not change a dependency pin or C++ behavior.
 
 ### Repository structure simplification
 

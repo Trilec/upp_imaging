@@ -1,5 +1,25 @@
 # Third-Party Code
 
+## Expat
+
+- Upstream version: 2.8.5 (from 2.7.2)
+- Official release archive:
+  `https://github.com/libexpat/libexpat/releases/download/R_2_8_5/expat-2.8.5.tar.gz`
+- Archive SHA-256:
+  `920DDE485E15EDA0CCE8D2310B41D492C534E5E3D89AD407A0B4176DD2FF88FE`
+- License: MIT/X Consortium; original `COPYING` is in
+  `third_party/support/expat_src/upstream/COPYING`.
+- Imported 2026-09-24. The upstream `lib/` sources and public headers match
+  the release archive; the repository-generated `expat_config.h` is mirrored
+  into `upstream/` and `upstream/lib/` for the Windows U++ static build.
+- Linked provider: `expat_src` through `expat`, used by OCIO XML readers.
+  DTD, namespaces, general entities and large-size support are enabled;
+  the Windows `rand_s` entropy provider is compiled. Tools and examples
+  are not linked.
+- Security applicability and the remaining upstream issue are tracked in
+  `docs/THIRD_PARTY_SECURITY.md`; this version is not certified
+  vulnerability-free.
+
 ## zlib
 
 - Upstream name: zlib

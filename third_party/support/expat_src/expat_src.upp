@@ -1,4 +1,4 @@
-description "Strict upstream Expat 2.7.2 source package";
+description "Strict upstream Expat 2.8.5 source package";
 
 noblitz
 NOWARNINGS
@@ -10,6 +10,7 @@ file
 	README.md,
 	upstream/COPYING,
 	upstream/lib/expat_config.h,
+	upstream/lib/random_rand_s.c,
 	upstream/lib/xmlparse.c,
 	upstream/lib/xmlrole.c,
 	upstream/lib/xmltok.c,
