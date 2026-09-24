@@ -44,11 +44,13 @@ supplied OCIO XML files, so library parse flaws are potentially reachable.
 | CVE-2026-50219, CVE-2026-56131, CVE-2026-56412 | Before 2.8.2 / 2.8.2 | Parser re-entry through callbacks; code compiled; current OCIO callers do not re-enter the parser from handlers | Updated; native clients could use those APIs |
 | CVE-2026-76957 | Before 2.8.4 / 2.8.4 | Custom encoding callback re-entry; code compiled; current OCIO callers do not install custom encoding callbacks | Updated |
 | CVE-2026-56409 through CVE-2026-56411 | Before 2.8.2 / 2.8.2 | xmlwf command-line tool, not compiled | Not affected |
-| CVE-2025-66382 | All releases, no fixed version announced | Upstream reports crafted 2 MiB XML can consume 25–100 seconds. OCIO parses user supplied XML; the non-public trigger prevents confirming whether the Workbench pathway reaches it. | **Unresolved release gate** |
+| CVE-2025-66382 | All releases, no fixed version announced | Upstream reports crafted 2 MiB XML can consume 25–100 seconds. OCIO's CTF/CLF, CDL and Iridas `.look` readers call `XML_ParserCreate` and feed complete user-selected XML streams to `XML_Parse`; Workbench FileTransform and file-backed OCIO configs can reach those readers. The trigger is non-public, so issue-specific exploitability remains unproven. | **Unresolved release gate** |
 
 The maintainer also tracks further non-public reports in
 [upstream issue #1160](https://github.com/libexpat/libexpat/issues/1160).
-The unresolved DoS is described in
+The `.ocio` configuration parser itself is YAML; file transforms referenced
+from a config can still reach the XML readers. Neither extension filtering
+nor a file-size cap excludes the reported ~2 MiB case. The unresolved DoS is described in
 [upstream issue #1076](https://github.com/libexpat/libexpat/issues/1076).
 Release notes and affected components are in the
 [Expat 2.8.5 change log](https://github.com/libexpat/libexpat/blob/R_2_8_5/expat/Changes).
@@ -155,22 +157,57 @@ test's repeated malformed opens on the ordinary caller thread. The later
 clean Windows suite passed and Workbench was manually accepted by Curt.
 Other security gates still prevent a releasable binary.
 
-The copied 3.1.17.0 backend sets `limits:channels=1024`,
-`limits:resolution=1048576` for each dimension and
-`limits:imagesize_MB` to the smaller of 32768 or detected physical
-memory. These are backend open-time guards, not the final ImagingIO
-allocation policy: ImagingCore currently rejects buffers over `INT_MAX`
-bytes. Practical application limits for metadata and subimage/frame counts
-remain to be specified and tested before release.
+The copied 3.1.17.0 backend defaults to `limits:channels=1024`,
+`limits:resolution=1048576` per dimension and `limits:imagesize_MB` to the
+smaller of 32768 or detected physical memory. The repository wrapper now
+sets 65,536 pixels per dimension and 2,048 MiB uncompressed image data
+before registering readers. OIIO checks these when opening supported
+images; ImagingCore separately rejects buffers over `INT_MAX` bytes.
+These limits cover the ordinary OIIO read path and the Workbench, but not
+arbitrary metadata expansion inside format parsers or OCIO XML parsing.
+Workbench still enumerates subimages for display without a count cap;
+metadata and frame/subimage policies remain a release gate. The OIIO
+global attributes are configurable by an embedding application after
+initialization for workloads that need a documented larger budget.
+
+## OpenEXR: 3.4.13 to 3.4.14
+
+The linked OpenEXR and OpenEXRCore imports now contain all 20 changed
+implementation/header files from the official
+[3.4.14 security tag](https://github.com/AcademySoftwareFoundation/openexr/releases/tag/v3.4.14),
+commit `777d231a179de1711d2a942810d9559216ab3f4c`.
+Iex and IlmThread source files did not change between the two tags;
+repository-generated configuration and include bridges were versioned
+together. One upstream blank-line whitespace cleanup was made in
+`internal_dwa_compressor.h`; the other changed imports match the tag
+after line-ending normalization. The 3.4.14 release fixes malformed
+metadata and decompression defects in linked readers, including
+`CVE-2026-61555` in `ImfMultiView`; it also fixes ILP32 defects that do
+not apply to this x64 build. OpenEXRUtil, Python bindings and command-line
+tools are not linked here, so their advisory paths are not reachable.
+The linked OpenJPH provider is the standalone 0.27.1 release, while
+OpenEXR 3.4.14 vendors 0.31.0. The latter has an API/ABI break and was
+not substituted into this package graph. The official
+[OpenEXR advisory](https://github.com/AcademySoftwareFoundation/openexr/security/advisories/GHSA-2f85-52wj-hc3c)
+identifies an assertion reached by a malformed JPEG 2000 QCD marker in
+OpenJPH 0.26.3 and names 0.27.1 as fixed. The imported 0.27.1 source
+replaces that assertion with input validation. All changed core files
+between official 0.26.3 and 0.27.1 were imported, including the
+`ojph_mem_c.c` rename; one upstream whitespace-only blank line was
+normalized in `ojph_file.h`. OpenEXR's generated config names 0.27.1.
+The focused Windows EXR Core, high-level and ImagingIO tests passed
+106 checks per configuration after this update, 212 checks and six clean
+exits total. Those tests verify compilation and normal decoding, not the
+advisory's crafted trigger; malformed HTJ2K coverage remains pending.
 
 ## Remaining graph and release boundary
 
 The remaining graph includes libde265 and dav1d below libheif,
-OpenEXR with Imath, OpenJPH and
-libdeflate, JPEG XL with nested Brotli/Highway/skcms, OpenColorIO with
+Imath, OpenJPH and libdeflate below OpenEXR, JPEG XL with nested
+Brotli/Highway/skcms, OpenColorIO with
 bundled internals, minizip-ng, yaml-cpp, and the bounded FFmpeg source
-slice. PNG/JPEG/WebP/TIFF/RAW/support packages and U++ `plugin/z` must
-also be traced to the actual linked provider. These families are not
+slice. PNG/JPEG/WebP/TIFF/RAW/support packages still need review.
+These families are not
 covered by the Expat or libheif checkpoints. Exact pins and enabled slices are in
 the package READMEs and source manifests, but release/advisory
 applicability has not been verified for every family. Status:
@@ -213,17 +250,16 @@ are published. Six FFmpeg tests passed in both Windows configurations,
 including the 27-check first-frame pixel contract; five additional runs
 per configuration passed with exit 0.
 
-On Windows, `third_party/codecs/zlib/zlib.upp` selects the installed U++
-`plugin/z` provider, whose `lib/zlib.h` declares 1.3.1 in the local
-U++ 18468 installation. The repository's `zlib_src` copy is 1.3.2 but
-is selected only outside Windows. Consequently, a Windows build cannot
-claim it links 1.3.2. The [zlib upstream site](https://zlib.net/) lists
-1.3.2 and describes security audit fixes since 1.3.1. The exact exposure
-of the linked 1.3.1 source is not yet resolved. Updating the installed
-U++ tree is outside this task, and changing the repository manifest alone
-could create duplicate zlib symbols because U++ Core also uses `plugin/z`.
-This remains a release security gate until the actual linked provider is
-updated or shown not to contain an applicable defect.
+The installed U++ 18468 `plugin/z` header still declares 1.3.1, but
+the `GitHubOut` assembly now resolves U++ Core's `plugin/z` dependency
+to `third_party/codecs/plugin/z`, which delegates to the repository's
+`zlib_src` 1.3.2 and forwards the matching header. This avoids a second
+zlib implementation in the package graph. The [official 1.3.2 release](https://github.com/madler/zlib/releases/tag/v1.3.2)
+addresses security-audit findings. Both Windows `zlib_test` configurations
+reported runtime 1.3.2 and passed round trips; the version assertion now
+checks the compile-time and runtime providers exactly. This resolves the
+provider-version mismatch for this assembly. Other assembly/toolchain
+configurations must verify their own package resolution.
 
 The security refresh must keep OpenImageIO's separate source copies
 consistent and retain the MinGW main-thread error wrappers until a

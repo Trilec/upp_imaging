@@ -513,6 +513,34 @@ static int RunTests()
 	wb.RenderPreviewFromProxy();
 	Check(wb.canvas.GetViewState().mode == ViewMode::Fit, "EXR load starts in Fit", passed, failed);
 
+	// Exercise the readers now exposed by the Workbench Open dialog using
+	// small, generated files rather than external fixture downloads.
+	for(const char* extension : {"webp", "tiff", "hdr", "dpx", "jxl"}) {
+		std::filesystem::path fixture = root / (std::string("open_format.") + extension);
+		bool written = WriteFixture(fixture, 8, 6, 3, {"R", "G", "B"}, -1,
+		                            MakePixels(8, 6, 3, 0.1f));
+		Check(written, Format("%s fixture write", extension), passed, failed);
+		bool loaded = written && wb.LoadImageFile(fixture.string().c_str(), error, true);
+		Check(loaded && wb.source_image.spec().width == 8 &&
+		      wb.source_image.spec().height == 6,
+		      Format("%s Workbench load", extension), passed, failed);
+	}
+	std::filesystem::path source_file(__FILE__);
+	if(!source_file.is_absolute())
+		source_file = std::filesystem::absolute(source_file);
+	const std::filesystem::path heif_fixtures =
+		source_file.parent_path().parent_path().parent_path() /
+		"third_party/codecs/libheif_src/upstream";
+	for(const auto& fixture : {
+			heif_fixtures / "examples/example.avif",
+			heif_fixtures / "tests/data/rainbow-451x461.heic"}) {
+		bool loaded = wb.LoadImageFile(fixture.string().c_str(), error, true);
+		bool avif = fixture.extension() == ".avif";
+		Check(loaded && wb.source_image.spec().width == (avif ? 800 : 451) &&
+		      wb.source_image.spec().height == (avif ? 533 : 461),
+		      avif ? "AVIF Workbench load" : "HEIC Workbench load", passed, failed);
+	}
+
 	Check(wb.LoadImageFile(grouped.string().c_str(), error, true), "grouped load", passed, failed);
 	wb.canvas.SetRect(0, 0, 640, 360);
 	wb.canvas.Layout();

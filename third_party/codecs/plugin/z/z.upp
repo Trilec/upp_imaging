@@ -1,0 +1,8 @@
+description "Repository-owned U++ plugin/z compatibility provider using pinned zlib_src";
+
+uses zlib_src;
+
+file
+	z.h,
+	lib/zlib.h,
+	README.md;

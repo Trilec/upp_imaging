@@ -25,7 +25,7 @@ imaging_roundtrip_viewer_ocio_smoke_test 39
 imaging_test 6
 imaging_tone_conversion_test 124
 imaging_view_transform_test 111
-imaging_workbench_ocio_test 136
+imaging_workbench_ocio_test 148
 imath_test 4
 jpegxl_imagingio_test 50
 jpegxl_oiio_test 10

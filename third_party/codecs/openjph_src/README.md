@@ -4,10 +4,10 @@
 
 Meaning:
 
-- it builds the official standalone OpenJPH 0.26.3 core library source directly
+- it builds the official standalone OpenJPH 0.27.1 core library source directly
 - it does not use system OpenJPH
 - it does not depend on OpenEXRCore
-- it is intended to serve as a future dependency for `openexr_core_src`
+- it supplies the linked `openexr_core_src` JPEG 2000 decoder dependency
 
 ## Include style
 

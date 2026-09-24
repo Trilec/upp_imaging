@@ -10,7 +10,8 @@ CONSOLE_APP_MAIN
 
 	const char *version = zlibVersion();
 	Cout() << "zlib version: " << (version ? version : "(null)") << '\n';
-	if(version && *version)
+	if(version && strcmp(version, "1.3.2") == 0 &&
+	   strcmp(ZLIB_VERSION, "1.3.2") == 0)
 		passed++;
 	else
 		failed++;

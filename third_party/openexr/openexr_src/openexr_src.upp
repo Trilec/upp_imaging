@@ -1,4 +1,4 @@
-description "Strict upstream OpenEXR 3.4.13 high-level source package for U++";
+description "Strict upstream OpenEXR 3.4.14 high-level source package for U++";
 
 noblitz;
 

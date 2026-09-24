@@ -56,6 +56,13 @@ The upstream license text is preserved in `third_party/codecs/libpng_src/upstrea
 The `imath_src/` package includes upstream Imath source code under the BSD-3-Clause license.
 The upstream license text is preserved in `third_party/imath/imath_src/upstream/LICENSE.md`.
 
+## OpenEXR and OpenJPH
+
+The imported OpenEXR 3.4.14 source remains under BSD-3-Clause; the
+original license text is preserved in the imported upstream trees.
+The standalone OpenJPH 0.27.1 core is BSD-2-Clause, with its notice in
+`third_party/codecs/openjph_src/upstream/LICENSE`.
+
 ## JPEG XL backend
 
 The `third_party/codecs/jpegxl_src/upstream` submodule pins libjxl 0.12.0, distributed under BSD-3-Clause with the upstream PATENTS grant. Its recursively pinned build dependencies used by `jpegxl_src` are Brotli (MIT), Highway (Apache-2.0/BSD-3-Clause dual license), and skcms (BSD-3-Clause). Their upstream license files remain inside the recursively initialized source tree.

@@ -1,6 +1,6 @@
 # openexr_src
 
-`openexr_src` is the strict imported-source OpenEXR 3.4.13 high-level package.
+`openexr_src` is the strict imported-source OpenEXR 3.4.14 high-level package.
 
 Current meaning:
 
@@ -11,8 +11,8 @@ Current meaning:
 
 ## Upstream preflight target
 
-- inspected version: `3.4.13`
-- source archive: `https://github.com/AcademySoftwareFoundation/openexr/archive/refs/tags/v3.4.13.tar.gz`
+- inspected version: `3.4.14`
+- source tag: `https://github.com/AcademySoftwareFoundation/openexr/releases/tag/v3.4.14`
 - this package now carries the full high-level OpenEXR source boundary plus repository-owned generated config metadata
 
 ## Current scope

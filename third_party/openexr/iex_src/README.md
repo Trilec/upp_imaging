@@ -7,7 +7,7 @@ Current scope:
 - builds the upstream Iex source subset directly
 - does not use system Iex
 - does not provide OpenEXR image APIs
-- depends on repository-owned generated config metadata derived from OpenEXR 3.4.13
+- depends on repository-owned generated config metadata derived from OpenEXR 3.4.14
 
 Local imported-source adjustment:
 

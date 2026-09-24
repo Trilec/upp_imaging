@@ -167,8 +167,8 @@ int main()
     const std::string exrPath = (workspace / "stable_roundtrip.exr").string();
     const std::string malformedPath = (workspace / "malformed_input.bin").string();
 
-    if (!Check(result, OPENEXR_VERSION_MAJOR == 3 && OPENEXR_VERSION_MINOR == 4 && OPENEXR_VERSION_PATCH == 13,
-               "PASS OpenEXR version 3.4.13", "OpenEXR version 3.4.13"))
+    if (!Check(result, OPENEXR_VERSION_MAJOR == 3 && OPENEXR_VERSION_MINOR == 4 && OPENEXR_VERSION_PATCH == 14,
+               "PASS OpenEXR version 3.4.14", "OpenEXR version 3.4.14"))
     {
         std::printf("SUMMARY passed=%d failed=%d\n", result.passed, result.failed);
         return 1;

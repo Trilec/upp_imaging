@@ -7,4 +7,4 @@ Current scope:
 - builds the upstream IlmThread source subset directly
 - does not use system IlmThread
 - depends on `iex_src`
-- uses repository-owned generated config metadata derived from OpenEXR 3.4.13 and local Windows threading assumptions
+- uses repository-owned generated config metadata derived from OpenEXR 3.4.14 and local Windows threading assumptions
