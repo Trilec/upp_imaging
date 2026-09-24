@@ -115,7 +115,7 @@ Package names are stable across nests. See [layout](package_layout.md) for assem
 | `openimageio_src` | `third_party/openimageio/openimageio_src` | Strict upstream OpenImageIO 3.1.15.0 main source package |
 | `openimageio_util_src` | `third_party/openimageio/openimageio_util_src` | Strict upstream OpenImageIO 3.1.15.0 utility source package |
 | `expat` | `third_party/support/expat` | Stable Expat user-facing package |
-| `expat_src` | `third_party/support/expat_src` | Strict upstream Expat 2.7.2 source package |
+| `expat_src` | `third_party/support/expat_src` | Strict upstream Expat 2.8.5 source package |
 | `fmt` | `third_party/support/fmt` | fmt package with stable public include path |
 | `fmt_src` | `third_party/support/fmt_src` | Strict upstream fmt 12.2.0 source package |
 | `minizip_ng` | `third_party/support/minizip_ng` | Stable minizip-ng user-facing package |
