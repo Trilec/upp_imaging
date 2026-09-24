@@ -52,6 +52,8 @@ The `.ocio` configuration parser itself is YAML; file transforms referenced
 from a config can still reach the XML readers. Neither extension filtering
 nor a file-size cap excludes the reported ~2 MiB case. The unresolved DoS is described in
 [upstream issue #1076](https://github.com/libexpat/libexpat/issues/1076).
+The official issue was rechecked on 2026-09-25 and remains open without
+a public trigger or fixed release.
 Release notes and affected components are in the
 [Expat 2.8.5 change log](https://github.com/libexpat/libexpat/blob/R_2_8_5/expat/Changes).
 A version update does not resolve those undisclosed issues. Do not label
@@ -165,8 +167,11 @@ before registering readers. OIIO checks these when opening supported
 images; ImagingCore separately rejects buffers over `INT_MAX` bytes.
 These limits cover the ordinary OIIO read path and the Workbench, but not
 arbitrary metadata expansion inside format parsers or OCIO XML parsing.
-Workbench still enumerates subimages for display without a count cap;
-metadata and frame/subimage policies remain a release gate. The OIIO
+Workbench now caps metadata inspection at 256 subimages and labels a
+larger file as truncated in the Layers view. This bounds Workbench's
+post-open enumeration and UI allocation, but it does not bound metadata
+allocated by a reader while opening the file. Parser-level metadata and
+non-Workbench frame policies remain a release gate. The OIIO
 global attributes are configurable by an embedding application after
 initialization for workloads that need a documented larger budget.
 

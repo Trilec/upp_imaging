@@ -33,7 +33,8 @@ PARTIAL — the historical FFmpeg checkpoint passed the clean Windows suite;
 the present security and Workbench changes have focused Windows checks only.
 Workbench manually accepted by Curt. That confirmation does not identify
 the exact staged executable hash. The unfixed Expat issue, remaining
-dependency-family review, metadata/subimage policies, and Linux/macOS/
+dependency-family review, parser-level metadata and non-Workbench frame
+policies, and Linux/macOS/
 sanitizer/fuzz execution remain gates. No release
 binary is published.
 
@@ -93,7 +94,7 @@ checks and six clean exits; the first checkpoint's Core/IO/EXR matrix
 passed 316 checks and eight clean exits. Both OCIO generator `--check`
 modes passed. That historical minimum manifest had 49 targets and 1,373
 checks per configuration (2,746 total). The expanded Workbench test has
-since raised the current minimum to 1,385 per configuration. Logs and executables are under
+since raised the current minimum to 1,388 per configuration. Logs and executables are under
 `build/windows-x64/validation/`.
 
 The 3.1.17.0 OpenImageIO focused matrix passed 10 targets in each Windows
@@ -110,6 +111,13 @@ Workbench test passed 148/0 in Debug and Release with generated WebP,
 TIFF, HDR, DPX and JPEG XL files and retained AVIF/HEIC samples.
 After the OpenJPH import, a separate focused Workbench/zlib matrix passed
 148/0 and 2/0 in each configuration: 300 checks and four clean exits.
+The follow-on subimage-bound regression generated a 257-page TIFF and
+passed the Workbench target 151/0 in Debug and Release (302 checks, two
+clean exits). Workbench inspects at most 256 pages and labels the rest as
+truncated; reader-internal metadata allocation remains unbounded here.
+The focused runner's `source=` header records the pre-commit HEAD
+`ad7be8e7a037dceaed62392915b867593afe3c7d`; its build used the
+subimage-bound worktree changes that are committed with this checkpoint.
 
 The FFmpeg 9.0.2 focused matrix passed six targets in each Windows
 configuration: 87 checks and six exits at 0 per configuration (174 checks,
@@ -151,7 +159,8 @@ by Curt; the GUI is no longer a release gate.
 
 Resolve or isolate the reachable, unfixed Expat XML denial-of-service,
 complete the remaining dependency-family review and metadata/subimage
-limits, and perform Linux/macOS and sanitizer/fuzz validation separately.
+limits across the backend, and perform Linux/macOS and sanitizer/fuzz
+validation separately.
 At a substantive release-candidate checkpoint, run a new clean integrated
 Windows acceptance and verify a fresh Release Workbench artifact before
 publishing to `bin/`. The earlier staged hashes are identification evidence

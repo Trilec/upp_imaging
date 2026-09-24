@@ -75,6 +75,8 @@ Known limits:
 - Cineon and camera RAW are input-only; JPEG is not registered in this build
 - the Open dialog lists common RAW extensions and offers an All files filter
   for other camera RAW extensions accepted by the reader policy
+- metadata inspection and the Layers tree show at most 256 subimages;
+  a file with more is marked as truncated and its first image remains viewable
 - multipart EXR remains metadata-only for later subimages
 - Fit resets on new image load; manual navigation is preserved across preview changes when dimensions allow
 

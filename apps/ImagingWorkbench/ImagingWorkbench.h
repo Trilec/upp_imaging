@@ -228,6 +228,7 @@ protected:
 	Vector<PreviewGroup> preview_groups;
 	Vector<ImageSubimageInfo> subimages;
 	int subimage_count = 0;
+	bool subimages_truncated = false;
 	int selected_preview_group = -1;
 	ChannelView channel_view = ChannelView::RGB;
 	double exposure_stops = 0.0;
