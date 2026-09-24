@@ -2,11 +2,11 @@
 
 ## Status
 
-The assembly example and Windows validation runner target `build/` instead
-of `out/`. Focused Windows tests have verified the new output path; the
-clean full suite and Workbench release pass are pending. The last full
-accepted run is recorded in [WINDOWS_ACCEPTANCE.md](WINDOWS_ACCEPTANCE.md)
-at `17bdbb3`.
+The active Windows assembly and validation runner target `build/` instead
+of `out/`. The clean 49-target Debug/Release suite passed at the FFmpeg
+9.0.2 checkpoint; [WINDOWS_ACCEPTANCE.md](WINDOWS_ACCEPTANCE.md) records
+its exact ledger. Workbench manually accepted by Curt. Security and final
+artifact publication remain pending, so `bin/` is not populated.
 A Git pull does not edit an existing local `.var` file, relocate old artifacts,
 redirect application runtime logs, or populate `bin/`.
 

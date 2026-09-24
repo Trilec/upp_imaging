@@ -26,11 +26,11 @@ integrated clean Windows acceptance and stage the Workbench.
 
 ## STATUS
 
-PARTIAL — the FFmpeg family is refreshed and its focused Windows matrix
-passes. The clean full suite is running. Workbench manual checks,
-other dependency families, input limits and Linux/macOS execution remain
-gates.
-No release binary is published.
+PARTIAL — the FFmpeg family and clean Windows Debug/Release suite pass.
+Workbench manually accepted by Curt. That confirmation does not identify
+the exact staged executable hash. Other dependency families, input limits,
+security clearance and Linux/macOS execution remain gates. No release
+binary is published.
 
 The [security review](THIRD_PARTY_SECURITY.md) records an unfixed upstream
 Expat denial of service with unresolved reachability through OCIO user XML,
@@ -40,9 +40,10 @@ repository's 1.3.2 source copy. Do not call this release security-cleared.
 The old `out/` tree was inventoried: 12,689 untracked generated files,
 26,490,790,815 bytes, no tracked files or reparse points. Historical
 structure logs and results were copied to
-`build/windows-x64/legacy-evidence/`. An older Workbench process is still
-running from `out/ImagingWorkbench.exe`; leave the tree intact until it
-closes and the generated tree can be rechecked safely.
+`build/windows-x64/legacy-evidence/`. An older Workbench was running from
+`out/ImagingWorkbench.exe` at the earlier inventory. Recheck its current
+process identity and arrange normal closure before rechecking and removing
+that generated tree.
 
 Remote branch cleanup: deleted
 `recovery/still-image-acceptance-20260818` at
@@ -66,7 +67,8 @@ Expat is `ccaeaafa34a91f23c413674ae9bd1f580f0cb5be`;
 libheif is `319b0e6d8c32f08e325862c1d18ec8622ab45f8e`;
 the process runner is `a1ed7337a343311d1823c374f31ac3ffda92dc30`;
 OpenImageIO is `b80ddbfa1ae35dbce797b111d9b53620dac7509f`.
-This checkpoint's final SHA resolves with `git log -1 -- docs/ACTIVE_WORK.md`.
+FFmpeg is `26c494498e6d975c77c552d002ce4e65a06c1960`.
+This evidence update's final SHA resolves with `git log -1 -- docs/ACTIVE_WORK.md`.
 The branch deletions above are already verified on origin.
 
 ## VALIDATION
@@ -100,19 +102,39 @@ trees match the pinned checkout after line-ending normalization. The Git
 tag signature is cryptographically good but its published key was expired
 at the tag date; see [security review](THIRD_PARTY_SECURITY.md).
 
-Two clean full-suite attempts stopped at `dpx_cineon_oiio_test` Debug
-after its 19/0 summary because `Start-Process` reported a blank exit
-code. The first failed result is preserved at
-`build/windows-x64/validation/full-clean-attempt-1-results.txt`.
-Direct and warm focused reruns returned 19/0 and exit 0; the new
-explicit process launcher also passed that target in both configurations.
-The integrated clean suite has not yet passed.
+The clean integrated Windows run passed all 49 Debug targets and all 49
+Release targets: 1,373 checks and 49 process exits at 0 in each
+configuration, 2,746 checks and 98 exits at 0 overall. The complete
+intermediate root was checked for tracked files and reparse points, then
+emptied before the run. The immutable ledger is
+`build/windows-x64/release/acceptance-26c4944-clean-results.txt`
+(SHA-256 `5244B2EC1B15ACDE06E9EAA1FC588F31CCBECEAEFFE49FF462AF82ED4E6A684D`).
+Its `source=` header names `b80ddbfa1ae35dbce797b111d9b53620dac7509f`
+because the runner started before the FFmpeg source update was committed.
+The tested worktree already contained the FFmpeg 9.0.2 submodule,
+generated headers and version assertions subsequently published in
+`26c4944`; only documentation changed while the suite ran. The
+`ffmpeg_avutil_test` 9.0.2 assertion passed in both configurations.
+This records the tested source relationship without rerunning the suite
+solely to change the ledger header. Earlier stopped clean attempts are
+historical; their logs remain under `build/windows-x64/validation/`.
+
+Both Workbench staging builds passed after the clean suite. The staged
+Debug SHA-256 is `18BCE9C2EACE0777543C5495C6553953E8D0CF4FFA0FAA0F2300FFBDC0E723CB`;
+the staged Release SHA-256 is
+`8970C47030AB437ED127C23012911D19008588AC0D4B1ED2E269B9E200468619`.
+These identify build artifacts, not necessarily the exact executable
+Curt manually accepted. The earlier automated GUI observations used
+different staged hashes and are historical. Workbench manually accepted
+by Curt; the GUI is no longer a release gate.
 
 ## NEXT ACTION
 
-Publish the OpenImageIO checkpoint. Then clean the
-complete intermediate root and run all 49 retained tests in both Windows
-configurations, build and exercise Workbench, remove the proven generated
-legacy `out/` tree and inspect `bin/`. Continue per-family security and
-input-limit work. Resolve the upstream Expat DoS and actual Windows zlib
-provider before any security clearance; Linux/macOS remain untested.
+Determine applicability of the unresolved Expat DoS through OCIO's actual
+XML path and resolve the linked Windows U++ zlib provider. Complete the
+remaining dependency-family audit and configurable input limits with
+focused regressions. Recheck the old Workbench process, then remove only
+verified generated `out/` contents after normal closure. Finish review
+of `supervisor/img-shutdown-009`. Do not publish `bin/` until the
+security and final artifact gates pass. Linux/macOS and sanitizer/fuzz
+execution remain untested.

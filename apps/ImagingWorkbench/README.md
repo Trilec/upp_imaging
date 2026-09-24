@@ -10,9 +10,10 @@ staging, logs and test executables belong under `build/windows-x64/`.
 
 This is the primary interactive integration check. Its visual smoke check and
 clean shutdown supplement, rather than replace, the deterministic tests.
-Debug and Release staging builds and a partial Release GUI smoke check are
-recorded in [active work](../../docs/ACTIVE_WORK.md). The complete manual
-release gate and `bin/` publication remain pending.
+Debug and Release staging builds are recorded in
+[active work](../../docs/ACTIVE_WORK.md). Workbench manually accepted by
+Curt; that confirmation does not identify a staged executable hash.
+Security clearance and `bin/` publication remain pending.
 
 Current scope:
 - EXR and PNG loading

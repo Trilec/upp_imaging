@@ -118,9 +118,9 @@ paired-init focused regressions. `heif_imagingio_test` passed 13/0,
 configurations, all exits 0. The new cases pin exact decoded AVIF and HEIC
 pixels, reject upstream's 857-byte oversized AV1 header corpus within ten
 seconds without replacing the caller's image, and repeat malformed AVIF
-opening 64 times on the caller thread. The clean full suite and Workbench
-checks remain pending. The old 1.23.1 build is affected and must not be
-published.
+opening 64 times on the caller thread. The later clean Windows suite passed
+and Workbench was manually accepted by Curt; remaining security gates are
+separate. The old 1.23.1 build is affected and must not be published.
 
 ## OpenImageIO: 3.1.17.0 focused validation complete
 
@@ -151,9 +151,9 @@ the separate MinGW main-thread error wrappers remain; upstream's changes
 do not prove that distinct shutdown workaround unnecessary.
 The final focused matrix passed 10 affected targets in each of Debug and
 Release: 306 checks, 20 exits at 0. This includes the 20-check DPX/Cineon
-test's repeated malformed opens on the ordinary caller thread. The clean
-full suite and Workbench remain **release gates**; a source refresh alone
-does not establish a releasable binary.
+test's repeated malformed opens on the ordinary caller thread. The later
+clean Windows suite passed and Workbench was manually accepted by Curt.
+Other security gates still prevent a releasable binary.
 
 The copied 3.1.17.0 backend sets `limits:channels=1024`,
 `limits:resolution=1048576` for each dimension and
