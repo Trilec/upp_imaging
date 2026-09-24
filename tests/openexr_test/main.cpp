@@ -4,9 +4,8 @@
 #include <cerrno>
 #include <cmath>
 #include <fstream>
+#include <filesystem>
 #include <string>
-
-#include <direct.h>
 
 #include <openexr/Imf.h>
 
@@ -48,11 +47,11 @@ namespace
         std::remove(path);
     }
 
-    bool EnsureWorkspace(const char* dir)
+    bool EnsureWorkspace(const std::filesystem::path& dir)
     {
-        if (_mkdir(dir) == 0)
-            return true;
-        return errno == EEXIST;
+        std::error_code error;
+        std::filesystem::create_directories(dir, error);
+        return !error && std::filesystem::is_directory(dir);
     }
 
     Imf::Rgba Pixel(float r, float g, float b, float a)
@@ -161,9 +160,12 @@ int main()
 
     CompileOnlyPublicHeaderProbe();
 
-    const char* const workspace = "out/openexr_test";
-    const std::string exrPath = std::string(workspace) + "/stable_roundtrip.exr";
-    const std::string malformedPath = std::string(workspace) + "/malformed_input.bin";
+    const char* runtime = std::getenv("UPP_IMAGING_TEST_RUNTIME_DIR");
+    const std::filesystem::path workspace =
+        (runtime && *runtime ? std::filesystem::path(runtime)
+                             : std::filesystem::temp_directory_path()) / "openexr_test";
+    const std::string exrPath = (workspace / "stable_roundtrip.exr").string();
+    const std::string malformedPath = (workspace / "malformed_input.bin").string();
 
     if (!Check(result, OPENEXR_VERSION_MAJOR == 3 && OPENEXR_VERSION_MINOR == 4 && OPENEXR_VERSION_PATCH == 13,
                "PASS OpenEXR version 3.4.13", "OpenEXR version 3.4.13"))
@@ -174,7 +176,8 @@ int main()
 
     Check(result, true, "PASS stable package marker", "stable package marker");
 
-    if (!Check(result, EnsureWorkspace(workspace), "PASS temporary workspace", "temporary workspace"))
+    if (!Check(result, EnsureWorkspace(workspace),
+               "PASS temporary workspace", "temporary workspace"))
     {
         std::printf("SUMMARY passed=%d failed=%d\n", result.passed, result.failed);
         return 1;

@@ -2,8 +2,12 @@
 
 Authoritative acceptance set after the repository structure migration. The manifest
 `tests/acceptance.txt` contains all 49 retained deterministic test packages;
-`tools/validate.ps1` builds and runs them in Debug and Release, rejecting build
-failures, missing summaries, failed checks, nonzero exits and timeouts.
+`tools/validate.ps1` builds and runs them in Debug and Release. Minimum
+per-target check counts are maintained in `tests/expected_counts.txt`; the
+table below is historical evidence from the structure migration. The runner
+rejects invalid configurations, stale executables after failed builds,
+missing/duplicate/malformed summaries, reduced counts, failed checks,
+nonzero exits and timeouts.
 
 ## Reproduce
 
@@ -22,10 +26,14 @@ The runner now writes test executables/logs to
 `build/windows-x64/validation/debug/` and `build/windows-x64/validation/release/`,
 with `results.txt` in their parent. U++ intermediate output is controlled
 separately by the active assembly: `build/windows-x64/umk/`.
+The runner records source SHA, method, configuration, per-target counts,
+exit codes and log paths in `results.txt`. An increased check count is
+accepted and should be reviewed and reflected in the minimum-count manifest
+at a coherent checkpoint.
 
-These output-routing changes are source-reviewed but have not yet been run on
-Windows. The evidence below remains the previous accepted source checkpoint,
-not proof of the new output layout, dependency upgrades or other platforms.
+The new output routing has focused Windows evidence recorded in ACTIVE_WORK.md.
+The evidence below remains the previous full accepted source checkpoint,
+not proof of a clean full build, dependency upgrades or other platforms.
 
 ## Recorded migration evidence — 17bdbb3e326a07e71f159cb034c34534fb6f6bff
 
