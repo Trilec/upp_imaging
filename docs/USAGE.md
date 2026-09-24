@@ -1,6 +1,6 @@
 # Usage
 
-Configure the logical nests using [GitHubOut.var.example](../GitHubOut.var.example). Package names remain independent of directory layout.
+Configure the logical nests using [GitHubOut.var.example](../GitHubOut.var.example). Package names remain independent of directory layout. [Build and run](BUILD_AND_RUN.md) defines `build/<platform>/` for disposable output and `bin/<platform>/` for verified Release applications; update the active local assembly, not just its repository example.
 
 ## Framework image I/O
 
@@ -34,3 +34,5 @@ Add `plugin/exr` from the `integrations/` nest to register EXR StreamRaster prev
 ## Interactive tools
 
 Build `ImagingWorkbench` from the `apps/` nest. The workbench provides channel inspection, bounded previews, histograms, OCIO displays and EXR/PNG roundtrips. Build `imaging_workbench_bench` from `tools/` for manual timings; `--quick` selects its shorter run.
+
+ImagingWorkbench is the primary interactive integration check, not a substitute for the deterministic acceptance suite. Its normal Windows launch location after local validation is `bin/windows-x64/ImagingWorkbench.exe`; Debug and benchmark staging stay in `build/windows-x64/`. Keep logs and user-generated images out of `bin/`.

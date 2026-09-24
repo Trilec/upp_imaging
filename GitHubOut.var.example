@@ -1,2 +1,2 @@
 UPP = "upp_imaging/imaging;upp_imaging/third_party/openimageio;upp_imaging/third_party/opencolorio;upp_imaging/third_party/openexr;upp_imaging/third_party/imath;upp_imaging/third_party/ffmpeg;upp_imaging/third_party/codecs;upp_imaging/third_party/support;upp_imaging/integrations;upp_imaging/tests;upp_imaging/apps;upp_imaging/tools;upp_Ui;upp_animation;U++ uppsrc";
-OUTPUT = "out";
+OUTPUT = "build/windows-x64/umk";

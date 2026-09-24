@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Build-output convention and release preparation
+
+* Redirected the assembly example to `build/windows-x64/umk` and the Windows validation runner to configuration-specific directories under `build/windows-x64/validation`.
+* Reserved `bin/<platform>` for verified runnable Release applications; updated build, usage and Workbench documentation and ignored generated build/bin trees.
+* Preserved the accepted migration evidence at `17bdbb3e326a07e71f159cb034c34534fb6f6bff`: 49 tests in each configuration, 2,734 checks and 98 clean exits. The new output routing still needs local Windows validation.
+* Defined release-preparation gates for safe local/branch cleanup, verified dependency-security refresh, Workbench checks and separately evidenced Linux/macOS portability. No dependency pin or C++ behavior changed in this checkpoint.
+
 ### Repository structure simplification
 
 * Reduced 177 source-root directories to eight logical areas and 174 packages to 124.
@@ -18,7 +25,11 @@
 * Kept `plugin/exr` opt-in and display-oriented rather than making it a full-fidelity EXR API or an automatic `Imaging` dependency.
 * Kept FFmpeg as a separate media subsystem rather than expanding `ImagingIO` into a movie API.
 
-### Established Windows framework baseline
+### Original Windows framework baseline (historical)
+
+These are the original bring-up totals, not the current acceptance requirements.
+After hardening and migration, Core is 52/0, ImagingIO 89/0 and ImagingColor 69/0;
+`docs/WINDOWS_ACCEPTANCE.md` records the retained 49-test matrix.
 
 * ImagingCore accepted at 48/0.
 * ImagingIO EXR/PNG baseline accepted at 79/0.
@@ -35,7 +46,7 @@
 * Added exact-lossless WebP support for the documented subset.
 * Added decode-only HEIF/AVIF support with pinned decoder dependencies.
 * Expanded TIFF/OpenImageIO support.
-* Repaired shared static OpenImageIO plugin dependency ownership in `5ca436c3ba6265f6431deaf7348332940051686d`; the complete current-main accumulation matrix remains Windows validation pending.
+* Repaired shared static OpenImageIO plugin dependency ownership in `5ca436c3ba6265f6431deaf7348332940051686d`; the accumulated boundary subsequently passed Debug and Release, including the retained migration suite.
 * Aligned `ImagingIO` package documentation with the implemented HEIF/AVIF and TIFF policies and replaced later-format roadmap shorthand with the exact 16-target repository-owned Debug/Release matrix and expected totals.
 * Kept positive real-camera RAW decode, real 8/10-bit AVIF/HEIC decode and animated-WebP rejection as separately reported supplementary interoperability evidence because provenance-reviewed fixtures are not stored in the repository.
 
@@ -43,7 +54,7 @@
 
 * Implemented the opt-in EXR `StreamRaster` / `Upp::Image` preview bridge.
 * Expanded the focused contract through `323c3dc29938de404fc3411b87dcaf6c6aea4559` to cover GrayAlpha, non-finite-to-zero preview behaviour, single-channel masks, named multichannel RGB selection, straight alpha, opaque/alpha reporting, invalid/truncated input and fixture cleanup.
-* Current focused contract is 22 checks; Debug/Release Windows acceptance remains pending.
+* The 22-check focused contract passed Debug and Release and remains in the accepted migration suite.
 
 ### FFmpeg first slice
 
@@ -58,7 +69,7 @@
 * Recorded `ffmpeg_avcodec_test` Debug 12/0 as green after the generated config repair.
 * Closed the avformat linker ownership defect by adding pinned upstream `libavformat/to_upper4.c` (`ff_toupper4`) and `libavformat/mpegaudiotabs.c` (`ff_mpa_freq_tab`) to the explicit avformat manifest.
 * Audited the selected avformat and swscale Makefile-to-manifest ownership closures; no further live first-slice materializer gap was found statically.
-* Current expected first-slice gates are headers 8/0, avutil 13/0, avcodec 12/0, avformat 14/0, swscale 13/0, first-frame 27/0. Current-main full Debug/Release and repeatability acceptance remains pending.
+* Current expected first-slice gates are headers 8/0, avutil 13/0, avcodec 12/0, avformat 14/0, swscale 13/0, first-frame 27/0. The bounded Debug/Release and five-additional-runs-per-configuration repeatability gates passed at `f67e9a53b70be84cb5dd40586f59e1009c1724ab`; all six focused gates also passed the later migration suite.
 
 ### Documentation and recovery
 
@@ -70,4 +81,4 @@
 
 ### Deferred next scope
 
-* FFmpeg SIMD/external assembly, hardware acceleration, broader codecs/containers, audio, seeking/indexing, a backend-neutral media wrapper, and waveform/vectorscope expansion remain explicitly deferred until the current bounded generation is fully accepted.
+* FFmpeg SIMD/external assembly, hardware acceleration, broader codecs/containers, audio, seeking/indexing, a backend-neutral media wrapper, and waveform/vectorscope expansion remain separate enhancements, not unfinished requirements of the accepted bounded generation. Current release preparation prioritizes verified dependency security and accurately reported platform support.

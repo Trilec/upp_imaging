@@ -1,2 +1,6 @@
+# Local generated output; never source nests.
+/build/
+/bin/
+# Legacy artifacts remain ignored until local cleanup is complete.
 out/
 GitHubOut.var

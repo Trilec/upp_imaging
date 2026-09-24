@@ -25,4 +25,4 @@ Explicit source manifests and import lists remain authoritative. `_src` packages
 
 The Imath and OpenEXR public packages export their own include directories for bare upstream header names. No root-level implementation header is required. Submodules live with their source owners; `.gitmodules` records their current physical paths while retaining their original module identities.
 
-Build output and local logs belong in ignored `out/`, which is not a source directory.
+Disposable compiler output, test executables, validation logs and staging belong under ignored `build/<platform>/`. Only verified runnable Release applications and required runtime payloads belong under ignored `bin/<platform>/`. Neither directory is a U++ source nest. The old `out/` tree is legacy local output, not an active build destination. See [build and run](BUILD_AND_RUN.md) for assembly setup, exact paths and migration status.
