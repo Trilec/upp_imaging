@@ -1382,11 +1382,13 @@ void ImagingWorkbench::RenderPreviewFromProxy()
 
 void ImagingWorkbench::ScanSourceMetadata()
 {
+	constexpr int max_subimages_to_inspect = 256;
 	preview_groups.Clear();
 	selected_preview_group = -1;
 	proxy_cache.Clear();
 	subimages.Clear();
 	subimage_count = 0;
+	subimages_truncated = false;
 
 	std::unique_ptr<OIIO::ImageInput> input(OIIO::ImageInput::open(source_filename.Begin()));
 	if(!input) {
@@ -1394,7 +1396,7 @@ void ImagingWorkbench::ScanSourceMetadata()
 		return;
 	}
 
-	for(int subimage = 0; input->seek_subimage(subimage, 0); ++subimage) {
+	for(int subimage = 0; subimage < max_subimages_to_inspect && input->seek_subimage(subimage, 0); ++subimage) {
 		++subimage_count;
 		const OIIO::ImageSpec& spec = input->spec();
 		ImageSubimageInfo info;
@@ -1577,6 +1579,8 @@ void ImagingWorkbench::ScanSourceMetadata()
 			}
 		}
 	}
+	if(subimage_count == max_subimages_to_inspect)
+		subimages_truncated = input->seek_subimage(max_subimages_to_inspect, 0);
 
 	input->close();
 }
@@ -1879,7 +1883,10 @@ void ImagingWorkbench::UpdateLayersPage()
 	summary << basename << "\n";
 	summary << resolution_text << "\n";
 	summary << spec.nchannels << " channels: " << channel_text << "\n";
-	summary << subimage_count << " subimage" << (subimage_count == 1 ? "" : "s") << "\n";
+	summary << subimage_count << " subimage" << (subimage_count == 1 ? "" : "s");
+	if(subimages_truncated)
+		summary << " shown (inspection limit reached)";
+	summary << "\n";
 	summary << source_type << " source / FLOAT working buffer\n";
 	summary << "Color space: " << color_space << "\n";
 	summary << memory_text;
@@ -1887,7 +1894,8 @@ void ImagingWorkbench::UpdateLayersPage()
 
 	UiModelItem file_item;
 	file_item.text = basename;
-	file_item.right_text = subimage_count > 1 ? Format("%d subimages", subimage_count) : String("1 subimage");
+	file_item.right_text = subimages_truncated ? Format("%d+ subimages", subimage_count) :
+	                       subimage_count > 1 ? Format("%d subimages", subimage_count) : String("1 subimage");
 	file_item.description = summary;
 	file_item.group_header = true;
 	UiTreeNodeRef file_node = model.AddChild(model.Root(), file_item);

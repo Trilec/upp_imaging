@@ -53,6 +53,21 @@ static bool WriteFixture(const std::filesystem::path& path, int width, int heigh
 	return UppImaging::SaveImage(path.string().c_str(), image, &error);
 }
 
+static bool WriteManySubimages(const std::filesystem::path& path, int count)
+{
+	OIIO::ImageOutput::unique_ptr output = OIIO::ImageOutput::create(path.string());
+	if(!output)
+		return false;
+	OIIO::ImageSpec spec(1, 1, 3, OIIO::TypeDesc::UINT8);
+	const unsigned char pixel[] = {32, 64, 96};
+	for(int i = 0; i < count; ++i) {
+		if(!output->open(path.string(), spec, i ? OIIO::ImageOutput::AppendSubimage : OIIO::ImageOutput::Create) ||
+		   !output->write_image(OIIO::TypeDesc::UINT8, pixel))
+			return false;
+	}
+	return output->close();
+}
+
 static bool WriteCurveLut(const std::filesystem::path& path)
 {
 	std::ofstream out(path, std::ios::binary);
@@ -540,6 +555,14 @@ static int RunTests()
 		      wb.source_image.spec().height == (avif ? 533 : 461),
 		      avif ? "AVIF Workbench load" : "HEIC Workbench load", passed, failed);
 	}
+	const std::filesystem::path many_subimages = root / "many_subimages.tiff";
+	bool many_written = WriteManySubimages(many_subimages, 257);
+	Check(many_written, "multi-subimage TIFF fixture write", passed, failed);
+	bool many_loaded = many_written && wb.LoadImageFile(many_subimages.string().c_str(), error, true);
+	Check(many_loaded, "multi-subimage TIFF load", passed, failed);
+	Check(many_loaded && wb.subimage_count == 256 && wb.subimages.GetCount() == 256 &&
+	      wb.subimages_truncated && wb.layers_summary.GetText().Find("inspection limit reached") >= 0,
+	      "Workbench subimage inspection bound", passed, failed);
 
 	Check(wb.LoadImageFile(grouped.string().c_str(), error, true), "grouped load", passed, failed);
 	wb.canvas.SetRect(0, 0, 640, 360);

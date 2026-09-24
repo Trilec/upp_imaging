@@ -11,6 +11,8 @@
 * Exposed the registered WebP, TIFF, HDR, DPX, JPEG XL, AVIF, HEIC and other
   supported input families in Workbench. Small generated fixtures and retained
   upstream HEIF examples validate the expanded Open path; saving remains EXR/PNG.
+  Limited Workbench's subimage inspection and Layers tree to 256 entries,
+  showing when a file has more subimages.
 * Updated the linked OpenEXR and OpenEXRCore source slices from 3.4.13 to
   the 3.4.14 security release and standalone OpenJPH from 0.26.3 to
   0.27.1, retaining explicit generated configuration.
