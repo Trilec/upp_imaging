@@ -1,7 +1,0 @@
-description "Strict Iex package preflight test";
-
-uses
-	iex_src;
-
-file
-	main.cpp;

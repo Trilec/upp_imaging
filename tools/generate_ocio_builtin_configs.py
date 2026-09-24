@@ -52,7 +52,7 @@ def validate_generated(text: str, path: Path, identifiers: list[str]) -> None:
 
 
 def build_output(root: Path) -> tuple[Path, Path, str, str]:
-    src = root / "opencolorio_src"
+    src = root / "third_party" / "opencolorio" / "opencolorio_src"
     template_dir = src / "upstream" / "src" / "OpenColorIO" / "builtinconfigs"
     config_dir = template_dir / "configs"
     out_dir = src / "generated_include"

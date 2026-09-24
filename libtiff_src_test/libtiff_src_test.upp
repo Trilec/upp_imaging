@@ -1,8 +1,0 @@
-description "Strict libtiff source probe";
-
-uses
-	Core,
-	libtiff_src;
-
-file
-	main.cpp;

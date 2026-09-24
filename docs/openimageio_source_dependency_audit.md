@@ -32,7 +32,7 @@ Authority files inspected:
 - Source manifest location: `src/libutil/CMakeLists.txt:set(libOpenImageIO_Util_srcs ...)`
 - Source count: 18 `.cpp`
 - Sources: `argparse.cpp`, `benchmark.cpp`, `errorhandler.cpp`, `farmhash.cpp`, `filesystem.cpp`, `fmath.cpp`, `filter.cpp`, `hashes.cpp`, `paramlist.cpp`, `plugin.cpp`, `SHA1.cpp`, `strutil.cpp`, `sysutil.cpp`, `thread.cpp`, `timer.cpp`, `typedesc.cpp`, `ustring.cpp`, `xxhash.cpp`
-- Public headers: `OpenImageIO/argparse.h`, `benchmark.h`, `errorhandler.h`, `filter.h`, `filesystem.h`, `fmath.h`, `hash.h`, `optparser.h`, `parallel.h`, `paramlist.h`, `plugin.h`, `refcnt.h`, `span.h`, `string_view.h`, `strutil.h`, `strongparam.h`, `thread.h`, `timer.h`, `typedesc.h`, `ustring.h`, `vecparam.h`
+- Public headers: `third_party/openimageio/OpenImageIO/argparse.h`, `benchmark.h`, `errorhandler.h`, `filter.h`, `filesystem.h`, `fmath.h`, `hash.h`, `optparser.h`, `parallel.h`, `paramlist.h`, `plugin.h`, `refcnt.h`, `span.h`, `string_view.h`, `strutil.h`, `strongparam.h`, `thread.h`, `timer.h`, `typedesc.h`, `ustring.h`, `vecparam.h`
 - Internal headers: `src/libutil/SHA1.h`, `src/libutil/stb_sprintf.h`
 - Generated/configured headers: `version_win32.rc` on Windows only
 - Direct dependencies: `Threads::Threads`, `Imath::Imath`, `fmt::fmt-header-only` (or internalized fmt headers), `GCC_ATOMIC_LIBRARIES` when needed
@@ -48,7 +48,7 @@ Authority files inspected:
 - Embedded sibling sources: `src/libtexture/texturesys.cpp`, `texture3d.cpp`, `environment.cpp`, `texoptions.cpp`, `imagecache.cpp`
 - Source count: 38 `.cpp` entries in the target source list, before any embedded plugin sources
 - Sources: `imagebufalgo.cpp`, `imagebufalgo_pixelmath.cpp`, `imagebufalgo_channels.cpp`, `imagebufalgo_compare.cpp`, `imagebufalgo_copy.cpp`, `imagebufalgo_deep.cpp`, `imagebufalgo_draw.cpp`, `imagebufalgo_addsub.cpp`, `imagebufalgo_muldiv.cpp`, `imagebufalgo_mad.cpp`, `imagebufalgo_minmaxchan.cpp`, `imagebufalgo_orient.cpp`, `imagebufalgo_xform.cpp`, `imagebufalgo_demosaic.cpp`, `imagebufalgo_yee.cpp`, `imagebufalgo_flip.cpp`, `deepdata.cpp`, `exif.cpp`, `exif-canon.cpp`, `formatspec.cpp`, `icc.cpp`, `imagebuf.cpp`, `imageinput.cpp`, `imageio.cpp`, `imageioplugin.cpp`, `imageoutput.cpp`, `iptc.cpp`, `xmp.cpp`, `color_ocio.cpp`, `maketexture.cpp`, `bluenoise.cpp`, `printinfo.cpp`, `oiio_gpu.cpp`, plus the 5 `src/libtexture/*.cpp` files above
-- Public headers: `OpenImageIO/imageio.h`, `imagebuf.h`, `imagebufalgo.h`, `imagebufalgo_util.h`, `imagecache.h`, `imagebufalgo_opencv.h`, `color.h`, `deepdata.h`, `filesystem.h`, `plugin.h`, `thread.h`, `typedesc.h`, `ustring.h`, `strutil.h`, `span.h`, `image_span.h`, `memory.h`, `platform.h`, `paramlist.h`, `parallel.h`, `filter.h`, `fmath.h`, `simd.h`, `texture.h`, `sysutil.h`, `tiffutils.h`, `attrdelegate.h`
+- Public headers: `third_party/openimageio/OpenImageIO/imageio.h`, `imagebuf.h`, `imagebufalgo.h`, `imagebufalgo_util.h`, `imagecache.h`, `imagebufalgo_opencv.h`, `color.h`, `deepdata.h`, `filesystem.h`, `plugin.h`, `thread.h`, `typedesc.h`, `ustring.h`, `strutil.h`, `span.h`, `image_span.h`, `memory.h`, `platform.h`, `paramlist.h`, `parallel.h`, `filter.h`, `fmath.h`, `simd.h`, `texture.h`, `sysutil.h`, `tiffutils.h`, `attrdelegate.h`
 - Internal headers: `imageio_pvt.h`, `buildopts.h`, `imagecache_pvt.h`, `imagecache_memory_pvt.h`, `imagecache_memory_print.h`, `texture_pvt.h`, `imagebufalgo_demosaic_prv.h`, `exif.h`, `kissfft.hh`
 - Generated/configured headers: `buildopts.h` from `src/libOpenImageIO/buildopts.h.in`; `version_win32.rc` on Windows; `oiioversion.h` from `src/include/OpenImageIO/oiioversion.h.in`; `OpenImageIOConfig.cmake`, `OpenImageIOConfigVersion.cmake`, `OpenImageIOTargets.cmake`, and `OpenImageIO.pc` are also generated/configured support files
 - Direct dependencies: `OpenImageIO_Util`, `Imath::Imath`, `OpenEXR::OpenEXR`, `OpenColorIO::OpenColorIO`, `ZLIB::ZLIB`
@@ -83,20 +83,20 @@ Recommended future U++ plugin packages:
 
 For the first no-I/O audit probe, the smallest usable surface is:
 
-- `OpenImageIO/oiioversion.h`
-- `OpenImageIO/export.h`
-- `OpenImageIO/typedesc.h`
-- `OpenImageIO/strutil.h`
-- `OpenImageIO/filesystem.h`
-- `OpenImageIO/ustring.h`
+- `third_party/openimageio/OpenImageIO/oiioversion.h`
+- `third_party/openimageio/OpenImageIO/export.h`
+- `third_party/openimageio/OpenImageIO/typedesc.h`
+- `third_party/openimageio/OpenImageIO/strutil.h`
+- `third_party/openimageio/OpenImageIO/filesystem.h`
+- `third_party/openimageio/OpenImageIO/ustring.h`
 
 The core API adds:
 
-- `OpenImageIO/imageio.h`
-- `OpenImageIO/imagebuf.h`
-- `OpenImageIO/imagebufalgo.h`
-- `OpenImageIO/imagecache.h`
-- `OpenImageIO/color.h`
+- `third_party/openimageio/OpenImageIO/imageio.h`
+- `third_party/openimageio/OpenImageIO/imagebuf.h`
+- `third_party/openimageio/OpenImageIO/imagebufalgo.h`
+- `third_party/openimageio/OpenImageIO/imagecache.h`
+- `third_party/openimageio/OpenImageIO/color.h`
 
 Broader installed API exists, but it is not needed for the first strict compile-and-link milestone.
 
@@ -108,7 +108,7 @@ Broader installed API exists, but it is not needed for the first strict compile-
 - Values required for `3.1.15.0`: `OIIO_VERSION_MAJOR=3`, `OIIO_VERSION_MINOR=1`, `OIIO_VERSION_PATCH=15`, `OIIO_VERSION_TWEAK=0`, `OIIO_VERSION_RELEASE_TYPE` empty
 - Namespace values: outer namespace defaults to `OpenImageIO`; inner namespace is `v3_1` because supported releases omit the patch from the versioned namespace
 - Safe to pin in a repository package: yes, as a generated header mirroring the upstream release
-- Recommended repository path: `openimageio_src/OpenImageIO/oiioversion.h`
+- Recommended repository path: `third_party/openimageio/openimageio_src/OpenImageIO/oiioversion.h`
 
 ### `buildopts.h`
 
@@ -116,7 +116,7 @@ Broader installed API exists, but it is not needed for the first strict compile-
 - Values required: `OIIO_DEFAULT_PLUGIN_SEARCHPATH`, `OIIO_ALL_BUILD_DEPS_FOUND`
 - `OIIO_DEFAULT_PLUGIN_SEARCHPATH` is safe to pin as empty for the first no-I/O milestone
 - `OIIO_ALL_BUILD_DEPS_FOUND` can be left empty or populated from the package graph
-- Recommended repository path: `openimageio_src/buildopts.h`
+- Recommended repository path: `third_party/openimageio/openimageio_src/buildopts.h`
 
 ### `export.h`
 
@@ -180,7 +180,7 @@ These are optional in upstream and can stay disabled for the first strict milest
 - `Boost` -> only needed by older `OpenVDB`
 - `pugixml` -> optional external replacement
 - `OpenCV` -> optional feature
-- `FFmpeg` -> optional plugin/tool feature
+- `FFmpeg` -> optional integrations/plugin/tool feature
 - `WebP` -> optional plugin
 - `OpenJPEG` -> optional plugin
 - `Libheif` -> optional plugin
@@ -192,7 +192,7 @@ These are optional in upstream and can stay disabled for the first strict milest
 - `Python` -> bindings and tests only
 - `TBB` -> optional acceleration dependency
 - `CUDA` -> optional GPU path
-- `OpenVDB` -> optional plugin/feature path
+- `OpenVDB` -> optional integrations/plugin/feature path
 - `JXL` -> optional plugin
 - `R3DSDK` -> optional tool/plugin path
 - `Nuke` -> tool integration only
@@ -314,7 +314,7 @@ Current collision risk is low for a future lowercase package namespace such as `
 Recommended include convention:
 
 - stable route: `#include <openimageio/imageio.h>`
-- strict route: keep the strict package’s internal headers private; do not expose raw upstream `OpenImageIO/...` paths to application code unless the package wrapper is intentionally mirroring them
+- strict route: keep the strict package’s internal headers private; do not expose raw upstream `third_party/openimageio/OpenImageIO/...` paths to application code unless the package wrapper is intentionally mirroring them
 
 ## OpenColorIO relationship
 
@@ -323,7 +323,7 @@ In this release, OpenColorIO is a direct core-library dependency, not just a too
 Evidence:
 
 - `src/libOpenImageIO/CMakeLists.txt` links `OpenColorIO::OpenColorIO` directly
-- `src/libOpenImageIO/color_ocio.cpp` includes `OpenColorIO/OpenColorIO.h`
+- `src/libOpenImageIO/color_ocio.cpp` includes `third_party/opencolorio/OpenColorIO/OpenColorIO.h`
 - `src/include/OpenImageIO/color.h` documents runtime OCIO-backed color configuration
 
 Conclusion:

@@ -1,9 +1,0 @@
-description "fmt user-facing probe";
-
-uses
-	Core,
-	fmt;
-
-file
-	main.cpp,
-	README.md;

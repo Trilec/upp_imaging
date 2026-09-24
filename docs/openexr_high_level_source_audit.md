@@ -235,7 +235,7 @@ These are required by the implementation sources but should not be part of the o
 ### `OpenEXRConfig.h`
 
 - Upstream status: generated from `cmake/OpenEXRConfig.h.in`.
-- Repository equivalent: `openexr_src/upstream/OpenEXRConfig.h` already exists.
+- Repository equivalent: `third_party/openexr/openexr_src/upstream/OpenEXRConfig.h` already exists.
 - Suitability for high-level `OpenEXR`: suitable if the values remain aligned with 3.4.13.
 - Important values:
   - `OPENEXR_VERSION_MAJOR/MINOR/PATCH = 3.4.13`
@@ -252,7 +252,7 @@ These are required by the implementation sources but should not be part of the o
 ### `IexConfig.h`
 
 - Upstream status: generated from `cmake/IexConfig.h.in`.
-- Repository equivalent: `iex_src/upstream/IexConfig.h` exists.
+- Repository equivalent: `third_party/openexr/iex_src/upstream/IexConfig.h` exists.
 - Suitability for high-level `OpenEXR`: suitable and required.
 - Important values:
   - `IEX_INTERNAL_NAMESPACE = Iex_3_4`
@@ -263,7 +263,7 @@ These are required by the implementation sources but should not be part of the o
 ### `IlmThreadConfig.h`
 
 - Upstream status: generated from `cmake/IlmThreadConfig.h.in`.
-- Repository equivalent: `ilmthread_src/upstream/IlmThreadConfig.h` exists.
+- Repository equivalent: `third_party/openexr/ilmthread_src/upstream/IlmThreadConfig.h` exists.
 - Suitability for high-level `OpenEXR`: suitable and required.
 - Important values:
   - `ILMTHREAD_THREADING_ENABLED`
@@ -277,28 +277,28 @@ These are required by the implementation sources but should not be part of the o
 ### `ImfExport.h`
 
 - Upstream status: not generated; source-controlled header.
-- Repository equivalent: current `openexr_src/upstream/ImfExport.h` exists.
+- Repository equivalent: current `third_party/openexr/openexr_src/upstream/ImfExport.h` exists.
 - Suitability: suitable if it continues to include the correct config macros.
 - Important values: `OPENEXR_DLL`, `OPENEXR_EXPORTS`, and the visibility macros from `OpenEXRConfig.h`.
 
 ### `ImfNamespace.h`
 
 - Upstream status: not generated; source-controlled header.
-- Repository equivalent: current `openexr_src/upstream/ImfNamespace.h` exists.
+- Repository equivalent: current `third_party/openexr/openexr_src/upstream/ImfNamespace.h` exists.
 - Suitability: suitable if it includes the matching `OpenEXRConfig.h`.
 - Important values: `OPENEXR_IMF_NAMESPACE` and `OPENEXR_IMF_INTERNAL_NAMESPACE`.
 
 ### `ImfVersion.h`
 
 - Upstream status: not generated; source-controlled public header.
-- Repository equivalent: current `openexr_src/upstream/ImfVersion.h` exists.
+- Repository equivalent: current `third_party/openexr/openexr_src/upstream/ImfVersion.h` exists.
 - Suitability: suitable for the high-level package.
 - Important values: `MAGIC = 20000630`, `EXR_VERSION = 2`, file flags for tiled, long names, non-image, and multipart.
 
 ### `openexr_version.h`
 
 - Upstream status: not generated; source-controlled release/version header used by the OpenEXR tree.
-- Repository equivalent: current `openexr_src/upstream/openexr_version.h` exists.
+- Repository equivalent: current `third_party/openexr/openexr_src/upstream/openexr_version.h` exists.
 - Suitability: suitable as a shared version header, but it is not part of the high-level `OpenEXR` CMake target source list.
 - Important values: `OPENEXR_VERSION_MAJOR/MINOR/PATCH = 3.4.13`.
 - Conflict with OpenEXRCore: none if kept under package-prefixed include paths; both layers carry the same release number.
@@ -306,7 +306,7 @@ These are required by the implementation sources but should not be part of the o
 ### `OpenEXRConfigInternal.h`
 
 - Upstream status: generated/configured internal header, but not part of the high-level `OpenEXR` library target.
-- Repository equivalent: present under `openexr_core_src/upstream`.
+- Repository equivalent: present under `third_party/openexr/openexr_core_src/upstream`.
 - Suitability for high-level `OpenEXR`: only needed if the high-level package later copies or reuses OpenEXRCore internals.
 - Important values: `OPENEXR_USE_INTERNAL_DEFLATE`, `OPENEXR_IMF_HAVE_COMPLETE_IOMANIP`, `OPENEXR_IMF_HAVE_SYSCONF_NPROCESSORS_ONLN`, `OPENEXR_IMF_HAVE_GCC_INLINE_ASM_AVX`, `OPENEXR_MISSING_ARM_VLD1`.
 

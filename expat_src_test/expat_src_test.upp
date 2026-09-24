@@ -1,9 +1,0 @@
-description "Strict Expat source probe";
-
-uses
-	Core,
-	expat_src;
-
-file
-	main.cpp,
-	README.md;

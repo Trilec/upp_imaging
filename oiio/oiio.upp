@@ -1,8 +1,0 @@
-description "Temporary compatibility forwarding package for OpenImageIO";
-
-uses
-	OpenImageIO;
-
-file
-	OIIO.h,
-	README.md;

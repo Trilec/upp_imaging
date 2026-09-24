@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Repository structure simplification
+
+* Reduced 177 source-root directories to eight logical areas and 174 packages to 124.
+* Retained 49 deterministic tests and one manual benchmark; removed 41 obsolete or duplicate test/probe packages, compatibility aliases, the superseded viewer/helper route and a generated design executable.
+* Migrated U++ nests, explicit source paths, submodules, fixtures, generators and documentation while preserving package names and upstream pins.
+* Repaired workbench dependency/API/harness defects and clean-shutdown ownership for OCIO's LUT registry and MinGW OIIO error storage exposed by the retained tests.
+* Added the authoritative acceptance manifest and reproducible Debug/Release runner under tests/ and tools/.
+
 ### Current-generation framework and package architecture
 
 * Completed the backend-neutral `Upp::Imaging` framework: `ImagingCore`, `ImagingIO`, `ImagingColor`, `ImagingAnalysis`, `ImagingDiagnostics`, and the `Imaging` umbrella.

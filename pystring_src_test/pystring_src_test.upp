@@ -1,9 +1,0 @@
-description "Strict pystring source probe";
-
-uses
-	Core,
-	pystring_src;
-
-file
-	main.cpp,
-	README.md;

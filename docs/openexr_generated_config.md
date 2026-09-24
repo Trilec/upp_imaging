@@ -5,7 +5,7 @@ This document tracks generated/config headers needed for OpenEXR lower-layer pac
 ## OpenEXRConfig.h
 
 - upstream template: `openexr-3.4.13/cmake/OpenEXRConfig.h.in`
-- repository-owned generated output: `openexr_src/upstream/OpenEXRConfig.h`
+- repository-owned generated output: `third_party/openexr/openexr_src/upstream/OpenEXRConfig.h`
 - values used:
   - version: `3.4.13`
   - soversion: `33`
@@ -20,7 +20,7 @@ This document tracks generated/config headers needed for OpenEXR lower-layer pac
 ## OpenEXRConfigInternal.h
 
 - upstream template: `openexr-3.4.13/cmake/OpenEXRConfigInternal.h.in`
-- repository-owned generated output: `openexr_core_src/upstream/OpenEXRConfigInternal.h`
+- repository-owned generated output: `third_party/openexr/openexr_core_src/upstream/OpenEXRConfigInternal.h`
 - current values used:
   - `OPENEXR_USE_INTERNAL_DEFLATE` unset because this package attempt is not embedding vendored deflate
   - `OPENEXR_IMF_HAVE_COMPLETE_IOMANIP` enabled
@@ -43,7 +43,7 @@ This document tracks generated/config headers needed for OpenEXR lower-layer pac
 ## IexConfigInternal.h
 
 - upstream template: `openexr-3.4.13/cmake/IexConfigInternal.h.in`
-- repository-owned generated output: `iex_src/upstream/IexConfigInternal.h`
+- repository-owned generated output: `third_party/openexr/iex_src/upstream/IexConfigInternal.h`
 - values used:
   - `HAVE_UCONTEXT_H` unset
   - `IEX_HAVE_CONTROL_REGISTER_SUPPORT` unset

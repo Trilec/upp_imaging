@@ -1,24 +1,24 @@
 [submodule "jpegxl_src/upstream"]
-	path = jpegxl_src/upstream
+	path = third_party/codecs/jpegxl_src/upstream
 	url = https://github.com/libjxl/libjxl.git
 [submodule "openimageio_plugins_src/upstream"]
-	path = openimageio_plugins_src/upstream
+	path = third_party/openimageio/openimageio_plugins_src/upstream
 	url = https://github.com/AcademySoftwareFoundation/OpenImageIO.git
 [submodule "libraw_src/upstream"]
-	path = libraw_src/upstream
+	path = third_party/codecs/libraw_src/upstream
 	url = https://github.com/LibRaw/LibRaw.git
 [submodule "webp_src/upstream"]
-	path = webp_src/upstream
+	path = third_party/codecs/webp_src/upstream
 	url = https://github.com/webmproject/libwebp.git
 [submodule "dav1d_src/upstream"]
-	path = dav1d_src/upstream
+	path = third_party/codecs/dav1d_src/upstream
 	url = https://github.com/libsdl-org/dav1d.git
 [submodule "libde265_src/upstream"]
-	path = libde265_src/upstream
+	path = third_party/codecs/libde265_src/upstream
 	url = https://github.com/strukturag/libde265.git
 [submodule "libheif_src/upstream"]
-	path = libheif_src/upstream
+	path = third_party/codecs/libheif_src/upstream
 	url = https://github.com/strukturag/libheif.git
 [submodule "ffmpeg_headers/upstream"]
-	path = ffmpeg_headers/upstream
+	path = third_party/ffmpeg/ffmpeg_headers/upstream
 	url = https://github.com/FFmpeg/FFmpeg.git

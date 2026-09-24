@@ -1,0 +1,13 @@
+description "User-facing OpenEXR package with stable include path";
+
+include .;
+
+uses
+	openexr_src;
+
+file
+	Imf.h,
+	half.h,
+	ImathBox.h,
+	ImathVec.h,
+	README.md;

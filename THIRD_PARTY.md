@@ -13,7 +13,7 @@
 
 Notes:
 
-- The imported upstream source tree is preserved under `zlib_src/upstream/`.
+- The imported upstream source tree is preserved under `third_party/codecs/zlib_src/upstream/`.
 - `zlib_src` is the strict package that compiles imported upstream zlib 1.3.2 sources directly.
 - `zlib` is a compatibility package. On Windows/Core builds it can reuse U++ `plugin/z` linkage to avoid duplicate static zlib symbols, because `Core` already links `plugin/z` on Windows.
 
@@ -30,11 +30,11 @@ Notes:
 
 Notes:
 
-- The imported upstream source tree is preserved under `libpng_src/upstream/`.
+- The imported upstream source tree is preserved under `third_party/codecs/libpng_src/upstream/`.
 - `libpng_src` is the strict package that compiles imported upstream libpng 1.6.58 sources directly.
 - `libpng_src` depends on `zlib_src`.
-- The release-provided file `scripts/pnglibconf.h.prebuilt` was copied into `libpng_src/upstream/pnglibconf.h` to avoid local config generation.
-- A local bridge header `libpng_src/upstream/zlib.h` was added so the imported libpng sources can include zlib from `zlib_src` without modifying upstream libpng files.
+- The release-provided file `scripts/pnglibconf.h.prebuilt` was copied into `third_party/codecs/libpng_src/upstream/pnglibconf.h` to avoid local config generation.
+- A local bridge header `third_party/codecs/libpng_src/upstream/zlib.h` was added so the imported libpng sources can include zlib from `zlib_src` without modifying upstream libpng files.
 - `libpng` is the current user-facing package and compiles the same imported libpng sources against `zlib` for compatibility with normal U++ applications.
 
 ## Imath
@@ -50,10 +50,10 @@ Notes:
 
 Notes:
 
-- The imported upstream source tree is preserved under `imath_src/upstream/`.
+- The imported upstream source tree is preserved under `third_party/imath/imath_src/upstream/`.
 - `imath_src` is the strict package that compiles imported upstream Imath 3.2.2 sources directly.
 - `imath` is the current user-facing package and delegates to `imath_src`.
-- A repository-owned generated config header `imath_src/upstream/ImathConfig.h` was created from upstream `config/ImathConfig.h.in` using the upstream release defaults needed for this local static package build.
+- A repository-owned generated config header `third_party/imath/imath_src/upstream/ImathConfig.h` was created from upstream `config/ImathConfig.h.in` using the upstream release defaults needed for this local static package build.
 - OpenEXR is not included in this import.
 
 ## OpenEXR
@@ -71,7 +71,7 @@ Notes:
 
 - This task does not add full OpenEXR support.
 - `openexr_src` now carries the full high-level OpenEXR source package for 3.4.13.
-- Repository-owned generated config and bridge headers remain in `openexr_src/upstream/` to preserve the strict source boundary.
+- Repository-owned generated config and bridge headers remain in `third_party/openexr/openexr_src/upstream/` to preserve the strict source boundary.
 - The package depends directly on `imath_src`, `iex_src`, `ilmthread_src`, and `openexr_core_src`.
 
 ## Iex
@@ -85,7 +85,7 @@ Notes:
 
 - `iex_src` packages the lower OpenEXR exception/error layer.
 - Repository-owned generated headers `IexConfig.h` and `IexConfigInternal.h` were added from upstream templates / local static-package assumptions.
-- Imported file `iex_src/upstream/IexMathFpu.cpp` was minimally adjusted to use quoted local config-header includes for the U++ package include model.
+- Imported file `third_party/openexr/iex_src/upstream/IexMathFpu.cpp` was minimally adjusted to use quoted local config-header includes for the U++ package include model.
 
 ## IlmThread
 
@@ -134,7 +134,7 @@ Pinned build dependencies used by `jpegxl_src`:
 
 Notes:
 
-- `jpegxl_src/upstream` is a pinned Git submodule and its required nested dependencies are initialized recursively from libjxl's own submodule declarations.
+- `third_party/codecs/jpegxl_src/upstream` is a pinned Git submodule and its required nested dependencies are initialized recursively from libjxl's own submodule declarations.
 - `jpegxl_src` compiles the libjxl codec, thread runners, Brotli, core Highway runtime dispatch, and baseline skcms directly through U++ `import.ext`.
 - JPEG XL container boxes are enabled.
 - Lossless JPEG reconstruction/transcoding is disabled, so libjpeg-turbo is not part of this backend slice.
@@ -155,3 +155,7 @@ Notes:
 - `openimageio_plugin_jpegxl` statically registers the OpenImageIO JPEG XL reader/writer through the stable `OpenImageIO` package.
 - The reader is retained from the 3.1.15.0 source slice; the repository copy of the writer is packaged locally for the U++ static plugin model.
 - ImagingIO applies a stricter framework policy than the raw plugin and currently rejects JPEG XL GrayAlpha and arbitrary extra-channel/MultiChannel layouts.
+
+## Local lifetime integration
+
+Pinned source trees are unchanged by the layout migration. OpenColorIO's source manifest compiles a reproducible local FileTransform.cpp overlay that owns its LUT format registry and raw format objects at process shutdown; its generator and original BSD-3-Clause copyright are retained. OpenImageIO source wrappers expose shutdown of MinGW main-thread error storage before the U++ heap audit, retaining pending-error reporting. These downstream integration files live outside upstream trees. See docs/STRUCTURE_MIGRATION.md and the respective package READMEs.
