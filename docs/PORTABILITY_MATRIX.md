@@ -18,6 +18,12 @@ not produce a POSIX configuration. `third_party/ffmpeg/ffmpeg_headers/generated/
 still declares `ARCH_X86_64=1`, `HAVE_WINDOWS_H=1` and
 `HAVE_PTHREADS=0`. Those values must be regenerated and validated for
 each target before the FFmpeg slice can build there.
+The clean Windows rebuild also emits Clang's
+`-Wnonportable-include-path` warning for upstream OpenColorIO
+`#include <Imath/half.h>` resolving to `<imath/half.h>` in the current
+include route. This exact case mismatch needs a source/include-route
+review on a case-sensitive target; Windows compilation is not proof that
+the include works on Linux or macOS.
 
 The EXR round-trip tests now use a runner-provided runtime directory,
 falling back to the platform temp directory when run standalone. This

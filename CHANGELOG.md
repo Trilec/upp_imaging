@@ -4,6 +4,11 @@
 
 ### Local release preparation in progress
 
+* Refreshed the bounded FFmpeg source and generated header family from
+  9.0.1 to 9.0.2, including a reachable MOV metadata allocation bound and
+  native H.264 corrections. Kept the scalar configuration and the required
+  `chroma_pos_compat.c` integration function; the FFmpeg-focused matrix and
+  ten additional first-frame runs passed.
 * Verified the new U++ intermediate path and focused Debug/Release tests;
   added exact per-target check minima and stopped EXR tests writing to
   the legacy `out/` directory.

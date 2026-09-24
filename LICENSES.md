@@ -6,6 +6,15 @@ This repository contains original repository content plus imported third-party c
 
 The repository-level license is in `LICENSE`.
 
+## FFmpeg
+
+`third_party/ffmpeg/ffmpeg_headers/upstream/` is pinned to FFmpeg 9.0.2.
+The selected static decode configuration excludes GPL and nonfree components;
+its baseline is LGPL-2.1-or-later. Original license texts and source notices
+are preserved in the upstream submodule. Generated Windows configuration and
+`chroma_pos_compat.c` are repository integration files. Static redistribution
+requires review of the LGPL combined-work, relinking and source obligations.
+
 ## libheif
 
 `third_party/codecs/libheif_src/upstream/` is pinned to libheif 1.23.5

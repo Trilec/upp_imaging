@@ -1,6 +1,6 @@
 # ffmpeg_avformat_src
 
-Pinned FFmpeg 9.0.1 `libavformat` implementation for the first U++ video decode stack.
+Pinned FFmpeg 9.0.2 `libavformat` implementation for the first U++ video decode stack.
 
 ## Enabled format surface
 

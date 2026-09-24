@@ -1,4 +1,4 @@
-description "Pinned FFmpeg 9.0.1 native H.264 libavcodec package";
+description "Pinned FFmpeg 9.0.2 native H.264 libavcodec package";
 
 noblitz;
 

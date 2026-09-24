@@ -29,7 +29,7 @@ Our framework is in [imaging](imaging/), native dependencies in [third_party](th
 
 See [layout](docs/package_layout.md), [package catalogue](docs/PACKAGE_CATALOGUE.md), [usage](docs/USAGE.md), and [acceptance](docs/WINDOWS_ACCEPTANCE.md). ImagingWorkbench is the primary interactive integration check; deterministic tests remain the correctness authority. Compiler/test/log output belongs under `build/<platform>/`; `bin/<platform>/` contains only verified runnable Release applications and required runtime payloads.
 
-The FFmpeg stack remains pinned to `n9.0.1`, scalar/static, native H.264 decode, MOV/MP4 demux, local-file protocol and swscale. Networking, external codecs, hardware acceleration, encoding and other media subsystems remain disabled.
+The FFmpeg stack remains pinned to `n9.0.2`, scalar/static, native H.264 decode, MOV/MP4 demux, local-file protocol and swscale. Networking, external codecs, hardware acceleration, encoding and other media subsystems remain disabled.
 
 [THIRD_PARTY.md](THIRD_PARTY.md) records provenance and pins; [LICENSES.md](LICENSES.md) lists licenses. The current [security review](docs/THIRD_PARTY_SECURITY.md) and [portability matrix](docs/PORTABILITY_MATRIX.md) record unresolved release gates. [STRUCTURE_MIGRATION.md](docs/STRUCTURE_MIGRATION.md) records every test cleanup decision.
 

@@ -8,9 +8,9 @@ The first objective is deterministic **video-frame decode** on Windows CLANGx64 
 
 ## Upstream pin
 
-- FFmpeg release: `n9.0.1`
-- exact commit: `bf1b838f2ab88b4f8fd83443325c782ea0e0f7fa`
-- signed tag date: 2026-08-12
+- FFmpeg release: `n9.0.2`
+- exact commit: `946fcce07b6dcd0331c8cc609192aeff5e1924f8`
+- tag date: 2026-09-18
 - licensing baseline: LGPL-2.1-or-later
 - `--enable-gpl`, `--enable-version3`, `--enable-nonfree` and GPL/external codec integrations are not part of the first source configuration
 
@@ -88,7 +88,7 @@ The still-image OpenImageIO accumulation pass remains a separate validator lane 
 
 Reassess both the generated configuration and
 third_party/ffmpeg/ffmpeg_swscale_src/chroma_pos_compat.c whenever the FFmpeg pin changes. The
-materializer is token-equivalent (comments/whitespace aside) to n9.0.1's
+materializer is token-equivalent (comments/whitespace aside) to n9.0.2's
 ff_sws_chroma_pos body; !CONFIG_UNSTABLE prevents duplicate ownership with
 format.c. It must be removed or adjusted if upstream moves or changes that
 helper. This does not authorize enabling unstable backends. The parity scanner

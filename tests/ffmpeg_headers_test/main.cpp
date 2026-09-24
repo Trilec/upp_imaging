@@ -387,13 +387,13 @@ CONSOLE_APP_MAIN
 	Check(state, AV_HAVE_FAST_UNALIGNED == 1,
 	      "FFmpeg public headers use fast unaligned access");
 	Check(state, LIBAVUTIL_VERSION_MAJOR == 61,
-	      "libavutil major matches FFmpeg 9.0.1");
+	      "libavutil major matches FFmpeg 9.0.2");
 	Check(state, LIBAVCODEC_VERSION_MAJOR == 63,
-	      "libavcodec major matches FFmpeg 9.0.1");
+	      "libavcodec major matches FFmpeg 9.0.2");
 	Check(state, LIBAVFORMAT_VERSION_MAJOR == 63,
-	      "libavformat major matches FFmpeg 9.0.1");
+	      "libavformat major matches FFmpeg 9.0.2");
 	Check(state, LIBSWSCALE_VERSION_MAJOR == 10,
-	      "libswscale major matches FFmpeg 9.0.1");
+	      "libswscale major matches FFmpeg 9.0.2");
 
 	AVFrame* frame = nullptr;
 	AVCodecContext* codec = nullptr;

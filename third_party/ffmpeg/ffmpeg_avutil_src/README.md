@@ -1,10 +1,10 @@
 # ffmpeg_avutil_src
 
-Pinned FFmpeg 9.0.1 `libavutil` implementation for the first U++ media decode stack.
+Pinned FFmpeg 9.0.2 `libavutil` implementation for the first U++ media decode stack.
 
 ## Boundary
 
-- exact upstream: `third_party/ffmpeg/ffmpeg_headers/upstream` at `bf1b838f2ab88b4f8fd83443325c782ea0e0f7fa`
+- exact upstream: `third_party/ffmpeg/ffmpeg_headers/upstream` at `946fcce07b6dcd0331c8cc609192aeff5e1924f8`
 - static, LGPL-only configuration
 - Windows x86_64 / U++ CLANGx64
 - scalar C path: external assembly and inline assembly are disabled

@@ -1,5 +1,5 @@
 /*
- * FFmpeg n9.0.1 places ff_sws_chroma_pos() inside CONFIG_UNSTABLE in
+ * FFmpeg n9.0.2 places ff_sws_chroma_pos() inside CONFIG_UNSTABLE in
  * libswscale/format.c, while the stable legacy path in graph.c calls it
  * unconditionally.  Keep the repository's unstable backends disabled and
  * materialize the pinned implementation for that configuration only.

@@ -1,8 +1,8 @@
 # Third-party security review
 
 Checked 2026-09-24. This is a staged audit, not a release security
-certificate. The Expat and libheif families below have source and Windows
-focused build evidence;
+certificate. Expat, libheif, OpenImageIO and the bounded FFmpeg slice below
+have source and focused Windows build evidence;
 the rest of the retained dependency graph still needs per-family advisory,
 configuration and provenance review before a release candidate can be approved.
 
@@ -176,15 +176,42 @@ the package READMEs and source manifests, but release/advisory
 applicability has not been verified for every family. Status:
 **unresolved**, not "no vulnerabilities found".
 
-One concrete pending pin is FFmpeg: the retained scalar, local-file
-H.264/MOV/MP4 slice is `n9.0.1` at
-`bf1b838f2ab88b4f8fd83443325c782ea0e0f7fa`, while the
-[official download page](https://ffmpeg.org/download.html) lists
-9.0.2 as the current 9.0 maintenance release (2026-09-18).
-Applicability of its changes to this exact compiled source slice is
-unresolved. A bump must update the source slice, generated configuration,
-headers, `chroma_pos_compat.c` parity and five first-frame runs per
-configuration together; no version-only edit is justified.
+FFmpeg's retained scalar, local-file H.264/MOV/MP4 slice was refreshed
+from `n9.0.1` (`bf1b838f2ab88b4f8fd83443325c782ea0e0f7fa`) to
+`n9.0.2` (`946fcce07b6dcd0331c8cc609192aeff5e1924f8`), the
+[official 9.0 maintenance release](https://ffmpeg.org/download.html) of
+2026-09-18 (checked 2026-09-24). The submodule supplies the implementation
+and public headers; generated Windows configuration and version headers were
+updated together. Its `libswscale/format.c` did not change between the tags,
+so the separate `chroma_pos_compat.c` materializer remains necessary with
+`CONFIG_UNSTABLE=0`.
+The local tag object verifies cryptographically against the
+[FFmpeg git-tag key](https://ffmpeg.org/git-tag-key.asc) with fingerprint
+`DD1EC9E8DE085C629B3E1846B18E8928B3948D64`, matching the
+[official download page](https://ffmpeg.org/download.html). GPG reports a
+good signature but exit 1 because this published key expired before the
+2026-09-18 tag date. Separately, the official 9.0.2 source archive has
+SHA-256 `8C3850283EB25FA026482078A04051E0BE17347B09EF81A0849BEC15A96E002E`;
+its detached signature verifies with exit 0 against FFmpeg's published
+release key `FCF986EA15E6E293A5644F10B4322F04D67658D8`. All 3,923
+C/header/assembly files in the four linked library trees match the
+pinned checkout after Git line-ending normalization. The local keyring
+has no independent web-of-trust certification; the key fingerprints are
+matched to FFmpeg's official download page. Exact logs and comparison
+script are under `build/windows-x64/release/ffmpeg-origin/`.
+
+The 9.0.2 diff contains a reachable MOV `keys` atom count bound before
+allocation (`8a77705045`) and native H.264 direct/slice corrections
+(`90f2d59a5b`, `7bc6dfe1f4`, `cb34c72359`, `16dfae5c88`). The
+`swscale_unscaled.c` unaligned-access fix (`1b087e9c85`) is also compiled;
+the first-frame YUV420-to-RGBA path does not itself exercise that planar
+copy case. The local build excludes changed network, encoding, hardware and
+other codec paths. These are source-diff applicability findings, not a claim
+that every FFmpeg vulnerability is closed; review the
+[official security list](https://ffmpeg.org/security.html) as new issues
+are published. Six FFmpeg tests passed in both Windows configurations,
+including the 27-check first-frame pixel contract; five additional runs
+per configuration passed with exit 0.
 
 On Windows, `third_party/codecs/zlib/zlib.upp` selects the installed U++
 `plugin/z` provider, whose `lib/zlib.h` declares 1.3.1 in the local

@@ -1,4 +1,4 @@
-description "Stable application-facing FFmpeg 9.0.1 native decode package";
+description "Stable application-facing FFmpeg 9.0.2 native decode package";
 
 uses
 	ffmpeg_headers,
