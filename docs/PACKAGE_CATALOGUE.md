@@ -1,232 +1,130 @@
-# Package Catalogue
+# Package catalogue
 
-Primary navigation for `upp_imaging`.
+Package names are stable across nests. See [layout](package_layout.md) for assembly configuration. Tests listed below are selected by [acceptance.txt](../tests/acceptance.txt).
 
-## State labels
-
-This catalogue distinguishes three states:
-
-- **implemented** — package/source/test contract exists and has passed source/static review;
-- **Windows-proven** — the relevant U++ CLANGx64 acceptance has been recorded;
-- **platform validation pending** — implementation exists but the current accumulated Windows checkpoint is not yet accepted.
-
-`docs/ACTIVE_WORK.md` is the authority for the exact accepted checkpoint and validation evidence.
-
-## Package model
-
-- direct packages expose established upstream-style APIs to applications;
-- `_src`, generated-header and static-registration packages own pinned implementation details and are not ordinary application dependencies;
-- narrow helpers expose deliberately limited U++-friendly file subsets;
-- `Upp::Imaging` framework packages expose backend-neutral U++ contracts;
-- raster plugins under `plugin/*` are opt-in display integrations;
-- FFmpeg is a separate media subsystem, not an `ImagingIO` backend;
-- tests/probes are the pass/fail authority; `ImagingWorkbench` is supplementary diagnostics.
-
-## Stable direct application packages
-
-### `openexr`
-- Stable high-level OpenEXR API.
-- Pinned OpenEXR 3.4.13 implementation is owned by `openexr_src`.
-- Primary validation: `openexr_test`.
-
-### `openexr_core`
-- Stable OpenEXRCore C API.
-- Implementation is owned by `openexr_core_src`.
-- Primary validation: `openexr_core_write_probe`, `openexr_core_roundtrip_test`.
-
-### `OpenColorIO`
-- Canonical application-facing OpenColorIO package over `opencolorio_src`.
-- Pinned version: 2.5.2.
-- The old lowercase public package name is intentionally not provided on Windows because package paths cannot differ only by case.
-- Primary validation: `opencolorio_test`, `opencolorio_gui_link_test`.
-
-### `OpenImageIO`
-- Canonical application-facing OpenImageIO package over `openimageio_headers`, `openimageio_src`, `openimageio_util_src` and statically registered format packages.
-- Pinned version: 3.1.15.0.
-- `oiio` remains a compatibility forwarder; it is not a second implementation.
-- The original OpenEXR/PNG route remains the accepted baseline.
-- Code-side static format expansion includes JPEG XL, Radiance HDR/RGBE, DPX/Cineon, camera RAW, WebP, decode-only HEIF/AVIF and TIFF support required by the current `ImagingIO` format line.
-- The shared static dependency repair is `5ca436c3ba6265f6431deaf7348332940051686d`; the complete current-main deterministic accumulation matrix is Windows-proven in Debug and Release.
-
-### Other stable direct packages
-
-The repository also retains independently usable stable packages including:
-
-- `imath`
-- `zlib`
-- `libpng`
-- `libjpeg_turbo`
-- `libtiff`
-- `libdeflate`
-- `openjph`
-- `fmt`
-- `robinmap`
-
-Each stable package owns the application-facing boundary; corresponding strict/source packages own pinned build details.
-
-## `Upp::Imaging` framework
-
-All framework public types live under `Upp::Imaging`. Public framework headers do not expose OIIO, OCIO, strict-source filesystem paths or application GUI types.
-
-### `ImagingCore`
-- Backend-neutral image data model, metadata, window, result and diagnostic contracts.
-- Core-only dependency boundary.
-- Public concepts include `ImageSpec`, `ImageBuffer`, `ImageData`, `Metadata`, `DataWindow`, `SampleType`, `ChannelLayout`, `Result` and `Diagnostics`.
-- **Implemented and Windows-proven**: established baseline `imaging_core_test` 52/0.
-
-### `ImagingIO`
-- Backend-neutral typed image load/save API using OpenImageIO privately.
-- Public headers expose only `Upp::Imaging` types.
-- Accepted baseline: EXR/PNG.
-- Code-side format line: JPEG XL, HDR/RGBE, DPX/Cineon, RAW, WebP, decode-only HEIF/AVIF and TIFF.
-- Preserves transactional load/save and stable framework diagnostics.
-- **Implemented and Windows-proven**; the shared 89/0 boundary and complete current format accumulation passed in Debug and Release.
-
-### `ImagingColor`
-- Backend-neutral colour-processing API using OpenColorIO privately.
-- Supports the documented RGB/RGBA and unambiguous named multichannel transform subset while preserving alpha and non-RGB channels.
-- **Implemented and Windows-proven**: 69/0 plus independent OCIO 15/0.
-
-### `ImagingAnalysis`
-- Core-only numerical analysis layer.
-- Provides per-channel statistics, normalized histograms, finite/non-finite accounting and source-coordinate probes.
-- Waveform/vectorscope algorithms are deferred next-scope work.
-- **Implemented and Windows-proven**: 41/0.
-
-### `ImagingDiagnostics`
-- Core-only deterministic numerical comparison and reporting layer.
-- Formats/compares existing `ImagingCore` contracts rather than duplicating state.
-- GUI-independent.
-- **Implemented and Windows-proven**: 33/0.
-
-### `Imaging`
-- Convenience umbrella over `ImagingCore`, `ImagingIO`, `ImagingColor`, `ImagingAnalysis` and `ImagingDiagnostics`.
-- Does not automatically include `plugin/exr` or FFmpeg.
-- **Implemented and Windows-proven**: 6/0.
-
-## Still-image accumulated validation targets
-
-The current repository-owned deterministic Debug/Release accumulation uses actual U++ packages, not roadmap format labels:
-
-- baseline/shared boundary: `openimageio_io_test` 21/0, `imaging_io_test` 89/0;
-- JPEG XL: `jpegxl_prereq_test` 9/0, `jpegxl_oiio_test` 10/0, `jpegxl_imagingio_test` 50/0;
-- HDR/RGBE + DPX/Cineon: `hdr_oiio_test` 12/0, `dpx_cineon_oiio_test` 19/0, `hdr_dpx_imagingio_test` 38/0;
-- camera RAW: `raw_oiio_test` 9/0, `raw_imagingio_test` 10/0;
-- WebP: `webp_oiio_test` 13/0, `webp_imagingio_test` 21/0;
-- HEIF/AVIF: `heif_oiio_test` 11/0, `heif_imagingio_test` 10/0;
-- TIFF: `tiff_oiio_test` 13/0, `tiff_imagingio_test` 29/0.
-
-Positive real-camera RAW decode, real 8/10-bit AVIF/HEIC decode and animated-WebP rejection depend on provenance-reviewed external fixtures that are not stored in the repository. Those results are supplementary interoperability evidence and must be reported separately rather than inferred from the deterministic matrix.
-
-## U++ raster integration
-
-### `plugin/exr`
-- Opt-in display-oriented `StreamRaster` / `Upp::Image` bridge.
-- Not a full-fidelity EXR API and not part of the `Imaging` umbrella.
-- Current contract covers ordinary single-image EXR preview, RGB/RGBA, Gray/GrayAlpha, one-channel masks, named multichannel RGB selection, straight alpha, deterministic finite-value clamp/rounding, non-finite-to-zero preview behaviour, and truthful opaque/alpha reporting.
-- Does not claim arbitrary-channel preservation, source floating-point preservation, full metadata/window semantics, multipart/deep/mip support or unclamped HDR fidelity.
-- **Implemented and Windows-proven**; expanded `plugin_exr_test` passed 22/0 in Debug and Release.
-
-## Narrow format helpers
-
-These remain intentionally narrower than the full framework/backends:
-
-### `openexr_io`
-- Scanline RGBA HALF/FLOAT subset over `openexr_core`.
-- No tiled, multipart, deep, arbitrary-channel or general metadata claim.
-
-### `png_io`
-- RGBA8 ordinary PNG helper over `libpng`.
-- Does not claim metadata/ICC/gamma/source-depth preservation.
-
-### `jpeg_io`
-- RGB8 baseline JPEG helper over `libjpeg_turbo`.
-- Lossy by design; not a metadata-preserving wrapper.
-
-### `tiff_io`
-- Typed RGBA classic single-directory scanline TIFF helper over `libtiff`.
-- No tiled, planar-separate, palette, CMYK, general metadata/ICC or BigTIFF claim.
-
-## FFmpeg media subsystem
-
-### `FFmpeg`
-- Stable direct application package forwarding standard FFmpeg C headers/types.
-- Separate from `ImagingIO` and the `Imaging` umbrella.
-- First slice is static LGPL scalar decode only.
-
-Implementation packages:
-
-- `ffmpeg_headers` — public/generated configuration boundary; no implementation source.
-- `ffmpeg_avutil_src` — scalar libavutil foundation.
-- `ffmpeg_avcodec_src` — native H.264 decoder closure only.
-- `ffmpeg_avformat_src` — MOV/MP4 demux + local `file` protocol only.
-- `ffmpeg_swscale_src` — scalar YUV-to-RGBA conversion boundary.
-
-Exact upstream pin: signed FFmpeg `n9.0.1`, commit `bf1b838f2ab88b4f8fd83443325c782ea0e0f7fa`.
-
-The first slice deliberately disables threads, network, external codecs, filters, devices, audio resampling, CLI/encoding, external/inline assembly and hardware acceleration.
-
-Current expected focused gates:
-
-- `ffmpeg_headers_test` 8/0 (includes generated-config parity audit)
-- `ffmpeg_avutil_test` 13/0
-- `ffmpeg_avcodec_test` 12/0
-- `ffmpeg_avformat_test` 14/0
-- `ffmpeg_swscale_test` 13/0
-- `ffmpeg_first_frame_test` 27/0
-
-The avformat manifest explicitly owns the two pinned FFmpeg materializers `libavformat/to_upper4.c` and `libavformat/mpegaudiotabs.c`. The swscale package also owns a guarded compatibility materializer for the single stable-graph helper hidden by pinned FFmpeg when unstable backends are disabled. Neither repair enables a new component or feature.
-
-**Implemented and Windows-proven**: all six gates passed in Debug and Release, followed by five additional 27/0 first-frame runs per configuration with clean exits.
-
-## Strict imported-source/package boundaries
-
-Ordinary applications must not depend directly on strict implementation packages. Established strict boundaries include:
-
-| Strict package | Upstream role | Stable/public route |
+| Package | Physical directory | Current purpose |
 | --- | --- | --- |
-| `zlib_src` | pinned zlib source proof | `zlib` |
-| `libpng_src` | pinned libpng source proof | `libpng` |
-| `imath_src` | pinned Imath source proof | `imath` |
-| `libdeflate_src` | pinned libdeflate source proof | `libdeflate` |
-| `openjph_src` | pinned OpenJPH source proof | `openjph` |
-| `iex_src`, `ilmthread_src`, `openexr_core_src`, `openexr_src` | OpenEXR stack ownership | `openexr_core`, `openexr` |
-| `libjpeg_turbo_src` | pinned libjpeg-turbo source proof | `libjpeg_turbo` |
-| `libtiff_src` | pinned libtiff source proof | `libtiff` |
-| `opencolorio_src` | pinned OpenColorIO implementation | `OpenColorIO` |
-| `openimageio_headers`, `openimageio_src`, `openimageio_util_src`, static plugin packages | pinned OpenImageIO implementation/registration | `OpenImageIO` |
-| `fmt_src` | pinned fmt headers | `fmt` |
-| `robinmap_src` | pinned robin-map headers | `robinmap` |
-| `ffmpeg_headers`, `ffmpeg_*_src` | pinned bounded FFmpeg implementation | `FFmpeg` |
-
-Conflict rule: do not link strict and stable implementations of the same underlying library into one ordinary executable.
-
-## Validation and diagnostics
-
-- Automated tests determine PASS/FAIL.
-- `ImagingWorkbench` and round-trip viewers are supplementary diagnostics only.
-- Generated executables/images belong in ignored output directories.
-- Machine-specific U++ nest configuration is not committed.
-- Source manifests remain explicit; recursive globs must not be used to hide missing ownership/dependency closure.
-
-## Dependency direction
-
-```text
-pinned/strict source packages
-        ↓
-stable direct packages
-        ↓
-Upp::Imaging framework
-        ↓
-application / diagnostic integration
-```
-
-FFmpeg remains a parallel stable-direct media stack, not an Imaging framework dependency.
-
-`ImagingCore`, `ImagingAnalysis` and `ImagingDiagnostics` remain Core-only/GUI-independent according to their documented boundaries. `plugin/exr` remains opt-in.
-
-## Current closure boundary
-
-The bounded current generation is complete and Windows-proven. The exact repository-owned still-image matrix passed in Debug and Release, `plugin_exr_test` passed 22/0 in both configurations, and all six FFmpeg gates plus five additional first-frame runs per configuration passed with clean exits. Supplementary external-fixture interoperability evidence remains separate and is reported when provenance-reviewed fixtures are available.
-
-SIMD/hardware FFmpeg paths, broader codecs/containers, audio, seeking/indexing, waveform/vectorscope expansion and a possible backend-neutral media wrapper are deferred next scope, not incomplete requirements of this milestone.
+| `ImagingWorkbench` | `apps/ImagingWorkbench` | Interactive imaging workbench MVP |
+| `Imaging` | `imaging/Imaging` | Standard complete U++ Imaging framework umbrella |
+| `ImagingAnalysis` | `imaging/ImagingAnalysis` | Backend-neutral image analysis |
+| `ImagingColor` | `imaging/ImagingColor` | Backend-neutral colour processing through OpenColorIO |
+| `ImagingCore` | `imaging/ImagingCore` | Backend-neutral U++ Imaging core contracts |
+| `ImagingDiagnostics` | `imaging/ImagingDiagnostics` | Core-only structured imaging diagnostics and reporting |
+| `ImagingIO` | `imaging/ImagingIO` | Backend-neutral EXR, PNG, JPEG XL, HDR, DPX, Cineon, RAW, WebP, HEIF/AVIF and TIFF image I/O |
+| `imaging_histogram` | `integrations/imaging_histogram` | Source-referred histogram analysis data model |
+| `imaging_preview_coalescing` | `integrations/imaging_preview_coalescing` | Pure preview render coalescing helper for ImagingWorkbench |
+| `imaging_roundtrip_test_support` | `integrations/imaging_roundtrip_test_support` | Reusable synthetic image test support |
+| `imaging_roundtrip_viewer_ocio` | `integrations/imaging_roundtrip_viewer_ocio` | Workbench preview and diagnostic support |
+| `imaging_tone_conversion` | `integrations/imaging_tone_conversion` | Shared tone conversion helpers for ImagingWorkbench |
+| `imaging_view_transform` | `integrations/imaging_view_transform` | Pure source/view transform helpers for ImagingWorkbench |
+| `plugin/exr` | `integrations/plugin/exr` | Opt-in OpenEXR StreamRaster preview bridge |
+| `dpx_cineon_oiio_test` | `tests/dpx_cineon_oiio_test` | Focused OpenImageIO DPX and Cineon contract test |
+| `expat_test` | `tests/expat_test` | Stable Expat user-facing probe |
+| `ffmpeg_avcodec_test` | `tests/ffmpeg_avcodec_test` | Current public-contract regression |
+| `ffmpeg_avformat_test` | `tests/ffmpeg_avformat_test` | Current public-contract regression |
+| `ffmpeg_avutil_test` | `tests/ffmpeg_avutil_test` | Current public-contract regression |
+| `ffmpeg_first_frame_test` | `tests/ffmpeg_first_frame_test` | Current public-contract regression |
+| `ffmpeg_headers_test` | `tests/ffmpeg_headers_test` | Current public-contract regression |
+| `ffmpeg_swscale_test` | `tests/ffmpeg_swscale_test` | Current public-contract regression |
+| `hdr_dpx_imagingio_test` | `tests/hdr_dpx_imagingio_test` | Focused ImagingIO HDR, DPX and Cineon contract test |
+| `hdr_oiio_test` | `tests/hdr_oiio_test` | Focused OpenImageIO Radiance HDR/RGBE registration test |
+| `heif_imagingio_test` | `tests/heif_imagingio_test` | Focused ImagingIO HEIF/AVIF input-only policy test |
+| `heif_oiio_test` | `tests/heif_oiio_test` | Focused OpenImageIO HEIF/AVIF decode-only registration test |
+| `imaging_analysis_test` | `tests/imaging_analysis_test` | ImagingAnalysis public contract test |
+| `imaging_color_ocio_test` | `tests/imaging_color_ocio_test` | Independent OpenColorIO acceptance test for ImagingColor |
+| `imaging_color_test` | `tests/imaging_color_test` | ImagingColor public contract test |
+| `imaging_core_test` | `tests/imaging_core_test` | ImagingCore contract test |
+| `imaging_diagnostics_test` | `tests/imaging_diagnostics_test` | ImagingDiagnostics public contract test |
+| `imaging_histogram_test` | `tests/imaging_histogram_test` | Tests for source-referred histogram analysis |
+| `imaging_io_oiio_test` | `tests/imaging_io_oiio_test` | Independent OpenImageIO cross-check for ImagingIO |
+| `imaging_io_test` | `tests/imaging_io_test` | ImagingIO public EXR and PNG contract test |
+| `imaging_preview_coalescing_test` | `tests/imaging_preview_coalescing_test` | Deterministic tests for preview render coalescing |
+| `imaging_roundtrip_viewer_ocio_smoke_test` | `tests/imaging_roundtrip_viewer_ocio_smoke_test` | Current public-contract regression |
+| `imaging_test` | `tests/imaging_test` | Imaging umbrella contract test |
+| `imaging_tone_conversion_test` | `tests/imaging_tone_conversion_test` | Deterministic tone conversion test |
+| `imaging_view_transform_test` | `tests/imaging_view_transform_test` | Deterministic source/view transform test |
+| `imaging_workbench_ocio_test` | `tests/imaging_workbench_ocio_test` | Current public-contract regression |
+| `imath_test` | `tests/imath_test` | User-facing Imath package test |
+| `jpegxl_imagingio_test` | `tests/jpegxl_imagingio_test` | Focused ImagingIO JPEG XL contract test |
+| `jpegxl_oiio_test` | `tests/jpegxl_oiio_test` | Focused OpenImageIO JPEG XL registration and roundtrip test |
+| `libdeflate_test` | `tests/libdeflate_test` | User-facing libdeflate package test |
+| `libjpeg_turbo_test` | `tests/libjpeg_turbo_test` | User-facing libjpeg-turbo probe |
+| `libpng_roundtrip_test` | `tests/libpng_roundtrip_test` | User-facing libpng memory round-trip test |
+| `libtiff_test` | `tests/libtiff_test` | User-facing libtiff probe |
+| `minizip_ng_test` | `tests/minizip_ng_test` | Stable minizip-ng user-facing probe |
+| `opencolorio_test` | `tests/opencolorio_test` | Stable OpenColorIO user-facing probe |
+| `openexr_core_rgba_zip_test` | `tests/openexr_core_rgba_zip_test` | OpenEXRCore RGBA ZIP round-trip |
+| `openexr_test` | `tests/openexr_test` | Stable OpenEXR 3.4.13 high-level file round-trip test |
+| `openimageio_io_test` | `tests/openimageio_io_test` | Deterministic OpenImageIO IO test |
+| `plugin_exr_test` | `tests/plugin_exr_test` | plugin/exr StreamRaster preview contract |
+| `pystring_test` | `tests/pystring_test` | Stable pystring user-facing probe |
+| `raw_imagingio_test` | `tests/raw_imagingio_test` | Focused ImagingIO camera RAW policy contract test |
+| `raw_oiio_test` | `tests/raw_oiio_test` | Focused OpenImageIO RAW registration contract test |
+| `tiff_imagingio_test` | `tests/tiff_imagingio_test` | Focused ImagingIO TIFF policy and transaction test |
+| `tiff_oiio_test` | `tests/tiff_oiio_test` | Focused OpenImageIO TIFF registration and fidelity test |
+| `webp_imagingio_test` | `tests/webp_imagingio_test` | Focused ImagingIO WebP policy and transaction test |
+| `webp_oiio_test` | `tests/webp_oiio_test` | Focused OpenImageIO WebP registration and fidelity test |
+| `yaml_cpp_test` | `tests/yaml_cpp_test` | Stable yaml-cpp user-facing probe |
+| `zlib_test` | `tests/zlib_test` | Minimal zlib packaging test |
+| `dav1d_src` | `third_party/codecs/dav1d_src` | Pinned dav1d 1.5.4 scalar AV1 decoder backend for U++ |
+| `jpegxl_src` | `third_party/codecs/jpegxl_src` | Pinned libjxl 0.12.0 source backend for U++ |
+| `libde265_src` | `third_party/codecs/libde265_src` | Pinned libde265 1.1.1 scalar HEVC decoder backend for U++ |
+| `libdeflate` | `third_party/codecs/libdeflate` | libdeflate package with stable public include path |
+| `libdeflate_src` | `third_party/codecs/libdeflate_src` | Strict standalone libdeflate 1.25 source package for U++ |
+| `libheif_src` | `third_party/codecs/libheif_src` | Pinned libheif 1.23.1 decode-only HEIF/AVIF container backend |
+| `libjpeg_turbo` | `third_party/codecs/libjpeg_turbo` | Stable user-facing libjpeg-turbo package for U++ |
+| `libjpeg_turbo_src` | `third_party/codecs/libjpeg_turbo_src` | Strict upstream libjpeg-turbo 3.2.0 source package for U++ |
+| `libpng` | `third_party/codecs/libpng` | libpng package with stable public include path |
+| `libpng_src` | `third_party/codecs/libpng_src` | Strict upstream libpng 1.6.58 source package for U++ |
+| `libraw_src` | `third_party/codecs/libraw_src` | Pinned LibRaw 0.22.2 source backend for U++ |
+| `libtiff` | `third_party/codecs/libtiff` | Stable user-facing libtiff package for U++ |
+| `libtiff_src` | `third_party/codecs/libtiff_src` | Strict upstream libtiff 4.7.2 source package for U++ |
+| `openjph` | `third_party/codecs/openjph` | OpenJPH package with stable public include path |
+| `openjph_src` | `third_party/codecs/openjph_src` | Strict standalone OpenJPH 0.26.3 source package for U++ |
+| `webp_src` | `third_party/codecs/webp_src` | Pinned libwebp 1.6.0 static source backend for U++ |
+| `zlib` | `third_party/codecs/zlib` | zlib compression library packaged for U++ |
+| `zlib_src` | `third_party/codecs/zlib_src` | Strict upstream zlib 1.3.2 source package for U++ |
+| `FFmpeg` | `third_party/ffmpeg/FFmpeg` | Stable application-facing FFmpeg 9.0.1 native decode package |
+| `ffmpeg_avcodec_src` | `third_party/ffmpeg/ffmpeg_avcodec_src` | Pinned FFmpeg 9.0.1 native H.264 libavcodec package |
+| `ffmpeg_avformat_src` | `third_party/ffmpeg/ffmpeg_avformat_src` | Pinned FFmpeg 9.0.1 MOV/file libavformat package |
+| `ffmpeg_avutil_src` | `third_party/ffmpeg/ffmpeg_avutil_src` | Pinned FFmpeg 9.0.1 libavutil scalar source package |
+| `ffmpeg_headers` | `third_party/ffmpeg/ffmpeg_headers` | Strict FFmpeg 9.0.1 public-header and generated-config boundary |
+| `ffmpeg_swscale_src` | `third_party/ffmpeg/ffmpeg_swscale_src` | Pinned FFmpeg 9.0.1 scalar libswscale package |
+| `imath` | `third_party/imath/imath` | Imath package with stable public include path |
+| `imath_src` | `third_party/imath/imath_src` | Strict upstream Imath 3.2.2 source package for U++ |
+| `OpenColorIO` | `third_party/opencolorio/OpenColorIO` | Stable OpenColorIO user-facing package |
+| `opencolorio_src` | `third_party/opencolorio/opencolorio_src` | OpenColorIO 2.5.2 core source package |
+| `iex_src` | `third_party/openexr/iex_src` | Strict imported-source Iex package for U++ |
+| `ilmthread_src` | `third_party/openexr/ilmthread_src` | Strict imported-source IlmThread package for U++ |
+| `openexr` | `third_party/openexr/openexr` | User-facing OpenEXR package with stable include path |
+| `openexr_core` | `third_party/openexr/openexr_core` | User-facing OpenEXRCore package with stable include path |
+| `openexr_core_src` | `third_party/openexr/openexr_core_src` | Pinned OpenEXRCore source ownership for U++ |
+| `openexr_src` | `third_party/openexr/openexr_src` | Strict upstream OpenEXR 3.4.13 high-level source package for U++ |
+| `OpenImageIO` | `third_party/openimageio/OpenImageIO` | Stable application-facing OpenImageIO package |
+| `openimageio_headers` | `third_party/openimageio/openimageio_headers` | Strict internal OpenImageIO 3.1.15.0 public-header package |
+| `openimageio_plugin_dpxcineon` | `third_party/openimageio/openimageio_plugin_dpxcineon` | Pinned OpenImageIO 3.1.15 DPX and Cineon plugins |
+| `openimageio_plugin_hdr` | `third_party/openimageio/openimageio_plugin_hdr` | OpenImageIO Radiance HDR/RGBE plugin registration package |
+| `openimageio_plugin_heif` | `third_party/openimageio/openimageio_plugin_heif` | OpenImageIO HEIF/AVIF input plugin backed by decode-only libheif 1.23.1 |
+| `openimageio_plugin_jpegxl` | `third_party/openimageio/openimageio_plugin_jpegxl` | OpenImageIO JPEG XL plugin registration package |
+| `openimageio_plugin_openexr` | `third_party/openimageio/openimageio_plugin_openexr` | OpenImageIO OpenEXR plugin registration package |
+| `openimageio_plugin_png` | `third_party/openimageio/openimageio_plugin_png` | OpenImageIO PNG plugin registration package |
+| `openimageio_plugin_raw` | `third_party/openimageio/openimageio_plugin_raw` | OpenImageIO RAW input plugin backed by pinned LibRaw 0.22.2 |
+| `openimageio_plugin_tiff` | `third_party/openimageio/openimageio_plugin_tiff` | OpenImageIO TIFF plugin backed by bundled libtiff 4.7.2 |
+| `openimageio_plugin_webp` | `third_party/openimageio/openimageio_plugin_webp` | OpenImageIO WebP plugin backed by pinned libwebp 1.6.0 |
+| `openimageio_plugins_src` | `third_party/openimageio/openimageio_plugins_src` | Pinned OpenImageIO 3.1.15.0 plugin source tree |
+| `openimageio_src` | `third_party/openimageio/openimageio_src` | Strict upstream OpenImageIO 3.1.15.0 main source package |
+| `openimageio_util_src` | `third_party/openimageio/openimageio_util_src` | Strict upstream OpenImageIO 3.1.15.0 utility source package |
+| `expat` | `third_party/support/expat` | Stable Expat user-facing package |
+| `expat_src` | `third_party/support/expat_src` | Strict upstream Expat 2.7.2 source package |
+| `fmt` | `third_party/support/fmt` | fmt package with stable public include path |
+| `fmt_src` | `third_party/support/fmt_src` | Strict upstream fmt 12.2.0 source package |
+| `minizip_ng` | `third_party/support/minizip_ng` | Stable minizip-ng user-facing package |
+| `minizip_ng_src` | `third_party/support/minizip_ng_src` | Strict upstream minizip-ng 4.0.10 source package |
+| `pystring` | `third_party/support/pystring` | Stable pystring user-facing package |
+| `pystring_src` | `third_party/support/pystring_src` | Strict upstream pystring 1.1.4 source package |
+| `robinmap` | `third_party/support/robinmap` | robin-map package with stable public include path |
+| `robinmap_src` | `third_party/support/robinmap_src` | Strict upstream robin-map 1.4.1 source package |
+| `yaml_cpp` | `third_party/support/yaml_cpp` | Stable yaml-cpp user-facing package |
+| `yaml_cpp_src` | `third_party/support/yaml_cpp_src` | Strict upstream yaml-cpp 0.8.0 source package |
+| `imaging_workbench_bench` | `tools/imaging_workbench_bench` | ImagingWorkbench timing and coordinate bench |
+| `libpng_src_roundtrip_test` | `tests/libpng_src_roundtrip_test` | Standalone no-Core PNG/zlib provider regression. |

@@ -1,147 +1,108 @@
 # Windows Acceptance
 
-Self-contained validator contract for the current bounded `upp_imaging` generation.
+Authoritative acceptance set after the repository structure migration. The manifest
+`tests/acceptance.txt` contains all 49 retained deterministic test packages;
+`tools/validate.ps1` builds and runs them in Debug and Release, rejecting build
+failures, missing summaries, failed checks, nonzero exits and timeouts.
 
-## Validator role
+## Reproduce
 
-The validator confirms that the exact published repository state builds and runs correctly under the established Windows U++ CLANGx64 environment. Architecture, source ownership, dependencies, public APIs, tests and feature policy are supervisor-owned.
+Configure the family nests using `GitHubOut.var.example`, then run from the repository:
 
-Before any build:
+```powershell
+powershell -ExecutionPolicy Bypass -File tools/validate.ps1
+```
 
-1. fetch and fast-forward `origin/main`;
-2. record `git rev-parse HEAD` and use that exact SHA in the report;
-3. require a clean `git status --short`;
-4. use the repository's established U++ CLANGx64 Debug/Release configuration; do not invent or change feature flags to make a target pass.
+The accepted environment is Windows U++ `E:/upp-18468/umk.exe`, `CLANGx64`,
+Debug (`-H8`) and Release (`-rH8`). Record the checked-out commit before validation.
+Use `-Rebuild` to clean the first target and its dependencies in each configuration.
+Logs and binaries belong under ignored `out/validation/`.
 
-If HEAD does not match the SHA supplied with the validator task, stop and report both SHAs.
+## Migration evidence
 
-## Phase A — still-image deterministic matrix
+All test C++ entry points and headers were timestamp-touched before the final run,
+forcing their compilation against the new nests rather than reusing old test objects.
+The final run completed **98 builds/runs, 2734 passed checks, zero failed checks**.
+Every process exited normally with code 0, including the Debug heap-audit shutdown.
+Earlier clean Debug and Release dependency builds and staged representative builds
+are recorded in `STRUCTURE_MIGRATION.md`.
 
-Run Debug first, in this order. Stop on the first substantive compile, link or runtime failure.
+Local evidence: `out/structure-authoritative.log`, `out/validation/results.txt`,
+per-target build/run/stderr logs, and `out/structure-app-builds-final.log`.
 
-1. `openimageio_io_test` — require 21/0
-2. `imaging_io_test` — require 89/0
-3. `jpegxl_prereq_test` — require 9/0
-4. `jpegxl_oiio_test` — require 10/0
-5. `jpegxl_imagingio_test` — require 50/0
-6. `hdr_oiio_test` — require 12/0
-7. `dpx_cineon_oiio_test` — require 19/0
-8. `hdr_dpx_imagingio_test` — require 38/0
-9. `raw_oiio_test` — require 9/0
-10. `raw_imagingio_test` — require 10/0
-11. `webp_oiio_test` — require 13/0
-12. `webp_imagingio_test` — require 21/0
-13. `heif_oiio_test` — require 11/0
-14. `heif_imagingio_test` — require 10/0
-15. `tiff_oiio_test` — require 13/0
-16. `tiff_imagingio_test` — require 29/0
+| Test package | Debug passed/failed | Release passed/failed |
+| --- | --- | --- |
+| dpx_cineon_oiio_test | 19/0 | 19/0 |
+| expat_test | 3/0 | 3/0 |
+| ffmpeg_avcodec_test | 12/0 | 12/0 |
+| ffmpeg_avformat_test | 14/0 | 14/0 |
+| ffmpeg_avutil_test | 13/0 | 13/0 |
+| ffmpeg_first_frame_test | 27/0 | 27/0 |
+| ffmpeg_headers_test | 8/0 | 8/0 |
+| ffmpeg_swscale_test | 13/0 | 13/0 |
+| hdr_dpx_imagingio_test | 38/0 | 38/0 |
+| hdr_oiio_test | 12/0 | 12/0 |
+| heif_imagingio_test | 10/0 | 10/0 |
+| heif_oiio_test | 11/0 | 11/0 |
+| imaging_analysis_test | 41/0 | 41/0 |
+| imaging_color_ocio_test | 15/0 | 15/0 |
+| imaging_color_test | 69/0 | 69/0 |
+| imaging_core_test | 52/0 | 52/0 |
+| imaging_diagnostics_test | 33/0 | 33/0 |
+| imaging_histogram_test | 155/0 | 155/0 |
+| imaging_io_oiio_test | 21/0 | 21/0 |
+| imaging_io_test | 89/0 | 89/0 |
+| imaging_preview_coalescing_test | 13/0 | 13/0 |
+| imaging_roundtrip_viewer_ocio_smoke_test | 39/0 | 39/0 |
+| imaging_test | 6/0 | 6/0 |
+| imaging_tone_conversion_test | 124/0 | 124/0 |
+| imaging_view_transform_test | 111/0 | 111/0 |
+| imaging_workbench_ocio_test | 136/0 | 136/0 |
+| imath_test | 4/0 | 4/0 |
+| jpegxl_imagingio_test | 50/0 | 50/0 |
+| jpegxl_oiio_test | 10/0 | 10/0 |
+| libdeflate_test | 2/0 | 2/0 |
+| libjpeg_turbo_test | 5/0 | 5/0 |
+| libpng_roundtrip_test | 3/0 | 3/0 |
+| libpng_src_roundtrip_test | 3/0 | 3/0 |
+| libtiff_test | 10/0 | 10/0 |
+| minizip_ng_test | 9/0 | 9/0 |
+| opencolorio_test | 18/0 | 18/0 |
+| openexr_core_rgba_zip_test | 6/0 | 6/0 |
+| openexr_test | 11/0 | 11/0 |
+| openimageio_io_test | 21/0 | 21/0 |
+| plugin_exr_test | 22/0 | 22/0 |
+| pystring_test | 8/0 | 8/0 |
+| raw_imagingio_test | 10/0 | 10/0 |
+| raw_oiio_test | 9/0 | 9/0 |
+| tiff_imagingio_test | 29/0 | 29/0 |
+| tiff_oiio_test | 13/0 | 13/0 |
+| webp_imagingio_test | 21/0 | 21/0 |
+| webp_oiio_test | 13/0 | 13/0 |
+| yaml_cpp_test | 4/0 | 4/0 |
+| zlib_test | 2/0 | 2/0 |
 
-Only after all sixteen Debug targets are green, run the same sixteen targets in Release with the same totals.
+## Production and source integrity
 
-These are the repository-owned deterministic acceptance gates for HDR/RGBE, DPX/Cineon, camera RAW routing, WebP, decode-only HEIF/AVIF, TIFF, JPEG XL and the shared OpenImageIO/ImagingIO boundary.
+- All retained production packages are covered by the acceptance/app dependency
+  graph, plus a separate public `openjph` API compile/run in both configurations.
+- `ImagingWorkbench` and `imaging_workbench_bench` build in Debug and Release.
+- The manual benchmark completed `--quick` in Release with exit 0 and coordinate
+  checks passing. Its Debug smoke exceeded the 120-second observation limit and
+  was stopped; Debug benchmark timing is not an acceptance gate or performance claim.
+- All eight relocated submodules retain their existing commits and are clean.
+  FFmpeg remains `n9.0.1`, commit `bf1b838f2ab88b4f8fd83443325c782ea0e0f7fa`.
+- FFmpeg parity: 238 sources, 609 scanned files, 260 referenced identifiers,
+  397 generated definitions, zero missing definitions.
+- All 2,593 tracked vendored upstream files match the starting commit after Git
+  line-ending normalization. Generated downstream overlays are outside upstream.
+- Both OCIO generators pass `--check`. Package identities are case-insensitively
+  unique; the acceptance manifest exactly matches the retained test packages.
 
-## Phase B — EXR raster integration
+## Scope
 
-Run `plugin_exr_test` in Debug and Release. Require 22/0 in each configuration.
-
-## Phase C — FFmpeg first slice
-
-The repository submodule/source pin must resolve to signed FFmpeg `n9.0.1`, exact upstream commit:
-
-`bf1b838f2ab88b4f8fd83443325c782ea0e0f7fa`
-
-Do not validate FFmpeg against another upstream revision.
-
-Run Debug first, in this order:
-
-1. `ffmpeg_headers_test` — require 8/0
-2. `ffmpeg_avutil_test` — require 13/0
-3. `ffmpeg_avcodec_test` — require 12/0
-4. `ffmpeg_avformat_test` — require 14/0
-5. `ffmpeg_swscale_test` — require 13/0
-6. `ffmpeg_first_frame_test` — require 27/0
-
-Only after the complete Debug lane is green, run all six in Release with the same totals.
-
-Then run `ffmpeg_first_frame_test` five additional times in Debug and five additional times in Release. Every run must remain 27/0 and exit cleanly without shutdown/cleanup failure.
-
-The accepted first slice remains scalar LGPL decode only. Do not enable threads, network, external codecs, filters, devices, audio resampling, CLI/encoding, external/inline assembly, hardware acceleration, extra codecs or extra containers to make validation pass.
-
-## Supplementary real-file evidence
-
-The repository does not store provenance-reviewed fixtures for:
-
-- positive real-camera RAW/DNG decode;
-- real 8/10-bit AVIF and HEIC decode;
-- animated-WebP multi-frame rejection.
-
-If suitable fixtures are already available, report those interoperability results separately. If they are not available, report `fixture unavailable / evidence pending`. Do not fabricate substitute fixtures and do not convert their absence into either PASS or FAIL for the deterministic package matrix.
-
-## Recorded current-generation result
-
-The bounded current generation completed this contract under Windows U++ CLANGx64:
-
-- all sixteen Phase A targets passed in order in Debug and Release with the exact totals above and normal exits;
-- `plugin_exr_test` passed 22/0 in Debug and Release;
-- the FFmpeg pin resolved to signed `n9.0.1` at `bf1b838f2ab88b4f8fd83443325c782ea0e0f7fa`;
-- all six Phase C targets passed in order in Debug and Release with the exact totals above and normal exits;
-- five additional Debug and five additional Release first-frame runs each passed 27/0 with exit 0;
-- supplementary provenance-reviewed fixtures were unavailable, so that evidence remains pending and non-blocking.
-
-The exact repair history and accepted checkpoint are recorded in `docs/ACTIVE_WORK.md` and Git history. Deferred FFmpeg features remain disabled.
-
-## Failure handling
-
-On the first substantive failure, stop that lane and report:
-
-- exact repository SHA;
-- package name;
-- Debug or Release;
-- compile, link or runtime stage;
-- first useful complete error block, unresolved symbol or failed check;
-- immediately relevant source/object/file context if the tool reports it;
-- whether the worktree was clean before the run;
-- whether any local edit was made.
-
-Do not continue through a cascade after the first root failure merely to collect more symptoms.
-
-## Tiny local corrections
-
-A validator may make one genuinely mechanical one-file correction only when the cause is obvious and does not change architecture or behavior, for example a spelling mistake, simple local type/include compile nuisance, or exact search-and-replace correction.
-
-Before making it:
-
-1. preserve and report the original failure;
-2. show the exact diff;
-3. keep the change to one file;
-4. do not commit or push it unless Curt explicitly asks.
-
-Any locally edited run is no longer exact-SHA acceptance. Report the post-edit result separately.
-
-Return immediately to the supervisor for any change involving:
-
-- source manifests or source ownership;
-- package dependencies or build architecture;
-- public/private APIs;
-- test expectations or weakened tests;
-- FFmpeg `CONFIG_*`, `HAVE_*`, component or feature enablement;
-- format policy;
-- more than one file;
-- any fix whose correctness is not mechanically obvious.
-
-## Successful report
-
-A complete successful report must state:
-
-- exact validated repository SHA;
-- clean starting worktree;
-- all sixteen still-image Debug totals and all sixteen Release totals;
-- `plugin_exr_test` 22/0 Debug and 22/0 Release;
-- exact FFmpeg upstream pin;
-- all six FFmpeg Debug and Release totals;
-- five-repeat Debug and five-repeat Release first-frame results;
-- supplementary fixture results or explicit `unavailable/pending` status;
-- final `git status --short`;
-- confirmation that no architecture/dependency/API/test/feature-policy changes were made.
-
-The validator's job is to prove the published state. Substantive repair belongs to the supervisor and is published as a new exact SHA before acceptance resumes.
+This is Windows validation. Existing POSIX runtime coverage and optional external
+camera RAW, HEIF and animated-WebP fixtures remain outside this deterministic set.
+Prepared OCIO processor reuse and EXR chunk/tile preview performance remain deferred
+as described in `HARDENING_REVIEW.md`. Removed probes are classified individually
+in `STRUCTURE_MIGRATION.md`; do not recreate them as acceptance requirements.

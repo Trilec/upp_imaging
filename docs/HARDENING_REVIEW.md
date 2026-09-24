@@ -1,5 +1,9 @@
 # Final hardening review
 
+This records the preceding hardening checkpoint. The current layout and
+acceptance set are documented in STRUCTURE_MIGRATION.md and
+WINDOWS_ACCEPTANCE.md; the migration supersedes this report's package/test list.
+
 Start: `f67e9a53b70be84cb5dd40586f59e1009c1724ab` (fetched current origin/main).
 Final: the commit containing this report; resolve with `git rev-parse HEAD`.
 

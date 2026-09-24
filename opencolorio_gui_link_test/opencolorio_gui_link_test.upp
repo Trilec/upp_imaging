@@ -1,9 +1,0 @@
-description "OpenColorIO GUI coexistence probe";
-
-uses
-	CtrlLib,
-	Ui,
-	OpenColorIO;
-
-file
-	main.cpp;

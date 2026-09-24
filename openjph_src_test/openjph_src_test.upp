@@ -1,7 +1,0 @@
-description "Strict OpenJPH source package test";
-
-uses
-	openjph_src;
-
-file
-	main.cpp;

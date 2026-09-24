@@ -1,57 +1,9 @@
-# OpenEXR Package Graph
+# OpenEXR package graph
 
-Current intended strict-source layering for the OpenEXR branch:
+`openexr` exposes the high-level C++ API through `openexr_src`, which depends on `imath_src`, `iex_src`, `ilmthread_src` and `openexr_core_src`.
 
-- `libdeflate_src`
-  - independent compression package
-  - likely future dependency of `openexr_core_src`
+`openexr_core` exposes the lower-level API through `openexr_core_src`. That source owner depends on `imath_src`, `ilmthread_src`, `libdeflate_src` and `openjph_src`. Compression sources remain owned by their codec packages, not duplicated inside OpenEXR.
 
-- `libdeflate`
-  - user-facing wrapper package for normal app usage
+The OpenEXR packages live under `third_party/openexr/`, Imath under `third_party/imath/`, and the compression packages under `third_party/codecs/`. Public package names and include identities are unchanged.
 
-- `openjph_src`
-  - HTJ2K / OpenJPH package
-  - likely future dependency of `openexr_core_src`
-
-- `openjph`
-  - user-facing wrapper package for normal app usage
-
-- `iex_src`
-  - OpenEXR exception and error support layer
-  - should be independently usable
-  - depends on generated OpenEXR config metadata
-
-- `ilmthread_src`
-  - OpenEXR threading primitives
-  - depends on generated OpenEXR config metadata
-  - depends on `iex_src`
-  - may require platform-specific semaphore/thread implementation selection
-
-- `openexr_core_src`
-  - low-level OpenEXR core/C layer
-  - depends on `imath_src`
-  - likely depends on `libdeflate_src`
-  - depends on generated OpenEXR config metadata
-  - may depend on deflate and OpenJPH-related compression configuration immediately
-  - currently deferred until the compression/config surface is reduced or explicitly packaged
-
-- `openexr_src`
-  - high-level C++ OpenEXR image API layer
-  - likely depends on `iex_src`, `ilmthread_src`, `openexr_core_src`, and `imath_src`
-  - now implemented as the strict imported-source package
-
-Current tested lower layers:
-
-- `iex_src` added and test-backed
-- `ilmthread_src` added and test-backed
-- `openexr_core_src` added and test-backed
-- `openexr_src` added and test-backed
-- full OpenEXR read/write still deferred
-
-Current uncertainty:
-
-- whether `openexr_core_src` should vendor or externally package deflate/OpenJPH support in the first pass
-- whether OpenEXRCore should depend directly on `libdeflate_src` or a more specialized package shim
-- whether OpenJPH remains broadly useful enough as a standalone package or mostly exists here to keep the OpenEXRCore graph explicit
-- whether `Iex`, `IlmThread`, and `OpenEXRCore` should remain top-level packages or become subpackages beneath a single `openexr_src` source tree layout
-- how best to handle OpenEXR's direct include style like `<half.h>` under U++ package include paths without over-broad global shims
+`openexr_test` validates the high-level RGBA HALF ZIP roundtrip and malformed input. `openexr_core_rgba_zip_test` validates the lower-level RGBA ZIP pipeline. ImagingIO and plugin/exr test their respective typed-data and display boundaries separately.

@@ -10,10 +10,10 @@ For the initial `zlib` import, no upstream source files were modified.
 The current Windows compatibility workaround is implemented only in package metadata and wrapper headers, not in upstream zlib sources.
 
 For the initial `libpng` import, no upstream source files were modified.
-The release-provided `scripts/pnglibconf.h.prebuilt` file was copied into the imported source tree as `libpng_src/upstream/pnglibconf.h` instead of being regenerated locally.
+The release-provided `scripts/pnglibconf.h.prebuilt` file was copied into the imported source tree as `third_party/codecs/libpng_src/upstream/pnglibconf.h` instead of being regenerated locally.
 
 For the initial `Imath` import, no upstream source files were modified.
-The generated config header `imath_src/upstream/ImathConfig.h` was created from upstream `config/ImathConfig.h.in` using upstream release defaults required for the local static package build and should be treated as packaging metadata, not as an upstream source patch.
+The generated config header `third_party/imath/imath_src/upstream/ImathConfig.h` was created from upstream `config/ImathConfig.h.in` using upstream release defaults required for the local static package build and should be treated as packaging metadata, not as an upstream source patch.
 
 For the initial `libdeflate` import, no upstream source files were modified.
 The package uses the official standalone libdeflate release rather than the OpenEXR-vendored subtree so it remains independently useful.

@@ -25,7 +25,7 @@ Backend-neutral Upp::Imaging framework
         └── Imaging umbrella
         ↓
 Application / diagnostic integration
-        ├── opt-in plugin/exr
+        ├── opt-in integrations/plugin/exr
         └── ImagingWorkbench
 ```
 
@@ -41,7 +41,6 @@ Direct packages expose established native APIs without inventing substitute impl
 - `openimageio_src` / `openimageio_util_src` compile the pinned OpenImageIO implementation.
 - static registration packages own the configured format plugins.
 - `OpenImageIO` is the canonical application-facing package.
-- `oiio` is a temporary compatibility forwarder.
 
 The repository began with the Windows-accepted OpenEXR/PNG OIIO path and has since added the code-side still-image expansion for JPEG XL, HDR/RGBE, DPX/Cineon, RAW, WebP, decode-only HEIF/AVIF and TIFF. The post-repair accumulated Windows pass is tracked separately in `docs/ACTIVE_WORK.md`; implementation must not be confused with platform acceptance.
 
@@ -104,11 +103,11 @@ Applications that need a smaller dependency set include individual packages dire
 
 Raster plugins under `plugin/*` are opt-in and display-oriented.
 
-### plugin/exr
+### integrations/plugin/exr
 
 The implemented EXR bridge integrates ordinary single-image EXR previews with U++ `StreamRaster` / `Upp::Image` workflows.
 
-Its contract is intentionally narrower than ImagingIO/OpenEXR/OpenImageIO:
+Its contract is intentionally narrower than imaging/ImagingIO/OpenEXR/OpenImageIO:
 
 - reads encoded EXR through the supplied U++ `Stream`;
 - supports the documented RGB/RGBA, Gray/GrayAlpha, mask and unambiguous named multichannel preview cases;
@@ -175,7 +174,7 @@ The complete still-image accumulation, expanded `plugin/exr`, and bounded FFmpeg
 4. `Upp::Imaging` public headers do not expose OIIO, OCIO or application GUI types.
 5. ImagingCore stays Core-only.
 6. ImagingAnalysis and ImagingDiagnostics stay numerical/GUI-independent.
-7. Format helpers stay narrow and claims do not exceed tested contracts.
+7. Format policies and capability claims do not exceed tested contracts.
 8. Automated tests are the formal pass/fail authority; diagnostic viewers are supplementary.
 9. Generated images/executables belong under ignored output directories; machine-specific U++ nest configuration is not committed.
 10. Source/package manifests are explicit and reviewed against upstream ownership; do not use source globs to hide missing dependency closure.
@@ -186,6 +185,6 @@ The complete still-image accumulation, expanded `plugin/exr`, and bounded FFmpeg
 
 ## Repository strategy
 
-`upp_imaging` remains one U++ nest containing independently usable packages. Stable package boundaries provide separation without duplicating vendored source or coordinating multiple repositories.
+`upp_imaging` contains logical U++ nests for the framework, dependency families, integrations, tests, applications and tools. Package names remain independent of their physical nest. See [package layout](package_layout.md) and the root assembly example for the complete nest list.
 
 A future repository split or backend-neutral media wrapper is a separate architectural decision and is outside the current closure milestone.

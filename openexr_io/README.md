@@ -1,1 +1,0 @@
-OpenEXR IO helper package.

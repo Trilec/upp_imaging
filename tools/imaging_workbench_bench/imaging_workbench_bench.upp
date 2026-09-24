@@ -1,0 +1,21 @@
+description "ImagingWorkbench timing and coordinate bench";
+
+uses
+	CtrlLib,
+	Ui,
+	imaging_histogram,
+	imaging_preview_coalescing,
+	imaging_tone_conversion,
+	imaging_roundtrip_viewer_ocio,
+	imaging_view_transform,
+	OpenImageIO,
+	OpenColorIO;
+
+mainconfig
+	"" = "GUI";
+
+file
+	../../apps/ImagingWorkbench/ImagingWorkbench.generated.cpp,
+	../../apps/ImagingWorkbench/ImagingCanvas.cpp,
+	../../apps/ImagingWorkbench/ImagingWorkbench.cpp,
+	imaging_workbench_bench_main.cpp;
