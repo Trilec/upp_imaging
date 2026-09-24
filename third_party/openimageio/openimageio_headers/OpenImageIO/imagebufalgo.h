@@ -360,8 +360,7 @@ enum class TextAlignY { Baseline, Top, Bottom, Center };
 /// `share/fonts`, or `Library/Fonts`) underneath the directories in
 /// environment variables `$HOME`, `$SystemRoot`, `$OpenImageIO_ROOT`; (c) a
 /// number of common system font areas, including `/usr/share/fonts`,
-/// `/Library/fonts`, `C:/Windows/fonts`, and other Windows fonts directories;
-/// (d) in fonts directories one
+/// `/Library/fonts`, and `C:/Windows/fonts`; (d) in fonts directories one
 /// level up from the place where the currently running binary lives.
 bool OIIO_API render_text (ImageBuf &dst, int x, int y, string_view text,
                            int fontsize=16, string_view fontname="",
@@ -2675,8 +2674,7 @@ bool OIIO_API deep_merge (ImageBuf &dst, const ImageBuf &A,
 
 
 /// Return the samples of deep image `src` that are closer than the opaque
-/// frontier of deep image holdout, returning true upon success and false
-/// for any failures. Samples of `src` that are farther than the first
+/// frontier of deep image holdout. Samples of `src` that are farther than the first
 /// opaque sample of holdout (for the corresponding pixel) will not be copied
 /// to `dst`. Image holdout is only used as the depth threshold; no sample
 /// values from holdout are themselves copied to `dst`.

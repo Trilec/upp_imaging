@@ -1,11 +1,11 @@
 # OpenImageIO
 
-Strict upstream OpenImageIO 3.1.15.0 public-header package for U++.
+Strict upstream OpenImageIO 3.1.17.0 public-header package for U++.
 
 ## Upstream identity
 
-- version: `v3.1.15.0`
-- commit: `cbe57bc005678ca310835473568121719861734c`
+- version: `v3.1.17.0`
+- commit: `73bc189f7d8469a9760ce9c5099b686c77695074`
 - target: `OpenImageIO`
 
 ## Scope

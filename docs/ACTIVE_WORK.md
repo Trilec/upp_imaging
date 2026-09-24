@@ -2,32 +2,36 @@
 
 ## BASE
 
-`319b0e6d8c32f08e325862c1d18ec8622ab45f8e` on current main after
-the libheif checkpoint. The original required checkpoint,
+`a1ed7337a343311d1823c374f31ac3ffda92dc30` on current main after
+the process-runner checkpoint. The original required checkpoint,
 `58f317135f19ec254e2fae016a9962c82420ff8f`, remains an ancestor.
 
 ## TASK
 
 IMG-REL-002: local release preparation, security refresh and cleanup.
-This is the fourth coherent checkpoint: make Windows validation capture
-the actual test-process exit after two clean-build launches yielded a
-complete test summary but no exit code through `Start-Process`.
+This is the fifth coherent checkpoint: refresh the linked OpenImageIO
+source/header/plugin family from 3.1.15.0 to 3.1.17.0 after upstream
+fixed reachable Cineon and EXR memory corruption defects.
 
 ## TOUCHED
 
-- `tools/validate.ps1`: launch tests through an explicit .NET process
-  handle with shell execution disabled, read both output streams
-  asynchronously, enforce the existing 120-second timeout, preserve
-  output/stderr logs and require a concrete zero exit code.
-- This report: record both failed clean attempts and the new focused
-  process-runner evidence.
+- `third_party/openimageio/`: advance the plugin submodule to
+  `73bc189f7d8469a9760ce9c5099b686c77695074` and update its separately
+  copied main, utility and public-header slices, manifests and package
+  provenance together. Retain local include shims and the separate MinGW
+  main-thread error-storage wrappers.
+- `tests/dpx_cineon_oiio_test/` and `tests/expected_counts.txt`: cover 64
+  alternating malformed opens on the ordinary caller thread; minimum rises
+  from 19 to 20 (full-suite minimum 1,373 per configuration).
+- Security, licensing, package catalogue and changelog docs: record the
+  new pin, actual fixes and remaining release gates.
 
 ## STATUS
 
-PARTIAL — the focused process runner passes in Debug and Release.
-The full clean suite, Workbench manual checks, OpenImageIO 3.1.15.0
-decoder fixes, other dependency families, input limits and Linux/macOS
-execution remain gates.
+PARTIAL — the OpenImageIO family has been refreshed and its focused Windows
+matrix passes. The full clean suite, Workbench manual checks,
+other dependency families, input limits and Linux/macOS execution remain
+gates.
 No release binary is published.
 
 The [security review](THIRD_PARTY_SECURITY.md) records an unfixed upstream
@@ -61,7 +65,8 @@ lifecycle decision.
 
 The first checkpoint is `d9b7867619365bd564cf444cf8e3a808bfddccf0`;
 Expat is `ccaeaafa34a91f23c413674ae9bd1f580f0cb5be`;
-libheif is `319b0e6d8c32f08e325862c1d18ec8622ab45f8e`.
+libheif is `319b0e6d8c32f08e325862c1d18ec8622ab45f8e`;
+the process runner is `a1ed7337a343311d1823c374f31ac3ffda92dc30`.
 This checkpoint's final SHA resolves with `git log -1 -- docs/ACTIVE_WORK.md`.
 The branch deletions above are already verified on origin.
 
@@ -76,9 +81,15 @@ pixel hashes match in both configurations. The oversized AV1 corpus
 was rejected promptly. Earlier Expat/OCIO focused tests passed 316
 checks and six clean exits; the first checkpoint's Core/IO/EXR matrix
 passed 316 checks and eight clean exits. Both OCIO generator `--check`
-modes passed. The minimum manifest now has 49 targets and 1,372 checks
-per configuration (2,744 total). Logs and executables are under
+modes passed. The minimum manifest now has 49 targets and 1,373 checks
+per configuration (2,746 total). Logs and executables are under
 `build/windows-x64/validation/`.
+
+The 3.1.17.0 OpenImageIO focused matrix passed 10 targets in each Windows
+configuration: 153 checks and 10 exits at 0 per configuration (306 checks,
+20 exits total). The DPX/Cineon test now performs 64 alternating malformed
+opens on the caller thread in addition to the existing worker path; its
+Debug and Release runs each passed 20/0. This is focused evidence only.
 
 Two clean full-suite attempts stopped at `dpx_cineon_oiio_test` Debug
 after its 19/0 summary because `Start-Process` reported a blank exit
@@ -90,9 +101,7 @@ The integrated clean suite has not yet passed.
 
 ## NEXT ACTION
 
-Publish the runner checkpoint. Review and coherently update the
-OpenImageIO source/header/plugin copies to the stable 3.1.17.0 fixes;
-its 3.1.15.0 Cineon/DPX/EXR readers are affected. Then clean the
+Publish the OpenImageIO checkpoint. Then clean the
 complete intermediate root and run all 49 retained tests in both Windows
 configurations, build and exercise Workbench, remove the proven generated
 legacy `out/` tree and inspect `bin/`. Continue per-family security and

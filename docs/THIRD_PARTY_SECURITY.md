@@ -122,11 +122,12 @@ opening 64 times on the caller thread. The clean full suite and Workbench
 checks remain pending. The old 1.23.1 build is affected and must not be
 published.
 
-## OpenImageIO: 3.1.15.0 affected, 3.1.17.0 target
+## OpenImageIO: 3.1.17.0 focused validation complete
 
-The actual linked OIIO main, utility, public-header and static-plugin
-family is 3.1.15.0 at `cbe57bc005678ca310835473568121719861734c`.
-The stable 3.1.17.0 tag is `73bc189f7d8469a9760ce9c5099b686c77695074`.
+The previous linked OIIO main, utility, public-header and static-plugin
+family was 3.1.15.0 at `cbe57bc005678ca310835473568121719861734c`.
+The source tree is now refreshed to the stable 3.1.17.0 tag
+`73bc189f7d8469a9760ce9c5099b686c77695074` (checked 2026-09-24).
 This repository compiles separately copied main/utility/header files and
 direct plugin sources from a pinned submodule, so advancing only the
 plugin pointer would create a mixed-version library. The MinGW
@@ -144,9 +145,23 @@ adds reader `check_open()`/compression-ratio coverage, shared EXIF/ICC
 bounds fixes, and RAW/TIFF/JPEG XL hardening. These are in the retained
 reader surface; exact issue-by-issue reachability depends on the enabled
 format and caller, but the named Cineon/EXR defects are clearly relevant.
-The coherent 3.1.17.0 family update and its focused/full regressions are
-an **affected release gate**. No version-only, plugin-only or untested
-copy replacement is sufficient.
+The copied main, utility and public-header slices and the plugin submodule
+are now version-consistent. Existing robinmap/Imath include adaptations and
+the separate MinGW main-thread error wrappers remain; upstream's changes
+do not prove that distinct shutdown workaround unnecessary.
+The final focused matrix passed 10 affected targets in each of Debug and
+Release: 306 checks, 20 exits at 0. This includes the 20-check DPX/Cineon
+test's repeated malformed opens on the ordinary caller thread. The clean
+full suite and Workbench remain **release gates**; a source refresh alone
+does not establish a releasable binary.
+
+The copied 3.1.17.0 backend sets `limits:channels=1024`,
+`limits:resolution=1048576` for each dimension and
+`limits:imagesize_MB` to the smaller of 32768 or detected physical
+memory. These are backend open-time guards, not the final ImagingIO
+allocation policy: ImagingCore currently rejects buffers over `INT_MAX`
+bytes. Practical application limits for metadata and subimage/frame counts
+remain to be specified and tested before release.
 
 ## Remaining graph and release boundary
 

@@ -22,6 +22,16 @@ under its MIT/X Consortium license. The complete upstream notice is
 preserved in `third_party/support/expat_src/upstream/COPYING`.
 The generated Windows configuration header is repository-owned.
 
+## OpenImageIO
+
+`third_party/openimageio/openimageio_plugins_src/upstream/` pins
+OpenImageIO 3.1.17.0 at
+`73bc189f7d8469a9760ce9c5099b686c77695074` under Apache-2.0.
+The copied main, utility and public-header source slices retain upstream
+notices; the original license is in the pinned upstream tree. Local
+MinGW error-storage wrappers and include adaptations remain separate
+integration changes.
+
 ## zlib
 
 The `zlib_src/` package includes upstream zlib source code under the zlib License.

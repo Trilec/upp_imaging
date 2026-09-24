@@ -1,5 +1,9 @@
 # OpenImageIO 3.1.15.0 Source Dependency Audit
 
+Historical audit of the previous pin. The active source family is 3.1.17.0;
+see [third-party security](THIRD_PARTY_SECURITY.md) and the current package
+READMEs for release status.
+
 ## Upstream authority
 
 - Pinned release: `v3.1.15.0`

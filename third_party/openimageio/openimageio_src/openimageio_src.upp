@@ -1,4 +1,4 @@
-description "Strict upstream OpenImageIO 3.1.15.0 main source package";
+description "Strict upstream OpenImageIO 3.1.17.0 main source package";
 
 noblitz;
 

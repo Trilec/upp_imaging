@@ -1,6 +1,6 @@
 # openimageio_plugin_hdr
 
-Static OpenImageIO 3.1.15.0 Radiance HDR/RGBE plugin registration for the U++
+Static OpenImageIO 3.1.17.0 Radiance HDR/RGBE plugin registration for the U++
 imaging nest. The format is self-contained and introduces no new external codec
 dependency.
 

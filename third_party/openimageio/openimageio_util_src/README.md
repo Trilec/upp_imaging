@@ -4,8 +4,8 @@ Strict upstream OpenImageIO utility package for U++.
 
 ## Upstream identity
 
-- version: `v3.1.15.0`
-- commit: `cbe57bc005678ca310835473568121719861734c`
+- version: `v3.1.17.0`
+- commit: `73bc189f7d8469a9760ce9c5099b686c77695074`
 - upstream target: `OpenImageIO_Util`
 
 ## Commit Note
@@ -57,7 +57,7 @@ Strict upstream OpenImageIO utility package for U++.
 ## Generated version header
 
 - `third_party/openimageio/OpenImageIO/oiioversion.h` is repository-owned and derived from upstream `src/include/OpenImageIO/oiioversion.h.in`
-- pinned values: `3.1.15.0`
+- pinned values: `3.1.17.0`
 - namespace: `OpenImageIO::v3_1`
 
 ## Forwarding Shims

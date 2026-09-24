@@ -1,6 +1,6 @@
 # Minimum accepted checks per retained test package.
 # Increases are accepted; reductions require review.
-dpx_cineon_oiio_test 19
+dpx_cineon_oiio_test 20
 expat_test 4
 ffmpeg_avcodec_test 12
 ffmpeg_avformat_test 14

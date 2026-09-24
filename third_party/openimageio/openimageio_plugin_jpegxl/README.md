@@ -1,6 +1,6 @@
 # openimageio_plugin_jpegxl
 
-Static OpenImageIO 3.1.15.0 JPEG XL plugin registration for the U++ imaging nest.
+Static OpenImageIO 3.1.17.0 JPEG XL plugin registration for the U++ imaging nest.
 
 The codec implementation is the upstream `jpegxl.imageio` reader/writer paired with
 the repository-pinned `jpegxl_src` libjxl 0.12.0 backend. The package is internal

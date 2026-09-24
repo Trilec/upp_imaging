@@ -15,6 +15,11 @@
   security release, retaining the verified dav1d/libde265 source slice and
   registry-lifetime overlay. HEIF/AVIF validation and the full suite remain
   release gates.
+* Refreshed the OpenImageIO main, utility, public-header and plugin family
+  from 3.1.15.0 to 3.1.17.0, including the Cineon/EXR and shared metadata
+  fixes. Retained the separate MinGW main-thread error-storage wrappers and
+  added repeated caller-thread malformed DPX/Cineon coverage. Full clean
+  validation and Workbench acceptance remain release gates.
 * Retired four reviewed recovery branches. The shutdown experiment branch
   remains for a separate lifecycle decision.
 
