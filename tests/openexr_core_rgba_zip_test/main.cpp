@@ -1,6 +1,9 @@
 #include <stddef.h>
 #include <stdio.h>
+#include <cstdlib>
 #include <string.h>
+#include <filesystem>
+#include <string>
 
 #include <openexr_core/openexr.h>
 
@@ -123,7 +126,18 @@ int main()
 {
 	int passed = 0;
 	int failed = 0;
-	const char* path = "E:/apps/github/upp_imaging/out/openexr_core_rgba_zip.exr";
+	const char* runtime = std::getenv("UPP_IMAGING_TEST_RUNTIME_DIR");
+	const std::filesystem::path runtime_dir =
+		runtime && *runtime ? std::filesystem::path(runtime)
+		                    : std::filesystem::temp_directory_path();
+	std::error_code directory_error;
+	std::filesystem::create_directories(runtime_dir, directory_error);
+	if(directory_error) {
+		printf("SUMMARY passed=0 failed=1\n");
+		return 1;
+	}
+	const std::string output_path = (runtime_dir / "openexr_core_rgba_zip.exr").string();
+	const char* path = output_path.c_str();
 	const int width = 4;
 	const int height = 4;
 	Pixel input[height][width] = {};
@@ -254,6 +268,7 @@ int main()
 		}
 	check_ok("OpenEXRCore RGBA pixels verified", passed);
 
+	remove(path);
 	printf("SUMMARY passed=%d failed=%d\n", passed, failed);
 	return failed ? 1 : 0;
 }

@@ -71,6 +71,9 @@ For an array of package names, invoke the script directly from PowerShell instea
 ```
 
 The second direct invocation runs the manifest suite in Debug and Release.
+`tests/expected_counts.txt` is the authoritative minimum-check manifest.
+The runner rejects malformed or reduced results and records source SHA,
+counts, exit codes and log paths in `build/windows-x64/validation/results.txt`.
 `-Rebuild` cleans the first selected target and its dependency closure in each
 configuration; it is not a guarantee that every independent package cache was
 cleaned. For final release evidence, use a new empty intermediate root or a
