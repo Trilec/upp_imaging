@@ -1,6 +1,6 @@
 # FFmpeg
 
-Stable application-facing direct native FFmpeg package for the pinned 9.0.1 source build.
+Stable application-facing direct native FFmpeg package for the pinned 9.0.2 source build.
 
 The package forwards the standard FFmpeg C API and links the repository-owned scalar `libavutil`, native H.264 `libavcodec`, MOV/local-file `libavformat`, and scalar `libswscale` boundaries. It does not invent replacement FFmpeg types.
 

@@ -4,10 +4,10 @@ Strict public-header and generated-configuration boundary for the repository's p
 
 ## Provenance
 
-- upstream: third_party/ffmpeg/FFmpeg/FFmpeg
-- release tag: `n9.0.1`
-- exact commit: `bf1b838f2ab88b4f8fd83443325c782ea0e0f7fa`
-- signed tag date: 2026-08-12
+- upstream: third_party/ffmpeg/ffmpeg_headers/upstream
+- release tag: `n9.0.2`
+- exact commit: `946fcce07b6dcd0331c8cc609192aeff5e1924f8`
+- tag date: 2026-09-18
 - base license: LGPL-2.1-or-later when GPL/nonfree components are not enabled
 
 The upstream tree is a git submodule. This package compiles no FFmpeg implementation source. It exports the ordinary FFmpeg public include routes such as `<libavutil/avutil.h>`, `<libavcodec/avcodec.h>`, `<libavformat/avformat.h>` and `<libswscale/swscale.h>`.

@@ -1,6 +1,6 @@
 # ffmpeg_avcodec_src
 
-Pinned FFmpeg 9.0.1 `libavcodec` implementation for the first U++ video decode stack.
+Pinned FFmpeg 9.0.2 `libavcodec` implementation for the first U++ video decode stack.
 
 ## Enabled codec surface
 

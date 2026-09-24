@@ -123,7 +123,7 @@ The plugin remains opt-in so ordinary U++ raster behaviour is not silently chang
 
 FFmpeg is a separate subsystem and is not an ImagingIO backend in the current architecture.
 
-The current first slice pins signed FFmpeg `n9.0.1` at exact commit `bf1b838f2ab88b4f8fd83443325c782ea0e0f7fa` and exposes a deliberately bounded direct stack:
+The current first slice pins FFmpeg `n9.0.2` at exact commit `946fcce07b6dcd0331c8cc609192aeff5e1924f8` and exposes a deliberately bounded direct stack:
 
 ```text
 application

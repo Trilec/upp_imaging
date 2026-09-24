@@ -84,12 +84,12 @@ Package names are stable across nests. See [layout](package_layout.md) for assem
 | `webp_src` | `third_party/codecs/webp_src` | Pinned libwebp 1.6.0 static source backend for U++ |
 | `zlib` | `third_party/codecs/zlib` | zlib compression library packaged for U++ |
 | `zlib_src` | `third_party/codecs/zlib_src` | Strict upstream zlib 1.3.2 source package for U++ |
-| `FFmpeg` | `third_party/ffmpeg/FFmpeg` | Stable application-facing FFmpeg 9.0.1 native decode package |
-| `ffmpeg_avcodec_src` | `third_party/ffmpeg/ffmpeg_avcodec_src` | Pinned FFmpeg 9.0.1 native H.264 libavcodec package |
-| `ffmpeg_avformat_src` | `third_party/ffmpeg/ffmpeg_avformat_src` | Pinned FFmpeg 9.0.1 MOV/file libavformat package |
-| `ffmpeg_avutil_src` | `third_party/ffmpeg/ffmpeg_avutil_src` | Pinned FFmpeg 9.0.1 libavutil scalar source package |
-| `ffmpeg_headers` | `third_party/ffmpeg/ffmpeg_headers` | Strict FFmpeg 9.0.1 public-header and generated-config boundary |
-| `ffmpeg_swscale_src` | `third_party/ffmpeg/ffmpeg_swscale_src` | Pinned FFmpeg 9.0.1 scalar libswscale package |
+| `FFmpeg` | `third_party/ffmpeg/FFmpeg` | Stable application-facing FFmpeg 9.0.2 native decode package |
+| `ffmpeg_avcodec_src` | `third_party/ffmpeg/ffmpeg_avcodec_src` | Pinned FFmpeg 9.0.2 native H.264 libavcodec package |
+| `ffmpeg_avformat_src` | `third_party/ffmpeg/ffmpeg_avformat_src` | Pinned FFmpeg 9.0.2 MOV/file libavformat package |
+| `ffmpeg_avutil_src` | `third_party/ffmpeg/ffmpeg_avutil_src` | Pinned FFmpeg 9.0.2 libavutil scalar source package |
+| `ffmpeg_headers` | `third_party/ffmpeg/ffmpeg_headers` | Strict FFmpeg 9.0.2 public-header and generated-config boundary |
+| `ffmpeg_swscale_src` | `third_party/ffmpeg/ffmpeg_swscale_src` | Pinned FFmpeg 9.0.2 scalar libswscale package |
 | `imath` | `third_party/imath/imath` | Imath package with stable public include path |
 | `imath_src` | `third_party/imath/imath_src` | Strict upstream Imath 3.2.2 source package for U++ |
 | `OpenColorIO` | `third_party/opencolorio/OpenColorIO` | Stable OpenColorIO user-facing package |

@@ -1,4 +1,4 @@
-description "Pinned FFmpeg 9.0.1 scalar libswscale package";
+description "Pinned FFmpeg 9.0.2 scalar libswscale package";
 
 noblitz;
 

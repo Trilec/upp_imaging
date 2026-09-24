@@ -1,4 +1,4 @@
-/* Selected FFmpeg 9.0.1 component/helper closure for the first U++ decode slice. */
+/* Selected FFmpeg 9.0.2 component/helper closure for the first U++ decode slice. */
 #ifndef FFMPEG_CONFIG_COMPONENTS_H
 #define FFMPEG_CONFIG_COMPONENTS_H
 

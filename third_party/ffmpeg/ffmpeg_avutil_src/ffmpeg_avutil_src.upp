@@ -1,4 +1,4 @@
-description "Pinned FFmpeg 9.0.1 libavutil scalar source package";
+description "Pinned FFmpeg 9.0.2 libavutil scalar source package";
 
 noblitz;
 

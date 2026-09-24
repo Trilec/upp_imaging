@@ -1,5 +1,5 @@
 /*
- * Repository-owned generated-equivalent FFmpeg 9.0.1 configuration.
+ * Repository-owned generated-equivalent FFmpeg 9.0.2 configuration.
  * Target: Windows x86_64, U++ CLANGx64, static scalar decode-first build.
  */
 #ifndef UPP_FFMPEG_CONFIG_H

@@ -1,4 +1,4 @@
-description "Strict FFmpeg 9.0.1 public-header and generated-config boundary";
+description "Strict FFmpeg 9.0.2 public-header and generated-config boundary";
 
 include
 	generated,

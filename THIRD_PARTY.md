@@ -1,5 +1,27 @@
 # Third-Party Code
 
+## FFmpeg
+
+- Upstream release: 9.0.2 (from 9.0.1); [official release](https://ffmpeg.org/download.html).
+- Pinned `third_party/ffmpeg/ffmpeg_headers/upstream` submodule commit:
+  `946fcce07b6dcd0331c8cc609192aeff5e1924f8` (`n9.0.2`).
+- [Official release archive](https://ffmpeg.org/releases/ffmpeg-9.0.2.tar.xz) SHA-256:
+  `8C3850283EB25FA026482078A04051E0BE17347B09EF81A0849BEC15A96E002E`.
+  Its detached signature verifies with FFmpeg's published release key, and
+  all 3,923 C/header/assembly files under the four linked library trees
+  match the pinned checkout after Git line-ending normalization.
+- License for this selected build: LGPL-2.1-or-later. GPL, nonfree and
+  external codec options are disabled; upstream notices are retained in
+  the pinned tree.
+- Imported 2026-09-24. The submodule provides public headers and directly
+  compiled implementation; repository-generated Windows configuration,
+  `ffversion.h` and the `chroma_pos_compat.c` scalar compatibility function
+  are downstream files. The latter remains required by the unchanged
+  upstream `libswscale/format.c` when `CONFIG_UNSTABLE=0`.
+- Actual linked slice: `libavutil`, native H.264 `libavcodec`, MOV/MP4
+  `libavformat`, local `file` protocol and scalar `libswscale`. Security
+  applicability and validation are recorded in `docs/THIRD_PARTY_SECURITY.md`.
+
 ## libheif
 
 - Upstream version: 1.23.5 (from 1.23.1)

@@ -33,7 +33,7 @@ CONSOLE_APP_MAIN
 
 	Check(state, avutil_version() == LIBAVUTIL_VERSION_INT,
 	      "libavutil runtime version matches headers");
-	Check(state, String(av_version_info()) == "9.0.1",
+	Check(state, String(av_version_info()) == "9.0.2",
 	      "FFmpeg release version is pinned");
 	Check(state, String(avutil_license()).Find("LGPL") >= 0,
 	      "libavutil reports LGPL configuration");

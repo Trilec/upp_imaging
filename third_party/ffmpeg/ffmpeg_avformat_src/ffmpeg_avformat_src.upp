@@ -1,4 +1,4 @@
-description "Pinned FFmpeg 9.0.1 MOV/file libavformat package";
+description "Pinned FFmpeg 9.0.2 MOV/file libavformat package";
 
 noblitz;
 
