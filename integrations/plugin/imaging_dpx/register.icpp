@@ -1,0 +1,8 @@
+#include "imaging_dpx.h"
+
+namespace Upp {
+INITIALIZER(ImagingDPXRaster)
+{
+	StreamRaster::Register<ImagingDPXRaster>();
+}
+}

@@ -207,6 +207,28 @@ static UiToolButton::Style MakeWorkbenchChannelToolStyle(Color face)
 	return s;
 }
 
+
+static bool MakeVideoImage(const Imaging::VideoFrame& frame, OIIO::ImageBuf& output, String& error)
+{
+	Size size = frame.image.GetSize();
+	if(size.cx <= 0 || size.cy <= 0 || int64(size.cx) * size.cy > 8 * 1024 * 1024) {
+		error = "video frame exceeds Workbench preview policy"; return false;
+	}
+	Vector<byte> pixels;
+	pixels.SetCount(size.cx * size.cy * 3);
+	const RGBA* source = frame.image.Begin();
+	for(int i = 0; i < size.cx * size.cy; ++i) {
+		pixels[i * 3] = source[i].r; pixels[i * 3 + 1] = source[i].g; pixels[i * 3 + 2] = source[i].b;
+	}
+	OIIO::ImageSpec spec(size.cx, size.cy, 3, OIIO::TypeDesc::UINT8);
+	OIIO::ImageBuf owned(spec);
+	if(!owned.set_pixels(owned.roi(), OIIO::TypeDesc::UINT8, pixels.Begin())) {
+		error = "unable to retain video frame pixels"; return false;
+	}
+	output = owned;
+	return true;
+}
+
 } // namespace
 
 ImagingWorkbench::ImagingWorkbench()
@@ -215,8 +237,17 @@ ImagingWorkbench::ImagingWorkbench()
 	PostBuild();
 }
 
+ImagingWorkbench::~ImagingWorkbench() { StopVideo(); }
+
+void ImagingWorkbench::Close()
+{
+	StopVideo();
+	ImagingWorkbenchLayout::Close();
+}
+
 void ImagingWorkbench::BindActions()
 {
+	WhenClose = [this] { Close(); };
 	quit_button.WhenAction = [=] { Close(); };
 	load_button.WhenAction = [=] { DoLoad(); };
 	save_split_button.WhenAction = [=] { DoSave(); };
@@ -237,6 +268,9 @@ void ImagingWorkbench::BindActions()
 
 bool ImagingWorkbench::HotKey(dword key)
 {
+	if(video_reader && key == K_SPACE) { ToggleVideoPlayback(); return true; }
+	if(video_reader && key == K_RIGHT) { StopVideo(); StepVideo(); return true; }
+	if(video_reader && key == K_HOME) { StopVideo(); SeekVideo(0); return true; }
 	if(key == K_CTRL_O) {
 		DoLoad();
 		return true;
@@ -337,6 +371,18 @@ void ImagingWorkbench::PostBuild()
 	layers_tree.ShowConnectorLines(true);
 	layers_tree.ShowMetadataMarker(true);
 	layers_tree.WhenSelection = [=] { UpdatePreviewSelection(); };
+	video_controls.SetDirection(UiDirection::H).SetGap(DPI(4), DPI(4)).SetWrap(UiBoxWrap::None);
+	video_play_button.SetText("Play");
+	video_next_button.SetText("Next");
+	video_restart_button.SetText("Restart");
+	video_play_button.WhenAction = [this] { ToggleVideoPlayback(); };
+	video_next_button.WhenAction = [this] { StopVideo(); StepVideo(); };
+	video_restart_button.WhenAction = [this] { StopVideo(); SeekVideo(0); };
+	video_controls.Add(video_play_button).Expand(1);
+	video_controls.Add(video_next_button).Expand(1);
+	video_controls.Add(video_restart_button).Expand(1);
+	UpdateVideoControls();
+	layers_layout.Add(video_controls).Fit().MinCross(DPI(0));
 	layers_layout.Add(layers_summary).Fit().MinCross(DPI(0));
 	layers_layout.Add(layers_tree).Expand(1).MinCross(DPI(0)).AlignSelf(UiBoxLayout::Align::Stretch);
 	layers_layout.Add(layers_detail).Fit().MinCross(DPI(0));
@@ -1975,9 +2021,9 @@ void ImagingWorkbench::UpdateLayersPage()
 void ImagingWorkbench::DoLoad()
 {
 	FileSel selector;
-	selector.Type("Supported image formats", "*.exr;*.png;*.jxl;*.hdr;*.rgbe;*.dpx;*.cin;*.webp;*.avif;*.heic;*.heif;*.heics;*.hif;*.tif;*.tiff;*.dng;*.cr2;*.cr3;*.nef;*.arw;*.raf;*.rw2;*.orf;*.pef;*.sr2;*.x3f");
+	selector.Type("Supported images and H.264 video", "*.mp4;*.mov;*.exr;*.png;*.jxl;*.hdr;*.rgbe;*.dpx;*.cin;*.webp;*.avif;*.heic;*.heif;*.heics;*.hif;*.tif;*.tiff;*.dng;*.cr2;*.cr3;*.nef;*.arw;*.raf;*.rw2;*.orf;*.pef;*.sr2;*.x3f");
 	selector.Type("All files (other camera RAW)", "*.*");
-	if(!selector.ExecuteOpen("Open image"))
+	if(!selector.ExecuteOpen("Open image or video"))
 		return;
 
 	String path = selector.Get();
@@ -1986,7 +2032,7 @@ void ImagingWorkbench::DoLoad()
 
 	String error;
 	if(!LoadImageFile(path, error, true)) {
-		Exclamation("Unable to open image:\n" + error);
+		Exclamation("Unable to open image or video:\n" + error);
 		SetStatus("Unable to load: " + error);
 		return;
 	}
@@ -1997,6 +2043,8 @@ void ImagingWorkbench::DoLoad()
 bool ImagingWorkbench::LoadImageFile(const String& path, String& error, bool populate_ui)
 {
 	String ext = Imaging::IOFormatPolicy::Extension(path);
+	if(ext == ".mp4" || ext == ".mov")
+		return LoadVideoFile(path, error, populate_ui);
 	if(!Imaging::IOFormatPolicy::IsSupportedExtension(ext)) {
 		error = "unsupported extension";
 		return false;
@@ -2015,6 +2063,11 @@ bool ImagingWorkbench::LoadImageFile(const String& path, String& error, bool pop
 	}
 	auto load_ms = std::chrono::duration<double, std::milli>(Clock::now() - load_started).count();
 
+	StopVideo();
+	video_reader.reset();
+	video_pending = false;
+	video_pending_frame = Imaging::VideoFrame();
+	UpdateVideoControls();
 	source_image = loaded;
 	source_filename = path;
 	InvalidateHistogram();
@@ -2032,6 +2085,135 @@ bool ImagingWorkbench::LoadImageFile(const String& path, String& error, bool pop
 	fit_view_button.Enable();
 	RecordTiming("file load", load_ms);
 	return true;
+}
+
+
+void ImagingWorkbench::UpdateVideoControls()
+{
+	bool enabled = video_reader && video_reader->IsOpen();
+	video_play_button.Enable(enabled);
+	video_next_button.Enable(enabled);
+	video_restart_button.Enable(enabled);
+	video_play_button.SetText(video_playing ? "Pause" : "Play");
+}
+
+void ImagingWorkbench::StopVideo()
+{
+	video_playing = false;
+	KillTimeCallback(VIDEO_TIMER_ID);
+	UpdateVideoControls();
+}
+
+void ImagingWorkbench::PublishVideoFrame(const Imaging::VideoFrame& frame, const OIIO::ImageBuf& image,
+                                         bool populate_ui, bool initial)
+{
+	source_image = image;
+	video_time_ms = frame.time_ms;
+	InvalidateHistogram();
+	proxy_cache.Clear();
+	probe_source_pixel.SetCount(3);
+	last_error.Clear();
+	if(initial) {
+		reset_canvas_view = true;
+		preview_groups.Clear();
+		PreviewGroup group;
+		group.name = "Video RGB"; group.channels_text = "R G B";
+		group.channel_count = 3; group.red = 0; group.green = 1; group.blue = 2;
+		preview_groups.Add(group);
+	}
+	selected_preview_group = 0;
+	subimages.Clear();
+	ImageSubimageInfo info;
+	info.size = frame.image.GetSize(); info.pixel_type = "uint8"; info.channel_count = 3;
+	subimages.Add(info); subimage_count = 1; subimages_truncated = false;
+	UpdateDisplayState();
+	if(initial) {
+		UpdateOcioControls(OcioControlChange::Config);
+		if(populate_ui) UpdateLayersPage();
+	}
+	BuildSelectedGroupProxy();
+	ComputeHistogramFromProxy();
+	RenderPreviewFromProxy();
+	save_split_button.Enable(); fit_view_button.Enable();
+	UpdateVideoControls();
+	SetStatus(Format("Video: %s  %.3f / %.3f s", GetFileName(source_filename),
+	                 video_time_ms / 1000.0, video_reader->GetDurationMs() / 1000.0));
+}
+
+bool ImagingWorkbench::LoadVideoFile(const String& path, String& error, bool populate_ui)
+{
+	auto reader = std::make_unique<Imaging::VideoReader>();
+	Imaging::VideoFrame frame;
+	OIIO::ImageBuf image;
+	if(!reader->Open(path) || !reader->ReadNext(frame)) {
+		error = reader->GetError();
+		if(error.IsEmpty()) error = "video contains no decoded frames";
+		return false;
+	}
+	if(!MakeVideoImage(frame, image, error)) return false;
+	StopVideo();
+	video_reader = std::move(reader);
+	video_pending = false;
+	video_pending_frame = Imaging::VideoFrame();
+	source_filename = path;
+	PublishVideoFrame(frame, image, populate_ui, true);
+	return true;
+}
+
+bool ImagingWorkbench::StepVideo()
+{
+	if(!video_reader) return false;
+	Imaging::VideoFrame frame;
+	OIIO::ImageBuf image;
+	String error;
+	bool read = video_pending;
+	if(video_pending) { frame = video_pending_frame; video_pending = false; }
+	else read = video_reader->ReadNext(frame);
+	if(!read) {
+		StopVideo();
+		SetStatus(video_reader->GetError().IsEmpty() ? "Video: end of clip" : "Video: " + video_reader->GetError());
+		return false;
+	}
+	if(!MakeVideoImage(frame, image, error)) { StopVideo(); SetStatus(error); return false; }
+	PublishVideoFrame(frame, image, true, false);
+	return true;
+}
+
+bool ImagingWorkbench::SeekVideo(int64 time_ms)
+{
+	if(!video_reader) return false;
+	StopVideo();
+	if(!video_reader->Seek(time_ms)) { SetStatus(video_reader->GetError()); return false; }
+	video_pending = false;
+	return StepVideo();
+}
+
+void ImagingWorkbench::ToggleVideoPlayback()
+{
+	if(!video_reader) return;
+	if(video_playing) { StopVideo(); return; }
+	if(video_reader->IsEof() && !SeekVideo(0)) return;
+	video_playing = true;
+	UpdateVideoControls();
+	ScheduleVideoFrame();
+}
+
+void ImagingWorkbench::ScheduleVideoFrame()
+{
+	if(!video_playing || !video_reader) return;
+	if(!video_pending) {
+		if(!video_reader->ReadNext(video_pending_frame)) {
+			StopVideo();
+			SetStatus(video_reader->GetError().IsEmpty() ? "Video: end of clip" : "Video: " + video_reader->GetError());
+			return;
+		}
+		video_pending = true;
+	}
+	int delay = (int)std::clamp<int64>(video_pending_frame.time_ms - video_time_ms, 1, 2000);
+	SetTimeCallback(delay, [this] {
+		if(!video_playing || !video_reader) return;
+		if(StepVideo()) ScheduleVideoFrame();
+	}, VIDEO_TIMER_ID);
 }
 
 // ── HistogramCtrl ───────────────────────────────────────────────────────

@@ -1,0 +1,8 @@
+#include "imaging_hdr.h"
+
+namespace Upp {
+INITIALIZER(ImagingHDRRaster)
+{
+	StreamRaster::Register<ImagingHDRRaster>();
+}
+}

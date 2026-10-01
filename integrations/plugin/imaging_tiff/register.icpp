@@ -1,0 +1,8 @@
+#include "imaging_tiff.h"
+
+namespace Upp {
+INITIALIZER(ImagingTIFFRaster)
+{
+	StreamRaster::Register<ImagingTIFFRaster>();
+}
+}

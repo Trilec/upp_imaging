@@ -1,0 +1,8 @@
+description "Opt-in HDR U++ raster preview";
+
+uses
+	ImagingRaster;
+
+file
+	imaging_hdr.h,
+	register.icpp;

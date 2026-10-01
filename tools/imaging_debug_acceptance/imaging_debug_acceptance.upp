@@ -1,0 +1,5 @@
+description "One Windows Debug acceptance block using tools/validate.ps1";
+uses Core;
+file main.cpp;
+mainconfig
+	"" = "CONSOLE";

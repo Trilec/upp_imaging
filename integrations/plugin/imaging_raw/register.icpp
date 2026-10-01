@@ -1,0 +1,8 @@
+#include "imaging_raw.h"
+
+namespace Upp {
+INITIALIZER(ImagingRAWRaster)
+{
+	StreamRaster::Register<ImagingRAWRaster>();
+}
+}

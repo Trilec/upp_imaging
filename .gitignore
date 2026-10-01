@@ -4,3 +4,7 @@
 # Legacy artifacts remain ignored until local cleanup is complete.
 out/
 GitHubOut.var
+
+# Klick transaction recovery evidence stays local.
+/.klick-patch/
+/.klick-patch.lock

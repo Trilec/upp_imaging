@@ -1,0 +1,10 @@
+description "Bounded local H.264 MP4/MOV reader for U++";
+
+uses
+	Draw,
+	FFmpeg;
+
+file
+	ImagingVideo.h,
+	ImagingVideo.cpp,
+	README.md;

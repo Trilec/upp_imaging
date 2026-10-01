@@ -18,7 +18,8 @@ Security clearance and `bin/` publication remain pending.
 Current scope:
 - loading the registered EXR, PNG, JPEG XL, Radiance HDR, DPX, Cineon,
   WebP, HEIF/AVIF, TIFF and camera RAW reader families
-- EXR and PNG saving
+- local H.264 MP4/MOV preview, Play/Pause, Next and Restart
+- EXR and PNG saving (including the currently displayed video frame)
 - channel and pass selection
 - RGB, R, G, B, and A display modes
 - exposure and gamma inspection controls
@@ -82,3 +83,17 @@ Known limits:
 
 Next milestones:
 - histogram graph polish
+
+## Video controls
+
+Open a local H.264 MP4 or MOV. Space toggles Play/Pause, Right steps one frame,
+and Home restarts; the Layers panel exposes the same controls. Frame timestamps
+and duration appear in the status bar. Closing or replacing the clip cancels
+playback. Audio, encoding, networking and other video codecs are outside this
+slice. Frames are RGBA8 previews; playback uses the UI timer and cooperative
+decode limits, so a difficult frame can still delay the UI. The reusable
+[ImagingVideo API](../../imaging/ImagingVideo/README.md) is independent of Workbench.
+
+Run imaging_raster_test and imaging_video_test to regenerate manual-load files
+under build/windows-x64/samples. The current identified Debug build is
+build/ImagingWorkbench_debug.exe; bin publication awaits security clearance.

@@ -1,5 +1,40 @@
 # Active Work
 
+## Current delivery block — 1 October 2026
+
+The [delivery task list](DELIVERY_TASKS.md) now defines a Windows Debug
+Workbench plus reusable U++ format packages and a bounded video API.
+The image integration block passed 234 Debug checks across three targets:
+57 format integration, 22 existing EXR contract, and 155 Workbench checks
+at the first image block; the later combined Workbench has 166 checks.
+All eleven image formats across ten reader families have positive U++ preview examples;
+Workbench now also has successful Cineon and DNG regression coverage.
+Generated manual samples remain under `build/windows-x64/samples/`.
+See [exact image-block evidence](IMAGING_RASTER_VALIDATION.md).
+
+The shared `ImagingRaster` implementation bounds encoded input and its own
+float/RGBA allocations. Native metadata and decoder scratch remain separate
+security work. Video integration passed 22 reader checks and the combined Workbench passed
+166 checks; the actual Debug app built with hash recorded in
+[video evidence](IMAGING_VIDEO_VALIDATION.md). The complete retained Debug acceptance passed 51 targets / 1,482 checks /
+zero failures / 51 exits at 0. Dependency clearance is still pending. Native parser allocations and
+cooperative video deadlines do not constitute complete input isolation.
+No new Release validation or artifact publication is claimed. Existing Curt
+acceptance and historical Windows results below remain evidence.
+
+The final Debug ledger is
+`build/windows-x64/release/acceptance-debug-delivery-20261001-results.txt`
+(SHA-256 `c55be65e0d8a520d81060906bd96c390d2cfcfd5efab807b3b72ca573d9678bd`). It records pre-commit HEAD
+`d944562640194668377f8832af0c762f34aac3dc`; the build included the new
+raster/video/Workbench source now published with this checkpoint. Production C++
+source was unchanged during the run. Afterward, the benchmark-only manifest
+received its missing ImagingIO dependency and a focused Debug rebuild passed
+(exec-6B3F66B3ED0BF3B65BF92E15304E0F21); other later edits reconcile documentation.
+This was an incremental Debug integration run, not a clean Release rebuild.
+The outer Klick response timed out; the complete per-target ledger establishes
+all 51 process exits and exact counts. Retained job history still reports an ACL
+error. No duplicate suite was started after the transport timeout.
+
 ## BASE
 
 `26c494498e6d975c77c552d002ce4e65a06c1960` was the reviewed

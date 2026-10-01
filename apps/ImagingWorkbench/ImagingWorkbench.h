@@ -10,6 +10,7 @@
 #include <imaging_roundtrip_viewer_ocio/OcioPreview.h>
 
 #include <OpenImageIO/OIIO.h>
+#include <ImagingVideo/ImagingVideo.h>
 
 namespace Upp {
 
@@ -121,6 +122,8 @@ public:
 	typedef ImagingWorkbench CLASSNAME;
 
 	ImagingWorkbench();
+	~ImagingWorkbench();
+	void Close() override;
 
 	// Test hooks (deterministic, not timing-based).
 	int HistogramRecomputeCount() const { return histogram_recompute_count; }
@@ -133,6 +136,14 @@ protected:
 
 	private:
 	void DoLoad();
+	bool LoadVideoFile(const String& path, String& error, bool populate_ui);
+	bool StepVideo();
+	bool SeekVideo(int64 time_ms);
+	void ToggleVideoPlayback();
+	void ScheduleVideoFrame();
+	void StopVideo();
+	void UpdateVideoControls();
+	void PublishVideoFrame(const Imaging::VideoFrame& frame, const OIIO::ImageBuf& image, bool populate_ui, bool initial);
 	bool LoadImageFile(const String& path, String& error, bool populate_ui = true);
 	void UpdateDisplayState();
 	void UpdateCanvasZoomLabel();
@@ -184,6 +195,14 @@ protected:
 	static bool IsAlphaChannelName(const String& name);
 	static String GroupPrefix(const String& name);
 
+	static constexpr int VIDEO_TIMER_ID = 91;
+	std::unique_ptr<Imaging::VideoReader> video_reader;
+	bool video_playing = false;
+	bool video_pending = false;
+	Imaging::VideoFrame video_pending_frame;
+	int64 video_time_ms = 0;
+	UiBoxLayout video_controls;
+	UiButton video_play_button, video_next_button, video_restart_button;
 	ImagingCanvas canvas;
 	UiBoxLayout layers_layout;
 	UiLabel layers_summary;

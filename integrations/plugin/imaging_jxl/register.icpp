@@ -1,0 +1,8 @@
+#include "imaging_jxl.h"
+
+namespace Upp {
+INITIALIZER(ImagingJXLRaster)
+{
+	StreamRaster::Register<ImagingJXLRaster>();
+}
+}

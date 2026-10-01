@@ -1,0 +1,8 @@
+#include "imaging_webp.h"
+
+namespace Upp {
+INITIALIZER(ImagingWebPRaster)
+{
+	StreamRaster::Register<ImagingWebPRaster>();
+}
+}

@@ -1,0 +1,8 @@
+description "Opt-in PNG U++ raster preview";
+
+uses
+	ImagingRaster;
+
+file
+	imaging_png.h,
+	register.icpp;

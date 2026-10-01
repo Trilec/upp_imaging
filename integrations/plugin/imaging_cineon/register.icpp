@@ -1,0 +1,8 @@
+#include "imaging_cineon.h"
+
+namespace Upp {
+INITIALIZER(ImagingCineonRaster)
+{
+	StreamRaster::Register<ImagingCineonRaster>();
+}
+}

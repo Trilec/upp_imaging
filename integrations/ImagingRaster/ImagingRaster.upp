@@ -1,0 +1,10 @@
+description "Shared bounded U++ image raster preview";
+
+uses
+	Draw,
+	OpenImageIO;
+
+file
+	ImagingRaster.h,
+	ImagingRaster.cpp,
+	README.md;

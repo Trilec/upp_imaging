@@ -1,8 +1,7 @@
 description "Opt-in OpenEXR StreamRaster preview bridge";
 
 uses
-	Draw,
-	OpenImageIO;
+	ImagingRaster;
 
 file
 	exr.h,

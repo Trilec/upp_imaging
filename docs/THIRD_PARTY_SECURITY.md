@@ -52,7 +52,7 @@ The `.ocio` configuration parser itself is YAML; file transforms referenced
 from a config can still reach the XML readers. Neither extension filtering
 nor a file-size cap excludes the reported ~2 MiB case. The unresolved DoS is described in
 [upstream issue #1076](https://github.com/libexpat/libexpat/issues/1076).
-The official issue was rechecked on 2026-09-25 and remains open without
+The official issue was rechecked on 2026-10-01 and remains open without
 a public trigger or fixed release.
 Release notes and affected components are in the
 [Expat 2.8.5 change log](https://github.com/libexpat/libexpat/blob/R_2_8_5/expat/Changes).
@@ -272,3 +272,43 @@ verified upstream fix replaces their distinct shutdown contract.
 HEIF registry teardown, OCIO FileTransform ownership and FFmpeg
 generated configuration likewise require explicit review before
 their families change.
+
+## U++ input policies added on 1 October 2026
+
+ImagingRaster buffers at most 64 MiB encoded data and validates dimensions,
+16M pixels, 64 channels and a combined 256 MiB float/RGBA allocation budget
+before allocating its output. Defaults and configurable exceptions are in its
+README. Signature checks avoid dispatching obvious unrelated data to a reader.
+A native parser may allocate metadata or scratch before its returned spec is
+checked; this is still an unresolved boundary. Other StreamRaster readers
+registered by Draw have their own limits.
+
+ImagingVideo restricts input to local H.264 in the MOV/MP4 demuxer, rejects URLs
+and UNC paths, and defaults to 256 MiB files, 8M pixels, 8192 per dimension,
+16 MiB packets and bounded decode work. FFmpeg's max_pixels is set before
+codec opening. The three-second deadline is cooperative: it cannot interrupt
+a single long native decode call. Packet checks follow native demux allocation;
+metadata, decoder scratch and reference frames are not a blanket hard cap.
+No additional codecs or network protocols were enabled. See
+[video validation](IMAGING_VIDEO_VALIDATION.md). These policies improve the
+public integration without clearing the remaining dependency/security gates.
+
+## Additional family review leads — 1 October 2026
+
+Official Brotli and yaml-cpp advisory pages list no published advisories;
+this is not proof of no vulnerabilities. Nested JXL dependency pins and source
+fixes still require comparison before either family is cleared:
+https://github.com/google/brotli/security/advisories and
+https://github.com/jbeder/yaml-cpp/security/advisories.
+
+The imported minizip-ng provider is 4.0.10; official upstream now lists 4.2.2.
+The 4.2.0 and 4.2.2 notes include extraction/symlink hardening:
+https://github.com/zlib-ng/minizip-ng/releases/tag/4.2.0 and
+https://github.com/zlib-ng/minizip-ng/releases/tag/4.2.2.
+The OCIO package links minizip-ng, but whether the affected extraction helpers
+are reachable through its archive/config APIs remains unresolved. Compare the
+compiled source slice and consumers before selecting a justified compatible
+refresh. Crypto fixes do not justify enabling currently disabled features.
+FFmpeg stream-info probing may decode before the reader's own codec context
+receives max_pixels; this native probing boundary requires further review.
+The completed 51-target Debug run is correctness evidence, not security clearance.

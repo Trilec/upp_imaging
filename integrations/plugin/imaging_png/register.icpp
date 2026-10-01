@@ -1,0 +1,8 @@
+#include "imaging_png.h"
+
+namespace Upp {
+INITIALIZER(ImagingPNGRaster)
+{
+	StreamRaster::Register<ImagingPNGRaster>();
+}
+}

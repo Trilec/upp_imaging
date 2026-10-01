@@ -1,0 +1,8 @@
+description "Opt-in WebP U++ raster preview";
+
+uses
+	ImagingRaster;
+
+file
+	imaging_webp.h,
+	register.icpp;

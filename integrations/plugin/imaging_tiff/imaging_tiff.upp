@@ -1,0 +1,8 @@
+description "Opt-in TIFF U++ raster preview";
+
+uses
+	ImagingRaster;
+
+file
+	imaging_tiff.h,
+	register.icpp;

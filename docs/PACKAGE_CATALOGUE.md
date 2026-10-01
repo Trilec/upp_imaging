@@ -54,7 +54,7 @@ Package names are stable across nests. See [layout](package_layout.md) for assem
 | `minizip_ng_test` | `tests/minizip_ng_test` | Stable minizip-ng user-facing probe |
 | `opencolorio_test` | `tests/opencolorio_test` | Stable OpenColorIO user-facing probe |
 | `openexr_core_rgba_zip_test` | `tests/openexr_core_rgba_zip_test` | OpenEXRCore RGBA ZIP round-trip |
-| `openexr_test` | `tests/openexr_test` | Stable OpenEXR 3.4.13 high-level file round-trip test |
+| `openexr_test` | `tests/openexr_test` | Stable OpenEXR 3.4.14 high-level file round-trip test |
 | `openimageio_io_test` | `tests/openimageio_io_test` | Deterministic OpenImageIO IO test |
 | `plugin_exr_test` | `tests/plugin_exr_test` | plugin/exr StreamRaster preview contract |
 | `pystring_test` | `tests/pystring_test` | Stable pystring user-facing probe |
@@ -80,7 +80,7 @@ Package names are stable across nests. See [layout](package_layout.md) for assem
 | `libtiff` | `third_party/codecs/libtiff` | Stable user-facing libtiff package for U++ |
 | `libtiff_src` | `third_party/codecs/libtiff_src` | Strict upstream libtiff 4.7.2 source package for U++ |
 | `openjph` | `third_party/codecs/openjph` | OpenJPH package with stable public include path |
-| `openjph_src` | `third_party/codecs/openjph_src` | Strict standalone OpenJPH 0.26.3 source package for U++ |
+| `openjph_src` | `third_party/codecs/openjph_src` | Strict standalone OpenJPH 0.27.1 source package for U++ |
 | `webp_src` | `third_party/codecs/webp_src` | Pinned libwebp 1.6.0 static source backend for U++ |
 | `zlib` | `third_party/codecs/zlib` | zlib compression library packaged for U++ |
 | `zlib_src` | `third_party/codecs/zlib_src` | Strict upstream zlib 1.3.2 source package for U++ |
@@ -128,3 +128,22 @@ Package names are stable across nests. See [layout](package_layout.md) for assem
 | `yaml_cpp_src` | `third_party/support/yaml_cpp_src` | Strict upstream yaml-cpp 0.8.0 source package |
 | `imaging_workbench_bench` | `tools/imaging_workbench_bench` | ImagingWorkbench timing and coordinate bench |
 | `libpng_src_roundtrip_test` | `tests/libpng_src_roundtrip_test` | Standalone no-Core PNG/zlib provider regression. |
+
+## Shared U++ preview and video packages
+
+| Package | Physical directory | Purpose |
+| --- | --- | --- |
+| ImagingRaster | integrations/ImagingRaster | Shared bounded RGBA8 StreamRaster implementation |
+| ImagingVideo | imaging/ImagingVideo | Bounded local H.264 reader, U++ frames, timestamps and seeking |
+| imaging_raster_test | tests/imaging_raster_test | Consolidated positive image-family and policy regression |
+| imaging_video_test | tests/imaging_video_test | Consolidated video decode, seeking and failure regression |
+| imaging_debug_acceptance | tools/imaging_debug_acceptance | One bounded Windows Debug acceptance block using validate.ps1 |
+| plugin/imaging_png | integrations/plugin/imaging_png | Opt-in png StreamRaster preview |
+| plugin/imaging_jxl | integrations/plugin/imaging_jxl | Opt-in jxl StreamRaster preview |
+| plugin/imaging_hdr | integrations/plugin/imaging_hdr | Opt-in hdr StreamRaster preview |
+| plugin/imaging_dpx | integrations/plugin/imaging_dpx | Opt-in dpx StreamRaster preview |
+| plugin/imaging_cineon | integrations/plugin/imaging_cineon | Opt-in cineon StreamRaster preview |
+| plugin/imaging_raw | integrations/plugin/imaging_raw | Opt-in raw StreamRaster preview |
+| plugin/imaging_webp | integrations/plugin/imaging_webp | Opt-in webp StreamRaster preview |
+| plugin/imaging_heif | integrations/plugin/imaging_heif | Opt-in heif StreamRaster preview |
+| plugin/imaging_tiff | integrations/plugin/imaging_tiff | Opt-in tiff StreamRaster preview |

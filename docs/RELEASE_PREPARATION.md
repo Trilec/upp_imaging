@@ -1,5 +1,15 @@
 # Release preparation
 
+## Current scope — 1 October 2026
+
+Curt requested Debug builds only for the current delivery. Image format adapters
+and H.264 MP4/MOV Workbench integration now have focused Debug evidence in
+[ACTIVE_WORK.md](ACTIVE_WORK.md). The retained acceptance set has 51 targets
+and a minimum of 1,482 checks. It passed as one Debug block at this checkpoint (1,482 checks, 51 exits at 0);
+do not repeat the old GUI checklist. The historical Debug/Release contract
+below remains a Release-publication reference, not today's build instruction.
+Security clearance remains unresolved; no new bin payload is published.
+
 Current execution evidence is in [ACTIVE_WORK.md](ACTIVE_WORK.md).
 This document preserves the original release-preparation contract and
 its starting-point statements below; those statements are historical

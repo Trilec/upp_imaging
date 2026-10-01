@@ -10,6 +10,7 @@ uses
 	imaging_roundtrip_viewer_ocio,
 	imaging_view_transform,
 	ImagingIO,
+	ImagingVideo,
 	OpenImageIO,
 	OpenColorIO;
 

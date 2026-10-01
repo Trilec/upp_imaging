@@ -8,6 +8,8 @@ uses
 	imaging_tone_conversion,
 	imaging_roundtrip_viewer_ocio,
 	imaging_view_transform,
+	ImagingIO,
+	ImagingVideo,
 	OpenImageIO,
 	OpenColorIO;
 

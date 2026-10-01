@@ -1,0 +1,8 @@
+#include "imaging_heif.h"
+
+namespace Upp {
+INITIALIZER(ImagingHEIFRaster)
+{
+	StreamRaster::Register<ImagingHEIFRaster>();
+}
+}

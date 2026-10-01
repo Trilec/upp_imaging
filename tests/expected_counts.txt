@@ -21,11 +21,13 @@ imaging_histogram_test 155
 imaging_io_oiio_test 21
 imaging_io_test 89
 imaging_preview_coalescing_test 13
+imaging_raster_test 57
 imaging_roundtrip_viewer_ocio_smoke_test 39
 imaging_test 6
 imaging_tone_conversion_test 124
+imaging_video_test 22
 imaging_view_transform_test 111
-imaging_workbench_ocio_test 151
+imaging_workbench_ocio_test 166
 imath_test 4
 jpegxl_imagingio_test 50
 jpegxl_oiio_test 10

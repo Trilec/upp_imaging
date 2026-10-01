@@ -13,6 +13,9 @@
 #undef private
 
 #include <OpenImageIO/OIIO.h>
+#include "../imaging_raster_test/Fixtures.h"
+#include "../imaging_video_test/Fixtures.h"
+#include "../ffmpeg_first_frame_test/Fixture.h"
 
 using namespace Upp;
 using namespace UppImaging;
@@ -555,6 +558,19 @@ static int RunTests()
 		      wb.source_image.spec().height == (avif ? 533 : 461),
 		      avif ? "AVIF Workbench load" : "HEIC Workbench load", passed, failed);
 	}
+
+	String cineon_fixture = (root / "positive.cin").string().c_str();
+	bool cineon_written = WriteCineon(cineon_fixture);
+	Check(cineon_written, "Cineon positive fixture write", passed, failed);
+	Check(cineon_written && wb.LoadImageFile(cineon_fixture.Begin(), error, true) &&
+	      wb.source_image.spec().width == 8 && wb.source_image.spec().height == 6,
+	      "Cineon Workbench positive load", passed, failed);
+	String raw_fixture = (root / "positive.dng").string().c_str();
+	bool raw_written = WriteDng(raw_fixture);
+	Check(raw_written, "camera DNG positive fixture write", passed, failed);
+	Check(raw_written && wb.LoadImageFile(raw_fixture.Begin(), error, true) &&
+	      wb.source_image.spec().width == 64 && wb.source_image.spec().height == 64,
+	      "camera DNG Workbench positive load", passed, failed);
 	const std::filesystem::path many_subimages = root / "many_subimages.tiff";
 	bool many_written = WriteManySubimages(many_subimages, 257);
 	Check(many_written, "multi-subimage TIFF fixture write", passed, failed);
@@ -719,6 +735,36 @@ static int RunTests()
 	wb.channel_view = ChannelView::Alpha;
 	wb.RenderPreviewFromProxy();
 	Check(!wb.ocio_preview_applied, "Alpha mode bypasses OCIO", passed, failed);
+
+
+	String video_path = (root / "workbench.mp4").string().c_str();
+	String mov_path = (root / "workbench.mov").string().c_str();
+	String video_bytes = ThreeFrameVideo(String(kFfmpegFirstFrameFixture, kFfmpegFirstFrameFixtureSize));
+	Check(!video_bytes.IsEmpty() && SaveFile(video_path, video_bytes), "Workbench video fixture", passed, failed);
+	for(int i = 0; i < 4; ++i) video_bytes.Set(8 + i, "qt  "[i]);
+	SaveFile(mov_path, video_bytes);
+	Check(wb.LoadImageFile(video_path, error, true) && wb.video_reader && wb.video_reader->IsOpen(),
+	      "Workbench opens H.264 MP4", passed, failed);
+	Check(wb.video_time_ms == 0 && !wb.preview_image.IsEmpty() && wb.source_image.nchannels() == 3,
+	      "Workbench renders first video frame", passed, failed);
+	wb.ToggleVideoPlayback();
+	Check(wb.video_playing && wb.video_pending && wb.video_time_ms == 0,
+	      "play queues timestamped frame", passed, failed);
+	wb.StopVideo();
+	Check(!wb.video_playing && wb.video_pending, "pause retains queued frame", passed, failed);
+	Check(wb.StepVideo() && wb.video_time_ms == 1000, "step consumes retained frame", passed, failed);
+	Check(wb.SeekVideo(1500) && wb.video_time_ms == 2000, "Workbench seek discards earlier frames", passed, failed);
+	Check(!wb.LoadImageFile((root / "missing.mp4").string().c_str(), error, true) &&
+	      wb.source_filename == video_path && wb.video_time_ms == 2000,
+	      "failed video open preserves current clip", passed, failed);
+	wb.SeekVideo(0);
+	wb.ToggleVideoPlayback();
+	wb.Close();
+	Check(!wb.video_playing, "close cancels playback", passed, failed);
+	Check(wb.LoadImageFile(mov_path, error, true) && wb.video_time_ms == 0,
+	      "Workbench opens QuickTime-brand MOV", passed, failed);
+	Check(wb.LoadImageFile(grouped.string().c_str(), error, true) && !wb.video_reader && !wb.video_playing,
+	      "still image replaces video and cancels playback", passed, failed);
 
 	printf("SUMMARY passed=%d failed=%d\n", passed, failed);
 	return failed ? 1 : 0;

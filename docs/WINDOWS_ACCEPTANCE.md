@@ -1,13 +1,39 @@
 # Windows Acceptance
 
 Authoritative acceptance set after the repository structure migration. The manifest
-`tests/acceptance.txt` contains all 49 retained deterministic test packages;
-`tools/validate.ps1` builds and runs them in Debug and Release. Minimum
+`tests/acceptance.txt` contains 51 retained deterministic test packages (the original 49 plus raster/video integration);
+`tools/validate.ps1` supports Debug and Release. Current delivery validation uses Debug only, as requested by Curt on 1 October 2026. Minimum
 per-target check counts are maintained in `tests/expected_counts.txt`; the
 table below is historical evidence from the structure migration. The runner
 rejects invalid configurations, stale executables after failed builds,
 missing/duplicate/malformed summaries, reduced counts, failed checks,
 nonzero exits and timeouts.
+
+## Current delivery Debug checkpoint — 1 October 2026
+
+All 51 retained targets passed: 1,482 checks, zero failures, 51 exits at 0.
+The suite used incremental CLANGx64 Debug builds through the existing runner;
+it is not a clean rebuild or fresh Release evidence. The immutable ledger is
+`build/windows-x64/release/acceptance-debug-delivery-20261001-results.txt`,
+SHA-256 `c55be65e0d8a520d81060906bd96c390d2cfcfd5efab807b3b72ca573d9678bd`.
+This is an LF-normalized preserved copy. The original CRLF ledger at
+validation/results.txt has SHA-256 fe3eb523cc9ee235d682481cb756d521db6f98d12fefa76f2f49709d66edd083; counts and lines are
+unchanged. Its source header is pre-commit d944562640194668377f8832af0c762f34aac3dc;
+the run compiled the image/video/Workbench worktree source committed with
+this delivery. No compiled source changed during the suite. The current minimum
+in expected_counts.txt is exactly 1,482. The new raster test adds 57 checks,
+the video test adds 22 and combined Workbench adds 15 over the prior 151.
+The outer Klick request timed out while the native driver continued; the
+complete saved per-target records establish the results without restarting.
+Debug Workbench artifact identity and focused video evidence are in
+[IMAGING_VIDEO_VALIDATION.md](IMAGING_VIDEO_VALIDATION.md). Workbench manually
+accepted by Curt; that historical acceptance does not identify this new hash.
+Release/security publication and non-Windows execution remain separate gates.
+
+To repeat this block deliberately, use `tools/validate.ps1 -Configuration debug`
+or build and run `imaging_debug_acceptance`, the fixed Windows driver with
+process-tree containment and a 550-second block deadline. It forwards no user
+commands and uses process-scoped PowerShell execution policy for this script.
 
 ## Reproduce
 

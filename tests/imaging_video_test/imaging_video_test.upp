@@ -1,0 +1,12 @@
+description "Consolidated bounded U++ video reader contract";
+
+uses
+	ImagingVideo;
+
+file
+	main.cpp,
+	Fixtures.h,
+	README.md;
+
+mainconfig
+	"" = "CONSOLE";

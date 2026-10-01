@@ -1,0 +1,8 @@
+description "Opt-in JXL U++ raster preview";
+
+uses
+	ImagingRaster;
+
+file
+	imaging_jxl.h,
+	register.icpp;

@@ -1,0 +1,21 @@
+description "Consolidated U++ format integration and preview limits";
+
+uses
+	plugin/exr,
+	plugin/imaging_png,
+	plugin/imaging_jxl,
+	plugin/imaging_hdr,
+	plugin/imaging_dpx,
+	plugin/imaging_cineon,
+	plugin/imaging_raw,
+	plugin/imaging_webp,
+	plugin/imaging_heif,
+	plugin/imaging_tiff;
+
+file
+	main.cpp,
+	Fixtures.h,
+	README.md;
+
+mainconfig
+	"" = "CONSOLE";
