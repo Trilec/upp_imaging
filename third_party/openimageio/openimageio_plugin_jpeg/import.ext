@@ -1,0 +1,3 @@
+files
+    ../openimageio_plugins_src/upstream/src/jpeg.imageio/jpeginput.cpp
+    ../openimageio_plugins_src/upstream/src/jpeg.imageio/jpegoutput.cpp;

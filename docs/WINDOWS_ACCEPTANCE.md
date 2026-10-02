@@ -9,6 +9,28 @@ rejects invalid configurations, stale executables after failed builds,
 missing/duplicate/malformed summaries, reduced counts, failed checks,
 nonzero exits and timeouts.
 
+## Final Windows Debug acceptance — 2 October 2026
+
+All 51 retained targets passed **1,512 checks, zero failures and 51 exits at 0**
+through `tools/validate.ps1 -Configuration debug`. The preserved byte-identical
+ledger is `build/windows-x64/release/acceptance-debug-finish-20261002-results.txt`,
+SHA-256 `0e63e53fb618d1d3d09fe09496c719ba0b2143f8465b6772894eb254b8c244c0`.
+Its header records pre-commit HEAD `ed15a3aaf855e6100df87bda2701dc8555b91905`;
+the compiled worktree includes the JPEG/input-policy/TIFF/OCIO source committed
+with this completion record. Production source did not change during the
+successful integrated run. The final manifest totals exactly 1,512 checks.
+No rerun is needed merely because those changes are subsequently committed.
+
+This was incremental Debug acceptance, not a clean Release rebuild. A first
+attempt stopped at the first target's link, before a test ran; the Windows
+LoadImage macro collision was repaired before the complete successful run.
+The actual app is rebuilt separately. See DELIVERY_COMPLETION_20261002.md.
+Release publication remains PARTIAL; non-Windows/sanitizer/fuzz execution is
+unvalidated. Workbench manually accepted by Curt; no exact new artifact identity
+is inferred from that earlier human acceptance.
+
+## Historical acceptance records
+
 ## Focused security checkpoint — 2 October 2026
 
 See [SECURITY_VALIDATION_20261002.md](SECURITY_VALIDATION_20261002.md): 293 checks across eight Debug targets, zero failures and eight exits at 0. The actual app rebuilt after the PNG refresh. The manifest minimum is now 1,493; no full run at that count is claimed. Historical full-suite ledgers below retain their exact counts and source scope.
@@ -24,8 +46,8 @@ This is an LF-normalized preserved copy. The original CRLF ledger at
 validation/results.txt has SHA-256 fe3eb523cc9ee235d682481cb756d521db6f98d12fefa76f2f49709d66edd083; counts and lines are
 unchanged. Its source header is pre-commit d944562640194668377f8832af0c762f34aac3dc;
 the run compiled the image/video/Workbench worktree source committed with
-this delivery. No compiled source changed during the suite. The current minimum
-in expected_counts.txt is exactly 1,482. The new raster test adds 57 checks,
+this delivery. No compiled source changed during the suite. The minimum at that earlier checkpoint
+was exactly 1,482; the current manifest is 1,512. The new raster test adds 57 checks,
 the video test adds 22 and combined Workbench adds 15 over the prior 151.
 The outer Klick request timed out while the native driver continued; the
 complete saved per-target records establish the results without restarting.

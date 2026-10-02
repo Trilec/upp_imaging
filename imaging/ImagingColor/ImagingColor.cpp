@@ -1,4 +1,5 @@
 #include "ImagingColor.h"
+#include <ImagingCore/TrustedInput.h>
 
 #include <OpenColorIO/OpenColorIO.h>
 
@@ -52,6 +53,11 @@ static Result LoadConfig(const ColorConfigRef& reference,
 			identity = reference.value;
 			break;
 		case ColorConfigSource::File:
+		{
+			String policy_error;
+			if(!CheckTrustedLocalInput(reference.value, 4 * 1024 * 1024, policy_error))
+				return Fail(ResultCode::InvalidArgument, diagnostics, policy_error,
+				            reference.value, "IMGCOLOR_CONFIG");
 			if(reference.value.IsEmpty())
 				return Fail(ResultCode::InvalidArgument, diagnostics,
 				            "OCIO config file path is empty", "config",
@@ -59,6 +65,7 @@ static Result LoadConfig(const ColorConfigRef& reference,
 			config = OCIO::Config::CreateFromFile(reference.value.Begin());
 			identity = reference.value;
 			break;
+		}
 		default:
 			return Fail(ResultCode::InvalidArgument, diagnostics,
 			            "unknown OCIO config source", "config",

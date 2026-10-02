@@ -1,0 +1,4 @@
+#include "imaging_jpeg.h"
+namespace Upp {
+INITIALIZER(ImagingJPEGRaster) { StreamRaster::Register<ImagingJPEGRaster>(); }
+}

@@ -1,4 +1,5 @@
 #include <ImagingColor/ImagingColor.h>
+#include <ImagingCore/TrustedInput.h>
 
 #include <algorithm>
 #include <cmath>
@@ -514,6 +515,14 @@ CONSOLE_APP_MAIN
 		}
 	Check(state, rgb_equal, "packed Float32 RGB agrees with general path across rows");
 	Check(state, alpha_exact, "packed path preserves signed zero and NaN alpha bits");
+	String policy_error;
+	Check(state, CheckTrustedLocalInput(config_path, 4 * 1024 * 1024, policy_error) &&
+	             !CheckTrustedLocalInput(config_path, 1, policy_error),
+	      "local config respects pre-parser size policy");
+	ColorConfigInfo denied_info;
+	Check(state, !InspectColorConfig(FileConfig("https://example.invalid/config.ocio"), denied_info).IsOk() &&
+	             !CheckTrustedLocalInput("\\\\server\\share\\config.ocio", 1024, policy_error),
+	      "network config paths rejected before OCIO parsing");
 	FileDelete(config_path);
 	Check(state, !FileExists(config_path), "fixture cleanup");
 

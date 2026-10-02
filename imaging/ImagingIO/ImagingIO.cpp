@@ -1,6 +1,7 @@
 #include "ImagingIO.h"
 #include "FormatPolicy.h"
 #include "Transaction.h"
+#include <ImagingCore/TrustedInput.h>
 
 #include <OpenImageIO/OIIO.h>
 
@@ -560,6 +561,10 @@ Result LoadImageFile(const String& path, ImageData& output,
 
 	UppImaging::InitializeOpenImageIO();
 	OIIO::ImageSpec read_config;
+	String policy_error;
+	if(!CheckTrustedLocalInput(path, 64 * 1024 * 1024, policy_error))
+		return Fail(ResultCode::InvalidArgument, diagnostics, policy_error,
+		            path, "IMGIO_INPUT_POLICY");
 	IOFormatPolicy::ConfigureRead(extension, read_config);
 	ImageInput::unique_ptr input = ImageInput::open(path.Begin(), &read_config);
 	if(!input)

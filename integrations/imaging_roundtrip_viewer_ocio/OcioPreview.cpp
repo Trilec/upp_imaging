@@ -1,4 +1,5 @@
 #include "OcioPreview.h"
+#include <ImagingCore/TrustedInput.h>
 
 #include <algorithm>
 #include <exception>
@@ -77,6 +78,8 @@ bool OcioPreviewProcessor::Update(const OCIO::ConstConfigRcPtr& new_config, cons
 
 	try {
 		OCIO::GroupTransformRcPtr group = OCIO::GroupTransform::Create();
+		if(!new_lut.IsEmpty() && !Imaging::CheckTrustedLocalInput(new_lut, 16 * 1024 * 1024, error))
+			return false;
 		if(!new_look.IsEmpty() && new_look != "None") {
 			OCIO::LookTransformRcPtr look_transform = OCIO::LookTransform::Create();
 			look_transform->setSrc(~new_source);
@@ -270,6 +273,8 @@ bool LoadEnvironmentConfig(OCIO::ConstConfigRcPtr& config, String& error, String
 		return false;
 	}
 	identity = env;
+	if(!Imaging::CheckTrustedLocalInput(identity, 4 * 1024 * 1024, error))
+		return false;
 	try {
 		config = OCIO::Config::CreateFromEnv();
 		if(!config) {
@@ -298,6 +303,8 @@ bool LoadConfigFile(const String& path, OCIO::ConstConfigRcPtr& config, String& 
 	config.reset();
 	error.Clear();
 	identity = CanonicalPath(path);
+	if(!Imaging::CheckTrustedLocalInput(path, 4 * 1024 * 1024, error))
+		return false;
 	if(path.IsEmpty()) {
 		error = "OCIO config file path is empty";
 		return false;

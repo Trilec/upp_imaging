@@ -1,0 +1,3 @@
+description "Opt-in standard JPEG U++ raster preview";
+uses ImagingRaster;
+file imaging_jpeg.h, register.icpp;

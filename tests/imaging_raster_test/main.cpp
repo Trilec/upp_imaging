@@ -1,5 +1,6 @@
 #include <plugin/exr/exr.h>
 #include <plugin/imaging_png/imaging_png.h>
+#include <plugin/imaging_jpeg/imaging_jpeg.h>
 #include <plugin/imaging_jxl/imaging_jxl.h>
 #include <plugin/imaging_hdr/imaging_hdr.h>
 #include <plugin/imaging_dpx/imaging_dpx.h>
@@ -9,6 +10,7 @@
 #include <plugin/imaging_heif/imaging_heif.h>
 #include <plugin/imaging_tiff/imaging_tiff.h>
 #include <OpenImageIO/OIIO.h>
+#include <ImagingIO/ImagingIO.h>
 #include "Fixtures.h"
 #include <filesystem>
 #include <cstring>
@@ -81,6 +83,44 @@ CONSOLE_APP_MAIN
 	RealizeDirectory(root);
 	Generated<EXRRaster>(s, root, "exr");
 	String png = Generated<ImagingPNGRaster>(s, root, "png");
+	Generated<ImagingJPEGRaster>(s, root, "jpg");
+	using namespace Upp::Imaging;
+	ImageData jpeg, alias, gray, gray_read;
+	bool jpeg_loaded = LoadImageFile(AppendFileName(root, "rgb.jpg"), jpeg).IsOk();
+	Check(s, jpeg_loaded && jpeg.spec.sample_type == SampleType::UInt8 &&
+	         jpeg.spec.channel_layout == ChannelLayout::RGB &&
+	         Near(jpeg.buffer.Begin()[0], 64) && Near(jpeg.buffer.Begin()[1], 128),
+	      "ImagingIO JPEG loads RGB pixels");
+	String alias_path = AppendFileName(root, "rgb.jpeg");
+	Check(s, jpeg_loaded && SaveImageFile(alias_path, jpeg).IsOk() &&
+	         LoadImageFile(alias_path, alias).IsOk() &&
+	         Near(alias.buffer.Begin()[0], jpeg.buffer.Begin()[0]),
+	      "ImagingIO JPEG alias saves and reloads");
+	if(jpeg_loaded) {
+		gray.spec = jpeg.spec;
+		gray.spec.channel_layout = ChannelLayout::Gray;
+		gray.spec.channels = 1;
+		gray.spec.channel_names.Clear(); gray.spec.channel_names.Add("Y");
+		gray.spec.alpha_channel = -1;
+		gray.buffer.Allocate(gray.spec);
+		memset(gray.buffer.Begin(), 128, (size_t)gray.buffer.GetByteCount());
+	}
+	String gray_path = AppendFileName(root, "gray.jpg");
+	Check(s, jpeg_loaded && SaveImageFile(gray_path, gray).IsOk() &&
+	         LoadImageFile(gray_path, gray_read).IsOk() &&
+	         gray_read.spec.channel_layout == ChannelLayout::Gray &&
+	         Near(gray_read.buffer.Begin()[0], 128),
+	      "ImagingIO JPEG Gray roundtrip");
+	ImageData rgba;
+	if(jpeg_loaded) {
+		rgba.spec = jpeg.spec; rgba.spec.channel_layout = ChannelLayout::RGBA;
+		rgba.spec.channels = 4;
+		rgba.spec.channel_names.Add("A"); rgba.spec.alpha_channel = 3;
+		rgba.buffer.Allocate(rgba.spec);
+		memset(rgba.buffer.Begin(), 255, (size_t)rgba.buffer.GetByteCount());
+	}
+	Check(s, jpeg_loaded && SaveImageFile(AppendFileName(root, "alpha.jpg"), rgba).code == ResultCode::Unsupported,
+	      "ImagingIO JPEG rejects alpha without silently discarding it");
 	Generated<ImagingJXLRaster>(s, root, "jxl");
 	Generated<ImagingHDRRaster>(s, root, "hdr");
 	Generated<ImagingDPXRaster>(s, root, "dpx");

@@ -16,6 +16,8 @@ options
 
 file
 	import.ext,
+	TiffInput.cpp,
 	RegisterTIFF.h,
 	RegisterTIFF.cpp,
+	AllocationPolicy.h,
 	README.md;

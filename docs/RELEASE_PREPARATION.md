@@ -1,12 +1,38 @@
 # Release preparation
 
-## Current security checkpoint — 2 October 2026
+## Completed Windows Debug milestone — 2 October 2026
+
+**PASS — 100% of the trusted-local Windows Debug delivery milestones.**
+Curt selected trusted local inputs with enforced restrictions. JPEG, PNG,
+JPEG XL, EXR, DPX and Radiance HDR have reusable U++ integration and positive
+fixtures; H.264 MP4/MOV has bounded frames, timestamps, seeking and Workbench
+controls. JPEG XR is distinct from EXR and is deferred.
+
+The final integrated Debug run passed **51 targets / 1,512 checks / zero
+failures / 51 exits at 0**. OCIO XML input is disabled, TIFF native allocations
+are bounded, and shared image/config/LUT preflight limits are implemented.
+See [completion evidence](DELIVERY_COMPLETION_20261002.md),
+[input scope and residual risks](INPUT_POLICY.md), and
+[U++ quick start](FORMAT_QUICKSTART.md).
+
+Workbench manually accepted by Curt. That historical confirmation does not
+identify the newly rebuilt executable. No full GUI checklist was repeated.
+Release publication remains **PARTIAL**: no new Release payload is published;
+Linux/macOS, sanitizer and fuzz execution remain unvalidated. Decoder isolation
+and hostile-file safety are outside the user-approved milestone.
+
+## Historical preparation records
+
+The records below describe earlier checkpoints. The completion and input
+policy above supersede their open Windows Debug security/delivery status.
+
+## Previous security checkpoint — 2 October 2026
 
 Status: PARTIAL. The delivery checkpoint f1194ea is published on main. Video native probing is removed, minizip-ng's retained source slice is refreshed to 4.2.2 with extraction defenses, and both repository PNG providers are refreshed to 1.6.59. Focused Debug validation passed 293 checks across eight targets; the actual Debug Workbench rebuilt successfully. See [exact evidence and current artifact hashes](SECURITY_VALIDATION_20261002.md).
 
 The previous full Debug result remains 51 targets / 1,482 checks at f1194ea. Updated focused regressions raise the manifest minimum to 1,493; that full count has not been run. Security clearance remains open for reachable Expat XML denial-of-service, native allocation/isolation boundaries and remaining dependency/provider review. No new Release payload was published. Workbench manually accepted by Curt.
 
-## Current scope — 1 October 2026
+## Historical scope — 1 October 2026
 
 Curt requested Debug builds only for the current delivery. Image format adapters
 and H.264 MP4/MOV Workbench integration now have focused Debug evidence in

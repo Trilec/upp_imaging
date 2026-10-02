@@ -1,10 +1,12 @@
 description "Stable application-facing OpenImageIO package";
 
 uses
+	ImagingCore,
 	openimageio_headers,
 	openimageio_src,
 	openimageio_plugin_openexr,
 	openimageio_plugin_png,
+	openimageio_plugin_jpeg,
 	openimageio_plugin_jpegxl,
 	openimageio_plugin_hdr,
 	openimageio_plugin_dpxcineon,

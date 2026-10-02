@@ -66,6 +66,7 @@ String Extension(const String& path)
 bool IsSupportedExtension(const String& extension)
 {
     return extension == ".exr" || extension == ".png" ||
+           extension == ".jpg" || extension == ".jpeg" ||
            extension == ".jxl" || IsHDR(extension) ||
            extension == ".dpx" || extension == ".cin" ||
            IsRaw(extension) || extension == ".webp" ||
@@ -74,7 +75,8 @@ bool IsSupportedExtension(const String& extension)
 
 bool RequiresZeroOrigin(const String& extension)
 {
-    return extension == ".png" || extension == ".jxl" ||
+    return extension == ".jpg" || extension == ".jpeg" ||
+           extension == ".png" || extension == ".jxl" ||
            IsHDR(extension) || IsRaw(extension) ||
            extension == ".webp" || IsHEIF(extension) || IsTIFF(extension);
 }
@@ -83,6 +85,7 @@ const char* FormatName(const String& extension)
 {
     if(extension == ".exr") return "EXR";
     if(extension == ".png") return "PNG";
+    if(extension == ".jpg" || extension == ".jpeg") return "JPEG";
     if(extension == ".jxl") return "JPEG XL";
     if(IsHDR(extension)) return "Radiance HDR/RGBE";
     if(extension == ".dpx") return "DPX";
@@ -126,6 +129,11 @@ void ConfigureWriteTarget(const String& extension, const ImageData& image,
 Result ValidateLoaded(const String& extension, const ImageSpec& spec,
                       Diagnostics* diagnostics, const String& path)
 {
+    if((extension == ".jpg" || extension == ".jpeg") &&
+       (spec.sample_type != SampleType::UInt8 ||
+        (spec.channel_layout != ChannelLayout::Gray && spec.channel_layout != ChannelLayout::RGB)))
+        return FailPolicy(ResultCode::Unsupported, diagnostics,
+                          "JPEG supports UInt8 Gray/RGB input", path, "IMGIO_CHANNELS");
     if((extension == ".png" || extension == ".jxl") &&
        spec.channel_layout == ChannelLayout::MultiChannel)
         return FailPolicy(ResultCode::Unsupported, diagnostics,
@@ -231,6 +239,11 @@ Result ValidateLoaded(const String& extension, const ImageSpec& spec,
 Result ValidateSave(const String& extension, const ImageData& image,
                     Diagnostics* diagnostics, const String& path)
 {
+    if((extension == ".jpg" || extension == ".jpeg") &&
+       (image.spec.sample_type != SampleType::UInt8 ||
+        (image.spec.channel_layout != ChannelLayout::Gray && image.spec.channel_layout != ChannelLayout::RGB)))
+        return FailPolicy(ResultCode::Unsupported, diagnostics,
+                          "JPEG supports UInt8 Gray/RGB output without alpha", path, "IMGIO_CHANNELS");
     if(extension == ".cin")
         return FailPolicy(ResultCode::Unsupported, diagnostics,
                           "Cineon output is not supported by the bundled OpenImageIO backend",

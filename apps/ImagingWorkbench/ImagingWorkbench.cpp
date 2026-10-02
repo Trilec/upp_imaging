@@ -2021,7 +2021,7 @@ void ImagingWorkbench::UpdateLayersPage()
 void ImagingWorkbench::DoLoad()
 {
 	FileSel selector;
-	selector.Type("Supported images and H.264 video", "*.mp4;*.mov;*.exr;*.png;*.jxl;*.hdr;*.rgbe;*.dpx;*.cin;*.webp;*.avif;*.heic;*.heif;*.heics;*.hif;*.tif;*.tiff;*.dng;*.cr2;*.cr3;*.nef;*.arw;*.raf;*.rw2;*.orf;*.pef;*.sr2;*.x3f");
+	selector.Type("Supported images and H.264 video", "*.mp4;*.mov;*.jpg;*.jpeg;*.exr;*.png;*.jxl;*.hdr;*.rgbe;*.dpx;*.cin;*.webp;*.avif;*.heic;*.heif;*.heics;*.hif;*.tif;*.tiff;*.dng;*.cr2;*.cr3;*.nef;*.arw;*.raf;*.rw2;*.orf;*.pef;*.sr2;*.x3f");
 	selector.Type("All files (other camera RAW)", "*.*");
 	if(!selector.ExecuteOpen("Open image or video"))
 		return;

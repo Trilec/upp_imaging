@@ -13,7 +13,8 @@ metadata workflows use ImagingIO instead.
 
 Defaults: 64 MiB encoded input, 16,777,216 pixels, 16,384 pixels per dimension,
 64 channels, and 256 MiB combined float samples plus RGBA storage. SetLimits
-before Open can lower those budgets. Native parser metadata and decoder working
+before Open can lower those budgets. Initialized OIIO also imposes 8192 per
+axis, so that is the effective default axis limit. Native parser metadata and decoder working
 memory are not included in that combined allocation budget. RAW also receives
 the native memory limit. Readers without IOProxy (including RAW) use a bounded
 temporary file, removed on all normal success/failure exits.

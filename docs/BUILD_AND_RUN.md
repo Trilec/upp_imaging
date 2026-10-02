@@ -2,11 +2,10 @@
 
 ## Status
 
-The active Windows assembly and validation runner target `build/` instead
-of `out/`. The clean 49-target Debug/Release suite passed at the FFmpeg
-9.0.2 checkpoint; [WINDOWS_ACCEPTANCE.md](WINDOWS_ACCEPTANCE.md) records
-its exact ledger. Workbench manually accepted by Curt. Security and final
-artifact publication remain pending, so `bin/` is not populated.
+The Windows trusted-local Debug milestone is complete with 51 targets /
+1,512 checks / 51 exits at 0; see DELIVERY_COMPLETION_20261002.md for the
+current Debug artifact identity. Workbench manually accepted by Curt.
+Release publication remains PARTIAL; `bin/` is not a current Release payload.
 A Git pull does not edit an existing local `.var` file, relocate old artifacts,
 redirect application runtime logs, or populate `bin/`.
 

@@ -340,17 +340,17 @@ FormatRegistry & FormatRegistry::GetInstance()
 FormatRegistry::FormatRegistry()
 {
     registerFileFormat(CreateFileFormat3DL());
-    registerFileFormat(CreateFileFormatCC());
-    registerFileFormat(CreateFileFormatCCC());
-    registerFileFormat(CreateFileFormatCDL());
-    registerFileFormat(CreateFileFormatCLF());
+    // XML input disabled by the repository trusted-local policy.
+    // XML input disabled by the repository trusted-local policy.
+    // XML input disabled by the repository trusted-local policy.
+    // XML input disabled by the repository trusted-local policy.
     registerFileFormat(CreateFileFormatCSP());
     registerFileFormat(CreateFileFormatDiscreet1DL());
     registerFileFormat(CreateFileFormatHDL());
     registerFileFormat(CreateFileFormatICC());
     registerFileFormat(CreateFileFormatIridasCube());
     registerFileFormat(CreateFileFormatIridasItx());
-    registerFileFormat(CreateFileFormatIridasLook());
+    // XML input disabled by the repository trusted-local policy.
     registerFileFormat(CreateFileFormatPandora());
     registerFileFormat(CreateFileFormatResolveCube());
     registerFileFormat(CreateFileFormatSpi1D());

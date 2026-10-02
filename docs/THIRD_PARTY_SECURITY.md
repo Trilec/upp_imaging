@@ -1,10 +1,21 @@
 # Third-party security review
 
-Initial review 2026-09-24; focused security refresh 2026-10-02. This is a staged audit, not a release security
-certificate. Expat, libheif, OpenImageIO and the bounded FFmpeg slice below
-have source and focused Windows build evidence;
-the rest of the retained dependency graph still needs per-family advisory,
-configuration and provenance review before a release candidate can be approved.
+## Current disposition — 2 October 2026
+
+The **Windows trusted-local Debug delivery** security milestone is complete
+within the input scope explicitly selected by Curt. See [INPUT_POLICY.md](INPUT_POLICY.md)
+and [dependency dispositions](DEPENDENCY_REVIEW_20261002.md). Known Expat XML
+CPU risk is avoided by disabling every OCIO XML reader; it is not an upstream
+fix. Native scratch/metadata, config-referenced resources and incomplete
+independent skcms advisory coverage remain documented residual risks.
+The supported entry points enforce file, image and allocation restrictions.
+This is not certification of the raw dependency APIs or hostile-input safety.
+
+Release publication remains **PARTIAL**. No new Release, Linux/macOS,
+sanitizer or fuzz execution is established by the Debug completion. Current
+execution and artifact identities are in DELIVERY_COMPLETION_20261002.md.
+The historical refresh and applicability records below are retained; the
+current input policy supersedes their formerly reachable OCIO XML boundary.
 
 ## Expat: 2.7.2 to 2.8.5
 
@@ -25,8 +36,10 @@ OpenColorIO CTF, CDL and Iridas XML readers. The U++ manifest compiles
 DTD, namespaces, general entities and large-size support remain enabled.
 `xmlwf`, tests, examples and other entropy providers are not compiled.
 The generated config fails clearly on non-Windows platforms; a probed
-Linux/macOS config is required. The current Workbench can accept user
-supplied OCIO XML files, so library parse flaws are potentially reachable.
+Linux/macOS config is required. Before the final policy overlay, Workbench could accept OCIO XML. The compiled
+registry now omits those formats, and the compatibility header throws before
+XML_ParserCreate can reach Expat. Standalone Expat remains unrestricted for
+other native consumers.
 
 | Advisory (official Expat change log) | Affected / fixed | Component and current reachability | Disposition |
 | --- | --- | --- | --- |
@@ -44,20 +57,20 @@ supplied OCIO XML files, so library parse flaws are potentially reachable.
 | CVE-2026-50219, CVE-2026-56131, CVE-2026-56412 | Before 2.8.2 / 2.8.2 | Parser re-entry through callbacks; code compiled; current OCIO callers do not re-enter the parser from handlers | Updated; native clients could use those APIs |
 | CVE-2026-76957 | Before 2.8.4 / 2.8.4 | Custom encoding callback re-entry; code compiled; current OCIO callers do not install custom encoding callbacks | Updated |
 | CVE-2026-56409 through CVE-2026-56411 | Before 2.8.2 / 2.8.2 | xmlwf command-line tool, not compiled | Not affected |
-| CVE-2025-66382 | All releases, no fixed version announced | Upstream reports crafted 2 MiB XML can consume 25–100 seconds. OCIO's CTF/CLF, CDL and Iridas `.look` readers call `XML_ParserCreate` and feed complete user-selected XML streams to `XML_Parse`; Workbench FileTransform and file-backed OCIO configs can reach those readers. The trigger is non-public, so issue-specific exploitability remains unproven. | **Unresolved release gate** |
+| CVE-2025-66382 | All releases, no fixed version announced | Upstream reports crafted 2 MiB XML can consume 25–100 seconds. OCIO's CTF/CLF, CDL and Iridas `.look` readers call `XML_ParserCreate` and feed complete user-selected XML streams to `XML_Parse`; Workbench FileTransform and file-backed OCIO configs can reach those readers. The trigger is non-public, so issue-specific exploitability remains unproven. | Upstream unresolved; OCIO XML disabled in this milestone |
 
 The maintainer also tracks further non-public reports in
 [upstream issue #1160](https://github.com/libexpat/libexpat/issues/1160).
-The `.ocio` configuration parser itself is YAML; file transforms referenced
-from a config can still reach the XML readers. Neither extension filtering
+The `.ocio` configuration parser itself is YAML. Config-referenced transforms
+formerly reached XML; those XML readers are now disabled for every OCIO caller. Neither extension filtering
 nor a file-size cap excludes the reported ~2 MiB case. The unresolved DoS is described in
 [upstream issue #1076](https://github.com/libexpat/libexpat/issues/1076).
 The official issue was rechecked on 2026-10-01 and remains open without
 a public trigger or fixed release.
 Release notes and affected components are in the
 [Expat 2.8.5 change log](https://github.com/libexpat/libexpat/blob/R_2_8_5/expat/Changes).
-A version update does not resolve those undisclosed issues. Do not label
-the release secure while the reachable XML boundary is unbounded.
+A version update does not resolve those undisclosed issues. No library fix is claimed. Raw Expat consumers retain the upstream risk;
+OCIO XML support must not be restored without a separate review.
 
 Validation: `expat_test` 4/0, `opencolorio_test` 18/0 and
 `imaging_workbench_ocio_test` 136/0 passed in both Windows configurations
@@ -305,8 +318,20 @@ The 1 October lead review is superseded by these findings. Focused results and a
 
 Official minizip release evidence: [4.2.0](https://github.com/zlib-ng/minizip-ng/releases/tag/4.2.0), [4.2.2](https://github.com/zlib-ng/minizip-ng/releases/tag/4.2.2).
 
-### Remaining release-security work
+### Final restricted-input disposition
 
-Expat CVE-2025-66382 / [upstream issue 1076](https://github.com/libexpat/libexpat/issues/1076) remains open on the checked date, without a public trigger/fix. OCIO XML FileTransforms (CTF/CLF/CDL/IridasLook) are reachable, including references from YAML configs. Existing size/pixel caps do not prove protection from XML CPU denial-of-service; isolation or an explicit restricted-input policy is still required.
+The remaining-family review is recorded in DEPENDENCY_REVIEW_20261002.md.
+TIFF's native allocation gap is repaired on filename and IOProxy paths.
+Image file loading is preflighted at 64 MiB, configs at 4 MiB and directly
+selected LUTs at 16 MiB. OIIO defaults are now 256 MiB declared image size,
+8192 per axis and 64 channels. These limits do not bound whole-process CPU
+or memory; the trusted, stable local-input scope explicitly accepts that
+native-parser boundary. Config-referenced resources remain trusted.
 
-Native image/video metadata, scratch and reference allocations can precede application-owned buffer checks. TIFF, WebP, RAW, JPEG, JXL/Highway/skcms, Imath/libdeflate and support-family configuration/provenance review remain incomplete. Draw's installed provider is E:/upp-18468/uppsrc/plugin/png, libpng 1.6.54; pngupp.cpp uses png_read_info and rows, destroys its reader on cleanup and never calls png_read_end. The named abandoned read-end sequence is absent from that wrapper, but its old raw library and other advisories still require separate provider review. No installed U++ files were modified. Linux/macOS, sanitizer and fuzz status remains unvalidated. Do not publish a Release payload or claim complete security clearance from the focused correctness results.
+The installed Draw PNG provider was traced to libpng 1.6.54; its wrapper
+never calls png_read_end, so the named abandoned read-end sequence is absent.
+That disposition is specific to the reviewed caller, not clearance of every
+raw installed libpng API. No installed U++ source was modified.
+Standalone Expat, raw third-party embedding, independent skcms advisory
+review and isolated hostile-file decoding are outside the completed milestone.
+Release publication and non-Windows/sanitizer/fuzz validation remain pending.

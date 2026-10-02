@@ -533,7 +533,7 @@ static int RunTests()
 
 	// Exercise the readers now exposed by the Workbench Open dialog using
 	// small, generated files rather than external fixture downloads.
-	for(const char* extension : {"webp", "tiff", "hdr", "dpx", "jxl"}) {
+	for(const char* extension : {"jpg", "webp", "tiff", "hdr", "dpx", "jxl"}) {
 		std::filesystem::path fixture = root / (std::string("open_format.") + extension);
 		bool written = WriteFixture(fixture, 8, 6, 3, {"R", "G", "B"}, -1,
 		                            MakePixels(8, 6, 3, 0.1f));

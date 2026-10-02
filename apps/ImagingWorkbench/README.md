@@ -13,10 +13,11 @@ clean shutdown supplement, rather than replace, the deterministic tests.
 Debug and Release staging builds are recorded in
 [active work](../../docs/ACTIVE_WORK.md). Workbench manually accepted by
 Curt; that confirmation does not identify a staged executable hash.
-Security clearance and `bin/` publication remain pending.
+The supported input scope is [trusted local files with restrictions](../../docs/INPUT_POLICY.md).
+Release `bin/` publication remains separate from the Windows Debug milestone.
 
 Current scope:
-- loading the registered EXR, PNG, JPEG XL, Radiance HDR, DPX, Cineon,
+- loading the registered EXR, PNG, JPEG, JPEG XL, Radiance HDR, DPX, Cineon,
   WebP, HEIF/AVIF, TIFF and camera RAW reader families
 - local H.264 MP4/MOV preview, Play/Pause, Next and Restart
 - EXR and PNG saving (including the currently displayed video frame)

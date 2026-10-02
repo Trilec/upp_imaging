@@ -1,6 +1,7 @@
 #include <Core/Core.h>
 #include <OpenImageIO/OIIO.h>
 #include <OpenImageIO/imageio.h>
+#include <OpenImageIO/filesystem.h>
 
 #include <cstring>
 #include <filesystem>
@@ -139,6 +140,38 @@ CONSOLE_APP_MAIN
     Check(state, malformed_rejected, "malformed TIFF is rejected");
     Check(state, malformed_error, "malformed TIFF reports an error");
 
+    const std::string metadata_path = (root / "metadata.tif").string();
+    ImageSpec metadata_spec(2, 2, 3, TypeUInt8);
+    metadata_spec.attribute("ImageDescription", std::string(2 * 1024 * 1024, 'a'));
+    auto metadata_output = ImageOutput::create(metadata_path);
+    unsigned char metadata_pixels[12] = {};
+    bool metadata_written = metadata_output && metadata_output->open(metadata_path, metadata_spec) &&
+                            metadata_output->write_image(TypeUInt8, metadata_pixels) && metadata_output->close();
+    Check(state, metadata_written, "large TIFF metadata fixture written");
+    std::ifstream metadata_file(metadata_path, std::ios::binary);
+    std::vector<unsigned char> metadata_bytes((std::istreambuf_iterator<char>(metadata_file)), {});
+    OIIO::attribute("limits:imagesize_MB", 1);
+    OIIO::attribute("try_all_readers", 0);
+    auto limited_file = ImageInput::open(metadata_path);
+    Check(state, metadata_written && (!limited_file ||
+          limited_file->spec().get_string_attribute("ImageDescription").empty()),
+          "TIFF file metadata allocation cap enforced");
+    OIIO::Filesystem::IOMemReader metadata_memory(metadata_bytes.data(), metadata_bytes.size());
+    auto limited_memory = ImageInput::open("metadata.tif", nullptr, &metadata_memory);
+    Check(state, metadata_written && (!limited_memory ||
+          limited_memory->spec().get_string_attribute("ImageDescription").empty()),
+          "TIFF IOProxy metadata allocation cap enforced");
+    OIIO::attribute("limits:imagesize_MB", 256);
+    OIIO::attribute("try_all_readers", 1);
+    auto permitted_metadata = ImageInput::open(metadata_path);
+    Check(state, metadata_written && permitted_metadata &&
+          permitted_metadata->spec().get_string_attribute("ImageDescription") == std::string(65536, 'a') &&
+          permitted_metadata->close(),
+          "TIFF metadata within default cap remains supported");
+    limited_file.reset();
+    limited_memory.reset();
+    permitted_metadata.reset();
+    metadata_file.close();
     std::filesystem::remove_all(root, error);
     Check(state, !std::filesystem::exists(root), "fixture cleanup");
 

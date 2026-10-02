@@ -1,3 +1,2 @@
 files
-	../openimageio_plugins_src/upstream/src/tiff.imageio/tiffinput.cpp
 	../openimageio_plugins_src/upstream/src/tiff.imageio/tiffoutput.cpp;

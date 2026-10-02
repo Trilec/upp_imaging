@@ -516,7 +516,30 @@ int main()
 		failed++;
 	}
 
+	bool xml_advertised = false;
+	for(int i = 0; i < OCIO::FileTransform::GetNumFormats(); ++i) {
+		std::string ext = OCIO::FileTransform::GetFormatExtensionByIndex(i);
+		xml_advertised = xml_advertised || ext == "ctf" || ext == "clf" ||
+		                 ext == "cc" || ext == "ccc" || ext == "cdl" || ext == "look";
+	}
+	printf("OCIO XML formats disabled: %s\n", !xml_advertised ? "OK" : "FAIL");
+	(!xml_advertised ? passed : failed)++;
+	String xml_path = GetTempFileName() + ".cc";
+	bool xml_rejected = SaveFile(xml_path,
+		"<ColorCorrection id=\"test\"><SOPNode><Slope>1 1 1</Slope>"
+		"<Offset>0 0 0</Offset><Power>1 1 1</Power></SOPNode>"
+		"<SatNode><Saturation>1</Saturation></SatNode></ColorCorrection>");
+	try {
+		OCIO::CDLTransform::CreateFromFile(xml_path.Begin(), nullptr);
+		xml_rejected = false;
+	} catch(const OCIO::Exception&) {
+		// The registry assertion above excludes the XML parser dispatch.
+	}
+	FileDelete(xml_path);
+	printf("direct CDL file API rejects unsupported XML: %s\n", xml_rejected ? "OK" : "FAIL");
+	(xml_rejected ? passed : failed)++;
 	printf("SUMMARY passed=%d failed=%d\n", passed, failed);
+
 	return failed ? 1 : 0;
 	} catch(const OCIO::Exception& e) {
 		printf("OCIO exception: %s\n", e.what());

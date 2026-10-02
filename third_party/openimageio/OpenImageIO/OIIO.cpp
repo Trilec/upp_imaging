@@ -1,3 +1,4 @@
+#include <ImagingCore/TrustedInput.h>
 #include "OIIO.h"
 
 #include <cstdlib>
@@ -5,6 +6,7 @@
 
 #include <openimageio_plugin_openexr/RegisterOpenEXR.h>
 #include <openimageio_plugin_png/RegisterPNG.h>
+#include <openimageio_plugin_jpeg/RegisterJPEG.h>
 #include <openimageio_plugin_jpegxl/RegisterJPEGXL.h>
 #include <openimageio_plugin_hdr/RegisterHDR.h>
 #include <openimageio_plugin_dpxcineon/RegisterDPXCineon.h>
@@ -50,12 +52,14 @@ void InitializeOpenImageIO()
 {
     static std::once_flag once;
     std::call_once(once, [] {
-        // Match the largest image buffer representable by ImagingCore while
-        // leaving room for decoder scratch. OIIO checks these before decode.
-        OIIO::attribute("limits:imagesize_MB", 2048);
-        OIIO::attribute("limits:resolution", 65536);
+        // Bound decoded image size, axes and channels. Native decoder scratch
+        // is separate; these checks do not establish a process memory limit.
+        OIIO::attribute("limits:imagesize_MB", 256);
+        OIIO::attribute("limits:resolution", 8192);
+        OIIO::attribute("limits:channels", 64);
         UppImaging::RegisterOpenImageIOOpenEXRPlugin();
         UppImaging::RegisterOpenImageIOPNGPlugin();
+        UppImaging::RegisterOpenImageIOJPEGPlugin();
         UppImaging::RegisterOpenImageIOJPEGXLPlugin();
         UppImaging::RegisterOpenImageIOHDRPlugin();
         UppImaging::RegisterOpenImageIODPXCineonPlugins();
@@ -78,6 +82,11 @@ bool LoadImage(const char* filename, OIIO::ImageBuf& destination,
     if(!filename || !*filename) {
         if(error)
             *error = "empty image filename";
+        return false;
+    }
+    Upp::String policy_error;
+    if(!Upp::Imaging::CheckTrustedLocalInput(filename, 64 * 1024 * 1024, policy_error)) {
+        if(error) *error = policy_error.Begin();
         return false;
     }
     OIIO::ImageBuf loaded(filename);

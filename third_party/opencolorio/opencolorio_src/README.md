@@ -1,5 +1,11 @@
 OpenColorIO 2.5.2 source package.
 
+The Windows trusted-local policy disables XML colour-file input. The generated
+registry omits CC/CCC/CDL, CLF/CTF and Iridas look; `compat_include/expat.h`
+also rejects parser construction for every compiled OCIO XML reader. YAML
+configs, non-XML LUTs and programmatic colour transforms remain available.
+Standalone Expat is unchanged. See `docs/INPUT_POLICY.md` at repository root.
+
 The pinned LUT format registry allocates a singleton and raw format objects
 without releasing them. `generated_include/FileTransform.cpp` is a reproducible
 local overlay that gives this registry an owner, required for clean U++ Debug

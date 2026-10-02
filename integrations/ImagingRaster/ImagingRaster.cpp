@@ -44,6 +44,7 @@ static bool MatchesSignature(const String& name, const String& data)
 {
 	if(name == "openexr") return HasOpenExrMagic(data);
 	if(name == "png") return data.GetLength() >= 8 && memcmp(data.Begin(), "\x89PNG\r\n\x1a\n", 8) == 0;
+	if(name == "jpeg") return data.GetLength() >= 2 && (byte)data[0] == 0xff && (byte)data[1] == 0xd8;
 	if(name == "jpegxl") return data.GetLength() >= 2 &&
 		(((byte)data[0] == 0xff && (byte)data[1] == 0x0a) ||
 		 (data.GetLength() >= 12 && data.Mid(4, 4) == "JXL "));

@@ -10,7 +10,7 @@ Package names are stable across nests. See [layout](package_layout.md) for assem
 | `ImagingColor` | `imaging/ImagingColor` | Backend-neutral colour processing through OpenColorIO |
 | `ImagingCore` | `imaging/ImagingCore` | Backend-neutral U++ Imaging core contracts |
 | `ImagingDiagnostics` | `imaging/ImagingDiagnostics` | Core-only structured imaging diagnostics and reporting |
-| `ImagingIO` | `imaging/ImagingIO` | Backend-neutral EXR, PNG, JPEG XL, HDR, DPX, Cineon, RAW, WebP, HEIF/AVIF and TIFF image I/O |
+| `ImagingIO` | `imaging/ImagingIO` | Backend-neutral EXR, PNG, JPEG, JPEG XL, HDR, DPX, Cineon, RAW, WebP, HEIF/AVIF and TIFF image I/O |
 | `imaging_histogram` | `integrations/imaging_histogram` | Source-referred histogram analysis data model |
 | `imaging_preview_coalescing` | `integrations/imaging_preview_coalescing` | Pure preview render coalescing helper for ImagingWorkbench |
 | `imaging_roundtrip_test_support` | `integrations/imaging_roundtrip_test_support` | Reusable synthetic image test support |
@@ -139,6 +139,8 @@ Package names are stable across nests. See [layout](package_layout.md) for assem
 | imaging_video_test | tests/imaging_video_test | Consolidated video decode, seeking and failure regression |
 | imaging_debug_acceptance | tools/imaging_debug_acceptance | One bounded Windows Debug acceptance block using validate.ps1 |
 | plugin/imaging_png | integrations/plugin/imaging_png | Opt-in png StreamRaster preview |
+| plugin/imaging_jpeg | integrations/plugin/imaging_jpeg | Opt-in standard JPEG StreamRaster preview |
+| openimageio_plugin_jpeg | third_party/openimageio/openimageio_plugin_jpeg | Static OIIO JPEG reader/writer using scalar libjpeg-turbo |
 | plugin/imaging_jxl | integrations/plugin/imaging_jxl | Opt-in jxl StreamRaster preview |
 | plugin/imaging_hdr | integrations/plugin/imaging_hdr | Opt-in hdr StreamRaster preview |
 | plugin/imaging_dpx | integrations/plugin/imaging_dpx | Opt-in dpx StreamRaster preview |

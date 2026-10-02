@@ -1,8 +1,10 @@
 description "Consolidated U++ format integration and preview limits";
 
 uses
+	ImagingIO,
 	plugin/exr,
 	plugin/imaging_png,
+	plugin/imaging_jpeg,
 	plugin/imaging_jxl,
 	plugin/imaging_hdr,
 	plugin/imaging_dpx,

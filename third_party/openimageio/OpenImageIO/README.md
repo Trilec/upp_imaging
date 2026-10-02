@@ -2,7 +2,7 @@
 
 Canonical application-facing OpenImageIO package. Include `<OpenImageIO/OIIO.h>`.
 Use `UppImaging::LoadImage` and `UppImaging::SaveImage` for the statically
-registered OpenEXR, PNG, JPEG XL, Radiance HDR/RGBE, DPX, Cineon and camera RAW
+registered OpenEXR, PNG, JPEG, JPEG XL, Radiance HDR/RGBE, DPX, Cineon and camera RAW
 plugins.
 
 JPEG XL uses the repository-pinned libjxl 0.12.0 backend. HDR/RGBE is
@@ -43,3 +43,10 @@ file's actual encoding. Selecting factories for every load would change which
 mislabeled files are accepted. The EXR preview bridge already validates EXR
 magic and correctly selects the openexr factory. Production malformed-input
 error-storage debt therefore remains until the dependency is upgraded.
+## Windows delivery input policy
+
+The stable file loader uses trusted local regular files up to 64 MiB. Reader
+defaults cap declared decoded image size at 256 MiB, axes at 8192 and channels
+at 64. JPEG is registered through repository libjpeg-turbo. TIFF has a separate
+native allocation overlay. See `docs/INPUT_POLICY.md` at repository root for
+the scope and residual native-parser limits.

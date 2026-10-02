@@ -5,4 +5,5 @@ uses
 
 file
 	ImagingCore.h,
+	TrustedInput.h,
 	README.md;
