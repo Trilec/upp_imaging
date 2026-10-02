@@ -1,5 +1,9 @@
 # Windows Debug video integration — 1 October 2026
 
+## Subsequent security repair — 2 October 2026
+
+The reader no longer calls avformat_find_stream_info: supported H.264 dimensions must be present in the MP4/MOV header, before its single decoder is opened with max_pixels. Duration uses the selected stream without probing. Oversized header and continued valid-open checks pass in the current 24-check reader block. Post-repair Workbench regression passed 166 checks. See [current artifact identities and precise run scope](SECURITY_VALIDATION_20261002.md). The older identities and 22-check result below remain historical evidence.
+
 Base HEAD: d944562640194668377f8832af0c762f34aac3dc. Builds include this
 checkpoint's uncommitted source; HEAD alone does not identify the compiled tree.
 No Release, Linux/macOS, sanitizer or fuzz run is claimed.

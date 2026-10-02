@@ -14,8 +14,8 @@
 /***************************************************************************/
 
 /* MZ_VERSION */
-#define MZ_VERSION       ("4.0.10")
-#define MZ_VERSION_BUILD (0x04000A)
+#define MZ_VERSION       ("4.2.2")
+#define MZ_VERSION_BUILD (0x040202)
 
 /* MZ_ERROR */
 #define MZ_OK             (0)  /* zlib */
@@ -53,6 +53,7 @@
 #define MZ_OPEN_MODE_APPEND    (0x04)
 #define MZ_OPEN_MODE_CREATE    (0x08)
 #define MZ_OPEN_MODE_EXISTING  (0x10)
+#define MZ_OPEN_MODE_NOFOLLOW  (0x20)
 
 /* MZ_SEEK */
 #define MZ_SEEK_SET (0)
@@ -66,6 +67,7 @@
 #define MZ_COMPRESS_METHOD_LZMA    (14)
 #define MZ_COMPRESS_METHOD_ZSTD    (93)
 #define MZ_COMPRESS_METHOD_XZ      (95)
+#define MZ_COMPRESS_METHOD_PPMD    (98)
 #define MZ_COMPRESS_METHOD_AES     (99)
 
 #define MZ_COMPRESS_LEVEL_DEFAULT  (-1)
@@ -159,7 +161,9 @@
 #include <string.h> /* memset, strncpy, strlen */
 #include <limits.h>
 
-#if defined(HAVE_STDINT_H)
+#include "mz_config.h"
+
+#if HAVE_STDINT_H
 #  include <stdint.h>
 #elif defined(__has_include)
 #  if __has_include(<stdint.h>)
@@ -192,7 +196,7 @@ typedef unsigned int uint32_t;
 typedef unsigned long long uint64_t;
 #endif
 
-#if defined(HAVE_INTTYPES_H)
+#if HAVE_INTTYPES_H
 #  include <inttypes.h>
 #elif defined(__has_include)
 #  if __has_include(<inttypes.h>)

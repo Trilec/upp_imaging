@@ -25,3 +25,4 @@ for the compiled implementation.
 
 - ZIP write/read round-trip
 - malformed ZIP rejection
+- Windows extraction containment and overlong/drive-qualified symlink rejection

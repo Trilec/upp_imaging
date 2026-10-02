@@ -75,7 +75,7 @@ Package names are stable across nests. See [layout](package_layout.md) for assem
 | `libjpeg_turbo` | `third_party/codecs/libjpeg_turbo` | Stable user-facing libjpeg-turbo package for U++ |
 | `libjpeg_turbo_src` | `third_party/codecs/libjpeg_turbo_src` | Strict upstream libjpeg-turbo 3.2.0 source package for U++ |
 | `libpng` | `third_party/codecs/libpng` | libpng package with stable public include path |
-| `libpng_src` | `third_party/codecs/libpng_src` | Strict upstream libpng 1.6.58 source package for U++ |
+| `libpng_src` | `third_party/codecs/libpng_src` | Strict upstream libpng 1.6.59 source package for U++ |
 | `libraw_src` | `third_party/codecs/libraw_src` | Pinned LibRaw 0.22.2 source backend for U++ |
 | `libtiff` | `third_party/codecs/libtiff` | Stable user-facing libtiff package for U++ |
 | `libtiff_src` | `third_party/codecs/libtiff_src` | Strict upstream libtiff 4.7.2 source package for U++ |
@@ -119,7 +119,7 @@ Package names are stable across nests. See [layout](package_layout.md) for assem
 | `fmt` | `third_party/support/fmt` | fmt package with stable public include path |
 | `fmt_src` | `third_party/support/fmt_src` | Strict upstream fmt 12.2.0 source package |
 | `minizip_ng` | `third_party/support/minizip_ng` | Stable minizip-ng user-facing package |
-| `minizip_ng_src` | `third_party/support/minizip_ng_src` | Strict upstream minizip-ng 4.0.10 source package |
+| `minizip_ng_src` | `third_party/support/minizip_ng_src` | minizip-ng 4.2.2 compiled source slice with documented Windows extraction overlay |
 | `pystring` | `third_party/support/pystring` | Stable pystring user-facing package |
 | `pystring_src` | `third_party/support/pystring_src` | Strict upstream pystring 1.1.4 source package |
 | `robinmap` | `third_party/support/robinmap` | robin-map package with stable public include path |

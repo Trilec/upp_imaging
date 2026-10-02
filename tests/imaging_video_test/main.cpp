@@ -67,6 +67,22 @@ CONSOLE_APP_MAIN
 	Check(s, reader.Open(mp4) && !reader.ReadNext(frame) && !reader.GetError().IsEmpty() &&
 	         SameImage(first, frame.image), "packet limit rejects without replacing output");
 	reader.Close();
+	limits = VideoInputLimits(); reader.SetLimits(limits);
+	String oversized = encoded;
+	int stsd = oversized.Find("stsd");
+	int avc = stsd >= 0 ? oversized.Find("avc1", stsd + 4) : -1;
+	bool changed = avc >= 4 && avc + 31 < oversized.GetLength();
+	if(changed) {
+		oversized.Set(avc + 28, char(0x40)); oversized.Set(avc + 29, char(0));
+	}
+	String hostile = AppendFileName(root, "oversized-header.mp4");
+	Check(s, changed && SaveFile(hostile, oversized) && !reader.Open(hostile) &&
+	         reader.GetError().Find("dimension/pixel limits") >= 0,
+	      "oversized AVC header rejected before stream-info decoding");
+	DeleteFile(hostile);
+	Check(s, reader.Open(mp4) && reader.ReadNext(frame) && SameImage(first, frame.image),
+	      "normal reader remains usable after crafted header rejection");
+	reader.Close();
 	Check(s, !reader.Open("https://example.invalid/video.mp4"), "network URL rejected");
 	Cout() << "SUMMARY passed=" << s.passed << " failed=" << s.failed << '\n';
 	SetExitCode(s.failed ? 1 : 0);

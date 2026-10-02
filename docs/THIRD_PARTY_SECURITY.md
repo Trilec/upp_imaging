@@ -1,6 +1,6 @@
 # Third-party security review
 
-Checked 2026-09-24. This is a staged audit, not a release security
+Initial review 2026-09-24; focused security refresh 2026-10-02. This is a staged audit, not a release security
 certificate. Expat, libheif, OpenImageIO and the bounded FFmpeg slice below
 have source and focused Windows build evidence;
 the rest of the retained dependency graph still needs per-family advisory,
@@ -293,22 +293,20 @@ No additional codecs or network protocols were enabled. See
 [video validation](IMAGING_VIDEO_VALIDATION.md). These policies improve the
 public integration without clearing the remaining dependency/security gates.
 
-## Additional family review leads — 1 October 2026
+## Security repairs and applicability — 2 October 2026
 
-Official Brotli and yaml-cpp advisory pages list no published advisories;
-this is not proof of no vulnerabilities. Nested JXL dependency pins and source
-fixes still require comparison before either family is cleared:
-https://github.com/google/brotli/security/advisories and
-https://github.com/jbeder/yaml-cpp/security/advisories.
+The 1 October lead review is superseded by these findings. Focused results and artifact identities are in [SECURITY_VALIDATION_20261002.md](SECURITY_VALIDATION_20261002.md): 293 Debug checks / eight exits at 0. This remains a staged review, not complete security clearance.
 
-The imported minizip-ng provider is 4.0.10; official upstream now lists 4.2.2.
-The 4.2.0 and 4.2.2 notes include extraction/symlink hardening:
-https://github.com/zlib-ng/minizip-ng/releases/tag/4.2.0 and
-https://github.com/zlib-ng/minizip-ng/releases/tag/4.2.2.
-The OCIO package links minizip-ng, but whether the affected extraction helpers
-are reachable through its archive/config APIs remains unresolved. Compare the
-compiled source slice and consumers before selecting a justified compatible
-refresh. Crypto fixes do not justify enabling currently disabled features.
-FFmpeg stream-info probing may decode before the reader's own codec context
-receives max_pixels; this native probing boundary requires further review.
-The completed 51-target Debug run is correctness evidence, not security clearance.
+- Video: removed avformat_find_stream_info, which could create native decoders before our max_pixels policy. Restricted H.264 MP4/MOV now requires dimensions and codec metadata in the container header; incomplete headers fail closed. The selected stream supplies duration without probing. Native demux allocations, decoder scratch/reference frames and cooperative deadlines remain separate limits.
+- minizip-ng: refreshed the retained compiled C/header slice and public header copies from official 4.2.2, commit 7b2387161c542fa9f427352dcdef76097d0d692b. OCIO's public ExtractOCIArchive reaches mz_zip_reader_save_all (OCIOZArchive.cpp); filesystem extraction hardening is therefore applicable, even though ordinary archive config loading uses entry_save_buffer. Version 4.2.0/4.2.2 extraction/symlink fixes are retained. A documented local mz_os.c overlay bounds parent/target copies and rejects Windows colon-bearing symlink targets. This is a source-review defense, with no invented CVE. Generated Windows configuration selects HAVE_ZLIB plus the repository zlib ABI via ZLIB_COMPAT; crypto and other optional codecs remain disabled. Stored/deflated ZIP extraction and escaping-symlink policy regressions pass. Auxiliary uncompiled directories remain the original 4.0.10 import.
+- PNG: refreshed both repository providers from official v1.6.59, commit cd952f49f95bb27154ae77dbb103032d95f6e580, for [CVE-2026-46675 / GHSA-qvg3-h654-xq3j](https://github.com/pnggroup/libpng/security/advisories/GHSA-qvg3-h654-xq3j). Affected versions 1.6.0–1.6.58 permit stale zlib input after incomplete compressed metadata when png_read_end follows png_read_info without reading rows. OIIO's normal PNG path reads rows before read_end, so that rare sequence is not its normal preview path. Public repository libpng APIs still warrant the defensive refresh. Stable upp_png_ symbol prefixes and the actual zlib 1.3.2 provider are retained. Both providers reject the crafted metadata call sequence in repeated native Debug checks; this is not sanitizer proof. Draw's separately installed U++ plugin/png is a distinct provider and is not cleared by updating these two packages.
+- yaml-cpp: source 0.8.0 does not contain the later stale-simple-key PopIndent path involved in upstream [issue 1475](https://github.com/jbeder/yaml-cpp/issues/1475) / [fix 1476](https://github.com/jbeder/yaml-cpp/pull/1476). The minimized malformed block-scalar input rejects in a focused regression. No unnecessary backport was applied; this finding clears only that named report.
+- Brotli: the JXL nested pin 028fb5a23661f123017c060daa546b55cf4bde29 (v1.2.0) contains no BASE64_MODE implementation introduced later in 037b70e and involved in [issue 1509](https://github.com/google/brotli/issues/1509). The Python binding implicated in CVE-2025-6176 is not compiled. These applicability findings do not constitute a whole-family audit.
+
+Official minizip release evidence: [4.2.0](https://github.com/zlib-ng/minizip-ng/releases/tag/4.2.0), [4.2.2](https://github.com/zlib-ng/minizip-ng/releases/tag/4.2.2).
+
+### Remaining release-security work
+
+Expat CVE-2025-66382 / [upstream issue 1076](https://github.com/libexpat/libexpat/issues/1076) remains open on the checked date, without a public trigger/fix. OCIO XML FileTransforms (CTF/CLF/CDL/IridasLook) are reachable, including references from YAML configs. Existing size/pixel caps do not prove protection from XML CPU denial-of-service; isolation or an explicit restricted-input policy is still required.
+
+Native image/video metadata, scratch and reference allocations can precede application-owned buffer checks. TIFF, WebP, RAW, JPEG, JXL/Highway/skcms, Imath/libdeflate and support-family configuration/provenance review remain incomplete. Draw's installed provider is E:/upp-18468/uppsrc/plugin/png, libpng 1.6.54; pngupp.cpp uses png_read_info and rows, destroys its reader on cleanup and never calls png_read_end. The named abandoned read-end sequence is absent from that wrapper, but its old raw library and other advisories still require separate provider review. No installed U++ files were modified. Linux/macOS, sanitizer and fuzz status remains unvalidated. Do not publish a Release payload or claim complete security clearance from the focused correctness results.

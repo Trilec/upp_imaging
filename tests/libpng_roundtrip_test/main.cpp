@@ -1,5 +1,6 @@
 #include <Core/Core.h>
 #include <libpng/png.h>
+#include "../libpng_src_roundtrip_test/Security.h"
 
 using namespace Upp;
 
@@ -114,6 +115,15 @@ CONSOLE_APP_MAIN
 		failed += 2;
 	}
 	png_destroy_read_struct(&read_ptr, &read_info, NULL);
+	bool version_ok = strcmp(PNG_LIBPNG_VER_STRING, "1.6.59") == 0 &&
+	                  strcmp(png_get_libpng_ver(NULL), "1.6.59") == 0;
+	Cout() << "libpng source/runtime version: " << (version_ok ? "OK" : "FAIL") << '\n';
+	(version_ok ? passed : failed)++;
+	bool metadata_ok = true;
+	for(int i = 0; i < 16; ++i)
+		metadata_ok = SecurityPngAbandonedMetadata(encoded.data.Begin(), encoded.data.GetCount()) && metadata_ok;
+	Cout() << "abandoned metadata read-end rejection: " << (metadata_ok ? "OK" : "FAIL") << '\n';
+	(metadata_ok ? passed : failed)++;
 
 	Cout() << "SUMMARY passed=" << passed << " failed=" << failed << '\n';
 	SetExitCode(failed ? 1 : 0);

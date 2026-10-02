@@ -15,8 +15,11 @@
 
 ## Current behavior
 
-`libpng` compiles the imported libpng 1.6.58 sources against `zlib`.
+`libpng` compiles the imported libpng 1.6.59 sources against `zlib`.
 It does not use U++ `plugin/png`.
 
-This differs from `libpng_src` because Windows/Core builds cannot link `zlib_src` cleanly alongside U++ `plugin/z`.
-Using `zlib` keeps the public package compatible with normal U++ applications while preserving strict vendored-source proof in `libpng_src`.
+The GitHubOut assembly resolves U++ plugin/z to the repository provider, so
+both routes link zlib 1.3.2. This package preserves its upp_png_ symbol prefix;
+U++ Draw still has its own plugin/png reader. See THIRD_PARTY_SECURITY.md for
+provider-specific applicability. The matching changed source/header slices were
+refreshed from official v1.6.59 (cd952f49f95bb27154ae77dbb103032d95f6e580).

@@ -25,3 +25,11 @@ fixture is a QuickTime-brand variant. The actual Debug app also builds.
 See IMAGING_VIDEO_VALIDATION.md. The complete 51-target Debug block passed 1,482 checks, zero failures and
 51 exits at 0. The identified Debug executable is build/ImagingWorkbench_debug.exe.
 Security clearance remains pending; the reviewed checkpoint is identified by git log -1 -- docs/DELIVERY_TASKS.md.
+
+Security block, 2 October: 293 focused Debug checks across eight targets passed,
+and the current Debug Workbench rebuilt. Video probing is removed; minizip-ng
+4.2.2 and PNG 1.6.59 are integrated. The suite minimum is now 1,493, while the
+previous full run remains 1,482. See SECURITY_VALIDATION_20261002.md for source
+scope and hashes. Overall delivery remains 7/8 milestones (87.5%); security is
+not partially counted as a completed milestone. Expat XML, native allocation
+boundaries and remaining provider/family review still prevent final clearance.

@@ -80,8 +80,9 @@ bool VideoReader::Open(const String& path)
 	int result = avformat_open_input(&next->format, path.Begin(), av_find_input_format("mov"), &options);
 	av_dict_free(&options);
 	if(result < 0) { error = MediaError(result); return false; }
-	result = avformat_find_stream_info(next->format, nullptr);
-	if(result < 0) { error = MediaError(result); return false; }
+	// MOV/MP4 must describe the supported track in its header. Stream-info
+	// probing can open/decode every stream before our decoder budgets apply.
+	// Do not probe: reject incomplete headers and cap our only decoder first.
 	next->stream_index = av_find_best_stream(next->format, AVMEDIA_TYPE_VIDEO, -1, -1, nullptr, 0);
 	if(next->stream_index < 0) { error = "no supported video stream"; return false; }
 	AVCodecParameters* parameters = next->format->streams[next->stream_index]->codecpar;
@@ -101,7 +102,10 @@ bool VideoReader::Open(const String& path)
 	next->frame = av_frame_alloc();
 	if(!next->packet || !next->frame) { error = "video packet/frame allocation failed"; return false; }
 	next->size = Size(parameters->width, parameters->height);
-	if(next->format->duration != AV_NOPTS_VALUE)
+	AVStream* stream = next->format->streams[next->stream_index];
+	if(stream->duration != AV_NOPTS_VALUE)
+		next->duration_ms = av_rescale_q(stream->duration, stream->time_base, AVRational{1, 1000});
+	else if(next->format->duration != AV_NOPTS_VALUE)
 		next->duration_ms = av_rescale_q(next->format->duration, AV_TIME_BASE_Q, AVRational{1, 1000});
 	state = std::move(next);
 	return true;

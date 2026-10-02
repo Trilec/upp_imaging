@@ -25,7 +25,7 @@ imaging_raster_test 57
 imaging_roundtrip_viewer_ocio_smoke_test 39
 imaging_test 6
 imaging_tone_conversion_test 124
-imaging_video_test 22
+imaging_video_test 24
 imaging_view_transform_test 111
 imaging_workbench_ocio_test 166
 imath_test 4
@@ -33,10 +33,10 @@ jpegxl_imagingio_test 50
 jpegxl_oiio_test 10
 libdeflate_test 2
 libjpeg_turbo_test 5
-libpng_roundtrip_test 3
-libpng_src_roundtrip_test 3
+libpng_roundtrip_test 5
+libpng_src_roundtrip_test 5
 libtiff_test 10
-minizip_ng_test 9
+minizip_ng_test 13
 opencolorio_test 18
 openexr_core_rgba_zip_test 6
 openexr_test 11
@@ -49,5 +49,5 @@ tiff_imagingio_test 29
 tiff_oiio_test 13
 webp_imagingio_test 21
 webp_oiio_test 13
-yaml_cpp_test 4
+yaml_cpp_test 5
 zlib_test 2

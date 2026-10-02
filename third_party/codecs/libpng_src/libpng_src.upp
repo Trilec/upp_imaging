@@ -1,4 +1,4 @@
-description "Strict upstream libpng 1.6.58 source package for U++";
+description "Strict upstream libpng 1.6.59 source package for U++";
 
 options(BUILDER_OPTION) NOWARNINGS;
 

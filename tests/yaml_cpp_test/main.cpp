@@ -95,6 +95,13 @@ int main()
 		}
 	}
 
+	// Upstream #1475 minimized stale-key/block-scalar reproducer.
+	bool rejected = false;
+	try { (void)YAML::Load("!\n: |\nb\n>\n|\n  !\n>"); }
+	catch(const YAML::ParserException&) { rejected = true; }
+	printf("upstream indent-stack reproducer: %s\n", rejected ? "OK" : "FAIL");
+	(rejected ? passed : failed)++;
+
 	printf("SUMMARY passed=%d failed=%d\n", passed, failed);
 	return failed ? 1 : 0;
 }

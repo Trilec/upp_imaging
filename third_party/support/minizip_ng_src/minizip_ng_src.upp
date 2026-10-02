@@ -1,4 +1,4 @@
-description "Strict upstream minizip-ng 4.0.10 source package";
+description "minizip-ng 4.2.2 source with documented Windows path hardening";
 
 noblitz
 NOWARNINGS
@@ -14,6 +14,8 @@ file
 	zlib.h,
 	zlib-ng.h,
 	mz.h,
+	mz_config.h,
+	upstream/mz_config.h,
 	mz_crypt.h,
 	mz_os.h,
 	mz_strm.h,

@@ -6,6 +6,7 @@
 
 #include <minizip_ng/mz.h>
 #include <minizip_ng/mz_strm.h>
+#include <minizip_ng/mz_os.h>
 #include <minizip_ng/mz_zip.h>
 #include <minizip_ng/mz_zip_rw.h>
 
@@ -19,6 +20,7 @@ struct EntrySpec {
 	const char* name;
 	const void* data;
 	int size;
+	bool symlink = false;
 };
 
 static bool FileIsNonEmpty(const String& path)
@@ -27,7 +29,7 @@ static bool FileIsNonEmpty(const String& path)
 	return in.IsOpen() && in.GetSize() > 0;
 }
 
-static bool WriteArchive(const String& path, const EntrySpec* entries, int count)
+static bool WriteArchive(const String& path, const EntrySpec* entries, int count, bool deflated = false)
 {
 	void* writer = mz_zip_writer_create();
 	if(!writer) {
@@ -42,14 +44,18 @@ static bool WriteArchive(const String& path, const EntrySpec* entries, int count
 		return false;
 	}
 
-	mz_zip_writer_set_compress_method(writer, MZ_COMPRESS_METHOD_STORE);
+	mz_zip_writer_set_compress_method(writer, deflated ? MZ_COMPRESS_METHOD_DEFLATE : MZ_COMPRESS_METHOD_STORE);
 	for(int i = 0; i < count; ++i) {
 		mz_zip_file info;
 		memset(&info, 0, sizeof(info));
 		info.filename = entries[i].name;
-		info.compression_method = MZ_COMPRESS_METHOD_STORE;
+		info.compression_method = deflated ? MZ_COMPRESS_METHOD_DEFLATE : MZ_COMPRESS_METHOD_STORE;
 		info.uncompressed_size = entries[i].size;
 		info.modified_date = time(NULL);
+		if(entries[i].symlink) {
+			info.version_madeby = (MZ_HOST_SYSTEM_UNIX << 8) | 20;
+			info.external_fa = 0120777u << 16;
+		}
 		rc = mz_zip_writer_add_buffer(writer, (void*)entries[i].data, entries[i].size, &info);
 		if(rc != MZ_OK)
 			break;
@@ -114,7 +120,7 @@ int main()
 	int passed = 0;
 	int failed = 0;
 
-	if(strcmp(MZ_VERSION, "4.0.10") == 0) {
+	if(strcmp(MZ_VERSION, "4.2.2") == 0) {
 		printf("version macro: OK\n");
 		passed++;
 	} else {
@@ -227,6 +233,56 @@ int main()
 		failed++;
 	}
 
+
+	// Pure policy checks do not require Windows symlink creation privileges.
+	String extract = GetExeDirFile("minizip_security_extract");
+	RealizeDirectory(extract);
+	String link = AppendFileName(extract, "link");
+	String long_link = extract + "/" + String('a', 1100) + "/link";
+	bool paths_ok = mz_path_is_symlink_target_safe(~link, "inside.txt", ~extract) == MZ_OK &&
+		mz_path_is_symlink_target_safe(~link, "../escape.txt", ~extract) == MZ_EXIST_ERROR &&
+		mz_path_is_symlink_target_safe(~link, "C:\\escape.txt", ~extract) == MZ_EXIST_ERROR &&
+		mz_path_is_symlink_target_safe(~link, "inside:stream", ~extract) == MZ_EXIST_ERROR &&
+		mz_path_is_symlink_target_safe(~long_link, "inside.txt", ~extract) == MZ_BUF_ERROR;
+	printf("symlink target policy: %s\n", paths_ok ? "OK" : "FAIL");
+	(paths_ok ? passed : failed)++;
+
+	void* extraction_reader = mz_zip_reader_create();
+	bool extraction_ok = extraction_reader &&
+		mz_zip_reader_open_file(extraction_reader, ~zip_path) == MZ_OK &&
+		mz_zip_reader_save_all(extraction_reader, ~extract) == MZ_OK &&
+		LoadFile(AppendFileName(extract, "alpha.txt")) == alpha &&
+		LoadFile(AppendFileName(extract, "beta.bin")) == String((const char*)beta, sizeof(beta));
+	mz_zip_reader_delete(&extraction_reader);
+	printf("normal ZIP extraction: %s\n", extraction_ok ? "OK" : "FAIL");
+	(extraction_ok ? passed : failed)++;
+
+	const String link_zip = GetExeDirFile("minizip_escape_test.zip");
+	const char target[] = "../minizip_escape_target.txt";
+	const EntrySpec attack[] = {{"escape-link", target, (int)strlen(target), true}};
+	void* escape_reader = mz_zip_reader_create();
+	bool escape_ok = WriteArchive(link_zip, attack, 1) && escape_reader &&
+		mz_zip_reader_open_file(escape_reader, ~link_zip) == MZ_OK &&
+		mz_zip_reader_save_all(escape_reader, ~extract) == MZ_EXIST_ERROR &&
+		!FileExists(AppendFileName(extract, "escape-link")) &&
+		!FileExists(GetExeDirFile("minizip_escape_target.txt"));
+	mz_zip_reader_delete(&escape_reader);
+	printf("escaping archive symlink rejected: %s\n", escape_ok ? "OK" : "FAIL");
+	(escape_ok ? passed : failed)++;
+	const String compressed_zip = GetExeDirFile("minizip_deflate_test.zip");
+	void* compressed_reader = mz_zip_reader_create();
+	bool compressed_ok = WriteArchive(compressed_zip, entries, 2, true) && compressed_reader &&
+		mz_zip_reader_open_file(compressed_reader, ~compressed_zip) == MZ_OK &&
+		mz_zip_reader_save_all(compressed_reader, ~extract) == MZ_OK &&
+		LoadFile(AppendFileName(extract, "alpha.txt")) == alpha &&
+		LoadFile(AppendFileName(extract, "beta.bin")) == String((const char*)beta, sizeof(beta));
+	mz_zip_reader_delete(&compressed_reader);
+	printf("deflated ZIP extraction: %s\n", compressed_ok ? "OK" : "FAIL");
+	(compressed_ok ? passed : failed)++;
+	FileDelete(compressed_zip);
+	FileDelete(AppendFileName(extract, "alpha.txt"));
+	FileDelete(AppendFileName(extract, "beta.bin"));
+	FileDelete(link_zip);
 	FileDelete(zip_path);
 	FileDelete(bad_path);
 

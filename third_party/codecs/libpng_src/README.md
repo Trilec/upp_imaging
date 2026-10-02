@@ -4,7 +4,7 @@
 
 Meaning:
 
-- it builds imported official libpng 1.6.58 source directly
+- it builds imported official libpng 1.6.59 source directly
 - it depends on `zlib_src`
 - it does not use U++ `plugin/png`
 - it does not use U++ `plugin/z`
@@ -20,8 +20,10 @@ Preferred strict include:
 
 ## Upstream import
 
-- upstream version: `1.6.58`
-- source archive: `https://download.sourceforge.net/libpng/libpng-1.6.58.tar.xz`
+- upstream version: `1.6.59`
+- official Git tag: `v1.6.59`, commit `cd952f49f95bb27154ae77dbb103032d95f6e580`
+- source: `https://github.com/pnggroup/libpng/tree/v1.6.59`
+- refreshed changed compiled files/public headers from v1.6.58 on 2026-10-02
 - `pnglibconf.h`: copied from the official release file `scripts/pnglibconf.h.prebuilt`
 - license text: `third_party/codecs/libpng_src/upstream/LICENSE`
 

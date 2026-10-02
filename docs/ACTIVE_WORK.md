@@ -1,5 +1,11 @@
 # Active Work
 
+## Current security checkpoint — 2 October 2026
+
+Status: PARTIAL. The delivery checkpoint f1194ea is published on main. Video native probing is removed, minizip-ng's retained source slice is refreshed to 4.2.2 with extraction defenses, and both repository PNG providers are refreshed to 1.6.59. Focused Debug validation passed 293 checks across eight targets; the actual Debug Workbench rebuilt successfully. See [exact evidence and current artifact hashes](SECURITY_VALIDATION_20261002.md).
+
+The previous full Debug result remains 51 targets / 1,482 checks at f1194ea. Updated focused regressions raise the manifest minimum to 1,493; that full count has not been run. Security clearance remains open for reachable Expat XML denial-of-service, native allocation/isolation boundaries and remaining dependency/provider review. No new Release payload was published. Workbench manually accepted by Curt.
+
 ## Current delivery block — 1 October 2026
 
 The [delivery task list](DELIVERY_TASKS.md) now defines a Windows Debug

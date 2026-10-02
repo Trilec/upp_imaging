@@ -9,6 +9,10 @@ rejects invalid configurations, stale executables after failed builds,
 missing/duplicate/malformed summaries, reduced counts, failed checks,
 nonzero exits and timeouts.
 
+## Focused security checkpoint — 2 October 2026
+
+See [SECURITY_VALIDATION_20261002.md](SECURITY_VALIDATION_20261002.md): 293 checks across eight Debug targets, zero failures and eight exits at 0. The actual app rebuilt after the PNG refresh. The manifest minimum is now 1,493; no full run at that count is claimed. Historical full-suite ledgers below retain their exact counts and source scope.
+
 ## Current delivery Debug checkpoint — 1 October 2026
 
 All 51 retained targets passed: 1,482 checks, zero failures, 51 exits at 0.

@@ -3,6 +3,7 @@
 #include <vector>
 
 #include <libpng_src/png.h>
+#include "Security.h"
 
 struct MemBuffer {
 	std::vector<unsigned char> data;
@@ -114,6 +115,15 @@ int main()
 		failed += 2;
 	}
 	png_destroy_read_struct(&read_ptr, &read_info, NULL);
+	bool version_ok = strcmp(PNG_LIBPNG_VER_STRING, "1.6.59") == 0 &&
+	                  strcmp(png_get_libpng_ver(NULL), "1.6.59") == 0;
+	printf("libpng source/runtime version: %s\n", version_ok ? "OK" : "FAIL");
+	(version_ok ? passed : failed)++;
+	bool metadata_ok = true;
+	for(int i = 0; i < 16; ++i)
+		metadata_ok = SecurityPngAbandonedMetadata(encoded.data.data(), encoded.data.size()) && metadata_ok;
+	printf("abandoned metadata read-end rejection: %s\n", metadata_ok ? "OK" : "FAIL");
+	(metadata_ok ? passed : failed)++;
 
 	printf("SUMMARY passed=%d failed=%d\n", passed, failed);
 	return failed ? 1 : 0;
