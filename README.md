@@ -6,11 +6,11 @@ Version 1.0: a U++ imaging framework with opt-in image-format plugins, a Workben
 
 The plugin demo loads an image into `UiMediaCard` and shows the matching C++ to copy into your application.
 
-![Imaging plugin demo showing a PNG in UiMediaCard beside its generated C++](docs/images/snapshot_plugin.jpg)
+![Imaging plugin demo showing a PNG in UiMediaCard beside its generated C++](snapshot_plugin.jpg)
 
 The Workbench provides image viewing, channel controls, exposure, colour transforms and histogram analysis.
 
-![Imaging Workbench showing the same image with its RGB histogram](docs/images/snapshot_workbench.jpg)
+![Imaging Workbench showing the same image with its RGB histogram](snapshot_workbench.jpg)
 
 ## Choose an API
 

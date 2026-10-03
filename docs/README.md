@@ -12,7 +12,7 @@ Current Windows version 1 documentation:
 | [Architecture](ARCHITECTURE.md) | Package ownership and dependency boundaries |
 | [Maintaining Imaging](MAINTAINING.md) | Repository layout, adding formats, dependency updates and deferred work |
 
-The [plugin demo snapshot](images/snapshot_plugin.jpg) and
-[Workbench snapshot](images/snapshot_workbench.jpg) show the applications in use.
+The [plugin demo snapshot](../snapshot_plugin.jpg) and
+[Workbench snapshot](../snapshot_workbench.jpg) show the applications in use.
 Dependency pins and licence notices remain in the repository's
 [THIRD_PARTY.md](../THIRD_PARTY.md) and [LICENSES.md](../LICENSES.md).
