@@ -1,5 +1,19 @@
 # Build output and runnable applications
 
+## Version 1.0 Windows release — 3 October 2026
+
+The current release record is [V1_RELEASE.md](V1_RELEASE.md). It supersedes
+older pending-publication statements below. The version 1 checkpoint adds
+explicit Open types, eight image exports, in-app Help, and ImagingPluginDemo
+with compiled generated C++. The integrated Debug suite passed 51 targets /
+1,527 checks / 51 exits at 0. Release builds and artifact identities are recorded
+there separately from Debug acceptance. Security scope remains trusted stable
+local inputs with enforced limits; Linux/macOS, sanitizer/fuzz and hostile-file
+isolation remain unvalidated or deferred. Workbench manually accepted by Curt;
+that earlier acceptance does not establish a new executable hash.
+
+## Historical records
+
 ## Status
 
 The Windows trusted-local Debug milestone is complete with 51 targets /
@@ -27,6 +41,8 @@ build/
 bin/
   windows-x64/
     ImagingWorkbench.exe    # verified Release build only
+    ImagingPluginDemo.exe   # image-plugin / UiMediaCard provider demo
+    README.txt, docs/, samples/, licenses/
 ```
 
 `build/` is reproducible generated output, not source. `bin/` is the launch
@@ -77,8 +93,9 @@ The runner rejects malformed or reduced results and records source SHA,
 counts, exit codes and log paths in `build/windows-x64/validation/results.txt`.
 `-Rebuild` cleans the first selected target and its dependency closure in each
 configuration; it is not a guarantee that every independent package cache was
-cleaned. For final release evidence, use a new empty intermediate root or a
-reviewed cleanup of the entire relevant cache. Preserve the existing source
+cleaned. For an explicitly clean-build claim, use a new empty intermediate root or a
+reviewed cleanup of the entire relevant cache. Version 1 uses incremental Debug
+acceptance, focused Release acceptance and separately rebuilt applications. Preserve the existing source
 manifests and required tests; no fresh matrix is needed after every small edit.
 
 ## Workbench staging and publication

@@ -1,4 +1,4 @@
-# ImagingWorkbench
+# ImagingWorkbench 1.0
 
 Small interactive image workbench built on the stable `OpenImageIO` and
 `OpenColorIO` application packages.
@@ -20,7 +20,8 @@ Current scope:
 - loading the registered EXR, PNG, JPEG, JPEG XL, Radiance HDR, DPX, Cineon,
   WebP, HEIF/AVIF, TIFF and camera RAW reader families
 - local H.264 MP4/MOV preview, Play/Pause, Next and Restart
-- EXR and PNG saving (including the currently displayed video frame)
+- EXR, PNG, JPEG, JPEG XL, TIFF, WebP, Radiance HDR and DPX still-image saving (including the current video frame)
+- Help button / F1 with format choices, export semantics, video and input limits
 - channel and pass selection
 - RGB, R, G, B, and A display modes
 - exposure and gamma inspection controls
@@ -98,3 +99,9 @@ decode limits, so a difficult frame can still delay the UI. The reusable
 Run imaging_raster_test and imaging_video_test to regenerate manual-load files
 under build/windows-x64/samples. The current identified Debug build is
 build/ImagingWorkbench_debug.exe; bin publication awaits security clearance.
+
+EXR preserves original channels; other exports use the selected source RGB/RGBA group at full resolution. Display exposure/gamma/OCIO are not baked in. JPEG/HDR/DPX require a group without alpha. JPEG is 8-bit lossy, WebP is 8-bit and DPX is 16-bit. Cineon, RAW and HEIF are input-only. The companion ImagingPluginDemo demonstrates raster plugins loading into UiMediaCard and generates copyable C++.
+
+Version 1 Release: `bin/windows-x64/ImagingWorkbench.exe`. `--smoke` runs the
+normal GUI loop and closes after one second for bounded startup checks.
+See docs/V1_RELEASE.md for hashes, scope and validation.

@@ -4,7 +4,8 @@ Package names are stable across nests. See [layout](package_layout.md) for assem
 
 | Package | Physical directory | Current purpose |
 | --- | --- | --- |
-| `ImagingWorkbench` | `apps/ImagingWorkbench` | Interactive imaging workbench MVP |
+| `ImagingPluginDemo` | `apps/ImagingPluginDemo` | Six opt-in image plugins feeding UiMediaCard with copyable public-API C++ |
+| `ImagingWorkbench` | `apps/ImagingWorkbench` | Version 1.0 image/video workbench with explicit formats, eight image exports and Help |
 | `Imaging` | `imaging/Imaging` | Standard complete U++ Imaging framework umbrella |
 | `ImagingAnalysis` | `imaging/ImagingAnalysis` | Backend-neutral image analysis |
 | `ImagingColor` | `imaging/ImagingColor` | Backend-neutral colour processing through OpenColorIO |

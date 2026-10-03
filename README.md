@@ -1,6 +1,6 @@
 # upp_imaging
 
-A U++ imaging framework with pinned native image libraries, an optional EXR raster integration, an interactive workbench, and a separate bounded FFmpeg decoder.
+Version 1.0: a U++ imaging framework with opt-in image-format plugins, a Workbench and a bounded H.264 video reader for trusted local files.
 
 ## Choose an API
 
@@ -13,10 +13,10 @@ A U++ imaging framework with pinned native image libraries, an optional EXR rast
 | Comparisons and structured diagnostics | `ImagingDiagnostics` |
 | Framework umbrella | `Imaging` |
 | Direct native APIs | `OpenImageIO`, `OpenColorIO`, `openexr`, `openexr_core`, and the public codec packages |
-| Display-oriented U++ StreamRaster bridge | `plugin/exr` |
+| Display-oriented U++ StreamRaster bridge | `plugin/imaging_jpeg`, `plugin/imaging_png`, `plugin/imaging_jxl`, `plugin/imaging_hdr`, `plugin/imaging_dpx`, `plugin/exr` |
 | Bounded H.264/MP4 decode-to-RGBA | `FFmpeg` |
 
-ImagingIO supports EXR, PNG, JPEG XL, HDR/RGBE, DPX/Cineon, camera RAW, WebP, HEIF/AVIF and TIFF within each format's declared policy. RAW, HEIF/AVIF and Cineon are input-only. JPEG remains available through the direct codec API. Framework public headers do not expose OpenImageIO or OpenColorIO types.
+ImagingIO supports EXR, PNG, JPEG, JPEG XL, HDR/RGBE, DPX/Cineon, camera RAW, WebP, HEIF/AVIF and TIFF within each format's declared policy. RAW, HEIF/AVIF and Cineon are input-only. JPEG is also available through the direct codec API. Framework public headers do not expose OpenImageIO or OpenColorIO types.
 
 ## Browse and build
 
@@ -33,6 +33,10 @@ The FFmpeg stack remains pinned to `n9.0.2`, scalar/static, native H.264 decode,
 
 [THIRD_PARTY.md](THIRD_PARTY.md) records provenance and pins; [LICENSES.md](LICENSES.md) lists licenses. The current [security review](docs/THIRD_PARTY_SECURITY.md) and [portability matrix](docs/PORTABILITY_MATRIX.md) record unresolved release gates. [STRUCTURE_MIGRATION.md](docs/STRUCTURE_MIGRATION.md) records every test cleanup decision.
 
-## Release readiness
+## Version 1.0 Windows release
 
-The last recorded full Windows acceptance is the structure-migration checkpoint `17bdbb3e326a07e71f159cb034c34534fb6f6bff`: 49 tests per configuration, 2,734 checks across Debug/Release, all exits 0. Focused tests now verify the new build output routing. A clean full run, Workbench manual checks, dependency-security clearance and Linux/macOS runtime acceptance remain pending. See [release preparation](docs/RELEASE_PREPARATION.md) and [active work](docs/ACTIVE_WORK.md) for the current evidence.
+The Workbench lists each image family and H.264 MP4/MOV explicitly. It exports EXR, PNG, JPEG, JPEG XL, TIFF, WebP, Radiance HDR and DPX. Help is available through the Help button or F1.
+
+[ImagingPluginDemo](apps/ImagingPluginDemo/) loads JPEG, PNG, JPEG XL, EXR, HDR and DPX into `UiMediaCard`, with live C++ output and Copy C++. Start with the [plugin quick start](docs/FORMAT_QUICKSTART.md); add the selected plugin to your `.upp` uses and call `SetImage` with its decoded U++ image. Full-fidelity HDR data uses `ImagingIO`.
+
+See [version 1 release evidence](docs/V1_RELEASE.md) for executable identities and validation. Support is Windows x64, trusted local inputs with [enforced limits](docs/INPUT_POLICY.md). MP4/MOV requires H.264 and plays without audio. JPEG XR, other video codecs, HDR video, Linux/macOS, sanitizers and fuzz validation remain deferred; the release does not claim those capabilities.

@@ -1,5 +1,19 @@
 # Windows Acceptance
 
+## Version 1.0 Windows release — 3 October 2026
+
+The current release record is [V1_RELEASE.md](V1_RELEASE.md). It supersedes
+older pending-publication statements below. The version 1 checkpoint adds
+explicit Open types, eight image exports, in-app Help, and ImagingPluginDemo
+with compiled generated C++. The integrated Debug suite passed 51 targets /
+1,527 checks / 51 exits at 0. Release builds and artifact identities are recorded
+there separately from Debug acceptance. Security scope remains trusted stable
+local inputs with enforced limits; Linux/macOS, sanitizer/fuzz and hostile-file
+isolation remain unvalidated or deferred. Workbench manually accepted by Curt;
+that earlier acceptance does not establish a new executable hash.
+
+## Historical records
+
 Authoritative acceptance set after the repository structure migration. The manifest
 `tests/acceptance.txt` contains 51 retained deterministic test packages (the original 49 plus raster/video integration);
 `tools/validate.ps1` supports Debug and Release. Current delivery validation uses Debug only, as requested by Curt on 1 October 2026. Minimum

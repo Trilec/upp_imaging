@@ -25,7 +25,9 @@ Use `ImagingColor` for backend-neutral color transforms, `ImagingAnalysis` for s
 
 Use `<OpenImageIO/OIIO.h>`, `<OpenColorIO/OpenColorIO.h>`, `<openexr/Imf.h>` or the relevant public codec header when native APIs are required. Add the corresponding public package to `uses`. Source-owner packages are implementation details unless deliberately testing the standalone provider route.
 
-JPEG is available through libjpeg_turbo. It is not part of the ImagingIO format policy. FFmpeg also backs the reusable ImagingVideo reader; see [FFmpeg](../third_party/ffmpeg/FFmpeg/README.md).
+JPEG is available through ImagingIO, plugin/imaging_jpeg and the direct libjpeg_turbo API. FFmpeg also backs the reusable ImagingVideo reader; see [FFmpeg](../third_party/ffmpeg/FFmpeg/README.md).
+
+See [FORMAT_QUICKSTART.md](FORMAT_QUICKSTART.md) and [ImagingPluginDemo](../apps/ImagingPluginDemo/) for a real file-loading UiMediaCard example with copyable C++.
 
 ## U++ display integration
 

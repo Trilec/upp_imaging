@@ -181,6 +181,8 @@ protected:
 	void UpdateProbe(Point image_point);
 	void ClearProbe();
 	void DoSave();
+	void ShowHelp();
+	UiButton help_button;
 	void DoSaveFormat(const Value& data);
 	bool SaveCurrentImage(String& path, const String& format, String& error);
 	void SetStatus(const String& text);

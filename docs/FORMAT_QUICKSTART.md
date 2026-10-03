@@ -22,12 +22,35 @@ Image preview = StreamRaster::LoadFileAny(local_jpeg_path);
 | DPX | plugin/imaging_dpx |
 | Radiance HDR | plugin/imaging_hdr |
 
+## Executable plugin / media-card example
+
+Build `apps/ImagingPluginDemo` with GitHubOut / CLANGx64 / +GUI. Choose a format,
+load a small local image, switch Contain/Cover and use Copy C++. The code pane
+shows a standalone program with the exact package/header, concrete raster class,
+FileIn loading and UiMediaCard::SetImage. It uses the same format/path/fit as the
+preview. UiMediaCard is the display control; the raster plugin does decoding.
+
+```cpp
+#include <Ui/Ui.h>
+#include <plugin/imaging_jpeg/imaging_jpeg.h>
+// .upp uses: Ui, plugin/imaging_jpeg
+FileIn input(local_jpeg_path);
+ImagingJPEGRaster reader;
+if(input.IsOpen() && reader.Open(input))
+    media_card.SetImage(reader.GetImage()); // media_card is a live UiMediaCard
+```
+
+The direct reader keeps this plugin's stream limits; LoadFileAny may dispatch
+to other registered Draw readers with their own policies. Controls must outlive
+the window's Run(). The full styling/PropertyEditor demonstration remains
+`upp_Ui/examples/UiMediaCardDemo`; the imaging demo concentrates on providers.
+
 For full-fidelity images, add `ImagingIO` and call
 `Upp::Imaging::LoadImageFile(path, image_data)`. EXR/HDR floating-point data
 keeps values outside the display range; StreamRaster preview is RGBA8 and
 clamps to its display range. Workbench offers exposure and OCIO view controls.
 JPEG core saving accepts UInt8 Gray/RGB; alpha is rejected explicitly.
-Workbench saving remains EXR/PNG.
+Workbench Save offers EXR, PNG, JPEG, JPEG XL, TIFF, WebP, Radiance HDR and DPX. EXR preserves original channels; other choices export the selected source group at full resolution, without baking exposure/gamma/OCIO preview. JPEG/HDR/DPX require RGB without alpha; JPEG is lossy and 8-bit, WebP is 8-bit, DPX is 16-bit.
 
 For video, add `ImagingVideo`, include `<ImagingVideo/ImagingVideo.h>`, open a
 local MP4/MOV with `Upp::Imaging::VideoReader`, then call `ReadNext` for U++

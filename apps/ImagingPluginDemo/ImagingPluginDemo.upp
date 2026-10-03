@@ -1,0 +1,11 @@
+description "U++ Imaging 1.0 plugin file loading into UiMediaCard with usage code";
+uses
+    Ui,
+    plugin/imaging_jpeg,
+    plugin/imaging_png,
+    plugin/imaging_jxl,
+    plugin/exr,
+    plugin/imaging_hdr,
+    plugin/imaging_dpx;
+file main.cpp, UsageCode.h, version.rc, README.md;
+mainconfig "" = "GUI";

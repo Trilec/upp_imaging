@@ -42,5 +42,5 @@ input, not by claiming a library fix. Standalone Expat remains available to
 other native consumers and carries its documented upstream risk.
 
 Dependency dispositions are recorded in THIRD_PARTY_SECURITY.md and
-DEPENDENCY_REVIEW_20261002.md. Release publication and Linux/macOS,
+DEPENDENCY_REVIEW_20261002.md. Version 1 Windows Release publication is recorded in V1_RELEASE.md. Linux/macOS,
 sanitizer and fuzz validation remain separate, uncompleted work.

@@ -1,4 +1,5 @@
 #include "ImagingWorkbench.h"
+#include "WorkbenchFormats.h"
 
 #include <imaging_tone_conversion/imaging_tone_conversion.h>
 #include <ImagingIO/FormatPolicy.h>
@@ -158,18 +159,20 @@ static Size ComputeProxySize(Size source_size)
 
 static String SaveExtensionForFormat(const String& format)
 {
-	return ToUpper(format) == "PNG" ? String(".png") : String(".exr");
+	return WorkbenchFormatExtension(format);
 }
 
 static bool ValidateSaveExtension(String& path, const String& format, String& error)
 {
 	String desired = SaveExtensionForFormat(format);
 	String ext = ToLower(GetFileExt(path));
+	if(desired.IsEmpty()) { error = "unsupported output format"; return false; }
+	if((desired == ".jpg" && ext == ".jpeg") || (desired == ".tif" && ext == ".tiff")) return true;
 	if(ext.IsEmpty()) {
 		path = ForceExt(path, desired);
 		return true;
 	}
-	if(ext != ".exr" && ext != ".png") {
+	if(desired.IsEmpty() || (ext != desired && ext != ".exr" && ext != ".png" && ext != ".jpg" && ext != ".jxl" && ext != ".tif" && ext != ".webp" && ext != ".hdr" && ext != ".dpx")) {
 		error = "unsupported output extension";
 		return false;
 	}
@@ -268,6 +271,7 @@ void ImagingWorkbench::BindActions()
 
 bool ImagingWorkbench::HotKey(dword key)
 {
+	if(key == K_F1) { ShowHelp(); return true; }
 	if(video_reader && key == K_SPACE) { ToggleVideoPlayback(); return true; }
 	if(video_reader && key == K_RIGHT) { StopVideo(); StepVideo(); return true; }
 	if(video_reader && key == K_HOME) { StopVideo(); SeekVideo(0); return true; }
@@ -289,6 +293,15 @@ void ImagingWorkbench::Paint(Draw& w)
 
 void ImagingWorkbench::PostBuild()
 {
+	Title("U++ Imaging Workbench 1.0");
+	hidder_card.SetTitle("IMAGING 1.0").SetSubTitle("Images and H.264 MP4/MOV");
+	int format_count;
+	auto formats = WorkbenchSaveFormats(format_count);
+	for(int i = 2; i < format_count; ++i)
+		save_split_button.Add(formats[i].description, formats[i].name);
+	help_button.SetText("Help");
+	help_button.WhenAction = [this] { ShowHelp(); };
+	boxlayout_04.Add(help_button).Fixed(DPI(65));
 	rbg_tool.SetCheckable(true);
 	r_too.SetCheckable(true);
 	g_tool.SetCheckable(true);
@@ -1636,10 +1649,44 @@ void ImagingWorkbench::DoSave()
 	DoSaveFormat(last_save_format);
 }
 
+void ImagingWorkbench::ShowHelp()
+{
+	TopWindow help;
+	DocEdit text;
+	help.Title("U++ Imaging 1.0 — Help").Sizeable().Zoomable();
+	help.SetRect(0, 0, DPI(760), DPI(620));
+	text.SetData("U++ IMAGING WORKBENCH 1.0\n\n"
+		"OPEN: JPEG, PNG, JPEG XL, OpenEXR, Radiance HDR, DPX, Cineon, TIFF, WebP, "
+		"AVIF/HEIF and supported camera RAW/DNG. Use the file-type dropdown to select a family.\n\n"
+		"VIDEO: H.264 in MP4/MOV, without audio. Layers has Play/Pause, Next and Restart. "
+		"Frames are decoded as needed with one upcoming frame queued. Other codecs and HDR video are deferred.\n\n"
+		"SAVE: EXR preserves original channels. PNG, JPEG, JXL, TIFF, WebP, HDR and DPX export "
+		"the selected source RGB/RGBA group at full resolution. Exposure, display gamma and OCIO "
+		"preview are not baked into these files. JPEG/WebP use 8-bit output; JPEG is lossy. "
+		"DPX uses 16-bit RGB. JPEG/HDR/DPX require a group without alpha. Cineon, camera RAW "
+		"and HEIF are input-only. Video saving exports the current still frame, not a video.\n\n"
+		"VIEW: Select channels/passes in Layers. Fit, mouse wheel zoom and middle-button pan "
+		"control the canvas. Exposure/gamma and OCIO change the preview. Floating-point EXR/HDR "
+		"source data retains values above the display range.\n\n"
+		"U++ PLUGIN USE: Add plugin/imaging_jpeg (or imaging_png, imaging_jxl, imaging_hdr, "
+		"imaging_dpx, or plugin/exr) to .upp uses. Include its header, load a U++ Image, "
+		"then call UiMediaCard::SetImage(image). ImagingPluginDemo shows file loading and "
+		"copyable C++ for this. docs/FORMAT_QUICKSTART.md has exact package/header names. "
+		"For full-fidelity data use ImagingIO::LoadImageFile.\n\n"
+		"INPUT POLICY: Trusted stable local files only. Images up to 64 MiB, video up to "
+		"256 MiB; image axes up to 8192. Configs up to 4 MiB and selected LUTs up to 16 MiB. "
+		"OCIO XML colour formats and JPEG XR are disabled/deferred. Native decoder scratch "
+		"is additional memory; these limits do not make hostile files safe.\n\n"
+		"See docs/INPUT_POLICY.md and docs/FORMAT_QUICKSTART.md in the repository.");
+	text.SetReadOnly();
+	help.Add(text.SizePos());
+	help.Run();
+}
+
 void ImagingWorkbench::DoSaveFormat(const Value& data)
 {
 	String format = ToUpper(AsString(data));
-	if(format != "EXR" && format != "PNG")
+	if(WorkbenchFormatExtension(format).IsEmpty())
 		format = "EXR";
 	last_save_format = format;
 
@@ -1650,11 +1697,9 @@ void ImagingWorkbench::DoSaveFormat(const Value& data)
 	}
 
 	FileSel selector;
-	if(format == "PNG")
-		selector.Type("PNG", "*.png");
-	else
-		selector.Type("EXR", "*.exr");
-	selector.DefaultExt(format == "PNG" ? "png" : "exr");
+	String extension = SaveExtensionForFormat(format);
+	selector.Type(format, "*" + extension);
+	selector.DefaultExt(extension.Mid(1));
 	String seed = last_saved_filename.IsEmpty() ? source_filename : last_saved_filename;
 	if(seed.IsEmpty())
 		seed = "image" + SaveExtensionForFormat(format);
@@ -1662,7 +1707,7 @@ void ImagingWorkbench::DoSaveFormat(const Value& data)
 	if(!seed.IsEmpty())
 		selector.ActiveDir(GetFileFolder(seed));
 
-	if(!selector.ExecuteSaveAs(format == "PNG" ? "Save PNG" : "Save EXR"))
+	if(!selector.ExecuteSaveAs("Save " + format))
 		return;
 
 	String path = selector.Get();
@@ -1806,6 +1851,11 @@ bool ImagingWorkbench::SaveCurrentImage(String& path, const String& format, Stri
 		}
 
 		src_a = group.HasAlpha() ? group.alpha : -1;
+		String output_format = ToUpper(format);
+		if(src_a >= 0 && (output_format == "JPEG" || output_format == "HDR" || output_format == "DPX")) {
+			error = "This format supports RGB only. Select a group without alpha; alpha will not be silently discarded.";
+			return false;
+		}
 		expected_channels = src_a >= 0 ? 4 : 3;
 		expected_alpha = src_a >= 0 ? expected_channels - 1 : -1;
 		expected_names.clear();
@@ -1842,6 +1892,10 @@ bool ImagingWorkbench::SaveCurrentImage(String& path, const String& format, Stri
 			expected_spec.attribute("oiio:ColorSpace", source_cs.Begin());
 
 		OIIO::ImageBuf png_buf(expected_spec);
+		if(output_format == "JXL") png_buf.specmod().attribute("compression", "jpegxl:100");
+		if(output_format == "WEBP") png_buf.specmod().attribute("compression", "lossless:70");
+		if(output_format == "TIFF") png_buf.specmod().attribute("compression", "zip");
+		if(output_format == "DPX") png_buf.set_write_format(OIIO::TypeDesc::UINT16);
 		if(!png_buf.set_pixels(png_buf.roi(), OIIO::TypeDesc::FLOAT, output_pixels.data(),
 					       OIIO::AutoStride, OIIO::AutoStride, OIIO::AutoStride)) {
 			error = png_buf.geterror();
@@ -2021,8 +2075,7 @@ void ImagingWorkbench::UpdateLayersPage()
 void ImagingWorkbench::DoLoad()
 {
 	FileSel selector;
-	selector.Type("Supported images and H.264 video", "*.mp4;*.mov;*.jpg;*.jpeg;*.exr;*.png;*.jxl;*.hdr;*.rgbe;*.dpx;*.cin;*.webp;*.avif;*.heic;*.heif;*.heics;*.hif;*.tif;*.tiff;*.dng;*.cr2;*.cr3;*.nef;*.arw;*.raf;*.rw2;*.orf;*.pef;*.sr2;*.x3f");
-	selector.Type("All files (other camera RAW)", "*.*");
+	AddWorkbenchOpenFormats(selector);
 	if(!selector.ExecuteOpen("Open image or video"))
 		return;
 

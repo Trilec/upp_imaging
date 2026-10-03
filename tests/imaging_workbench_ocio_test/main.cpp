@@ -9,6 +9,7 @@
 #define private public
 #define protected public
 #include "../../apps/ImagingWorkbench/ImagingWorkbench.h"
+#include "../../apps/ImagingWorkbench/WorkbenchFormats.h"
 #undef protected
 #undef private
 
@@ -373,6 +374,13 @@ static int RunTests()
 	WorkbenchSnapshot baseline_after_png;
 	Check(CaptureWorkbenchSnapshot(wb, baseline_after_png), "capture PNG post-save state", passed, failed);
 	Check(SameWorkbenchSnapshot(baseline_state, baseline_after_png), "PNG save leaves source and viewer state unchanged", passed, failed);
+	for(const char* format : {"JPEG", "HDR", "DPX"}) {
+		String rejected_path = (root / "alpha-output").string().c_str();
+		rejected_path << WorkbenchFormatExtension(format);
+		Check(!wb.SaveCurrentImage(rejected_path, format, save_error) &&
+		      save_error.Find("alpha") >= 0,
+		      Format("%s rejects alpha rather than dropping it", format), passed, failed);
+	}
 
 	OIIO::ImageBuf baseline_exr_image;
 	Check(UppImaging::LoadImage(baseline_exr_path.Begin(), baseline_exr_image, &load_error), "baseline EXR reopen", passed, failed);
@@ -542,6 +550,18 @@ static int RunTests()
 		Check(loaded && wb.source_image.spec().width == 8 &&
 		      wb.source_image.spec().height == 6,
 		      Format("%s Workbench load", extension), passed, failed);
+	}
+	for(const char* format : {"JPEG", "JXL", "TIFF", "WEBP", "HDR", "DPX"}) {
+		String output_path = (root / "export-format").string().c_str();
+		output_path << WorkbenchFormatExtension(format);
+		bool saved = wb.SaveCurrentImage(output_path, format, save_error);
+		Check(saved, Format("%s Workbench selected RGB export", format), passed, failed);
+		if(!saved) printf("export error: %s\n", save_error.Begin());
+		OIIO::ImageBuf exported;
+		std::string export_error;
+		Check(saved && UppImaging::LoadImage(output_path.Begin(), exported, &export_error) &&
+		      exported.spec().width == 8 && exported.spec().height == 6 && exported.spec().nchannels == 3,
+		      Format("%s export independently reopens", format), passed, failed);
 	}
 	std::filesystem::path source_file(__FILE__);
 	if(!source_file.is_absolute())
