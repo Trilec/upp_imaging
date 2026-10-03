@@ -8,3 +8,7 @@ GitHubOut.var
 # Klick transaction recovery evidence stays local.
 /.klick-patch/
 /.klick-patch.lock
+
+# General programming guides are private material, not Imaging documentation.
+/guides/
+/docs/guides/

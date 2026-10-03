@@ -16,7 +16,7 @@ x64 and trusted stable local inputs. Keep capability claims within that scope.
 | tests | Deterministic contract packages, acceptance manifest and minimum counts |
 | examples | Small usage examples |
 | tools | Validation runner, config generator and manual benchmark |
-| docs | Current usage, support, architecture and this guide; images contains screenshots |
+| docs | Current usage, support, architecture and this guide; snapshots live at the repository root |
 | build / bin | Ignored generated evidence/staging and verified Release payload, respectively |
 
 Package names are independent of nests. [GitHubOut.var.example](../GitHubOut.var.example)
@@ -78,3 +78,6 @@ Seeking already exists in ImagingVideo; it is not an unfinished feature.
 For rebuild/publication use [BUILD_AND_RUN.md](BUILD_AND_RUN.md). Keep the public
 docs current; routine work diaries, broad programming guides and review reports
 do not belong here. Local diagnostic evidence belongs under ignored build.
+
+General programming guides belong outside this repository. The historical
+guides/ and docs/guides/ paths are ignored to prevent accidental reintroduction.

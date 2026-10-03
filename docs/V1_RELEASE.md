@@ -25,7 +25,7 @@ Pulling Git does not download or populate ignored local binaries.
 
 ## Windows validation
 
-Release source checkpoint: `fe891dd65e6b6e6b36af79b83f007bac0fead100`.
+Release source checkpoint: `04ec3626faadf090c5d2a7b20d6895393b422e12`.
 Toolchain: U++ CLANGx64 / GitHubOut / +GUI.
 
 - Complete incremental Debug block: 51 targets, 1,527 checks, no failures, 51 exits 0.
