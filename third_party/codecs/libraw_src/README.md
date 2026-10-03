@@ -19,4 +19,4 @@ On Windows, `_USE_MATH_DEFINES` is supplied at the package compile boundary so t
 ## Intended use
 
 
-Current validation targets and results are listed in `tests/acceptance.txt` and `docs/WINDOWS_ACCEPTANCE.md` at the repository root.
+Current validation targets and results are listed in `tests/acceptance.txt` and `docs/V1_RELEASE.md` at the repository root.

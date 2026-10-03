@@ -38,4 +38,4 @@ undefined. Their platform guard rejects unvalidated non-Windows use. This also
 makes deflate handling explicit; the old tests covered only stored ZIP entries.
 The upstream CMake build and non-Windows providers have not been validated.
 
-Focused Debug evidence is recorded in docs/THIRD_PARTY_SECURITY.md.
+Current input restrictions are recorded in docs/INPUT_POLICY.md; Windows release validation is summarized in docs/V1_RELEASE.md.

@@ -1,144 +1,63 @@
-# Build output and runnable applications
+# Windows build and run
 
-## Version 1.0 Windows release — 3 October 2026
+Version 1 is validated on Windows x64 with U++ CLANGx64. Linux/macOS and other
+toolchains remain unvalidated; Windows-generated dependency configurations
+must not be treated as portable.
 
-The current release record is [V1_RELEASE.md](V1_RELEASE.md). It supersedes
-older pending-publication statements below. The version 1 checkpoint adds
-explicit Open types, eight image exports, in-app Help, and ImagingPluginDemo
-with compiled generated C++. The integrated Debug suite passed 51 targets /
-1,527 checks / 51 exits at 0. Release builds and artifact identities are recorded
-there separately from Debug acceptance. Security scope remains trusted stable
-local inputs with enforced limits; Linux/macOS, sanitizer/fuzz and hostile-file
-isolation remain unvalidated or deferred. Workbench manually accepted by Curt;
-that earlier acceptance does not establish a new executable hash.
+## Assembly
 
-## Historical records
+Initialize pinned submodules with `git submodule update --init --recursive`.
+Copy [GitHubOut.var.example](../GitHubOut.var.example) to local `GitHubOut.var`.
+Replace repository, external Ui/Animation and U++ paths with your local absolute
+paths. Add the listed nest directories, not individual packages. The repository
+root is not a nest. An existing local assembly is not changed by a Git pull.
+Set OUTPUT to `<checkout>/build/windows-x64/umk`.
 
-## Status
+## Applications
 
-The Windows trusted-local Debug milestone is complete with 51 targets /
-1,512 checks / 51 exits at 0; see DELIVERY_COMPLETION_20261002.md for the
-current Debug artifact identity. Workbench manually accepted by Curt.
-Release publication remains PARTIAL; `bin/` is not a current Release payload.
-A Git pull does not edit an existing local `.var` file, relocate old artifacts,
-redirect application runtime logs, or populate `bin/`.
-
-## Directory contract
-
-```text
-build/
-  windows-x64/
-    umk/                    # U++ package/method/configuration intermediates
-    validation/
-      debug/                # Debug test executables and their logs
-      release/              # Release test executables and their logs
-      results.txt
-    apps/
-      debug/                # Debug applications, never the release bin
-      release/              # Release staging before validation/publication
-    runtime/                # development smoke logs/scratch, not user images
-    release/                # build manifest, hashes and packaged-release evidence
-bin/
-  windows-x64/
-    ImagingWorkbench.exe    # verified Release build only
-    ImagingPluginDemo.exe   # image-plugin / UiMediaCard provider demo
-    README.txt, docs/, samples/, licenses/
-```
-
-`build/` is reproducible generated output, not source. `bin/` is the launch
-location, not a dump of every linked executable: no tests, object/static library
-files, compiler logs, temporary fixtures or old application versions. Necessary
-runtime libraries/resources may accompany an application; do not remove them
-merely to obtain an exe-only listing. Keep debug symbols in `build/` and record
-their relationship to the released binary.
-
-Use `linux-x64`, `macos-arm64` and, when actually supported, `macos-x64` as other
-platform directory names. Naming a directory is not evidence of platform support.
-A macOS GUI release may be an `.app` bundle rather than a bare executable.
-
-## Active U++ assembly
-
-Retain the `GitHubOut` assembly name. Configure its actual local `.var` file
-(the one TheIDE/umk resolves) with the nests in `GitHubOut.var.example`.
-Use local absolute paths. For the current Windows checkout:
-
-```text
-OUTPUT = "E:/apps/github/upp_imaging/build/windows-x64/umk";
-```
-
-The repository example is a template, not a portable machine configuration.
-U++ retains its own package/build-method/flag subdirectories under `OUTPUT`;
-do not flatten these or reuse objects across incompatible toolchains. If another
-compiler/ABI is added, isolate its build root as well.
-The explicit final target passed to umk is separate from this intermediate root.
-
-## Windows tests
-
-Run from the repository root with the configured local assembly:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File tools/validate.ps1 -Umk E:/upp-18468/umk.exe -Package imaging_core_test
-```
-
-For an array of package names, invoke the script directly from PowerShell instead:
-
-```powershell
-./tools/validate.ps1 -Umk E:/upp-18468/umk.exe -Package imaging_core_test,imaging_io_test
-./tools/validate.ps1 -Umk E:/upp-18468/umk.exe -Rebuild
-```
-
-The second direct invocation runs the manifest suite in Debug and Release.
-`tests/expected_counts.txt` is the authoritative minimum-check manifest.
-The runner rejects malformed or reduced results and records source SHA,
-counts, exit codes and log paths in `build/windows-x64/validation/results.txt`.
-`-Rebuild` cleans the first selected target and its dependency closure in each
-configuration; it is not a guarantee that every independent package cache was
-cleaned. For an explicitly clean-build claim, use a new empty intermediate root or a
-reviewed cleanup of the entire relevant cache. Version 1 uses incremental Debug
-acceptance, focused Release acceptance and separately rebuilt applications. Preserve the existing source
-manifests and required tests; no fresh matrix is needed after every small edit.
-
-## Workbench staging and publication
-
-Example Windows staging commands, from a PowerShell session at repository root:
+Run from the repository root, adjusting the builder path:
 
 ```powershell
 $umk = 'E:/upp-18468/umk.exe'
-New-Item -ItemType Directory -Force build/windows-x64/apps/debug,build/windows-x64/apps/release | Out-Null
-& $umk GitHubOut ImagingWorkbench CLANGx64 -H8 build/windows-x64/apps/debug/ImagingWorkbench.exe
-if ($LASTEXITCODE -ne 0) { throw 'Workbench Debug build failed' }
-& $umk GitHubOut ImagingWorkbench CLANGx64 -rH8 build/windows-x64/apps/release/ImagingWorkbench.exe
-if ($LASTEXITCODE -ne 0) { throw 'Workbench Release build failed' }
+New-Item -ItemType Directory -Force build/windows-x64/apps/release | Out-Null
+& $umk GitHubOut ImagingWorkbench CLANGx64 -rH8 +GUI build/windows-x64/apps/release/ImagingWorkbench.exe
+& $umk GitHubOut ImagingPluginDemo CLANGx64 -rH8 +GUI build/windows-x64/apps/release/ImagingPluginDemo.exe
 ```
 
-Smoke-test the newly built staging executable, then publish only after the
-required tests and clean shutdown pass:
+Require successful exit codes before using the outputs. For Debug, omit `-r`
+and stage under `build/windows-x64/apps/debug`. Workbench `--smoke` runs the
+normal GUI loop and closes after one second for a bounded startup check.
+The demo's interactive code pane shows the exact selected plugin API.
+
+## Validation
 
 ```powershell
-New-Item -ItemType Directory -Force bin/windows-x64 | Out-Null
-Copy-Item build/windows-x64/apps/release/ImagingWorkbench.exe bin/windows-x64/ImagingWorkbench.exe -Force
-Get-FileHash bin/windows-x64/ImagingWorkbench.exe -Algorithm SHA256
+./tools/validate.ps1 -Configuration debug -Package imaging_raster_test,imaging_workbench_ocio_test
+./tools/validate.ps1 -Configuration debug
 ```
 
-Close running Workbench instances before replacement. A failed build must not
-publish or validate an older executable. Verify the staged and published hashes,
-record source SHA/toolchain/configuration under `build/windows-x64/release/`,
-and launch the published executable from both the repository and another working
-directory. Do not assume an empty stderr stream means every check passed.
+The complete Debug command runs the retained manifest in `tests/acceptance.txt`.
+Minimum check counts are in `tests/expected_counts.txt`. The runner rejects failed
+builds, stale executables, malformed/reduced summaries, failed checks, nonzero
+exits and timeouts. It writes logs and results under build/windows-x64/validation.
+`-Configuration release` selects Release. Use focused checks for changed paths
+and a complete block at a substantive checkpoint; documentation-only changes
+do not require rebuilding applications. `-Rebuild` does not guarantee that every
+independent package cache is clean; use a separate empty cache for a clean-build claim.
 
-The local release pass must verify that Workbench logging, settings and generated
-images do not pollute `bin/`. Use documented development runtime paths or the
-platform's user-data locations; do not redirect genuine user files into disposable
-build output. No C++ runtime-path change is included in this documentation checkpoint.
+## Output folders and publication
 
-## Legacy artifact cleanup
+| Folder | Contents |
+| --- | --- |
+| build/windows-x64/umk | Compiler intermediates |
+| build/windows-x64/validation | Test executables, logs and ledger |
+| build/windows-x64/apps/debug | Debug applications |
+| build/windows-x64/apps/release | Release staging |
+| build/windows-x64/release | Local package, hashes and build evidence |
+| build/windows-x64/samples | Generated small manual-load fixtures |
+| bin/windows-x64 | Verified Release apps, usage docs, samples and licence notices |
 
-Inventory `out/`, old executable copies and known generated directories first.
-Preserve any useful diagnostic evidence before removing only reproducible
-artifacts. Do not follow junctions/symlinks outside the repository, delete user
-images/configs, clean submodule source trees, or run `git clean -xfd` across the
-checkout. Retained test source is not obsolete just because its last executable
-is old. Historical reports keep their original log paths clearly labelled.
-
-`out/` remains ignored during migration. Once local commands, IDE settings and
-runtime paths no longer recreate it, remove its known generated contents.
+Close running applications before replacement. Publish only successfully built
+and checked candidates; compare staged/published SHA-256 hashes. Keep test
+executables, logs, symbols and intermediates out of bin. User images/configs
+are not disposable build output. See [release information](V1_RELEASE.md).

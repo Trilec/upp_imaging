@@ -19,8 +19,7 @@
   are downstream files. The latter remains required by the unchanged
   upstream `libswscale/format.c` when `CONFIG_UNSTABLE=0`.
 - Actual linked slice: `libavutil`, native H.264 `libavcodec`, MOV/MP4
-  `libavformat`, local `file` protocol and scalar `libswscale`. Security
-  applicability and validation are recorded in `docs/THIRD_PARTY_SECURITY.md`.
+  `libavformat`, local `file` protocol and scalar `libswscale`. The supported input boundary is recorded in `docs/INPUT_POLICY.md`.
 
 ## libheif
 
@@ -34,8 +33,7 @@
   only the submodule pin and repository-owned generated version header and
   package metadata changed. The decode-only dav1d/libde265 source manifest
   and registry-lifetime overlay are retained. No upstream source was edited.
-- Security scope and applicable 1.23.4/1.23.5 fixes are in
-  `docs/THIRD_PARTY_SECURITY.md`.
+- Supported native-decoder input restrictions are in `docs/INPUT_POLICY.md`.
 
 ## Expat
 
@@ -54,7 +52,7 @@
   the Windows `rand_s` entropy provider is compiled. Tools and examples
   are not linked.
 - Security applicability and the remaining upstream issue are tracked in
-  `docs/THIRD_PARTY_SECURITY.md`; this version is not certified
+  `docs/INPUT_POLICY.md`; this version is not certified
   vulnerability-free.
 
 ## zlib
@@ -152,7 +150,7 @@ The changed core files were imported together with the `ojph_mem_c.c`
 source rename. A single whitespace-only blank line in `ojph_file.h` was
 normalized. OpenEXR's generated configuration names the separate 0.27.1
 provider. The 0.31.0 OpenJPH release changes API/ABI and is not used by
-this package graph; see [security review](docs/THIRD_PARTY_SECURITY.md).
+this package graph; see [input restrictions](docs/INPUT_POLICY.md).
 
 ## Iex
 
@@ -227,7 +225,7 @@ Notes:
 - Exact plugin-source submodule: `73bc189f7d8469a9760ce9c5099b686c77695074`
 - Enabled: copied main, utility and public-header slices with statically registered selected image plugins; `third_party/openimageio/` package READMEs identify the compiled files.
 - Local integration: robinmap/Imath include adaptations and separate MinGW main-thread error-storage wrappers are retained. The upstream source license is Apache-2.0; see `LICENSES.md`.
-- Security validation: 10 affected test targets in both Windows configurations, 306 checks and 20 clean exits. A later clean Windows suite and Curt's manual Workbench acceptance are recorded in `docs/ACTIVE_WORK.md`; the current post-hardening source needs new integrated acceptance at the release-candidate checkpoint.
+- Current Windows release validation is summarized in `docs/V1_RELEASE.md`; native-decoder input restrictions remain in `docs/INPUT_POLICY.md`.
 
 ## OpenImageIO JPEG XL plugin
 
@@ -246,4 +244,4 @@ Notes:
 
 ## Local lifetime integration
 
-Pinned source trees are unchanged by the layout migration. OpenColorIO's source manifest compiles a reproducible local FileTransform.cpp overlay that owns its LUT format registry and raw format objects at process shutdown; its generator and original BSD-3-Clause copyright are retained. OpenImageIO source wrappers expose shutdown of MinGW main-thread error storage before the U++ heap audit, retaining pending-error reporting. These downstream integration files live outside upstream trees. See docs/STRUCTURE_MIGRATION.md and the respective package READMEs.
+Pinned source trees are unchanged by the layout migration. OpenColorIO's source manifest compiles a reproducible local FileTransform.cpp overlay that owns its LUT format registry and raw format objects at process shutdown; its generator and original BSD-3-Clause copyright are retained. OpenImageIO source wrappers expose shutdown of MinGW main-thread error storage before the U++ heap audit, retaining pending-error reporting. These downstream integration files live outside upstream trees. See docs/MAINTAINING.md and the respective package READMEs.

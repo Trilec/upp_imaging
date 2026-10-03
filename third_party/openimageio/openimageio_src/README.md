@@ -44,4 +44,4 @@ Strict upstream OpenImageIO 3.1.17.0 main-library package for U++.
 - validation uses the static `OIIO` API path
 - consumer targets do not define package export macros
 
-Current validation targets and results are listed in `tests/acceptance.txt` and `docs/WINDOWS_ACCEPTANCE.md` at the repository root.
+Current validation targets and results are listed in `tests/acceptance.txt` and `docs/V1_RELEASE.md` at the repository root.

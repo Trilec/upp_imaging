@@ -11,4 +11,4 @@ Status:
 - `openexr` = stable application-facing package
 - `openexr_test` = stable high-level round-trip
 
-Current validation targets and results are listed in `tests/acceptance.txt` and `docs/WINDOWS_ACCEPTANCE.md` at the repository root.
+Current validation targets and results are listed in `tests/acceptance.txt` and `docs/V1_RELEASE.md` at the repository root.

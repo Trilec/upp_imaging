@@ -28,4 +28,4 @@ initialized. It does not acquire/release a heif_init count and becomes a no-op
 when the normal heif_deinit has emptied the registries. This closes the
 imaging_test link-only shutdown failure without adding a test prewarm.
 
-Current validation targets and results are listed in `tests/acceptance.txt` and `docs/WINDOWS_ACCEPTANCE.md` at the repository root.
+Current validation targets and results are listed in `tests/acceptance.txt` and `docs/V1_RELEASE.md` at the repository root.

@@ -99,4 +99,4 @@ Strict upstream OpenImageIO utility package for U++.
 - image file I/O
 - OpenColorIO integration at the main-library layer
 
-Current validation targets and results are listed in `tests/acceptance.txt` and `docs/WINDOWS_ACCEPTANCE.md` at the repository root.
+Current validation targets and results are listed in `tests/acceptance.txt` and `docs/V1_RELEASE.md` at the repository root.

@@ -8,13 +8,9 @@ The normal Windows Release launch location is
 `bin/windows-x64/ImagingWorkbench.exe` after local validation. Debug builds,
 staging, logs and test executables belong under `build/windows-x64/`.
 
-This is the primary interactive integration check. Its visual smoke check and
-clean shutdown supplement, rather than replace, the deterministic tests.
-Debug and Release staging builds are recorded in
-[active work](../../docs/ACTIVE_WORK.md). Workbench manually accepted by
-Curt; that confirmation does not identify a staged executable hash.
+This interactive application supplements the deterministic package tests.
+Current Windows release information is in [V1_RELEASE.md](../../docs/V1_RELEASE.md).
 The supported input scope is [trusted local files with restrictions](../../docs/INPUT_POLICY.md).
-Release `bin/` publication remains separate from the Windows Debug milestone.
 
 Current scope:
 - loading the registered EXR, PNG, JPEG, JPEG XL, Radiance HDR, DPX, Cineon,

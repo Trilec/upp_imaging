@@ -20,4 +20,4 @@ Current meaning:
 - strict source-boundary package for the high-level OpenEXR API
 - package-level compile/run probe passes
 
-Current validation targets and results are listed in `tests/acceptance.txt` and `docs/WINDOWS_ACCEPTANCE.md` at the repository root.
+Current validation targets and results are listed in `tests/acceptance.txt` and `docs/V1_RELEASE.md` at the repository root.

@@ -71,7 +71,7 @@
 
 These are the original bring-up totals, not the current acceptance requirements.
 After hardening and migration, Core is 52/0, ImagingIO 89/0 and ImagingColor 69/0;
-`docs/WINDOWS_ACCEPTANCE.md` records the retained 49-test matrix.
+That matrix was recorded at the migration checkpoint; current Windows release information is in `docs/V1_RELEASE.md`.
 
 * ImagingCore accepted at 48/0.
 * ImagingIO EXR/PNG baseline accepted at 79/0.
@@ -119,7 +119,7 @@ After hardening and migration, Core is 52/0, ImagingIO 89/0 and ImagingColor 69/
 * Reconciled package catalogue, status/roadmap, package-layout guidance, and this changelog so implemented work is no longer described as planned.
 * Formalized three distinct state labels: implemented, Windows-proven, and platform validation pending.
 * Made repository test package names and expected totals the validation authority instead of format-name roadmap shorthand.
-* `docs/ACTIVE_WORK.md` remains the recovery authority and records the exact published checkpoint, validation evidence, and next accumulated validator action.
+* Checkpoint-specific recovery records were maintained during development; current continuation guidance is in `docs/MAINTAINING.md`.
 
 ### Deferred next scope
 

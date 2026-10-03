@@ -1,7 +1,6 @@
 # Windows trusted-local input policy
 
-On 2 October 2026 Curt selected **trusted local inputs with enforced
-restrictions** as the delivery security scope. The supported contract is
+Version 1 supports **trusted local inputs with enforced restrictions**. The supported contract is
 stable local files from a known source, including trusted OCIO configs and
 their referenced LUTs. This is not a hostile-file service or decoder sandbox.
 
@@ -41,6 +40,6 @@ The known unresolved Expat CPU issue is addressed by disabling OCIO XML
 input, not by claiming a library fix. Standalone Expat remains available to
 other native consumers and carries its documented upstream risk.
 
-Dependency dispositions are recorded in THIRD_PARTY_SECURITY.md and
-DEPENDENCY_REVIEW_20261002.md. Version 1 Windows Release publication is recorded in V1_RELEASE.md. Linux/macOS,
-sanitizer and fuzz validation remain separate, uncompleted work.
+See [supported formats](FORMATS.md), [release information](V1_RELEASE.md)
+and [maintainer notes](MAINTAINING.md). Linux/macOS, sanitizer/fuzz validation
+and hostile-file isolation are not established by the Windows release.

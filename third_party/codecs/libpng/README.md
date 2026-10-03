@@ -20,6 +20,6 @@ It does not use U++ `plugin/png`.
 
 The GitHubOut assembly resolves U++ plugin/z to the repository provider, so
 both routes link zlib 1.3.2. This package preserves its upp_png_ symbol prefix;
-U++ Draw still has its own plugin/png reader. See THIRD_PARTY_SECURITY.md for
+U++ Draw still has its own plugin/png reader. See INPUT_POLICY.md for
 provider-specific applicability. The matching changed source/header slices were
 refreshed from official v1.6.59 (cd952f49f95bb27154ae77dbb103032d95f6e580).

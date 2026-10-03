@@ -62,5 +62,46 @@ Generated small image/video samples for manual loading are retained under
 deferred. XML colour files (CTF/CLF/CDL/CC/CCC/look) are disabled; YAML configs,
 non-XML LUTs and programmatic colour transforms remain supported.
 
-See [PACKAGE_CATALOGUE.md](PACKAGE_CATALOGUE.md) for physical package paths and
+See [MAINTAINING.md](MAINTAINING.md) for physical package paths and
 [BUILD_AND_RUN.md](BUILD_AND_RUN.md) for the assembly and output directories.
+
+## Full-fidelity image I/O
+
+Add ImagingIO to .upp uses:
+
+```cpp
+#include <ImagingIO/ImagingIO.h>
+using namespace Upp;
+using namespace Upp::Imaging;
+ImageData image;
+Diagnostics diagnostics;
+Result result = LoadImageFile("input.exr", image, &diagnostics);
+if(result.IsOk())
+    result = SaveImageFile("copy.exr", image, &diagnostics);
+```
+
+Inspect results/diagnostics. Load preserves output on failure. Save validates
+sample/channel policy and publishes through a verified temporary file.
+ImagingColor supplies transforms; ImagingAnalysis and ImagingDiagnostics provide
+statistics and comparisons. Direct native API consumers add OpenImageIO,
+OpenColorIO or the relevant codec package instead of implementation source owners.
+
+## Reusable video reader
+
+```cpp
+#include <ImagingVideo/ImagingVideo.h>
+Upp::Imaging::VideoReader reader;
+Upp::Imaging::VideoFrame frame;
+if(reader.Open("clip.mp4"))
+    while(reader.ReadNext(frame)) {
+        // frame.image is RGBA8; frame.time_ms is the timestamp.
+    }
+// Distinguish clean EOF with IsEof() from failure with GetError().
+```
+
+Add ImagingVideo to .upp uses. Seek(milliseconds) selects a time on subsequent
+reading. See [Video API](../imaging/ImagingVideo/README.md) for limits and errors.
+Additional preview packages are plugin/imaging_tiff, plugin/imaging_webp,
+plugin/imaging_cineon, plugin/imaging_raw and plugin/imaging_heif; each exposes the matching imaging_<format>.h header
+under its plugin package. The shared [ImagingRaster API](../integrations/ImagingRaster/README.md)
+describes explicit reader limits and preview layout restrictions.
